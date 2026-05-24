@@ -3124,28 +3124,26 @@ article.markdown-section {
 
 #arxiv-search-quick-run-side {
   width: 100%;
-  flex: 0 0 260px;
+  flex: 0 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  min-height: 260px;
-  max-height: 260px;
-  overflow-y: auto;
+  gap: 6px;
+  min-height: 0;
+  max-height: none;
+  overflow-y: visible;
   overflow-x: hidden;
-  padding-right: 2px;
 }
 
 #arxiv-conference-control-side {
   width: 100%;
-  flex: 0 0 260px;
+  flex: 0 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  min-height: 260px;
-  max-height: 260px;
-  overflow-y: auto;
+  gap: 6px;
+  min-height: 0;
+  max-height: none;
+  overflow-y: visible;
   overflow-x: hidden;
-  padding-right: 2px;
 }
 
 #arxiv-search-quick-run-side .chat-quick-run-item,
@@ -3173,6 +3171,14 @@ article.markdown-section {
 #arxiv-search-quick-run-side .chat-quick-run-item,
 #arxiv-conference-control-side .chat-quick-run-item {
   margin-bottom: 0;
+  padding: 5px 8px;
+  text-align: center;
+}
+
+#arxiv-search-quick-run-side .chat-quick-run-msg,
+#arxiv-conference-control-side .chat-quick-run-msg {
+  margin-top: 0;
+  min-height: 13px;
 }
 
 .dpr-admin-task-panel {
@@ -3182,7 +3188,7 @@ article.markdown-section {
   border: 1px solid #e3eaf7;
   border-radius: 16px;
   background: #fbfdff;
-  padding: 10px;
+  padding: 9px 10px;
   box-shadow: 0 -8px 24px rgba(38, 55, 86, 0.08);
 }
 
@@ -3191,14 +3197,14 @@ article.markdown-section {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .dpr-bulk-selection-count {
   display: inline-flex;
   align-items: center;
   width: fit-content;
-  margin-top: 4px;
+  margin-top: 2px;
   padding: 2px 8px;
   border-radius: 999px;
   background: #edf7ef;
@@ -3215,28 +3221,40 @@ article.markdown-section {
 .dpr-task-hint {
   font-size: 11px;
   color: #6a7698;
-  margin-top: -2px;
+  margin: -1px 0 0;
 }
 
-#arxiv-search-quick-run-side > .chat-quick-run-item,
-#arxiv-search-quick-run-side > .chat-quick-run-run-btn {
-  display: inline-flex;
-  justify-content: center;
+.dpr-task-action-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.dpr-task-danger-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.dpr-task-danger-row .chat-quick-run-run-btn {
   width: auto;
-  margin-right: 6px;
+  min-width: 82px;
+  margin-top: 0;
+  padding: 5px 10px;
 }
 
 .dpr-conference-choice-grid {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .dpr-conference-choice-row {
   display: grid;
-  grid-template-columns: 74px 1fr;
+  grid-template-columns: 66px 1fr;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .dpr-conference-choice-label {
@@ -3329,7 +3347,7 @@ article.markdown-section {
 .dpr-conference-pane {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .dpr-conference-title {
@@ -3344,33 +3362,32 @@ article.markdown-section {
 }
 
 .dpr-conference-note {
-  margin-top: 12px;
   border: 1px solid #f1e2b8;
   border-radius: 12px;
-  padding: 10px 12px;
+  padding: 6px 10px;
   background: #fff9e8;
   color: #7a5200;
   font-size: 12px;
-  line-height: 1.6;
+  line-height: 1.35;
 }
 
 .dpr-choice-field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .dpr-choice-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 
 .dpr-choice-pill {
   border: 1px solid rgba(46, 125, 50, 0.35);
   border-radius: 6px;
-  padding: 6px 10px;
-  min-width: 72px;
+  padding: 5px 9px;
+  min-width: 64px;
   background: #fff;
   color: #2e7d32;
   font-size: 12px;

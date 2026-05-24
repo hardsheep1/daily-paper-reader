@@ -539,7 +539,7 @@ window.SubscriptionsManager = (function () {
       let title = btn.getAttribute('data-default-title') || btn.textContent || '';
       if (blocked) {
         if (hasUnsavedChanges) {
-          title = btn === quickRunConferenceBtn ? '请先点击“保存”后再发起会议论文检索。' : '请先点击“保存”后再发起快速抓取。';
+          title = btn === quickRunConferenceBtn ? '请先保存后再检索会议论文。' : '请先保存后再抓取。';
         } else if (selectedProfileCount < 1) {
           title = '请先在上方选择至少一个词条。';
         } else if (btn === quickRunConferenceBtn && !selectedConferenceYearPairs.size) {
@@ -552,35 +552,35 @@ window.SubscriptionsManager = (function () {
     });
     if (quickRunSelectionCountEl) {
       quickRunSelectionCountEl.textContent = dailySelectedProfileCount > 0
-        ? `已选择 ${dailySelectedProfileCount} 个常规词条`
-        : '先勾选上方词条';
+        ? `${dailySelectedProfileCount} 个常规词条`
+        : '未选择';
       quickRunSelectionCountEl.classList.toggle('is-empty', dailySelectedProfileCount < 1);
     }
     if (conferenceSelectionCountEl) {
       conferenceSelectionCountEl.textContent = selectedProfileCount > 0
-        ? `已选择 ${selectedProfileCount} 个词条`
-        : '先勾选上方词条';
+        ? `${selectedProfileCount} 个词条`
+        : '未选择';
       conferenceSelectionCountEl.classList.toggle('is-empty', selectedProfileCount < 1);
     }
     if (quickRunHintEl) {
       quickRunHintEl.textContent = dailySelectedProfileCount > 0
-        ? '选择抓取范围后会对已勾选的常规词条批量执行。'
-        : '勾选一个或多个已启用的常规词条后，下方快速抓取按钮会自动激活。';
+        ? '对已选常规词条执行。'
+        : '先在上方勾选常规词条。';
     }
     if (conferenceHintEl) {
       conferenceHintEl.textContent = selectedProfileCount > 0
-        ? '继续选择会议年份，然后点击开始检索。'
-        : '勾选一个或多个词条，再选择会议年份进行批量会议检索。';
+        ? '选择年份后开始检索。'
+        : '先勾选词条，再选年份。';
     }
     if (hasUnsavedChanges && quickRunMsgEl) {
-      quickRunMsgEl.textContent = '检测到未保存修改，请先保存后再发起快速抓取。';
+      quickRunMsgEl.textContent = '有未保存修改，请先保存。';
       quickRunMsgEl.style.color = '#c00';
     }
     const conferenceMsgEl = document && typeof document.getElementById === 'function'
       ? document.getElementById('arxiv-admin-conference-run-msg')
       : null;
     if (hasUnsavedChanges && conferenceMsgEl) {
-      conferenceMsgEl.textContent = '检测到未保存修改，请先保存后再发起会议论文检索。';
+      conferenceMsgEl.textContent = '有未保存修改，请先保存。';
       conferenceMsgEl.style.color = '#c00';
     }
   };
@@ -1049,26 +1049,30 @@ window.SubscriptionsManager = (function () {
             <div class="dpr-bulk-bar-head">
               <div>
                 <div class="chat-quick-run-title">快速抓取</div>
-                <div id="arxiv-admin-quick-run-selection-count" class="dpr-bulk-selection-count is-empty">先勾选上方词条</div>
+                <div id="arxiv-admin-quick-run-selection-count" class="dpr-bulk-selection-count is-empty">未选择</div>
               </div>
-              <button id="arxiv-admin-open-workflow-panel-btn" class="arxiv-tool-btn" type="button" style="padding:2px 8px;">打开工作流面板</button>
+              <button id="arxiv-admin-open-workflow-panel-btn" class="arxiv-tool-btn" type="button" style="padding:2px 8px;">工作流</button>
             </div>
-            <div id="arxiv-admin-quick-run-hint" class="dpr-task-hint">勾选一个或多个常规词条后，下方快速抓取按钮会自动激活。</div>
-            <button id="arxiv-admin-quick-run-10d-btn" class="chat-quick-run-item" type="button">立即搜寻十天内论文</button>
-            <button id="arxiv-admin-quick-run-30d-btn" class="chat-quick-run-item" type="button">立即搜寻三十天内论文（全速览，约 0.76）</button>
-            <button id="arxiv-admin-quick-run-30d-standard-btn" class="chat-quick-run-item" type="button">立即搜寻三十天内论文（全标准 / 精读，约 1.22）</button>
+            <div id="arxiv-admin-quick-run-hint" class="dpr-task-hint">先在上方勾选常规词条。</div>
+            <div class="dpr-task-action-grid">
+              <button id="arxiv-admin-quick-run-10d-btn" class="chat-quick-run-item" type="button">10 天论文</button>
+              <button id="arxiv-admin-quick-run-30d-btn" class="chat-quick-run-item" type="button">30 天速览</button>
+              <button id="arxiv-admin-quick-run-30d-standard-btn" class="chat-quick-run-item" type="button">30 天精读</button>
+            </div>
             <div id="arxiv-admin-quick-run-msg" class="chat-quick-run-msg"></div>
 
             <div class="chat-quick-run-divider" aria-hidden="true"></div>
-            <div class="chat-quick-run-title">危险操作</div>
-            <button
-              id="arxiv-admin-reset-content-btn"
-              class="chat-quick-run-run-btn"
-              type="button"
-              style="background:#c62828; color:#fff; border-color:#b71c1c;"
-            >
-              删除所有
-            </button>
+            <div class="dpr-task-danger-row">
+              <div class="chat-quick-run-title">危险操作</div>
+              <button
+                id="arxiv-admin-reset-content-btn"
+                class="chat-quick-run-run-btn"
+                type="button"
+                style="background:#c62828; color:#fff; border-color:#b71c1c;"
+              >
+                删除所有
+              </button>
+            </div>
             <div id="arxiv-admin-reset-content-msg" class="chat-quick-run-msg"></div>
           </div>
 
@@ -1083,13 +1087,12 @@ window.SubscriptionsManager = (function () {
               <div class="dpr-bulk-bar-head">
                 <div>
                   <div class="chat-quick-run-title">会议论文检索</div>
-                  <div id="arxiv-admin-conference-selection-count" class="dpr-bulk-selection-count is-empty">先勾选上方词条</div>
+                  <div id="arxiv-admin-conference-selection-count" class="dpr-bulk-selection-count is-empty">未选择</div>
                 </div>
               </div>
-              <div class="dpr-conference-subtitle">按会议和年份从 Supabase 召回候选，不参与每日论文抓取。</div>
 
               <div id="arxiv-admin-conference-hint" class="dpr-conference-note">
-                勾选一个或多个词条，再选择会议年份进行批量会议检索。会议名仅分组，年份可多选。
+                先勾选词条，再选年份。
               </div>
 
               <div class="dpr-choice-field">
@@ -1104,7 +1107,7 @@ window.SubscriptionsManager = (function () {
                 开始检索
               </button>
               <div id="arxiv-admin-conference-run-msg" class="chat-quick-run-msg">
-                选择会议和年份后，会一次性触发 Supabase 会议论文检索。
+                触发 Supabase 会议检索。
               </div>
             </div>
           </div>
