@@ -25,3 +25,57 @@ subscriptions:
     stage: A
     diff_threshold_pct: 15
   keyword_recall_mode: or
+  intent_profiles:
+    - tag: ac
+      description: 主动学习聚类相关论文，特别是利用大模型的方法
+      enabled: true
+      paper_sources:
+        - arxiv
+      keywords:
+        - keyword: LLM
+          keyword_cn: 大模型
+          query: d
+        - keyword: active learning
+          keyword_cn: 主动学习
+          query: c
+        - keyword: clustering
+          keyword_cn: 聚类
+          query: c
+        - keyword: active learning clustering
+          keyword_cn: 主动学习聚类
+          query: active learning clustering with large language models
+        - keyword: large language model clustering
+          keyword_cn: 大语言模型聚类
+          query: clustering using large language models
+      intent_queries:
+        - query: clustering base LLM active learning
+          query_cn: 基于大模型主动学习的聚类
+          enabled: true
+          source: manual
+          note: ''
+        - query: Active learning clustering methods that leverage large language models
+          query_cn: 利用大语言模型的主动学习聚类方法
+          enabled: true
+          source: manual
+          note: ''
+        - query: Label efficient clustering approaches using active learning and large language models
+          query_cn: 使用主动学习和大语言模型的标签高效聚类方法
+          enabled: true
+          source: manual
+          note: ''
+      updated_at: '2026-05-29T02:26:40.584Z'
+source_backends:
+  arxiv:
+    papers_table: arxiv_papers
+    use_vector_rpc: true
+    vector_rpc: match_arxiv_papers
+    vector_rpc_exact: match_arxiv_papers_exact
+    use_bm25_rpc: true
+    bm25_rpc: match_arxiv_papers_bm25
+    sync_table: arxiv_sync_status
+    sync_success_value: success
+    schema: public
+    kind: supabase
+    enabled: true
+    url: https://lyucdwgefyfbmaiopjbk.supabase.co
+    anon_key: sb_publishable_lX-oi64Uxyd7SIVv3_w2Uw_MTOojeKq
