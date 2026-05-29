@@ -1,0 +1,24 @@
+{
+  "label": "2026-04-30 ~ 2026-05-29",
+  "date": "2026-04-30 ~ 2026-05-29",
+  "generated_at": "2026-05-29T02:34:10",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "20260430-20260529/2605.24867v1-clustering-as-reasoning-a-k-means-interpretation-of-chain-of-thought-graph-learning",
+      "section": "quick",
+      "title_en": "Clustering as Reasoning: A $k$-Means Interpretation of Chain-of-Thought Graph Learning",
+      "authors": "Xuanting Xie, Zhaochen Guo, Bingheng Li, Xingtong Yu, Zhifei Liao, Zhao Kang, Yuan Fang",
+      "date": "2026-05-24",
+      "pdf": "https://arxiv.org/pdf/2605.24867v1",
+      "score": "8.0",
+      "evidence": "将思维链推理解释为图上的k均值聚类，借助大语言模型",
+      "tldr": "现有链式思维图学习方法依赖分离架构和固定图表示，限制了语义-拓扑交互和可解释性。本文提出KCoT框架，建立Transformer块与k-means算法的数学对应，将推理视为迭代聚类。标准基准上一致超越现有方法。揭示了聚类作为图推理的机制，提升了可解释性。",
+      "tags": "query:ac",
+      "abstract_en": "Chain-of-Thought (CoT) prompting has shown promise in enhancing the reasoning capabilities of large language models (LLMs) on text-attributed graphs (TAGs). This work reframes CoT-based graph learning through the principle of clustering as reasoning, offering a $k$-means interpretation of how iterative reasoning operates over graph-structured data. We observe that existing graph CoT methods rely on disjoint architectures and fixed graph representations, limiting step-by-step semantic-topological interaction and interpretability. To overcome this limitation, we propose a unified framework named KCoT that integrates CoT reasoning with graph representation learning. Our key theoretical result reveals a formal mathematical correspondence between a Transformer block and the $k$-means algorithm, allowing reasoning to be interpreted as iterative assignment and update steps. Based on this insight, we introduce a Semantic Discriminating Prompt that explicitly formulates these steps as structured CoT reasoning, together with a structure-grounded alignment strategy to fuse topological priors with evolving thought-conditioned representations. Experiments on standard benchmarks demonstrate consistent improvements over state-of-the-art methods, validating clustering as a principled mechanism for CoT-based graph learning.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

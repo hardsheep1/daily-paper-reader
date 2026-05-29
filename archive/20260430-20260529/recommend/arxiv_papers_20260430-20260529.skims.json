@@ -1,0 +1,60 @@
+{
+  "mode": "skims",
+  "generated_at": "2026-05-29T02:33:15.068192+00:00",
+  "stats": {
+    "mode": "skims",
+    "forced_all_quick": true,
+    "min_score": 8.0,
+    "deep_divecandidates": 1,
+    "deep_cap": null,
+    "deep_selected": 0,
+    "quick_candidates": 1,
+    "quick_skim_target": null,
+    "quick_selected": 1
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2605.24867v1",
+      "source": "arxiv",
+      "title": "Clustering as Reasoning: A $k$-Means Interpretation of Chain-of-Thought Graph Learning",
+      "abstract": "Chain-of-Thought (CoT) prompting has shown promise in enhancing the reasoning capabilities of large language models (LLMs) on text-attributed graphs (TAGs). This work reframes CoT-based graph learning through the principle of clustering as reasoning, offering a $k$-means interpretation of how iterative reasoning operates over graph-structured data. We observe that existing graph CoT methods rely on disjoint architectures and fixed graph representations, limiting step-by-step semantic-topological interaction and interpretability. To overcome this limitation, we propose a unified framework named KCoT that integrates CoT reasoning with graph representation learning. Our key theoretical result reveals a formal mathematical correspondence between a Transformer block and the $k$-means algorithm, allowing reasoning to be interpreted as iterative assignment and update steps. Based on this insight, we introduce a Semantic Discriminating Prompt that explicitly formulates these steps as structured CoT reasoning, together with a structure-grounded alignment strategy to fuse topological priors with evolving thought-conditioned representations. Experiments on standard benchmarks demonstrate consistent improvements over state-of-the-art methods, validating clustering as a principled mechanism for CoT-based graph learning.",
+      "authors": [
+        "Xuanting Xie",
+        "Zhaochen Guo",
+        "Bingheng Li",
+        "Xingtong Yu",
+        "Zhifei Liao",
+        "Zhao Kang",
+        "Yuan Fang"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.CL",
+        "cs.NI"
+      ],
+      "published": "2026-05-24T04:58:44+00:00",
+      "link": "https://arxiv.org/pdf/2605.24867v1",
+      "tags": [
+        "keyword:ac",
+        "query:ac"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "interprets CoT reasoning as k-means clustering on graphs using LLMs",
+      "llm_evidence_cn": "将思维链推理解释为图上的k均值聚类，借助大语言模型",
+      "llm_evidence": "将思维链推理解释为图上的k均值聚类，借助大语言模型",
+      "canonical_evidence": "将思维链推理解释为图上的k均值聚类，借助大语言模型",
+      "llm_tldr_en": "Reframes Chain-of-Thought graph learning as clustering via k-means, showing a formal correspondence between iterative reasoning and clustering algorithms.",
+      "llm_tldr_cn": "现有图上的思维链方法依赖分离的架构和固定的图表示，限制了语义与拓扑的交互。本文提出KCoT框架，将思维链推理与图表示学习统一，理论上揭示了迭代推理与k均值聚类的数学对应。实验表明该框架提升了推理性能，并为理解大模型推理提供了聚类视角。",
+      "llm_tldr": "现有图上的思维链方法依赖分离的架构和固定的图表示，限制了语义与拓扑的交互。本文提出KCoT框架，将思维链推理与图表示学习统一，理论上揭示了迭代推理与k均值聚类的数学对应。实验表明该框架提升了推理性能，并为理解大模型推理提供了聚类视角。",
+      "llm_tags": [
+        "query:ac"
+      ],
+      "matched_query_tag": "query:ac",
+      "matched_query_text": "clustering using large language models",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    }
+  ]
+}
