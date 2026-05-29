@@ -1,0 +1,774 @@
+Title: Clustering via Self-Supervised Diffusion
+
+URL Source: https://openreview.net/pdf?id=9uPCP3j62m
+
+Number of Pages: 16
+
+Markdown Content:
+# Clustering via Self-Supervised Diffusion 
+
+Roy Uziel 1 2 Irit Chelly 1 2 Oren Freifeld 1 2 3 Ari Pakman 4 3 2 
+
+# Abstract 
+
+Diffusion models, widely recognized for their suc-cess in generative tasks, have not yet been applied to clustering. We introduce Clustering via Diffu-sion (CLUDI), a self-supervised framework that combines the generative power of diffusion mod-els with pre-trained Vision Transformer features to achieve robust and accurate clustering. CLUDI is trained via a teacher–student paradigm: the teacher uses stochastic diffusion-based sampling to produce diverse cluster assignments, which the student refines into stable predictions. This stochasticity acts as a novel data augmentation strategy, enabling CLUDI to uncover intricate structures in high-dimensional data. Extensive evaluations on challenging datasets demonstrate that CLUDI achieves state-of-the-art performance in unsupervised classification, setting new bench-marks in clustering robustness and adaptability to complex data distributions. 
+
+# 1. Introduction 
+
+Clustering is a fundamental task in unsupervised learning, essential for uncovering meaningful groupings within data. These groupings play a vital role in diverse downstream ap-plications, such as image segmentation (Mittal et al., 2022; Friebel et al., 2022), anomaly detection (Song et al., 2021a), and bioinformatics (Karim et al., 2021). Despite significant advancements, traditional methods face significant chal-lenges, particularly in datasets with intricate structures and varying intra-class similarity, where such approaches often struggle to capture underlying patterns (Ben-David, 2018). To address these limitations, deep learning-based clustering 
+
+> 1
+
+Department of Computer Science, Ben-Gurion University of the Negev, Beer Sheva, Israel 2Data Science Research Center, Ben-Gurion University of the Negev, Beer Sheva, Israel 3The School of Brain Sciences and Cognition, Ben-Gurion University of the Negev, Beer Sheva, Israel 4Department of Industrial Engineering and Management, Ben-Gurion University of the Negev, Beer Sheva, Israel. Correspondence to: Roy Uziel <uzielr@post.bgu.ac.il >.
+
+Proceedings of the 42 nd International Conference on Machine Learning , Vancouver, Canada. PMLR 267, 2025. Copyright 2025 by the author(s). Pretrained 
+
+> Vision
+> Transformer
+> Averaged Cluster
+> Assignments
+> Multiple Cluster
+> Assignments
+> Random Noise
+
+𝑧 𝑇  
+
+> 2
+
+𝑧 𝑇 
+
+> 3
+
+𝑧 𝑇  
+
+> 1
+
+𝑧 𝑇  
+
+> 4
+
+∼ 𝒩 𝟎 , 𝐹 2𝐈 
+
+> Assignment 1
+> Assignment 3
+> Assignment 2
+> Assignment 4
+> CLUDI’s
+> Diffusion model
+> Sampling
+
+Figure 1: Overview of the CLUDI Framework at Infer-ence. Images pass through a pre-trained Vision Transformer to obtain their feature representations. Multiple random vectors are sampled from a Gaussian distribution. A diffu-sion model, conditioned on the features, refines the random vectors into class assignment embeddings. Each refined embedding corresponds to a candidate cluster probability vector. By averaging multiple such assignments, the frame-work produces robust and accurate clustering predictions. approaches have gained substantial attention for their ability to tackle complex and diverse data landscapes (Zhou et al., 2024; Ren et al., 2024; Wei et al., 2024). However, deep learning-based clustering methods still face persistent challenges that limit their practical utility. Aprimary issue is model collapse (Amrani et al., 2022), where learned representations degenerate into trivial so-lutions. Another obstacle arises from underutilizing pre-trained features, resulting in suboptimal performance. No-tably, Adaloglou et al. (2023) demonstrate that using pre-trained Vision Transformers (Caron et al., 2021) can sur-pass methods that attempt to learn both representations and cluster assignments simultaneously, thereby highlighting 1Clustering via Self-Supervised Diffusion 
+
+the effectiveness of high-quality feature initialization. Self-supervised representations have consistently outperformed supervised ones in transfer tasks (Ericsson et al., 2021), highlighting the benefits of leveraging powerful pre-trained models. Meanwhile, many clustering frameworks rely on complex augmentation pipelines, such as neighbor min-ing (Van Gansbeke et al., 2020; Adaloglou et al., 2023), or employ multiple clustering heads trained in parallel, select-ing the best-performing one at evaluation time (Adaloglou et al., 2023; Amrani et al., 2022). Although these strategies can improve accuracy, they introduce additional complexity and computational overhead during training. To address these limitations, we introduce Clustering via Diffusion (CLUDI) , a self-supervised framework that lever-ages the generative strengths of diffusion models to pro-duce robust cluster probabilities. As Figure 1 illustrates, CLUDI takes as input a pre-trained Vision Transformer fea-ture vector x ∈ Rn and refines an initial random assignment embedding vector through an iterative diffusion process. Conditioned on x, this process evolves over multiple steps and culminates in a final assignment embedding z0 ∈ Rd,which encodes the likelihood of each data point belonging to each of the K clusters. During inference, CLUDI generates multiple stochastic sam-ples of z0 and aggregates the corresponding predictions. By averaging across diverse representations, this strategy mitigates uncertainty, uncovers subtle structures in high-dimensional feature spaces, and yields more stable and ac-curate cluster assignments, even in complex and diverse data scenarios. Our model is trained using a self-supervised Siamese ar-chitecture comprising teacher and student branches. The teacher, implemented as a diffusion model, generates assign-ment embeddings z0 ∈ Rd and cluster probabilities p(k|x)
+
+for k ∈ { 1, 2, . . . , K }, through stochastic sampling. These outputs, which capture diverse and complementary views of the data, serve as targets for the student. The student adapts its predictions to match the teacher’s out-puts, enabling it to uncover meaningful and distinct clusters in the data. The training process optimizes two complemen-tary objectives: an asymmetric non-contrastive loss (Grill et al., 2020; Chen & He, 2021; Caron et al., 2021) for the as-signment embedding z0 and a non-collapsing cross-entropy loss for the cluster probabilities p(k|x). To facilitate ef-fective clustering and prevent trivial solutions, the cross-entropy loss incorporates a uniform prior over the data mini-batch (Amrani et al., 2022), encouraging well-separated and diverse cluster assignments. 
+
+Why use diffusion for clustering? 
+
+Despite their success in generative tasks, diffusion models have not been explored for clustering until now. We ar-gue, however, that their ability to model and sample from complex, high-dimensional distributions makes them partic-ularly suited for clustering high-dimensional data, such as images. By iteratively refining noisy representations, diffu-sion models can uncover underlying structure and variability in the data, providing a natural mechanism for capturing meaningful cluster assignments. Their stochastic nature further enables robust and diverse clustering predictions. 
+
+Our key contributions are as follows: 
+
+• We introduce Clustering via Diffusion (CLUDI) , a novel framework that is the first to leverage diffusion models for the clustering task. • We propose a self-supervised training paradigm 
+
+based on a teacher-student architecture, where a diffu-sion model generates stochastic and informative cluster assignments to guide the student in learning meaning-ful cluster probabilities. • We demonstrate the effectiveness of CLUDI through extensive evaluations on benchmark datasets, achiev-ing state-of-the-art accuracy and robustness in unsuper-vised classification tasks. 
+
+# 2. Related Work 
+
+Deep learning-based models that learn to cluster are usually referred to as performing deep clustering or unsupervised classification . Cluster categories are learned during the training phase and remain fixed during inference. These methods have received much interest in the machine learn-ing community. Comprehensive reviews on this vast field can be found in (Zhou et al., 2024; Ren et al., 2024; Wei et al., 2024). 
+
+End-to-end training. Most previous works learn simul-taneously feature representations and cluster categories. An early work in this area is Deep Embedded Clustering (DEC) (Xie et al., 2016), which jointly optimizes feature learning through an autoencoder and assigns clusters using a Kullback-Leibler (KL) divergence-based loss. Although DEC can be effective in learning clusters, its performance is sensitive to initialization and prone to model collapse. DeepCluster (Caron et al., 2018) takes a different approach by alternating between pseudo-label generation and feature representation refinement. The method iteratively updates cluster centroids and uses the centroids to assign pseudo-labels, which are then used to optimize the feature space. However, the computational overhead associated with gen-erating and updating pseudo-labels can be significant, espe-cially for large-scale datasets. Invariant Information Clustering (IIC) (Ji et al., 2019) of-fers a complementary method by maximizing mutual in-2Clustering via Self-Supervised Diffusion 
+
+formation between different augmentations of the same data. Among probabilistic approaches, Variational Deep Embedding (VaDE) (Jiang et al., 2016) integrates varia-tional autoencoders with Gaussian mixture models to learn probabilistic cluster assignments. Recent works leverage popular self-supervised approaches. Self-Classifier (Amrani et al., 2022) uses a Siamese network to simultaneously learn representation and cluster labels. To avoid degenerate solu-tions, it uses a variant of the cross-entropy loss which we adopt in our model. 
+
+Training on pre-trained features. The idea of decoupling feature learning from cluster learning has been advocated by SCAN (Van Gansbeke et al., 2020) and TwoStageUC (Han et al., 2020). These models, however, lack efficiency, as they learn features from scratch for every dataset. The use of pre-trained features, particularly Vision Trans-formers (ViTs) (Dosovitskiy, 2020), was proposed by TSP (Zhou & Zhang, 2022) and TEMI (Ren et al., 2024). These approaches allow the model to focus on refining clus-ter assignments without relearning low-level features, sig-nificantly reducing the computational cost for large-scale datasets. Our CLUDI approach relies on a similar feature ex-traction backbone, based on the DINO model (Caron et al., 2021), but proposes a more refined clustering model and training setup that leads to superior results. DeepDPM (Ronen et al., 2022), which can be used in either end-to-end fashion or with pretrained features, is a deep clustering method that infers K and is inspired by a Dirichlet process mixture sampler (Chang & Fisher III, 2013; Dinari et al., 2019). However, unlike CLUDI, it makes a stringent assumption about the distribution of the features within each cluster. 
+
+Amortized clustering. In another approach, called amor-tized clustering , the model does not learn fixed cluster cat-egories. Instead, it learns to organize full datasets into clusters discovered at test time. This approach allows for real-time adaptation of clusters as new data is introduced. It is thus a form of meta-learning (Hospedales et al., 2021), and research on this task is just beginning to unfold (Pakman et al., 2020; Jurewicz et al., 2023; Wang et al., 2024; Chelly et al., 2025). 
+
+# 3. Background 
+
+Diffusion Models. Denoising diffusion probabilistic mod-els (DDPMs) are a recent pivotal shift in the landscape of generative modeling (Sohl-Dickstein et al., 2015; Ho et al., 2020), with considerable success across a range of appli-cations, including image synthesis, audio generation, and molecular design (Song et al., 2021b; Dhariwal & Nichol, 2021; Nichol & Dhariwal, 2021; Rombach et al., 2022). In DDPMs, an initial data sample denoted by z0 ∈ Rd, is trans-formed into pure Gaussian noise, zT ∼ N (0, Id), zT ∈ Rd,through a sequence of incremental additions of Gaussian noise. This forward process is Markovian and defined by: 
+
+q(zt|zt−1) = N (zt; p1 − βtzt−1, β tId), (1) where we introduced discrete time steps t = 1 . . . T , we assume T = 1000 , and βt is a predefined noise schedule. Note that the forward processes in Equation 1 allows closed-form sampling at any timestep t. Using the notation αt := 1 − βt and ¯αt := Qts=1 αs, we have: 
+
+q(zt|z0) = N (zt; √¯αtz0, (1 − ¯αt)Id). (2) DDPMs are a set of deep network models and sampling techniques which reverse this process: starting from a sam-ple zT ∼ N (0, Id), one generates samples at earlier times until a sample z0 from the data distribution is obtained. In the next section we present the particular model and sampling technique we use in CLUDI. For more details on diffusion models see recent overviews (Luo, 2022; Turner et al., 2024; Chan, 2024; Nakkiran et al., 2024). We use discrete time steps t, but continuous time formulations also exist (Song et al., 2021c). Note that our use of diffusions in continuous space to generate discrete data resembles their use to generate discrete language tokens (Dieleman et al., 2022; Gao et al., 2024; Gong et al., 2022; Li et al., 2022). 
+
+Self-Supervision. Self-supervised learning (SSL) has emerged as a powerful paradigm for learning from unla-beled data. The type of SSL that we employ uses a Siamese architecture (Chicco, 2021), where two views of the input produce different representations. The model is trained to ensure that these representations are informative and mu-tually predictable. A major challenge is avoiding model collapse, where the representations become mutually pre-dictive by minimizing the information about the inputs. Several mechanisms have been proposed in the SSL context to avoid collapse, such as contrastive losses (Chen et al., 2020; Jaiswal et al., 2020) or clustering constraints (Caron et al., 2018; 2021). In this work we adopt the teacher-student framework (Grill et al., 2020; Chen & He, 2021; Caron et al., 2021), in which the teacher model generates labels for the data which the student learns to predict. As we will detail in Section 5, we avoid collapse via stop-gradients, a predictor layer, and strong prior assumptions. We refer the reader to recent SSL surveys (Balestriero et al., 2023; ¨Ozbulak et al., 2023; Shwartz Ziv & LeCun, 2024; Gui et al., 2024) for thorough overviews. 3Clustering via Self-Supervised Diffusion 
+
+# 4. Clustering via Diffusion 
+
+Clustering via Diffusion (CLUDI) is a latent variable model for classification of the form 
+
+pθ (k|x) = 
+
+Z
+
+dz0 p(k|z0)pθ (z0|x) ≃ 1
+
+B
+
+> B
+
+X
+
+> i=1
+
+p(k|zi
+
+> 0
+
+), (3) where the last term is a Monte Carlo approximation obtained from B samples of pθ (z0|x), a data-conditioned diffusion model that generates assignment embeddings . The clas-sification head is a simple logit projection followed by a tempered softmax, 
+
+p(k|z0) = exp( [Lz 0]k 
+
+> τ
+
+)
+
+PKj=1 exp( [Lz 0]j 
+
+> τ
+
+) (4) 
+
+≡ uk. (5) where L ∈ RK×d. Figure 1 illustrates the averaging over 
+
+B = 4 samples of z0, while Figure 2 shows classifica-tion accuracy as a function of B for both clean and noise-augmented data. Starting from an initial Gaussian sample 
+
+zT ∼ N (0, F 2Id), (6) the diffusion model outputs z0 ∈ Rd. For reverse sampling we adopt a stochastic version of the Denoising Diffusion Implicit Model (DDIM) (Song et al., 2021b), which allows sampling backwards at arbitrarily earlier times s < t by running the backward dynamics 
+
+pθ (zs|zt) = N (zs; μθ (zt, x, s, t ), F 2σ2
+
+> s|t
+
+Id), (7) for s < t , where 
+
+μθ (zt, x, s, t ) = √αs
+
+zt − √1 − αt ϵ(t) 
+
+> θ
+
+(zt, x)
+
+√αt
+
+!
+
++ p1 − αs − σ2 
+
+> s
+
+· ϵ(t) 
+
+> θ
+
+(zt, x) (8) 
+
+σs|t =
+
+s
+
+1 − αs
+
+1 − αt
+
+
+
+1 − αt
+
+αs
+
+
+
+, (9) and we defined 
+
+ϵ(t) 
+
+> θ
+
+(zt, x) = zt − √¯αt ˜zθ (zt, x, t )
+
+√1 − αt
+
+. (10) Here ˜zθ (zt, x, t ) : Rd → Rd is a network that predicts z0,and is trained by minimizing 
+
+Ez0,zt,t, x
+
+h
+
+w(t) ∥˜zθ (zt, x, t ) − z0∥2i
+
+. (11) Here w(t) are fixed weights. This loss is a weighted varia-tional lower bound on the data log-likelihood. In modeling 
+
+Figure 2: Classification accuracy for clean and aug-mented inputs. The model classification accuracy on aug-mented data (feature dropout plus Gaussian noise) becomes similar to that of clean data as the number of data samples grows. Results from ImageNet 100 validation data. Stan-dard deviation based on 10 repetitions. 
+
+˜zθ we have followed (Salimans & Ho, 2022), but there exist other possibilities, such as modeling ϵ(t) 
+
+> θ
+
+, which represents the added noise in Equation 2. We treat the noise scale F 2 in Eqs.(6)-(7) as an hyperpa-rameter (Gao et al., 2024). Note that the above backward sampling requires choosing the values for the time steps in Equation 7, a freedom we exploit below in our training scheme. 
+
+Noise schedule. As in Li et al. (2022) we adopt the sqrt 
+
+noise schedule with α0 = ¯ α0 = 1 and 
+
+¯αt = 1 − pt/T + 0 .0001 , t ≥ 1 . (12) As shown in Figure 3, this schedule accounts for the reduced sensitivity of the discrete labels to noise added near t = 0 ,leading to most of the noise in Equation 2 being introduced at lower t values. As t grows, the noise addition slows down, easing the learning process of the denoising network. 
+
+Figure 3: sqrt noise scheduling. The noise grows faster near t = 0 , reflecting reduced sensitivity to noise at early timesteps, and grows gradually slower at later times. 
+
+# 5. Learning via Self-Distillation 
+
+CLUDI follows a self-supervised learning framework based on self-distillation, similar to BYOL (Grill et al., 2020), Sim-SIAM (Chen & He, 2021) and DINO (Caron et al., 2021). 4Clustering via Self-Supervised Diffusion (1 × 𝑁 × 𝑛 )                                            
+
+> Random Noise
+> Feature Vectors
+> (𝐵 ×𝑁 ×𝑑 )
+> 25 DDIM Denoising Steps
+> {𝐳 𝐓
+> 𝐛 }𝑏 =1
+> 𝐵 ∼𝒩 𝟎 ,𝐹 2𝐈
+> {𝐳 𝐓
+> 𝐛 →𝐳 𝟎
+> 𝐛 }𝑏 =1
+> 𝐵
+> {𝐳 𝐭 𝐛
+> 𝐛 →ො𝐳 𝟎
+> 𝐛 }𝑏 =1
+> 𝐵
+> Denoising Step
+> Teacher Model
+> Student Model
+> Feature
+> Augmentations
+> (𝐵 ×𝑁 ×𝑛 )
+> Augmented Features
+> ො𝐳 𝟎 ෝ𝐮
+> {𝐱 𝐢 }𝑖 =1
+> 𝑁
+> 𝑡 𝑏 ∼𝒰 1,𝑇
+> Noising Step
+> {𝐳 𝐭 𝐛
+> 𝐛 }𝑏 =1
+> 𝐵 ∼𝒩 𝛼 𝑡 𝑏 𝐳 𝟎
+> 𝐛 ,1−𝛼 𝑡 𝑏 𝐹 2𝐼
+> Assignment Embeddings
+> (𝐵 ×𝑁 ×𝑑 )(𝐵 ×𝑁 ×𝐾 )
+> ℒ𝑐𝑙𝑠
+> Embeddings Projection
+> (𝐾 ×𝑑 )
+> 𝐄
+
+𝛁 
+
+𝛁       
+
+> Clustering Probabilities
+> (𝐵 ×𝑁 ×𝐾 )
+> 𝐮
+> Clustering Probabilities
+> Logits Projection + Softmax
+> 𝑳
+
+𝛁                   
+
+> Logits Projection + Softmax
+> 𝑳
+> Assignment Embeddings
+> (𝐵 ×𝑁 ×𝑑 )
+> Assignment Embeddings
+> (𝐵 ×𝑁 ×𝑑 )
+> ෤𝒛 𝟎
+> ℒ𝑑𝑖𝑓
+> 𝐳 𝟎
+> Norm + Scale
+> 𝐳 𝟎
+> 𝐛
+> 2=𝑑 𝑏 =1
+> 𝐵
+> (𝑑 ×𝐾 )
+> (𝐾 ×𝑑 )
+> (𝐾 ×𝑑 )
+
+Figure 4: Overview of CLUDI’s training phase. Given a set of image features x, the teacher model generates denoised assignment embeddings ˜z0 which are used to create two targets for the student: (i) clustering probabilities u and (ii) assignment embeddings z0, obtained from u via a predictor layer. The student network aims to predict both targets based on a version of x corrupted by feature dropout plus Gaussian noise. Components whose parameters are updated via gradient-based optimization are marked with the ∇ symbol. In this setup, two versions of the network process different representations of the same data x, and one network predicts the output of the other. We adopt the SimSIAM approach, where the teacher and student networks share weights, un-like BYOL and DINO, where the teacher is updated via an exponential moving average of the student. A key distinction of CLUDI is that, for each data point x,the student has two different learning targets: the denoised assignment embedding z0 and the classification probabili-ties uk (Equation 5). Each target requires different strategies to avoid trivial solutions. For the embeddings z0, gradients are applied only to the student while keeping the teacher fixed, and a projection and normalization layer is added to structure the teacher’s output into a useful learning tar-get (Grill et al., 2020; Chen & He, 2021; Caron et al., 2021): These modifications prevent representational collapse and provide informative embeddings, though their precise effect remains an active area of research (Tian et al., 2021; Wang et al., 2021; Liu et al., 2022; Tao et al., 2022; Richemond et al., 2023; Halvagal et al., 2023). To avoid collapse when learning the softmax cluster prob-abilities uk, we enforce a uniform prior over mini-batches that regularizes the cross-entropy loss (Amrani et al., 2022). Figure 4 summarizes the sequence of teacher and student operations from the input data into the loss function. In the following section, we provide more details on our choices for the teacher, the student, and the loss function. 
+
+5.1. Teacher model 
+
+The teacher generates cluster probabilities u and assign-ment embeddings, z0 which serve as training targets for the student. It receives N input feature vectors xi ∈ Rn,
+
+i ∈ [1 , N ], and runs the denoising algorithm B times for each of them, yielding B × N denoised embeddings 
+
+˜zb,i  
+
+> 0
+
+∈ Rd. The time schedule of the teacher denoising is chosen to contain 25 equally-spaced timesteps from 
+
+t = T = 1000 to t = 0 , offering a balance between ef-ficient denoising and capturing essential cluster characteris-tics. Acting on ˜zb,i  
+
+> 0
+
+with L and a softmax (see Equation 4-Equation 5), yields B × N probability targets ub,i ∈ RK
+
+for the student. Empirically, however, the learning is less effective when the student’s targets directly the denoised embeddings ˜zb,i  
+
+> 0
+
+.Instead, we map the probabilities ub,i back to the embedding space by means of an embedding matrix E ∈ Rd×K , and then normalize and scale the target embeddings as 
+
+zb,i  
+
+> 0
+
+= √d Eu b,i 
+
+∥Eu b,i ∥2
+
+. (13) The role of E is akin to the predictor network in BYOL or SimSIAM, which assists in generating effective repre-sentations during training. Once the model is fully trained, however, E is no longer required. Given the above embed-5Clustering via Self-Supervised Diffusion 
+
+dings, the teacher class probabilities are 
+
+ub,i = exp( [Lz b,i   
+
+> 0]k
+> τ
+
+)
+
+PKj=1 exp( [Lz b,i   
+
+> 0]j
+> τ
+
+)
+
+. (14) 
+
+5.2. Student model 
+
+The student network aims to predict both targets in Equa-tion 13 and Equation 14. Since the input x consists of pre-trained features, we use an abstract augmentation strategy. For each data feature vector xi ∈ RD , i ∈ [1 , N ], we create 
+
+B augmented versions xb,i , b ∈ [1 , B ], each obtained by first zeroing the components of xi with probability 0.2, and then adding zero-mean Gaussian noise, with variance σ2
+
+sampled uniformly in [0 .1, 0.3] . We present the student with noisy versions of the teacher’s outputs in Equation 13, 
+
+zb,i tb ∼ N 
+
+p¯αtb zb,i  
+
+> 0
+
+, (1 − ¯αtb )F 2Id
+
+
+
+, (15) where tb is sampled uniformly from [0 , T ]. We denote the student predictions for the denoised assignment embedding and class probabilities as 
+
+ˆzb,i  
+
+> 0
+
+= ˜ zθ (zb,i tb , xb,i , t b) , (16) 
+
+ˆub,i = exp( [Lˆzb,i   
+
+> 0]k
+> τ
+
+)
+
+PKj=1 exp( [Lˆzb,i   
+
+> 0]j
+> τ
+
+)
+
+. (17) 
+
+5.3. Augmented views 
+
+Having presented the teacher and student models, we note that their different views of the data and assignment embed-dings originate from (i) the stochastic nature of the teacher denoising, which starts with pure noise in Equation 6 and performs 25 sampling steps, (ii) the augmentation of the student feature vector (feature dropout + Gaussian noise) and (iii) the noise added in Equation 15 to the embedding that the student is required to denoise. We remark that un-like common augmentation strategies acting on raw images (cropping, color alterations, etc), our augmentations act di-rectly on the data features or their assignment embeddings. In particular, the views generated by (i) and (iii) exploit the intrinsic randomness of the diffusion model. 
+
+5.4. Loss functions Embeddings. We employ an MSE loss between the teacher denoised embeddings zb,i  
+
+> 0
+
+from Equation 13 and the student-predicted embeddings ˆzb,i  
+
+> 0
+
+from Equation 16: 
+
+ℓdif (zb,i  
+
+> 0
+
+, ˆzb,i  
+
+> 0
+
+) = ∥zb,i  
+
+> 0
+
+− ˆzb,i  
+
+> 0
+
+∥2. (18) 
+
+Class probabilities. We use here a more explicit notation for the teacher and student class probabilities, respectively, as defined Equation 14 and Equation 17, 
+
+p(k|zb,i  
+
+> 0
+
+) = ub,i k , p(k|ˆzb,i  
+
+> 0
+
+) = ˆub,i k . (19) Naively using a cross entropy loss, 
+
+ℓ(ˆ zb,i  
+
+> 0
+
+, zb,i  
+
+> 0
+
+) = − X
+
+> k
+
+p(k|zb,i  
+
+> 0
+
+) log p(k|ˆzb,i  
+
+> 0
+
+), (20) quickly degenerates to a solution that puts all the proba-bility on a single category. We regularize this loss using an idea from Amrani et al. (2022), which amounts to treat-ing the indices (b, i ) as random variables with a uniform prior p(ˆ zb,i  
+
+> 0
+
+) = 1 /(N B ) and a distribution conditioned on 
+
+k given by a column softmax 
+
+p(zb,i  
+
+> 0
+
+|k) = exp( [Lz b,i   
+
+> 0]k
+> τcol
+
+)
+
+PB,N b′,i ′=1 exp( [Lz b′,i ′  
+
+> 0]k
+> τcol
+
+)
+
+, (21) with its own temperature τcol . Assuming also a uniform class prior p(k) = 1 /K , Bayes rule and the law of total probability imply 
+
+p(k|zb,i  
+
+> 0
+
+) = p(zb,i  
+
+> 0
+
+|k)p(k)
+
+p(zb,i  
+
+> 0
+
+) = p(zb,i  
+
+> 0
+
+|k)
+
+PKk=1 p(zb,i  
+
+> 0
+
+|k) , (22) 
+
+p(k|ˆzb,i  
+
+> 0
+
+) = p(k)p(k|ˆzb,i  
+
+> 0
+
+)
+
+p(k) = (N B/K )p(k|ˆzb,i  
+
+> 0
+
+)
+
+PB,N b′,i ′=1 p(k|ˆzb′,i ′ 
+
+> 0
+
+) . (23) Inserting these expressions in Equation 20 leads to a loss which was shown in (Amrani et al., 2022) not to admit collapsed distributions as optimal solutions. In practice, we use a symmetric version of Equation 20, 
+
+ℓcls (b, i ) = 12
+
+
+
+ℓ(ˆ zb,i  
+
+> 0
+
+, zb,i  
+
+> 0
+
+) + ℓ(zb,i  
+
+> 0
+
+, ˆzb,i  
+
+> 0
+
+)
+
+
+
+. (24) 
+
+Weighting the minibatch elements. Addressing the vary-ing difficulty of the predictions of zb,i  
+
+> 0
+
+, ub,i based on the sampled timestep tb, we incorporate the Min-SNR-γ (Hang et al., 2023) loss weighting strategy, which treats each timestep’s denoising task as distinct and assigns weights based on their difficulty: SNR tb = ¯αtb
+
+1 − ¯αtb
+
+, (25) 
+
+wb = max( SNR tb , γ )
+
+SNR tb + 1 , (26) where γ is a predefined threshold set to 5, enhancing the stability and ensuring that no single noise level dominates during training. The overall loss function, which incorpo-rates these weights, is structured as follows: 
+
+L = 1
+
+BN 
+
+> B,N
+
+X
+
+> b,i =1
+
+wb
+
+
+
+ℓdif (zb,i  
+
+> 0
+
+, ˆzb,i  
+
+> 0
+
+) + λℓ cls (b, i )
+
+
+
+. (27) This formulation enables a nuanced control over the learning process, adapting to the challenges posed by different levels of noise. 6Clustering via Self-Supervised Diffusion Vending 
+
+> Machine
+> Box Turtle
+> Maze
+> Banana
+
+Figure 5: Left: t-SNE visualization of the assignment embedding space of ImageNet 50 demonstrating the model’s ability to organize data points into well-separated clusters. Right: Examples of correctly classified images 
+
+# 6. Experiments 
+
+Datasets. We evaluate CLUDI on a comprehensive suite of benchmark datasets to rigorously assess its scalability, adaptability, and clustering performance. The datasets in-clude subsets of ImageNet (Deng et al., 2009), Oxford-IIIT Pets (Parkhi et al., 2012) (with K = 32 ), Oxford 102 Flower (Nilsback & Zisserman, 2008), Caltech 101 (Fei-Fei et al., 2004), CIFAR-10 (Krizhevsky et al., 2009), and STL-10 (Coates et al., 2011). Each dataset introduces unique chal-lenges: the ImageNet subsets cover broad and diverse cate-gories, providing a robust test of scalability (see Table 2); Oxford-IIIT Pets and Oxford 102 Flower focus on fine-grained distinctions that assess CLUDI’s precision; Caltech 101 evaluates generalization across diverse object types; and CIFAR-10 and STL-10 offer additional complex data that further validate CLUDI’s ability to handle intricate cluster-ing tasks (Table 1). 
+
+Evaluation Metrics. We use three popular metrics (Fahad et al., 2014): (i) Normalized Mutual Information (NMI) 
+
+quantifies shared information between predicted and ground-truth clusters; (ii) Clustering Accuracy (ACC) measures the alignment of predictions with true labels; (iii) Adjusted Rand Index (ARI) adjusts for chance, providing a robust measure of similarity between predicted and true clusters. 
+
+Experimental Setup. For all experiments, we use features from DINO (Caron et al., 2021) based on Vision Trans-formers (ViT-S/16 and ViT-B/16) pre-trained on ImageNet. We present comparisons with four leading self-supervised clustering models: SCAN (Van Gansbeke et al., 2020), Pro-pos (Huang et al., 2022), TSP (Zhou & Zhang, 2022) and TEMI (Adaloglou et al., 2023). We implement a variant of Self-Classifier (Amrani et al., 2022), denoted as Self-Classifier* , in which the feature extractor is frozen and only the classification heads are optimized. This setup ensures that CLUDI and Self-Classifier* share identical feature rep-resentations, enabling a more direct and fair comparison. All CLUDI results were obtained by running the embed-ding denoising for 100 equally spaced time steps. Figure 6 presents the ablation of the classification-loss weight λ,while Figure 7 illustrates the results of scanning different values of the embedding dimension d in Equation 27. For additional implementation details and ablations, see our Appendix. 
+
+Results. CLUDI achieves state-of-the-art performance across all tested datasets, consistently outperforming previ-ous approaches on clustering tasks of varying complexity. As detailed in Table 1 and Table 2, CLUDI significantly surpasses established baselines in NMI, ACC, and ARI, es-pecially on ImageNet subsets, showcasing its robustness in both general and fine-grained clustering scenarios. 7Clustering via Self-Supervised Diffusion 
+
+Table 1: Clustering performances on smaller datasets. 
+
+The results for SCAN, Propos, TSP, and TEMI on CIFAR-10 and STL-10 are from the original papers, except for TEMI (ViT-S/16), which we trained using the official code. For the Oxford and Caltech datasets, we trained all models. The best result is shown in bold , the second best is underlined. 
+
+Methods NMI (%) ACC (%) ARI (%) CIFAR 10 
+
+SCAN (Resnet50) 79.7 88.3 77.2 Propos (Resnet18) 88.6 94.3 88.4 TSP (ViT-S/16) 84.7 92.1 83.8 TSP (ViT-B/16) 88.0 94.0 87.5 TEMI (ViT-S/16) 85.4 92.7 84.8 TEMI (ViT-B/16) 88.6 94.5 88.5 Self-Classifier* (ViT-S/16) 83.8 91.2 82.1 Self-Classifier* (ViT-B/16) 84.2 89.0 80.3 
+
+Ours (ViT-S/16) 88.0 94.2 87.7 
+
+Ours (ViT-B/16) 89.6 95.3 89.8 STL 10 
+
+SCAN (Resnet50) 69.8 80.9 64.6 Propos (Resnet18) 75.8 86.7 73.7 TSP (ViT-S/16) 94.1 97.0 93.8 TSP (ViT-B/16) 95.8 97.9 95.6 TEMI (ViT-S/16) 85.0 88.8 80.1 TEMI (ViT-B/16) 96.5 98.5 96.8 Self-Classifier* (ViT-S/16) 90.5 83.1 82.4 Self-Classifier* (ViT-B/16) 91.5 87.7 85.7 
+
+Ours (ViT-S/16) 95.7 98.2 96.1 
+
+Ours (ViT-B/16) 96.8 98.7 97.1 Oxford-IIIT Pets 
+
+TEMI (ViT-S/16) 69.7 49.3 41.0 TEMI (ViT-B/16) 71.1 47.0 41.7 Self-Classifier* (ViT-S/16) 82.7 67.5 59.2 Self-Classifier* (ViT-B/16) 83.5 68.2 63.0 
+
+Ours (ViT-S/16) 87.3 74.1 71.6 Ours (ViT-B/16) 86.7 73.8 71.1 
+
+Oxford 102 Flower 
+
+TEMI (ViT-S/16) 50.1 26.0 14.2 TEMI (ViT-B/16) 50.2 25.9 16.9 Self-Classifier* (ViT-S/16) 69.1 51.5 35.4 Self-Classifier* (ViT-B/16) 72.5 57.8 42.9 
+
+Ours (ViT-S/16) 76.1 62.2 52.6 
+
+Ours (ViT-B/16) 81.5 69.7 61.8 Caltech 101 
+
+TEMI (ViT-S/16) 78.9 50.2 35.6 TEMI (ViT-B/16) 80.4 51.4 36.9 Self-Classifier* (ViT-S/16) 82.5 56.1 59.4 Self-Classifier* (ViT-B/16) 83.5 58.2 61.2 
+
+Ours (ViT-S/16) 86.5 66.7 65.7 
+
+Ours (ViT-B/16) 87.9 68.1 66.3 
+
+Qualitative Analysis. A t-SNE plot (Figure 5) of CLUDI’s embeddings on ImageNet-50 demonstrates its ability to form well-separated clusters, reinforcing its quantitative metrics and illustrating its effectiveness in organizing complex data structures into distinct clusters. This visualization highlights CLUDI’s capacity to capture subtle inter-class variations. Table 2: Clustering performances on ImageNet subsets. 
+
+The results for SCAN, Propos and TEMI are from the origi-nal papers. The best result is shown in bold , the second best is underlined. 
+
+Methods NMI (%) ACC (%) ARI (%) ImageNet 50 
+
+SCAN (Resnet50) 82.2 76.8 66.1 Propos (Resnet50) 82.8 - 69.1 TEMI (ViT-S/16) 84.2 77.8 68.4 TEMI (ViT-B/16) 86.1 80.1 71.0 Self-Classifier* (ViT-S/16) 87.1 76.3 71.1 Self-Classifier* (ViT-B/16) 87.8 77.1 73.2 
+
+Ours (ViT-S/16) 90.1 81.3 75.8 
+
+Ours (ViT-B/16) 91.2 82.1 76.2 ImageNet 100 
+
+SCAN (Resnet50) 80.8 68.9 57.6 Propos (Resnet50) 83.5 - 63.5 TEMI (ViT-S/16) 83.3 72.5 62.3 TEMI (ViT-B/16) 85.6 75.0 65.4 Self-Classifier* (ViT-S/16) 83.9 68.9 61.8 Self-Classifier* (ViT-B/16) 86.2 71.4 64.3 
+
+Ours (ViT-S/16) 86.5 74.3 67.5 
+
+Ours (ViT-B/16) 87.1 76.6 67.8 ImageNet 200 
+
+SCAN (Resnet50) 77.2 58.1 47.0 Propos (Resnet50) 80.6 - 53.8 TEMI (ViT-S/16) 82.7 71.9 59.8 TEMI (ViT-B/16) 85.2 73.1 62.1 Self-Classifier* (ViT-S/16) 80.5 54.5 46.7 Self-Classifier* (ViT-B/16) 78.3 53.1 44.1 
+
+Ours (ViT-S/16) 85.9 73.2 60.9 
+
+Ours (ViT-B/16) 86.1 73.7 63.2 
+
+Limitations. The effectiveness of the CLUDI model is in-fluenced by the choice of the diffusion parameter F 2 and the embedding dimensionality d, both of which play critical 
+
+Figure 6: Ablation Study on the Lcls weight λ. Each point in the curves shows the maximum validation accuracy on ImageNet-100 achieved during training. 8Clustering via Self-Supervised Diffusion 
+
+Figure 7: Embedding dimension selection d. Each point in the curves shows the maximum validation accuracy on ImageNet-100 achieved during training. roles in determining clustering quality. While these pa-rameters were tuned to optimize performance on the tested datasets, further refinement may be necessary for new data distributions or specific clustering tasks. Additionally, al-though CLUDI demonstrates strong capability in generating well-separated clusters, its performance can be impacted when scaling to a large number of clusters, as maintain-ing high-quality, distinct embeddings becomes increasingly complex with higher cluster counts. 
+
+# 7. Conclusion 
+
+In this work we introduced a novel use of diffusion mod-els to generate clustering embeddings of pretrained data features. Our experimental results underscore CLUDI’s ad-vantages over both traditional and contemporary clustering techniques, validating its robustness, flexibility, and supe-rior self-supervised clustering performance across diverse datasets and visual challenges. Future studies could build upon this work by investigating adaptive or data-driven hyperparameter selection techniques, as well as advanced clustering frameworks, such as hierarchical or multi-scale methods, potentially more scalable to large K settings. 
+
+# Acknowledgments 
+
+This work was supported in part by the Lynn and William Frankel Center at BGU CS, by Israel Science Foundation Personal Grant #360/21, and by the Israeli Council for Higher Education (CHE) via the Data Science Research Center at BGU. A.P. was supported by the Israel Science Foundation (grant No. 1138/23). I.C. was also funded in part by the Kreitman School of Advanced Graduate Studies, by BGU’s Hi-Tech Scholarship, and by the Israel’s Ministry of Technology and Science Aloni Scholarship. 
+
+# Impact Statement 
+
+This paper presents work whose goal is to advance the field of Machine Learning. There are many potential societal consequences of our work, none which we feel must be specifically highlighted here. 
+
+# References 
+
+Adaloglou, N., Michels, F., Kalisch, H., and Kollmann, M. Exploring the limits of deep image clustering us-ing pretrained models. In 34th British Machine Vision Conference , 2023. Amrani, E., Karlinsky, L., and Bronstein, A. Self-supervised classification network. In European Conference on Com-puter Vision , pp. 116–132. Springer, 2022. Balestriero, R., Ibrahim, M., Sobal, V., Morcos, A., Shekhar, S., Goldstein, T., Bordes, F., Bardes, A., Mialon, G., Tian, Y., Schwarzschild, A., Wilson, A. G., Geiping, J., Garrido, Q., Fernandez, P., Bar, A., Pirsiavash, H., LeCun, Y., and Goldblum, M. A cookbook of self-supervised learning, 2023. Ben-David, S. Clustering-what both theoreticians and prac-titioners are doing wrong. In Proceedings of the AAAI Conference on Artificial Intelligence , volume 32, 2018. Caron, M., Bojanowski, P., Joulin, A., and Douze, M. Deep clustering for unsupervised learning of visual features. In Proceedings of the European conference on computer vision (ECCV) , pp. 132–149, 2018. Caron, M., Touvron, H., Misra, I., J ´egou, H., Mairal, J., Bojanowski, P., and Joulin, A. Emerging properties in self-supervised vision transformers. In Proceedings of the IEEE/CVF international conference on computer vision ,pp. 9650–9660, 2021. Chan, S. H. Tutorial on diffusion models for imaging and vision. arXiv preprint arXiv:2403.18103 , 2024. Chang, J. and Fisher III, J. W. Parallel sampling of dp mixture models using sub-cluster splits. Advances in Neural Information Processing Systems , 26, 2013. 9Clustering via Self-Supervised Diffusion 
+
+Chelly, I., Uziel, R., Freifeld, O., and Pakman, A. Consistent amortized clustering via generative flow networks. In The 28th International Conference on Artificial Intelligence and Statistics , 2025. Chen, T., Kornblith, S., Norouzi, M., and Hinton, G. Asimple framework for contrastive learning of visual rep-resentations. In International conference on machine learning , pp. 1597–1607. PMLR, 2020. Chen, X. and He, K. Exploring simple siamese represen-tation learning. In Proceedings of the IEEE/CVF con-ference on computer vision and pattern recognition , pp. 15750–15758, 2021. Chicco, D. Siamese neural networks: An overview. Artifi-cial neural networks , pp. 73–94, 2021. Coates, A., Ng, A., and Lee, H. An analysis of single-layer networks in unsupervised feature learning. In Pro-ceedings of the fourteenth international conference on artificial intelligence and statistics , pp. 215–223. JMLR Workshop and Conference Proceedings, 2011. Deng, J., Dong, W., Socher, R., Li, L.-J., Li, K., and Fei-Fei, L. Imagenet: A large-scale hierarchical image database. In 2009 IEEE conference on computer vision and pattern recognition , pp. 248–255. Ieee, 2009. Dhariwal, P. and Nichol, A. Diffusion models beat gans on image synthesis. Advances in neural information processing systems , 34:8780–8794, 2021. Dieleman, S., Sartran, L., Roshannai, A., Savinov, N., Ganin, Y., Richemond, P. H., Doucet, A., Strudel, R., Dyer, C., Durkan, C., et al. Continuous diffusion for categorical data. arXiv preprint arXiv:2211.15089 , 2022. Dinari, O., Yu, A., Freifeld, O., and Fisher, J. Distributed mcmc inference in dirichlet process mixture models using julia. In 2019 19th IEEE/ACM International Symposium on Cluster, Cloud and Grid Computing (CCGRID) , pp. 518–525. IEEE, 2019. Dosovitskiy, A. An image is worth 16x16 words: Trans-formers for image recognition at scale. arXiv preprint arXiv:2010.11929 , 2020. Ericsson, L., Gouk, H., and Hospedales, T. M. How well do self-supervised models transfer? In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , pp. 5414–5423, 2021. Fahad, A., Alshatri, N., Tari, Z., Alamri, A., Khalil, I., Zomaya, A. Y., Foufou, S., and Bouras, A. A survey of clustering algorithms for big data: Taxonomy and empirical analysis. IEEE transactions on emerging topics in computing , 2(3):267–279, 2014. Fei-Fei, L., Fergus, R., and Perona, P. Learning generative visual models from few training examples: An incremen-tal bayesian approach tested on 101 object categories. In 
+
+2004 conference on computer vision and pattern recogni-tion workshop , pp. 178–178. IEEE, 2004. Friebel, A., Johann, T., Drasdo, D., and Hoehme, S. Guided interactive image segmentation using machine learning and color-based image set clustering. Bioinformatics , 38 (19):4622–4628, 2022. Gao, Z., Guo, J., Tan, X., Zhu, Y., Zhang, F., Bian, J., and Xu, L. Empowering diffusion models on the embedding space for text generation. In Proceedings of the 2024 Conference of the North American Chapter of the Associ-ation for Computational Linguistics: Human Language Technologies (Volume 1: Long Papers) , pp. 4664–4683, 2024. Gong, S., Li, M., Feng, J., Wu, Z., and Kong, L. Diffuseq: Sequence to sequence text generation with diffusion mod-els. arXiv preprint arXiv:2210.08933 , 2022. Grill, J.-B., Strub, F., Altch ´e, F., Tallec, C., Richemond, P., Buchatskaya, E., Doersch, C., Avila Pires, B., Guo, Z., Gheshlaghi Azar, M., et al. Bootstrap your own latent-a new approach to self-supervised learning. Advances in neural information processing systems , 33:21271–21284, 2020. Gui, J., Chen, T., Zhang, J., Cao, Q., Sun, Z., Luo, H., and Tao, D. A survey on self-supervised learning: Algorithms, applications, and future trends. IEEE Transactions on Pattern Analysis and Machine Intelligence , 2024. Halvagal, M. S., Laborieux, A., and Zenke, F. Implicit variance regularization in non-contrastive ssl. In Pro-ceedings of the 37th International Conference on Neural Information Processing Systems , pp. 63409–63436, 2023. Han, S., Park, S., Park, S., Kim, S., and Cha, M. Mitigating embedding and class assignment mismatch in unsuper-vised image classification. In European Conference on Computer Vision , pp. 768–784. Springer, 2020. Hang, T., Gu, S., Li, C., Bao, J., Chen, D., Hu, H., Geng, X., and Guo, B. Efficient diffusion training via min-snr weighting strategy. In Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV) , pp. 7441–7451, October 2023. Ho, J., Jain, A., and Abbeel, P. Denoising diffusion proba-bilistic models. Advances in neural information process-ing systems , 33:6840–6851, 2020. Hospedales, T., Antoniou, A., Micaelli, P., and Storkey, A. Meta-learning in neural networks: A survey. IEEE transactions on pattern analysis and machine intelligence ,44(9):5149–5169, 2021. 10 Clustering via Self-Supervised Diffusion 
+
+Huang, Z., Chen, J., Zhang, J., and Shan, H. Learning representation for clustering via prototype scattering and positive sampling. IEEE Transactions on Pattern Analysis and Machine Intelligence , 2022. Jaiswal, A., Babu, A. R., Zadeh, M. Z., Banerjee, D., and Makedon, F. A survey on contrastive self-supervised learning. Technologies , 9(1):2, 2020. Ji, X., Henriques, J. F., and Vedaldi, A. Invariant informa-tion clustering for unsupervised image classification and segmentation. In Proceedings of the IEEE/CVF inter-national conference on computer vision , pp. 9865–9874, 2019. Jiang, Z., Zheng, Y., Tan, H., Tang, B., and Zhou, H. Varia-tional deep embedding: An unsupervised and generative approach to clustering. arXiv preprint arXiv:1611.05148 ,2016. Jurewicz, M. M., Taylor, G. W., and Derczynski, L. The catalog problem: clustering and ordering variable-sized sets. In International Conference on Machine Learning ,pp. 15528–15545. PMLR, 2023. Karim, M. R., Beyan, O., Zappa, A., Costa, I. G., Rebholz-Schuhmann, D., Cochez, M., and Decker, S. Deep learning-based clustering approaches for bioinformatics. 
+
+Briefings in bioinformatics , 22(1):393–415, 2021. Krizhevsky, A., Hinton, G., et al. Learning multiple layers of features from tiny images. 2009. Li, X., Thickstun, J., Gulrajani, I., Liang, P. S., and Hashimoto, T. B. Diffusion-lm improves controllable text generation. Advances in Neural Information Process-ing Systems , 35:4328–4343, 2022. Liu, K.-J., Suganuma, M., and Okatani, T. Bridging the gap from asymmetry tricks to decorrelation principles in non-contrastive self-supervised learning. Advances in Neural Information Processing Systems , 35:19824–19835, 2022. Luo, C. Understanding diffusion models: A unified perspec-tive. arXiv preprint arXiv:2208.11970 , 2022. Mittal, H., Pandey, A. C., Saraswat, M., Kumar, S., Pal, R., and Modwel, G. A comprehensive survey of image segmentation: clustering methods, performance param-eters, and benchmark datasets. Multimedia Tools and Applications , pp. 1–26, 2022. Nakkiran, P., Bradley, A., Zhou, H., and Advani, M. Step-by-step diffusion: An elementary tutorial. arXiv preprint arXiv:2406.08929 , 2024. Nichol, A. Q. and Dhariwal, P. Improved denoising diffu-sion probabilistic models. In International conference on machine learning , pp. 8162–8171. PMLR, 2021. Nilsback, M.-E. and Zisserman, A. Automated flower clas-sification over a large number of classes. In 2008 Sixth Indian conference on computer vision, graphics & image processing , pp. 722–729. IEEE, 2008. ¨Ozbulak, U., Lee, H. J., Boga, B., Anzaku, E. T., Park, H., Van Messem, A., De Neve, W., and Vankerschaver, J. Know your self-supervised learning: a survey on image-based generative and discriminative training. TRANSAC-TIONS ON MACHINE LEARNING RESEARCH , 2023. Pakman, A., Wang, Y., Mitelut, C., Lee, J., and Paninski, L. Neural clustering processes. In International Conference on Machine Learning , pp. 7455–7465. PMLR, 2020. Parkhi, O. M., Vedaldi, A., Zisserman, A., and Jawahar, C. Cats and dogs. In 2012 IEEE conference on computer vision and pattern recognition , pp. 3498–3505. IEEE, 2012. Ren, Y., Pu, J., Yang, Z., Xu, J., Li, G., Pu, X., Philip, S. Y., and He, L. Deep clustering: A comprehensive survey. 
+
+IEEE Transactions on Neural Networks and Learning Systems , 2024. Richemond, P. H., Tam, A., Tang, Y., Strub, F., Piot, B., and Hill, F. The edge of orthogonality: A simple view of what makes byol tick. In International Conference on Machine Learning , pp. 29063–29081. PMLR, 2023. Rombach, R., Blattmann, A., Lorenz, D., Esser, P., and Ommer, B. High-resolution image synthesis with latent diffusion models. In Proceedings of the IEEE/CVF con-ference on computer vision and pattern recognition , pp. 10684–10695, 2022. Ronen, M., Finder, S. E., and Freifeld, O. DeepDPM: Deep clustering with an unknown number of clusters. In Pro-ceedings of the IEEE/CVF Conference on Computer Vi-sion and Pattern Recognition , pp. 9861–9870, 2022. Salimans, T. and Ho, J. Progressive distillation for fast sam-pling of diffusion models. In International Conference on Learning Representations , 2022. Shwartz Ziv, R. and LeCun, Y. To compress or not to compress—self-supervised learning and information the-ory: A review. Entropy , 26(3):252, 2024. Sohl-Dickstein, J., Weiss, E., Maheswaranathan, N., and Ganguli, S. Deep unsupervised learning using nonequi-librium thermodynamics. In International conference on machine learning , pp. 2256–2265. PMLR, 2015. Song, H., Li, P., and Liu, H. Deep clustering based fair out-lier detection. In Proceedings of the 27th ACM SIGKDD Conference on Knowledge Discovery & Data Mining , pp. 1481–1489, 2021a. 11 Clustering via Self-Supervised Diffusion 
+
+Song, J., Meng, C., and Ermon, S. Denoising diffusion implicit models. In International Conference on Learning Representations , 2021b. Song, Y., Sohl-Dickstein, J., Kingma, D. P., Kumar, A., Er-mon, S., and Poole, B. Score-based generative modeling through stochastic differential equations. In International Conference on Learning Representations , 2021c. Tao, C., Wang, H., Zhu, X., Dong, J., Song, S., Huang, G., and Dai, J. Exploring the equivalence of siamese self-supervised learning via a unified gradient framework. In 
+
+Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pp. 14431–14440, 2022. Tian, Y., Chen, X., and Ganguli, S. Understanding self-supervised learning dynamics without contrastive pairs. In International Conference on Machine Learning , pp. 10268–10278. PMLR, 2021. Turner, R. E., Diaconu, C.-D., Markou, S., Shysheya, A., Foong, A. Y., and Mlodozeniec, B. Denoising diffusion probabilistic models in six simple steps. arXiv preprint arXiv:2402.04384 , 2024. Van Gansbeke, W., Vandenhende, S., Georgoulis, S., Proes-mans, M., and Van Gool, L. SCAN: Learning to classify images without labels. In European conference on com-puter vision , pp. 268–285. Springer, 2020. Wang, X., Chen, X., Du, S. S., and Tian, Y. Towards de-mystifying representation learning with non-contrastive self-supervision. arXiv preprint arXiv:2110.04947 , 2021. Wang, Y., Lee, Y., Basu, P., Lee, J., Teh, Y. W., Paninski, L., and Pakman, A. Amortized probabilistic detection of communities in graphs. Structured Probabilistic Infer-ence & Generative Modeling workshop at ICML , 2024. Wei, X., Zhang, Z., Huang, H., and Zhou, Y. An overview on deep clustering. Neurocomputing , pp. 127761, 2024. Xie, J., Girshick, R., and Farhadi, A. Unsupervised deep embedding for clustering analysis. In International con-ference on machine learning , pp. 478–487. PMLR, 2016. Zhou, S., Xu, H., Zheng, Z., Chen, J., Li, Z., Bu, J., Wu, J., Wang, X., Zhu, W., and Ester, M. A comprehensive survey on deep clustering: Taxonomy, challenges, and future directions. ACM Computing Surveys , 2024. Zhou, X. and Zhang, N. L. Deep clustering with fea-tures from self-supervised pretraining. arXiv preprint arXiv:2207.13364 , 2022. 12 Clustering via Self-Supervised Diffusion 
+
+In this Appendix we present the results of several hyper-parameter ablations. All the curves shown correspond to performance metrics evaluated on the validation set of Im-ageNet 100. We also show some clustering examples on ImageNet 50. 
+
+# A. Hyperparameters 
+
+The model requires three hyperparameters: the embedding dimension d, the noise rescaling factor F 2 in Equation 6 and the coefficient λ on the loss in Equation 27. A systematic scan on the validation set of ImageNet 100 yielded the optimal values d = 64 , F 2 = 25 and λ = 50 , which we adopted for all the datasets with K ≥ 100 . For datasets with fewer clusters (ImageNet 50, Oxford-IIIT Pets, STL 10, CIFAR 10) we used a smaller embedding d = 32 .
+
+# B. Ablation Study on Lcls weight λ
+
+In Figure S1 we show the impact of varying the weight λ
+
+associated with the classification loss Lcls on the overall clustering performance. 
+
+Figure S1: Clustering performance metrics (NMI, ACC, ARI) across λ values for embedding dimension d = 64 .Each image corresponds to a specific metric: (a) NMI, (b) ACC, and (c) ARI. 
+
+# C. Ablation Study on Rescaling Factor F 2 and Embedding Dimension d
+
+In Figure S2 and Figure S3 we explore the effect on cluster-ing performance of varying the rescaling factor F 2 and the embedding dimension d.The noise rescaling factor F 2 plays a crucial role in our diffusion model by modulating the noise variance during the forward process. This parameter directly influences the model’s ability to balance stability and exploration, which are essential for effective clustering. Insufficient noise (low 
+
+F 2) results in trivial solutions where embeddings fail to explore the latent space adequately. Conversely, excessive noise (high F 2) destabilizes the learning process, disrupting inter-cluster separability. Our results, consistent with those in (Gao et al., 2024) for text generation, confirm the need to find an optimal value (for us F 2 = 25 .0) that strikes a balance between enabling the model to avoid degeneracy and preserving cluster co-herence. In practical terms, our findings highlight that F 2
+
+serves as a key hyperparameter for fine-tuning clustering models, with significant impacts on metrics such as NMI, ACC, and ARI. 
+
+# D. Clustering Visualization on ImageNet-50 
+
+In Figure S4 we provide a detailed visualization of the clus-tering results on the ImageNet-50 dataset. For ten different categories, we show images with highest and lowest con-fidence of belonging to each category. This illustrates the strength of our model and allows to visually explore the extent to which misclassifications are understandable. 13 Clustering via Self-Supervised Diffusion 
+
+NMI for F 2 = 4 .0 ACC for F 2 = 4 .0 ARI for F 2 = 4 .0
+
+NMI for F 2 = 9 .0 ACC for F 2 = 9 .0 ARI for F 2 = 9 .0
+
+NMI for F 2 = 16 .0 ACC for F 2 = 16 .0 ARI for F 2 = 16 .0
+
+Figure S2: Clustering performance metrics for rescaling factors F 2 = 4 .0, 9.0, 16 .0 (top, middle, bottom, respectively) as a function of the embedding dimension d. Each column shows curves for a different clustering metric (NMI, ACC, and ARI). 14 Clustering via Self-Supervised Diffusion 
+
+NMI for F 2 = 25 .0 ACC for F 2 = 25 .0 ARI for F 2 = 25 .0
+
+NMI for F 2 = 36 .0 ACC for F 2 = 36 .0 ARI for F 2 = 36 .0
+
+NMI for F 2 = 49 .0 ACC for F 2 = 49 .0 ARI for F 2 = 49 .0
+
+Figure S3: Clustering performance metrics for rescaling factors F 2 = 25 .0, 36 .0, 49 .0 (top, middle, bottom, respectively) as a function of the embedding dimension d. Each column shows curves for a different clustering metric (NMI, ACC, and ARI). 15 Clustering via Self-Supervised Diffusion Banana 
+
+Broom 
+
+Dipper 
+
+File Cabinet 
+
+Hair Dryer 
+
+Manhole 
+
+Cover 
+
+Schipperke 
+
+Shoe Shop 
+
+Unicycle 
+
+Soda Bottle 
+
+Figure S4: Visualization of supervised clustering results on the ImageNet 50 dataset. Each row corresponds to a single class, with the class name displayed on the left. For each class, the first four images represent the correctly classified samples with the highest confidence (outlined in green), while the last two images represent the incorrectly classified samples with the lowest confidence (outlined in red). 16

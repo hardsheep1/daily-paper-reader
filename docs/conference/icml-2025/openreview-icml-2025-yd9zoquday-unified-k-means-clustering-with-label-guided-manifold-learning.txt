@@ -1,0 +1,1197 @@
+Title: Unified K-Means Clustering with Label-Guided Manifold Learning
+
+URL Source: https://openreview.net/pdf?id=YD9ZoqUDAY
+
+Number of Pages: 14
+
+Markdown Content:
+# Unified K-Means Clustering with Label-Guided Manifold Learning 
+
+Qianqian Wang 1 Mengping Jiang 1 Zhengming Ding 2 Quanxue Gao 1
+
+Abstract 
+
+K-Means clustering is a classical and effective un-supervised learning method attributed to its sim-plicity and efficiency. However, it faces notable challenges, including sensitivity to random initial centroid selection, a limited ability to discover the intrinsic manifold structures within nonlinear datasets, and difficulty in achieving balanced clus-tering in practical scenarios. To overcome these weaknesses, we introduce a novel framework for K-Means that leverages manifold learning. This approach eliminates the need for centroid calcu-lation and utilizes a cluster indicator matrix to align the manifold structures, thereby enhancing clustering accuracy. Beyond the traditional Eu-clidean distance, our model incorporates Gaussian kernel distance, K-nearest neighbor distance, and low-pass filtering distance to effectively manage data that is not linearly separable. Furthermore, we introduce a balanced regularizer to achieve balanced clustering results. The detailed exper-imental results demonstrate the efficacy of our proposed methodology. 
+
+1. Introduction 
+
+Clustering is an unsupervised learning technique aiming at organizing data groups that exhibit similar characteris-tics without labels (Nie et al., 2023). It has been widely applied in Web data analysis and information retrieval (Fu et al., 2023; He et al., 2024). K-Means (Hartigan & Wong, 1979; Lloyd, 1982) is one of the simplest and most popular clustering algorithms (Liu et al., 2023). Its core concept is partitioning data points into c mutually exclusive clus-ters, and with each centroid representing a cluster, each data point is assigned to the cluster associated with its nearest centroid. The algorithm achieves this by minimizing the      
+
+> 1School of Communication Engineering, Xidian University, Xi’an, China. 2Department of Computer Science, Tulane Univer-sity, New Orleans, LA. Correspondence to: Quanxue Gao <qx-gao@xidian.edu.cn >.
+> Proceedings of the 42 nd International Conference on Machine Learning , Vancouver, Canada. PMLR 267, 2025. Copyright 2025 by the author(s).
+
+sum of squared distances between each data point and its corresponding centroid within a cluster. While K-Means excels in processing linearly separable data, it has limitations when dealing with nonlinearly separable data (Bai & Liang, 2020; Lu et al., 2024; Cheng et al., 2024). This is because it utilizes Euclidean distance to mea-sure the distance between data points, making it incapable of dividing nonlinearly separable clusters. To address these limitations, researchers have proposed various improvement methods. For instance, Kernel K-Means (KKM) (Sch ¨olkopf et al., 1998) introduces a kernel function to map data into a high-dimensional space, where the transformed data be-come linearly separable. This has led to the development of the Multi-Kernel K-Means (MKKM) algorithm (Du et al., 2015; Yao et al., 2020; Wang et al., 2022; Liu, 2022), which utilizes multiple kernel functions to capture the nonlinear structure of data better. Another solution is spectral cluster-ing (Ng et al., 2001; Zhou et al., 2020; Ding et al., 2024), an algorithm based on graph theory (Yang et al., 2023b), which utilizes the similarity matrix between data points to project them into a low-dimensional feature space and then applies the traditional K-Means algorithm, making it suitable for complex nonlinear data and irregularly shaped clusters (Fettal et al., 2023; Yang et al., 2023a). However, the aforementioned K-Means methods all require the initialization of cluster centroids, which can easily lead to suboptimal local solutions rather than the optimal global solution (Nie et al., 2022). K-Means++ (Arthur & Vassil-vitskii, 2006) adopts an improved initialization method that selects initial centroids according to a probabilistic distri-bution, resulting in a more uniform distribution of initial centroids and reducing the risk of falling into inferior local minima. Nie et al. proposed the Coordinate Descent Method for solving K-Means (CDKM), which can solve a better lo-cal minima of the objective function and effectively address the problem of forming empty clusters (Nie et al., 2022). Nevertheless, these methods still require the computation of cluster centroids, which are calculated based on the mean of all points within a cluster. Consequently, outliers can sig-nificantly impact the clustering results (Wang & Su, 2011; Huang et al., 2021; Heidari et al., 2024). Both (Lu et al., 2023) and (Pei et al., 2023) introduce centerless variants of K-Means, which minimize the distance between samples within the cluster instead of the distance between samples 1Unified K-Means Clustering with Label-Guided Manifold Learning 
+
+and the centroids. Therefore, these methods eliminate the need for initializing and updating the cluster centroid, thus preventing their negative influence and leading to more ro-bust results and improved clustering performance. Although these methods address the centroid initialization problem, they generally overlook the issue of balanced clus-tering, resulting in a bias towards larger clusters and smaller clusters being absorbed by larger ones (Malinen & Fr ¨anti, 2014). Even worse, all samples might be assigned to a sin-gle cluster. Balanced clustering, on the contrary, seeks to minimize the mean squared error (MSE) meanwhile con-sidering the balance of cluster sizes, thus avoiding trivial solutions. Regularized K-Means (RKM) (Lin et al., 2019) introduces regularization terms to control the size of each cluster for achieving balanced clustering, while Discrete and Balanced Spectral Clustering with Scalability (DBSC) mod-ifies the objective function of spectral clustering to promote balanced spectral clustering (Wang et al., 2023). However, these methods ignore the manifold structure and thus cannot exploit explicit cluster distribution. To mitigate these problems, we propose a novel unified K-Means clustering framework. We transform traditional K-Means into a label-guided manifold learning version without the need to compute the cluster centroids, thereby improv-ing the robustness of clustering. Specifically, we use the learned cluster indicator matrix to construct a similarity ma-trix, which ensures the consistency of the data manifold structure and cluster labels. Moreover, we maximize the bal-anced regularization term to ensure the balance of clustering results and provide the theoretical proof of its effectiveness. Finally, we further introduce four different distances, i.e. ,Euclidean distance, K-nearest neighbor distance, Gaussian kernel distance, and low-pass filtering distance, which are suitable for nonlinearly separable data and make it adaptive to datasets of various structures. The main contributions of this work can be summarized as follows: • Decentralization: We propose a unified K-Means clus-tering framework that eliminates centroid calculations and hence improves the robustness to outliers. • Label-Guided Manifold Learning: We construct the similarity matrix using a learnable cluster indicator matrix, ensuring the consistency of the data’s manifold structure and its labels. • Cluster Balance: We introduce a balanced regular-ization term that maximizes ℓ2,1-norm of the cluster indicator matrix to ensure the balance of clustering results. • Four Distance Metrics: We introduce four different distance matrices to explore different K-Means variants and improve clustering performance on nonlinearly separable and complex data. 
+
+2. Related Work 
+
+2.1. K-Means 
+
+Given data X = {x1, x2, · · · , xn} ∈ Rd×n, the num-ber of cluster centroids c, and the cluster centroids uk =1
+
+nknkX
+
+> i=1
+
+xi, (k = 1 , 2, . . . , c ), nk is the number of samples in the k-th cluster, the K-Means clustering algorithm aims to minimize the sum of squared distances between each sam-ple and its corresponding cluster centroid. The objective function of K-Means can be expressed as: 
+
+min  
+
+> uk,F
+> c
+
+X
+
+> k=1
+> nk
+
+X
+
+> i=1
+
+∥xi − uk∥22 Fik s.t. F ∈ Ind (1) where F ∈ Rn×c is a cluster cluster indicator matrix. The 
+
+i-th row f i of matrix F represents the label vector for the 
+
+i-th sample. Fik = 1 indicates that the i-th sample belongs to the k-th cluster, and Fik = 0 otherwise. This means that each sample’s label vector f i is a one-hot label. 
+
+2.2. Kernel K-Means 
+
+Kernel K-Means is a generalization of the traditional K-Means clustering algorithm. First, a nonlinear mapping func-tion ϕ is used to map the data points to a higher-dimensional feature space, and then the traditional K-Means algorithm is applied. Taking the Gaussian kernel K-Means as an ex-ample, its objective function can be expressed as: 
+
+min  
+
+> uk,F
+> c
+
+X
+
+> k=1
+> nk
+
+X
+
+> i=1
+
+∥ϕ(xi) − uk∥22 Fik s.t. F ∈ Ind (2) where uk = 1
+
+nknkX
+
+> i=1
+
+ϕ(xi) is the centroid of the k-th cluster in the feature space. By em-ploying the Gaussian kernel function K(x, y) =exp − ∥x − y∥2
+
+2σ2
+
+!
+
+, σ is a scaling parameter, we can implicitly compute the inner product or distance in the high-dimensional feature space without the need to explicitly calculate the feature vector ϕ(x). The objective is to minimize the sum of squared distances between each data point and its assigned cluster centroid in the feature space, which allows for the discovery of nonlinear structures of the data. 
+
+2.3. Fuzzy K-Means 
+
+Fuzzy K-Means is an extension of the traditional K-Means algorithm and diverges from the hard clustering of the tradi-tional K-Means by employing soft clustering, which permits each data point to belong to multiple clusters with a certain 2Unified K-Means Clustering with Label-Guided Manifold Learning 
+
+degree of membership. This approach offers enhanced flex-ibility, particularly adept at handling scenarios where the boundaries between data points are not distinctly defined. The objective function of fuzzy K-Means can be articulated as follows: 
+
+min  
+
+> uk,F
+> c
+
+X
+
+> k=1
+> nk
+
+X
+
+> i=1
+
+∥xi − uk∥22 Fmik s.t. F ⩾ 0, F1 = 1 (3) where 1 is an all-one vector; m > 1 is a parameter that controls the fuzziness of the membership function; a larger 
+
+m indicates higher fuzziness. 
+
+3. A Unified Centerless Framework 
+
+The K-Means method and its variants described above rely on the calculation of cluster centers, making them suscep-tible to outliers, which can negatively affect clustering re-sults. To address this issue, we first introduce Theorem 1, transforming the K-Means clustering into a label-guided manifold learning version, which is also equal to a unified centerless framework. 
+
+Theorem 1. Let xi be the i-th sample of data matrix X, uk
+
+be the centroid of the k-th cluster. Then, we have 
+
+> c
+
+X
+
+> k=1
+> nk
+
+X
+
+> i=1
+
+∥xi − uk∥22 Fik =
+
+> n
+
+X
+
+> i=1
+> n
+
+X
+
+> j=1
+
+∥xi − xj ∥22 Sij , (4) 
+
+where S is the similarity matrix that represents the manifold structure of the data. It is constructed from the cluster indicator matrix F, such that S = GG ⊤, where G =
+
+FP −1/2, P ∈ Rc×c is a diagonal matrix, and Pkk =Pni=1 Fik 
+
+Proof. Expanding the left side of Equation (4) yields: 
+
+tr 
+
+ nX
+
+> i=1
+> c
+
+X
+
+> k=1
+
+xix⊤ 
+
+> i
+
+Fik 
+
+
+
+− 2tr 
+
+ nX
+
+> i=1
+> c
+
+X
+
+> k=1
+
+x⊤ 
+
+> i
+
+ukFik 
+
+
+
++ tr 
+
+ nX
+
+> i=1
+> c
+
+X
+
+> k=1
+
+uku⊤ 
+
+> k
+
+Fik 
+
+
+
+.
+
+(5) Taking the partial derivative with respect to uk and setting it to zero, we find: 
+
+uk =
+
+Pni=1 xiFik 
+
+Pkk 
+
+= Xf kP−1 
+
+> kk
+
+. (6) where fk is the k-th column vector of F.Substituting Equation (6) back into Equation (5) and letting 
+
+Q ∈ Rn×n be a diagonal matrix where Qii = Pck=1 Fik ,we see that Equation (5) is simplified to: 
+
+tr 
+
+> n
+
+X
+
+> i=1
+
+xix⊤ 
+
+> i
+
+Qii − tr 
+
+> c
+
+X
+
+> k=1
+
+Xf kP−1 
+
+> kk
+
+f ⊤ 
+
+> k
+
+X⊤
+
+=tr( X(Q − FP −1F⊤)X⊤)
+
+(7) Letting the similarity matrix S = FP −1F⊤, then 
+
+S1 = FP −1(1⊤F)⊤ = F1 = Q1 (8) Equation (8) means that Q is a degree matrix of S, then Equation (7) can be written as: 
+
+tr( X(Q − FP −1F⊤)X⊤) = 
+
+> n
+
+X
+
+> i=1
+> n
+
+X
+
+> j=1
+
+∥xi − xj ∥22 Sij (9) Therefore, according to Equation (5), Equation (7), and Equation (9), we can conclude that Equation (4) holds and Theorem 1 is proved. Since S = GG ⊤, Sij = gi, gj , gi is the i-th row of 
+
+G, if the elements of the distance matrix D are defined as 
+
+Dij = ∥xi − xj ∥22, then we have 
+
+min 
+
+> F
+> n
+
+X
+
+> i=1
+> n
+
+X
+
+> j=1
+
+∥xi − xj ∥22 Sij = min  
+
+> F
+
+tr( G⊤DG ) (10) According to Equation (4), we have: 
+
+min  
+
+> uk,F
+> c
+
+X
+
+> k=1
+> nk
+
+X
+
+> i=1
+
+∥xi − uk∥22 Fik = min  
+
+> F
+
+tr( G⊤DG ) (11) Drawing from the Equation (11), we have derived a unified centerless framework for K-Means and manifold learning. This framework not only dispenses with the calculation of cluster centroids but also employs a cluster indicator matrix to construct a similarity matrix S, thereby preserving the consistency between the data’s manifold structure and its labels. In what follows, we will discuss the new version of K-Means, Kernel K-Means, and Fuzzy K-Means .
+
+(1) K-Means : According to Theorem 1, the objective of traditional K-Means can be reformulated as follows: 
+
+min 
+
+> F
+> n
+
+X
+
+> i=1
+> n
+
+X
+
+> j=1
+
+∥xi − xj ∥22 Sij = min  
+
+> F
+
+tr( G⊤DG )= min  
+
+> F
+
+tr(( FP −1/2)⊤D(FP −1/2)) = min  
+
+> F
+
+tr( F⊤DF (P)−1) s.t. F ∈ Ind 
+
+(12) where F ∈ Rn×c denotes the cluster indicator matrix, and 
+
+D ∈ Rn×n represents the distance matrix. 
+
+(2) Kernel K-Means: When applied Theorem 1 in the kernel space, Equation (2) can be rewritten as 
+
+min 
+
+> F
+> n
+
+X
+
+> i=1
+> n
+
+X
+
+> j=1
+
+∥ϕ(xi) − ϕ(xj )∥22 Sij = min  
+
+> F
+
+tr( G⊤DG )= min  
+
+> F
+
+tr( F⊤DF (F⊤F)−1) s.t. F ∈ Ind 
+
+(13) 3Unified K-Means Clustering with Label-Guided Manifold Learning 
+
+where Dij = ∥ϕ(xi) − ϕ(xj )∥22 = K(xi, xi) + 
+
+K(xj , xj ) − 2K(xi, xj ). The novel form Equation (13) of Kernel K-Means avoids reliance on cluster centroids, en-hancing the method’s capacity to handle nonlinear data and imparting greater robustness of clustering results. 
+
+(3) Fuzzy K-Means: Let Wik = Fmik , G = WP −1/2,
+
+S = GG ⊤, and P ∈ Rc×c be a diagonal matrix where 
+
+Pkk = Pni=1 Wik . According to Theorem 1, Equation (3) can be reformulated as 
+
+min 
+
+> F
+> n
+
+X
+
+> i=1
+> n
+
+X
+
+> j=1
+
+∥xi − xj ∥22 Sij = min  
+
+> F
+
+tr( G⊤DG )= min  
+
+> F
+
+tr( W⊤DW (P)−1) s.t. F ⩾ 0, F1 = 1
+
+(14) where the elements of the distance matrix D are defined as 
+
+Dij = ∥xi − xj ∥22.Therefore, we can say that K-Means, Kernel K-Means, and Fuzzy K-Means are all unified in our centerless manifold framework min F tr( G⊤DG ).
+
+4. Methodology 
+
+4.1. Motivation and Objective 
+
+We substitute G = FP −1/2 into Equation (10) and rewrite the unified K-Means as min F tr( F⊤DF (P)−1). Since the cluster indicator matrix F is discrete and challenging to optimize directly, and it does not ensure a balanced cluster-ing, we introduce a balanced regularization term based on 
+
+ℓ2,1-norm and obtain the overall objective: 
+
+min  
+
+> F
+
+tr( F⊤DF (P)−1) − λ∥F⊤∥2,1 s.t. F ⩾ 0, F1 = 1
+
+(15) where λ is a balance parameter. Then, we prove that maxi-mizing ∥F⊤∥2,1 helps to address both issues via Theorem 2. 
+
+Theorem 2. Given n1 + n2 + . . . + nc = n, where nk ≥ 0
+
+represents the number of samples in the k-th cluster. By achieving the following balanced regularization term, F is discrete and exhibits a balanced cluster distribution, i.e., the maximum will be attained when n1 = n2 = . . . = nc.
+
+max  
+
+> F
+
+∥F⊤∥2,1 s.t. F ⩾ 0, F1 = 1 (16) 
+
+Proof. Let fk ∈ Rn×1 represents k-th column of F. The 
+
+ℓ2,1-norm of the cluster indicator matrix F⊤ ∈ Rc×n is defined as follows: 
+
+∥F⊤∥2,1 =
+
+> c
+
+X
+
+> k=1
+
+q
+
+f ⊤ 
+
+> k
+
+fk =
+
+> c
+
+X
+
+> k=1
+
+vuut nX
+
+> i=1
+
+F2 
+
+> ik
+
+=
+
+> c
+
+X
+
+> k=1
+
+ak (17) where 
+
+ak =
+
+vuut nX
+
+> i=1
+
+F2 
+
+> ik
+
+=
+
+q
+
+f ⊤ 
+
+> k
+
+fk (18) 
+
+Lemma 1. According to the Cauchy-Schwarz inequality, let 
+
+a = [ a1, a 2, . . . , a c]⊤ ∈ Rc×1, e = [1 , 1, · · · , 1] ⊤ ∈ Rc×1.Then, we have 
+
+|⟨ a, e⟩| ≤ ∥ a∥2 ∥e∥2 ⇒
+
+> c
+
+X
+
+> k=1
+
+ak ≤ ∥ a∥2
+
+p(1 + 1 + · · · + 1) 
+
+⇒
+
+> c
+
+X
+
+> k=1
+
+ak ≤ ∥ a∥2
+
+√c
+
+(19) 
+
+The equality holds if and only if a1 = a2 = · · · = ac.
+
+According to Lemma 1, maximizing ∥F⊤∥2,1 = Pck=1 ak
+
+is equivalent to maximizing ∥a∥2. By substituting into Equation (18), we obtain 
+
+∥a∥2 =
+
+vuut cX
+
+> k=1
+
+a2 
+
+> k
+
+=
+
+vuut cX
+
+> k=1
+> n
+
+X
+
+> i=1
+
+F2 
+
+> ik
+
+=
+
+vuut nX
+
+> i=1
+> c
+
+X
+
+> k=1
+
+F2
+
+> ik
+
+(20) Thus, we have 
+
+max ∥a∥2 ⇒ max ∥a∥22 = max 
+
+> n
+
+X
+
+> i=1
+> c
+
+X
+
+> k=1
+
+F2 
+
+> ik
+
+(21) Obviously, each row f i of F is independent, so for each row, we have 
+
+max 
+
+> Fik
+> c
+
+X
+
+> k=1
+
+F2 
+
+> ik
+
+s.t. 0 ≤ Fik ≤ 1,
+
+> c
+
+X
+
+> k=1
+
+Fik = 1 (22) The solution to maximizing Equation (22) should be realized when f i has only one element equal to 1 and the rest are 0, and the maximum value of Equation (22) should be 1. Thus, we can conclude that Equation (22) of n rows reach maximum only when F is a discrete cluster indicator matrix. In this case, F⊤F ∈ Rc×c is a diagonal matrix whose k-th diagonal element is the number of samples in the k-th cluster, hence: 
+
+ak =
+
+q
+
+fk⊤fk = √nk (23) where nk is the number of samples of the k-th cluster, fk is the k-th column of the matrix F.According to a1 = a2 = · · · = ac, we have √n1 = √n2 =
+
+· · · = √nc, and the equality holds if and only if n1 = n2 =
+
+· · · = nc = n/c .Theorem 2 demonstrates that Equation (16) can achieve an approximate cluster balance. When the optimal solution is achieved, (F⊤F)1/2 =
+
+r nc I. Consequently, our objective function in the Equation (15) can be simplified to: 
+
+min  
+
+> F
+
+tr( F⊤DF ) − λ∥F⊤∥2,1 s.t. F ⩾ 0, F1 = 1 (24) 4Unified K-Means Clustering with Label-Guided Manifold Learning 
+
+When Equation (24) achieves the optimal solution, F is discrete and each cluster is balanced. 
+
+4.2. Optimization 
+
+The ℓ2,1-norm in Equation (24) is difficult to solve directly by gradient descent because of its non-smooth property. To simplify the optimization process, we define f (F) = 
+
+∥F⊤∥2,1 and perform a first-order Taylor expansion at F(t)
+
+as follows: 
+
+f (F) = f (F(t)) + ⟨∇ f (F(t)), F − F(t)⟩ (25) where F(t) is the solution at the t-th iteration, and ∇f (F(t))
+
+is the gradient of ∥F⊤∥2,1. The derivative of ∥F⊤∥2,1 with respect to F is denoted as H, given by: 
+
+H = ∂∥F⊤∥2,1
+
+∂F =12 tr  FΛF ⊤
+
+∂F = FΛ (26) where Λ is a diagonal matrix and Λkk = 1 
+
+> ∥fk∥2
+
+; fk ∈ Rn×1
+
+is the k-th column of F.Ignoring the constant in the Equation (25), we solve the Equation (24) iteratively as follows 
+
+F(t+1) = min  
+
+> F
+
+tr( F⊤DF ) − λ⟨∇ f (F(t)), F⟩
+
+= min  
+
+> F
+
+tr( F⊤DF ) − λtr( H⊤F) (27) So we approximate Equation (24) to Equation (28), F is updated by solving the following problem: 
+
+min  
+
+> F⩾0,F1 =1
+
+tr( F⊤DF ) − λtr( H⊤F) (28) Let ˜F =
+
+ f i
+
+F0
+
+
+
+, ˜D =
+
+Dii d⊤
+
+> i0
+
+di0 D00 
+
+
+
+, where f i ∈ R1×c is the i-th row of the matrix F, F0 ∈ R(n−1) ×c represents the matrix formed by all rows of matrix F except for the 
+
+i-th row f i. di0 ∈ R(n−1) ×1 denotes the column vector consisting of all elements of the i-th column di excluding the element Dii of matrix D. Lastly, D00 ∈ R(n−1) ×(n−1) 
+
+represents the matrix formed by all elements of matrix D
+
+except for those in the i-th row and i-th column. Obviously, 
+
+tr( F⊤DF ) = tr( ˜F⊤ ˜D ˜F), and we have: 
+
+˜F⊤ ˜D ˜F = (f i)⊤ (F0)⊤ Dii d⊤
+
+> i0
+
+di0 D00 
+
+  f i
+
+F0
+
+
+
+=( f i)⊤Dii f i + ( F0)⊤di0f i + ( f i)⊤d⊤
+
+> i0
+
+F0
+
++ ( F0)⊤D00 F0
+
+(29) Let ˜H =
+
+ hi
+
+H0
+
+
+
+, hi is the i-th row of H, H0 ∈ R(n−1) ×c
+
+represents the matrix formed by all rows of matrix H except for the i-th row hi, ˜H⊤ ˜F = (hi)⊤ (H0)⊤  f i
+
+F0
+
+
+
+=(hi)⊤f i + ( H0)⊤F0. Note that tr( H⊤F) = tr( ˜H⊤ ˜F), and we have: 
+
+˜F⊤ ˜D ˜F − λ ˜H⊤ ˜F =( f i)⊤Dii f i + ( F0)⊤di0f i
+
++ ( f i)⊤d⊤
+
+> i0
+
+F0 + ( F0)⊤D00 F0
+
+− λ(hi)⊤f i − λ(H0)⊤F0
+
+(30) Then, removing items not related to variable f i, through the properties of trace operation, we have: 
+
+tr( F⊤DF − λH⊤F)=tr(( f i)⊤Dii f i + 2 f iF⊤ 
+
+> 0
+
+di0 − λf i(hi)⊤)=f i(f i)⊤Dii + f i(2 F⊤ 
+
+> 0
+
+di0 − λ(hi)⊤)
+
+(31) Thus, the problem of updating the i-th row of F can be: min   
+
+> fi1=1
+
+f i(f i)⊤Dii + f i(2 F⊤ 
+
+> 0
+
+di0 − λ(hi)⊤) (32) As Dii = 0( i = 1 , 2, · · · , n ), Equation (32) can be: min   
+
+> fi
+
+f i(2 F⊤ 
+
+> 0
+
+di0 − λ(hi)⊤) ⇔ min   
+
+> fi
+
+f i(2 F⊤di − λ(hi)⊤)
+
+(33) where di is the i-th column of D, Dii = 0 . F denotes the solution before f i is updated. Then, the solution of f i can be: 
+
+Fib =
+
+
+
+1, b = arg min 
+
+> k
+
+(2 F⊤di − λ(hi)⊤)k
+
+0, otherwise .
+
+(34) The detailed optimization for F is summarized in Ap-pendix A. 
+
+4.3. Complexity Analysis 
+
+When updating the i-th row of F, we compute F⊤di −
+
+λ(hi)⊤, which requires a time complexity of O(nc ) and c
+
+addition operations. Thus, updating all rows of F necessi-tates a complexity of O(n2c), with nc addition operations. Therefore, the algorithm requires O(n2c + nc ) for each iter-ation. To address this, we propose an acceleration strategy to reduce the time complexity to O(nc ) during the iteration process. Our algorithm’s acceleration strategy and pseudo-code flow can be found in the Appendix A. 
+
+5. Four methods of calculating distance matrix 
+
+In order to demonstrate the applicability of our method to a variety of different datasets, we present the following four methods of calculating distance matrices: 
+
+1. Euclidean square distance: Dij = ∥xi − xj ∥22.5Unified K-Means Clustering with Label-Guided Manifold Learning 
+
+2. K nearest neighbor distance: 
+
+Dij =
+
+ ∥xi − xj ∥22 , xi ∈ Nk(xj ) or xj ∈ Nk(xi)
+
+σ, otherwise where σ is a large constant, Nk(xi) is the K nearest neigh-bors of the sample xi.
+
+3. Gaussian kernel distance: Dij = ∥ϕ(xi) − ϕ(xj )∥22 =
+
+K(xi, xi) + K(xj , xj ) − 2K(xi, xj ), where 
+
+ϕ(x) represents the nonlinear mapping of sam-ple x, and the Gaussian Kernel is K(x, y) =exp − ∥x − y∥2
+
+2σ2
+
+!
+
+, σ is a scaling parameter. 
+
+4. Low-pass filtering distance: In addition to the three dis-tances mentioned above, we have also introduced a low-pass filter distance. A low-pass filter allows low frequencies to pass and blocks high frequencies. With a cutoff frequency 
+
+ωc = 12π , its amplitude-frequency characteristic is given by |H(jω )| = 1
+
+p1 + ( ω · 2π)2 . Inspired by this charac-teristic, when the similarity matrix R is used as input, if we want to retain samples with high similarity and filter out samples with low similarity to address the issue of non-linear separability, we can rewrite the distance matrix as 
+
+Dij = a |H(jω )|2 , ω = Rij , where a is a hyperparam-eter. Through this filtering function, we can see that the higher the similarity, the smaller the distance, and the lower the similarity, the bigger the distance. This retains samples with high similarity, filters out samples with low similarity, and effectively preserves the intrinsic manifold structure of the data, which can better handle nonlinear separable data. 
+
+6. Experiments 
+
+In this chapter, we conducted relevant experiments on two toy datasets and ten benchmark datasets, and selected 6 classic clustering comparison algorithms for comparison. Our experiments were conducted on a Windows 11 system, 13th Gen Intel(R) Core(TM) CPU, and MATLAB R2023a. 
+
+6.1. Benchmark datasets Datasets: We selected the following ten datasets: CMUPIE (Sim et al., 2002), digits (Kusetogullari et al., 2020), FERET (Phillips et al., 2000), Mpeg7 (Bober, 2001), olivetti (Samaria & Harter, 1994), Palm 1, Pengdigits (Liu & Wech-sler, 1997), PEAL (Wang & Tang, 2004), STL10 (Coates et al., 2011), and USPS (Hull, 1994). Detailed information on the datasets is provided in the Appendix A. 
+
+Comparison Methods: We selected the following six com-parison methods: K-Means (Hartigan & Wong, 1979), KKM 
+
+> 1
+
+https://www.scholat.com/xjchensz -8 -6 -4 -2 0 2 4 6 8-6 -4 -2 0246
+
+> cluster 1 cluster 2
+
+(a) Two-spiral Dataset 0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 100.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1 (b) No-structure Dataset 
+
+Figure 1. Toy datasets. 
+
+(Tzortzis & Likas, 2008), RKM (Lin et al., 2019), CDKM (Nie et al., 2022), K-sum (Pei et al., 2023), and K-sum-x (Pei et al., 2023). 
+
+6.2. Clustering performance 
+
+The experimental results of our method utilizing four dis-tance matrices and six comparative algorithms on ten bench-mark datasets are presented in Tables 1 to 3. The parameter values of our model are in the Appendix A. It is evident that algorithms such as K-Means, RKM, and CDKM, which rely on the initialization of cluster centroids, are susceptible to the influence of these centroids. Additionally, their use of Euclidean squared distance impedes their ability to effec-tively handle complex data structures, resulting in inferior clustering performance compared to K-sum and K-sum-X, which leverage neighborhood relationships and do not require cluster centroid initialization. However, these lat-ter approaches operate under the assumption of balanced datasets, potentially limiting their applicability to certain specific data distributions. In contrast, our four distance-based models employ a center-less approach, all of which have yielded notably improved results. Particularly, our low-pass filtering distance met-ric, which harnesses a nonlinear mapping to transform the data’s similarity relationships into distance relationships, has demonstrated exceptional performance. This low-pass filtering distance preserves the manifold structure of the data and the consistency of the labels, where higher similarity corresponds to shorter distances and lower similarity corre-sponds to larger distances. Consequently, when confronted with non-linearly separable datasets, our low-pass filtering distance-based model exhibits superior clustering outcomes. 
+
+6.3. Toy datasets 
+
+To verify the feasibility of our method on nonlinear datasets and demonstrate that our method can achieve cluster balance, we only created the following two datasets. 
+
+Two-spiral Dataset: There are a total of four hundred sam-ples, divided into two clusters, with 200 samples in each 6Unified K-Means Clustering with Label-Guided Manifold Learning 
+
+Table 1. The clustering performances on the CMUPIE, digits, FERET, and Mpeg7 datasets. 
+
+Datasets CMUPIE digits FERET Mpeg7 Methods ACC NMI Purity ACC NMI Purity ACC NMI Purity ACC NMI Purity K-Means 0.1968 0.4121 0.2145 0.4353 0.4439 0.5966 0.2651 0.6514 0.2975 0.4557 0.6595 0.4856 KKM 0.1915 0.3770 0.2118 0.4368 0.4526 0.6008 0.2157 0.5807 0.2407 0.4993 0.6892 0.5236 RKM 0.1740 0.4182 0.1859 0.4042 0.4181 0.5833 0.3121 0.7090 0.3236 0.5264 0.7126 0.5521 CDKM 0.1994 0.4146 0.2187 0.4338 0.4438 0.5975 0.2834 0.6819 0.3168 0.5091 0.7196 0.5440 K-sum 0.2150 0.4764 0.2283 0.1390 0.3416 0.7422 0.2879 0.6993 0.2921 0.5386 0.7257 0.5721 K-sum-x 0.1754 0.4208 0.1824 0.1412 0.3417 0.7405 0.2936 0.7056 0.3079 0.5393 0.7288 0.5629 Our-ED 0.1765 0.4200 0.1891 0.3855 0.4195 0.5395 0.3000 0.7071 0.3086 0.5714 0.7463 0.5979 
+
+Our-KNN 0.3634 0.6375 0.3736 0.4570 0.4636 0.6058 0.3193 0.7183 0.3321 0.5600 0.7280 0.5800 Our-K-ED 0.2171 0.4844 0.2297 0.4550 0.4461 0.5848 0.3107 0.7117 0.3207 0.5650 0.7413 0.5900 Our-LF 0.6341 0.8174 0.6436 0.5073 0.5076 0.6305 0.3257 0.7233 0.3343 0.4600 0.6602 0.4821 
+
+Table 2. The clustering performances on the olivetti, Palm, USPS, and Pendigits datasets. 
+
+Datasets olivetti Palm USPS Pendigits Methods ACC NMI Purity ACC NMI Purity ACC NMI Purity ACC NMI Purity K-Means 0.4488 0.4697 0.4856 0.7047 0.8947 0.7558 0.6458 0.6026 0.7129 0.6963 0.6705 0.7260 KKM 0.4900 0.4862 0.5233 0.6620 0.8732 0.7065 0.6872 0.6437 0.7565 0.7859 0.7139 0.7859 RKM 0.4922 0.4671 0.5144 0.7690 0.9180 0.7825 0.6241 0.5748 0.7003 0.7296 0.6639 0.7296 CDKM 0.4617 0.4795 0.4896 0.7225 0.9052 0.7745 0.6526 0.6094 0.7237 0.7027 0.6697 0.7226 K-sum 0.4233 0.4282 0.4656 0.8405 0.9405 0.8520 0.6802 0.6274 0.7486 0.7562 0.6743 0.7562 K-sum-x 0.4322 0.4099 0.4467 0.8145 0.9321 0.8295 0.6502 0.5853 0.7150 0.7768 0.7001 0.7768 Our-ED 0.5078 0.4910 0.5256 0.8460 0.9401 0.8555 0.6539 0.5842 0.7164 0.7816 0.7056 0.7816 Our-KNN 0.5767 0.5361 0.5933 0.8585 0.9456 0.8665 0.7545 0.6690 0.7545 0.8406 0.7719 0.8406 Our-K-ED 0.5478 0.5229 0.5700 0.8325 0.9362 0.8440 0.7595 0.6559 0.7595 0.8579 0.7784 0.8579 
+
+Our-LF 0.8322 0.8181 0.8322 0.9055 0.9674 0.9105 0.8450 0.7803 0.8450 0.8322 0.7612 0.8322 
+
+Table 3. The clustering performances on the PEAL and STL10 datasets. 
+
+Datasets PEAL STL10 Methods ACC NMI Purity ACC NMI Purity K-Means 0.7206 0.8939 0.7539 0.8088 0.8049 0.8328 KKM 0.7087 0.8624 0.7296 0.9162 0.8548 0.9162 RKM 0.8072 0.9129 0.8181 0.9422 0.8796 0.9422 CDKM 0.7296 0.8967 0.7617 0.8094 0.8053 0.8333 K-sum 0.8770 0.9424 0.8811 0.9220 0.8502 0.9220 K-sum-x 0.8491 0.9291 0.8537 0.9215 0.8505 0.9215 Our-ED 0.8596 0.9321 0.8640 0.9212 0.8500 0.9212 Our-KNN 0.8919 0.9417 0.8939 0.9198 0.8357 0.9198 Our-K-ED 0.8602 0.9317 0.8649 0.9228 0.8516 0.9228 Our-LF 0.8854 0.9446 0.8889 0.9539 0.8969 0.9539 
+
+cluster. As can be seen from Figure 1.(a), this is a nonlin-early separable data, which can be used to verify the ability of our method to handle nonlinearly separable data. As shown in Figure 2, the results of K-Means, KKM, CDKM, and our method on the double spiral dataset. K-Means and CDKM use Euclidean distance and are affected by the ini-tialization of cluster centroids, so they cannot effectively separate the nonlinearly separable dataset. Although KKM uses the kernel method to calculate, it still relies on the calculation of cluster centroids, while our method does not require the calculation of cluster centroids and can well maintain the inherent structure of the data. 
+
+No-structure Dataset: A dataset of 400 samples without structure as shown in Figure 1.(b), with each sample ran-domly distributed on this two-dimensional plane, which can be used to verify that our method can ensure cluster bal-ance during clustering. For the unstructured dataset, we conducted binary clustering, three-cluster clustering, four-cluster clustering, and five-cluster clustering, as shown in Figure 3. Regardless of how many clusters the unstructured dataset is divided into, cluster balance can be achieved, with the number of samples in each cluster basically remaining consistent. Under the ideal cluster balance condition, when n = 400 
+
+samples are divided into c = 2 , 3, 4, 5 clusters, the sample number of each cluster should be n/c = 200 , 133 , 100 , 80 .7Unified K-Means Clustering with Label-Guided Manifold Learning -8 -6 -4 -2 0 2 4 6 8-6 -4 -2 0246
+
+> cluster 1 cluster 2
+
+(a) K-Means -8 -6 -4 -2 0 2 4 6 8-6 -4 -2 0246 
+
+> cluster 1 cluster 2
+
+(b) KKM -8 -6 -4 -2 0 2 4 6 8-6 -4 -2 0246 
+
+> cluster 1 cluster 2
+
+(c) CDKM -8 -6 -4 -2 0 2 4 6 8-6 -4 -2 0246 
+
+> cluster 1 cluster 2
+
+(d) Ours(LF) 
+
+Figure 2. The clustering results of our method and three comparison methods K-Means, KKM and CDKM on the two-spiral dataset.           
+
+> Our(LF) 00.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 100.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1
+
+(a) Two(201,199) 0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 100.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1 (b) Three(136,132,132) 0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 100.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1 (c) Four(103,99,100,98) 0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 100.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1 (d) Five(80,79,77,82,82)           
+
+> K-Means 00.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 100.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1
+
+(e) Two(191,209) 0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 100.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1 (f) Three(168,113,119) 0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 100.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1 (g) Four(96,108,101,95) 0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 100.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1 (h) Five(79,91,69,63,98) 
+
+Figure 3. The clustering results of our method on the no-structure dataset, different colors represent different clusters. 
+
+Table 4. The value of SSe. 
+
+Methods Two clusters Three clusters Four clusters Five clusters Ours (LF) 2 11 14 18 K-Means 162 1821 106 856 
+
+If we make a quantitative analysis, and calculate every clustering, the error sum of squares of each cluster is 
+
+SSe = Pck=1 (nk − nc )2, the larger the value, the worse the balance, the smaller the value, the better the balance. The specific calculation results can be seen in Table 4. Moreover, from Figure 3.(d) and (e), we can see that our clustering is not a simple linear clustering, and a cluster is not just around a cluster centroid, which also indicates that our method has good anti-noise performance. 
+
+More experiments, including T-SNE visualization, pa-rameter and convergence analysis, can be found in the Appendix A. 
+
+7. Conclusion 
+
+In this paper, we introduce a novel unified K-Means cluster-ing framework that achieves balanced clustering and elimi-nates the need for computing cluster centroids. Specifically, it first unifies the multiple versions of K-Means into a label-guided manifold learning version, which utilizes the cluster indicator matrix to construct the similarity matrix and ex-ploit the discriminative manifold structure guided by pseudo labels. Furthermore, it incorporates ℓ2,1-norm based bal-anced regularization to enforce producing a more robust and balanced clustering outcome. Four different distance metrics are introduced to enhance the method’s flexibility and adaptivity to different data distributions. Especially, the adopted low-pass filtering distance effectively handles nonlinear data structures. Finally, experiments on both toy and benchmark datasets demonstrate that our method out-performs comparison approaches. 8Unified K-Means Clustering with Label-Guided Manifold Learning 
+
+Acknowledgements 
+
+This work is supported by the National Natural Sci-ence Foundation of China under Grant 62176203, the Fundamental Research Funds for the Central Universi-ties (ZYTS25267, QTZX25004), and the Science and Technology Project of Xi’an (Grant 2022JH-JSYF-0009), Open Project of Anhui Provincial Key Laboratory of Mul-timodal Cognitive Computation, Anhui University (No. MMC202416), Selected Support Project for Scientific and Technological Activities of Returned Overseas Chinese Scholars in Shaanxi Province 2023-02, and the Xidian Inno-vation Fund (Project NoYJSJ25007). 
+
+Impact Statement 
+
+This paper presents work whose goal is to advance the field of Machine Learning. There are many potential societal consequences of our work, none which we feel must be specifically highlighted here. 
+
+References 
+
+Arthur, D. and Vassilvitskii, S. k-means++: The advantages of careful seeding. Technical report, Stanford, 2006. Bai, L. and Liang, J. A three-level optimization model for nonlinearly separable clustering. In Proceedings of the AAAI Conference on Artificial Intelligence , volume 34, pp. 3211–3218, 2020. Bober, M. Mpeg-7 visual shape descriptors. IEEE Transac-tions on circuits and systems for video technology , 11(6): 716–719, 2001. Cheng, D., Huang, J., Zhang, S., Xia, S., Wang, G., and Xie, J. K-means clustering with natural density peaks for discovering arbitrary-shaped clusters. IEEE Transactions on Neural Networks and Learning Systems , 35(8):11077– 11090, 2024. Coates, A., Ng, A., and Lee, H. An analysis of single-layer networks in unsupervised feature learning. In Proceed-ings of the International Conference on Artificial Intelli-gence and Statistics , volume 15, pp. 215–223, 2011. Ding, L., Li, C., Jin, D., and Ding, S. Survey of spectral clustering based on graph theory. Pattern Recognition ,151:110366, 2024. Du, L., Zhou, P., Shi, L., Wang, H., Fan, M., Wang, W., and Shen, Y.-D. Robust multiple kernel k-means using l21-norm. In Proceedings of the International Joint Confer-ence on Artificial Intelligence , volume 15, pp. 3476–3482, 2015. Fettal, C., Labiod, L., and Nadif, M. Scalable attributed-graph subspace clustering. In Proceedings of the AAAI Conference on Artificial Intelligence , volume 37, pp. 7559–7567, 2023. Fu, T., Zhao, X., and Yan, R. Delving into global dialogue structures: Structure planning augmented response selec-tion for multi-turn conversations. In Proceedings of the ACM SIGKDD Conference on Knowledge Discovery and Data Mining , pp. 495–505, 2023. Hartigan, J. A. and Wong, M. A. Algorithm as 136: A k-means clustering algorithm. Applied Statistics , 28(1): 100–108, 1979. He, X., Liu, S., Keung, J., and He, J. Co-clustering for federated recommender system. In Proceedings of the ACM Web Conference , pp. 3821–3832, 2024. Heidari, J., Daneshpour, N., and Zangeneh, A. A novel k-means and k-medoids algorithms for clustering non-spherical-shape clusters non-sensitive to outliers. Pattern Recognition , 155:110639, 2024. Huang, S., Kang, Z., Xu, Z., and Liu, Q. Robust deep k-means: An effective and simple method for data clus-tering. Pattern Recognition , 117:107996, 2021. Hull, J. J. A database for handwritten text recognition research. IEEE Transactions on pattern analysis and machine intelligence , 16(5):550–554, 1994. Kusetogullari, H., Yavariabdi, A., Cheddad, A., Grahn, H., and Hall, J. Ardis: a swedish historical handwritten digit dataset. Neural Computing and Applications , 32(21): 16505–16518, 2020. Li, X., Zhang, H., Wang, R., and Nie, F. Multiview cluster-ing: A scalable and parameter-free bipartite graph fusion method. IEEE Transactions on Pattern Analysis and Machine Intelligence , 44(1):330–344, 2022. Lin, W., He, Z., and Xiao, M. Balanced clustering: A uniform model and fast algorithm. In Proceedings of the International Joint Conference on Artificial Intelligence ,pp. 2987–2993, 2019. Liu, C. and Wechsler, H. Pendigit: Pendigit recognition using mlp and rbf networks. Technical report, Boston University, Center for Adaptive Systems and Department of Cognitive and Neural Systems, 1997. Liu, H., Chen, J., Dy, J., and Fu, Y. Transforming complex problems into k-means solutions. IEEE transactions on pattern analysis and machine intelligence , 45(7):9149– 9168, 2023. 9Unified K-Means Clustering with Label-Guided Manifold Learning 
+
+Liu, W., He, J., and Chang, S.-F. Large graph construction for scalable semi-supervised learning. In Proceedings of the International Conference on International Conference on Machine Learning , pp. 679–686, 2010. Liu, X. Simplemkkm: Simple multiple kernel k-means. 
+
+IEEE Transactions on Pattern Analysis and Machine In-telligence , 45(4):5174–5186, 2022. Lloyd, S. Least squares quantization in pcm. IEEE Trans-actions on Information Theory , 28(2):129–137, 1982. Lu, H., Gao, Q., Wang, Q., Yang, M., and Xia, W. Center-less multi-view k-means based on the adjacency matrix. In Proceedings of the AAAI Conference on Artificial In-telligence , volume 37, pp. 8949–8956, 2023. Lu, H., Xu, H., Wang, Q., Gao, Q., Yang, M., and Gao, X. Efficient multi-view k-means for image clustering. IEEE Transactions on Image Processing , 33:273–284, 2024. Malinen, M. I. and Fr ¨anti, P. Balanced k-means for clus-tering. In Proceedings of the Joint IAPR International Workshop on Structural, Syntactic, and Statistical Pattern Recognition , pp. 32–41. Springer, 2014. Ng, A., Jordan, M., and Weiss, Y. On spectral clustering: Analysis and an algorithm. In Advances in Neural Infor-mation Processing Systems , volume 14, 2001. Nie, F., Wang, X., Jordan, M. I., and Huang, H. The con-strained laplacian rank algorithm for graph-based cluster-ing. In Proceedings of the AAAI Conference on Artificial Intelligence , pp. 1969–1976, 2016. Nie, F., Xue, J., Wu, D., Wang, R., Li, H., and Li, X. Coordi-nate descent method for k-means. IEEE Transactions on Pattern Analysis and Machine Intelligence , 44(5):2371– 2385, 2022. Nie, F., Li, Z., Wang, R., and Li, X. An effective and efficient algorithm for k-means clustering with new for-mulation. IEEE Transactions on Knowledge and Data Engineering , 35(4):3433–3443, 2023. Pei, S., Chen, H., Nie, F., Wang, R., and Li, X. Centerless clustering. IEEE Transactions on Pattern Analysis and Machine Intelligence , 45(1):167–181, 2023. Phillips, P. J., Moon, H., Rizvi, S. A., and Rauss, P. J. The feret evaluation methodology for face-recognition algo-rithms. IEEE Transactions on pattern analysis and ma-chine intelligence , 22(10):1090–1104, 2000. Samaria, F. S. and Harter, A. C. Parameterisation of a stochastic model for human face identification. In Pro-ceedings of IEEE Workshop on Applications of Computer Vision , pp. 138–142, 1994. Sch ¨olkopf, B., Smola, A., and M ¨uller, K.-R. Nonlinear com-ponent analysis as a kernel eigenvalue problem. Neural computation , 10(5):1299–1319, 1998. Sim, T., Baker, S., and Bsat, M. The cmu pose, illumina-tion, and expression (pie) database. In Proceedings of IEEE International Conference on Automatic Face Ges-ture Recognition , pp. 53–58, 2002. Tzortzis, G. and Likas, A. The global kernel k-means clus-tering algorithm. In IEEE International Joint Conference on Neural Networks (IEEE World Congress on Computa-tional Intelligence) , pp. 1977–1984, 2008. Wang, J. and Su, X. An improved k-means clustering algo-rithm. In IEEE International Conference on Communica-tion Software and Networks , pp. 44–46, 2011. Wang, R., Lu, J., Lu, Y., Nie, F., and Li, X. Discrete and parameter-free multiple kernel k-means. IEEE Transac-tions on Image Processing , 31:2796–2808, 2022. Wang, R., Chen, H., Lu, Y., Zhang, Q., Nie, F., and Li, X. Discrete and balanced spectral clustering with scalabil-ity. IEEE Transactions on Pattern Analysis and Machine Intelligence , 45(12):14321–14336, 2023. Wang, X. and Tang, X. A unified framework for subspace face recognition. IEEE Transactions on pattern analysis and machine intelligence , 26(9):1222–1228, 2004. Yang, W., Wang, Y., Tang, C., Tong, H., Wei, A., and Wu, X. One step multi-view spectral clustering via joint adaptive graph learning and matrix factorization. Neurocomputing ,524:95–105, 2023a. Yang, X., Zhu, M., Cai, Y., Wang, Z., and Nie, F. Fast spec-tral clustering with self-adapted bipartite graph learning. 
+
+Information Sciences , 644:118810, 2023b. Yao, Y., Li, Y., Jiang, B., and Chen, H. Multiple kernel k-means clustering by selecting representative kernels. 
+
+IEEE Transactions on Neural Networks and Learning Systems , 32(11):4983–4996, 2020. Zhou, S., Liu, X., Liu, J., Guo, X., Zhao, Y., Zhu, E., Zhai, Y., Yin, J., and Gao, W. Multi-view spectral clustering with optimal neighborhood laplacian matrix. In Proceed-ings of the AAAI conference on artificial intelligence ,volume 34, pp. 6965–6972, 2020. 10 Unified K-Means Clustering with Label-Guided Manifold Learning 
+
+A. Appendix 
+
+A.1. Acceleration strategy 
+
+To enhance the algorithm’s efficiency, we calculate and retain the values of 2F⊤di − λ(hi)⊤ for i = 1 , 2, . . . , n , which requires O(n2) time complexity. This allows the resolution of each row, as referenced in Equation (34), to be completed with only c addition operations, resulting in a cumulative total of nc additions for each iteration. Before updating the i-th row f i of F, we record the index p corresponding to the non-zero element in f i. Then, we calculate Equation (34) to obtain b. If b = p, no changes are necessary; however, if b differs from p, the adjustments to 2f ⊤ 
+
+> k
+
+D − λh⊤
+
+> k
+
+for k = p, b are expressed as follows: 
+
+2f ⊤ 
+
+> p
+
+D − λh⊤ 
+
+> p
+
+← 2f ⊤ 
+
+> p
+
+D − λh⊤ 
+
+> p
+
+− 2di, 2f ⊤ 
+
+> b
+
+D − λh⊤ 
+
+> b
+
+← 2f ⊤ 
+
+> b
+
+D − λh⊤ 
+
+> b
+
++ 2 di (35) where fp is the p-th column of F, fb is the b-th column of F. hp is the p-th column of H, hb is the b-th column of H. di is the i-th column of D. This process involves just two additional operations. Each iteration for this step takes 2v additions, where v ≤ n. Consequently, this method reduces the time complexity per iteration from O(n2c + nc ) to O(nc + 2 v), which simplifies to O(nc ).Overall, this approach significantly minimizes the computational load of the algorithm, improving its efficiency. The comprehensive flow of the algorithm can be found in Algorithms 1 and 2. 
+
+Algorithm 1 Optimizing F
+
+Input: distance matrix D ∈ Rn×n, matrix H, hyperparameter λ.
+
+Initialize: cluster indicator matrix F ∈ Rn×c
+
+Calculate and store 2F⊤D − λH⊤, nk = f ⊤ 
+
+> k
+
+1
+
+while F not converge do for i = 1 to n do 
+
+Update p by the index of element 1 in f i
+
+if np = 1 then 
+
+continue 
+
+end if 
+
+Compute b = argmin 
+
+> k
+
+(2 F⊤di − λ(hi)⊤)k
+
+if b̸ = p then 
+
+Update 2f ⊤ 
+
+> k
+
+D − λh⊤ 
+
+> k
+
+(k = p, b ) via Equation (35) 
+
+end if end for end while Output F ∈ Rn×c
+
+Algorithm 2 Solving problem (24) 
+
+Input: distance matrix D ∈ Rn×n, cluster number c, hyperparameter λ.
+
+Initialize: cluster indicator matrix F ∈ Rn×c
+
+while not converge do 
+
+Update matrix H by Equation (26); Update matrix F by Algorithm 1; 
+
+end while Output F ∈ Rn×c
+
+A.2. Convergence Analysis 
+
+To address the non-smooth issue of the ℓ2,1-norm in the objective function (24) , we performed a Taylor expansion on 
+
+f (F) = ∥F⊤∥2,1 and then solved for the cluster indicator matrix F through multiple iterations. The F(t+1) obtained at the 
+
+(t + 1) -th iteration can be derived from: 
+
+F(t+1) = min  
+
+> F
+
+tr( F⊤DF ) − λtr( H⊤F) (36) 11 Unified K-Means Clustering with Label-Guided Manifold Learning 
+
+Since D is a positive definite matrix and tr( H⊤F) is a linear function of F, the formula is convex in F. Because F is a discrete cluster indicator matrix with elements valued at 0 or 1, and D and H are fixed matrices, the value of the formula varies within a finite range. Furthermore, by updating F through solving the minimization problem, the value of the objective function does not increase. Specifically, after each update, the value of the objective function either remains unchanged or decreases. All iterative results are located in the compact set {F | F1 = 1, F ⩾ 0}. Therefore, our model is convergent and will obtain an optimal solution during the iteration process. 
+
+A.3. The information of benchmark datasets  
+
+> Table 5. The information of datasets.
+
+Datasets Samples Features Clusters Type CMUPIE 2856 1024 68 images digits 4000 256 10 images FERET 1400 6400 200 images Mpeg7 1400 6000 70 images olivetti 900 2500 10 images Palm 2000 256 100 images Pendigits 10,992 16 10 images PEAL 30,863 256 1,040 images STL10 13000 2048 10 images USPS 9,298 256 10 images 
+
+A.4. Parameter setting 
+
+Since Equation (24) contains the parameter λ, we need to set the parameter λ for all four distances. In addition, Our-KNN needs to set the value of the nearest neighbor K; using the Gaussian kernel function K(x, y) = exp − ∥x − y∥2
+
+2σ2
+
+!
+
+, the Our-K-ED contains the parameter σ.While utilizing the Low-pass filtering distance defined as Dij = a |H(jω )|2 , ω = Rij , we employ the directly alternate sampling (DAS) method (Li et al., 2022) to select r anchor points (where r < n ), denoted as A ∈ Rd×r . The number of selecting anchor points is configured according to the ratio range provided in (Li et al., 2022), where the anchor ratio is from 0.1 to 0.9 with a step of 0.1. Subsequently, we apply the method from (Nie et al., 2016) to obtain the corresponding anchor graph T ∈ Rn×r . Let ρ represent the number of neighboring anchor points for each sample; the specific computation formula for the anchor graph T is as follows: 
+
+Tij =
+
+( h(xi,aρ+1 )−h(xi,aj )   
+
+> ρh (xi,ar+1 )−Pρz=1 h(xi,az)
+
+j ≤ ρ
+
+0 j > ρ (37) where h(xi, yj ) = ∥xi − yj ∥22, and aj represents the j-th neighboring anchor point. Finally, based (Liu et al., 2010) and the anchor graph T, we can derive the input matrix R for the Low-pass filtering distance as: 
+
+R = T∆−1T⊤ (38) where ∆ ∈ Rr×r has diagonal elements defined as ∆jj = Pni=1 Tij , with all other elements being zero. • Our-ED: The values of λ for CMUPIE, digits, FERET, Mpeg7, olivetti, Palm, Pengdigits, PEAL, STL10, and USPS are 7696000, 2886000, 1000, 1200, 1801000, 13126000, 500000, 88000, 500000, 52600. • Our-KNN: The values of ( K, λ) for CMUPIE, digits, FERET, Mpeg7, olivetti, Palm, Pengdigits, PEAL, STL10, and USPS are (20, 15000000), (100, 300000), (12, 500000), (19, 2000), (80, 300000), (10, 100000), (712, 100000), (29, 80000), (1000, 80000), (445, 50000). • Our-K-ED: The values of ( σ, λ) for CMUPIE, digits, FERET, Mpeg7, olivetti, Palm, Pengdigits, PEAL, STL10, and USPS are (0.1, 0.001), (0.2, 9), (0.2, 0.001), (1, 0.8), (0.5, 9), (0.8, 0.1), (0.09, 500), (16, 0.04), (0.5, 0.001), (0.1, 0.7). 12 Unified K-Means Clustering with Label-Guided Manifold Learning 
+
+• Our-LF: The values of λ for CMUPIE, digits, FERET, Mpeg7, olivetti, Palm, Pengdigits, PEAL, STL10, and USPS are 0.43, 0.71, 0.57, 0.23, 0.2, 0.74, 0.6, 0.15, 0.1, 0.82. 
+
+A.5. T-SNE visualization on the USPS dataset 
+
+We have visualized the performance of various methods on the USPS dataset, as shown in Figure 4.(a) depicts the true cluster labels, while Figure 4.(b)-(g) present the results of the six comparative algorithms. The final subfigure showcases our method based on the low-pass filtering distance metric. Examining the true label representation in Figure 4.(a), we observe that clusters 4 and 6, as well as clusters 5 and 10, are relatively proximal to one another. Among the six comparative methods, regardless of whether they are based on Euclidean distance or KNN distances, they struggle to accurately recognize the underlying cluster relationships between these two pairs of closely related clusters. In contrast, our low-pass filtering distance-based clustering approach is able to effectively differentiate these proximal clusters, and the resulting clustering outcomes closely align with the true label distribution, exhibiting the most favorable performance. This visual analysis highlights the ability of our low-pass filtering distance metric to better preserve the inherent manifold structure and cluster proximities present in the USPS dataset, leading to superior clustering outcomes compared to the alternative algorithms considered. -80 -60 -40 -20 0 20 40 60 -80 -60 -40 -20 020 40 60 
+
+> 12345678910
+
+(a) True label -80 -60 -40 -20 0 20 40 60 -80 -60 -40 -20 020 40 60  
+
+> 12345678910
+
+(b) K-Means -80 -60 -40 -20 0 20 40 60 -80 -60 -40 -20 020 40 60  
+
+> 12345678910
+
+(c) KKM -80 -60 -40 -20 0 20 40 60 -80 -60 -40 -20 020 40 60  
+
+> 0123456789
+
+(d) RKM -80 -60 -40 -20 0 20 40 60 -80 -60 -40 -20 020 40 60 
+
+> 12345678910
+
+(e) CDKM -80 -60 -40 -20 0 20 40 60 -80 -60 -40 -20 020 40 60  
+
+> 0123456789
+
+(f) K-sum -80 -60 -40 -20 0 20 40 60 -80 -60 -40 -20 020 40 60  
+
+> 0123456789
+
+(g) K-sum-x -80 -60 -40 -20 0 20 40 60 -80 -60 -40 -20 020 40 60  
+
+> 12345678910
+
+(h) Ours 
+
+Figure 4. T-SNE Visualization of the clustering effect of our method and six comparison methods on the USPS database. 
+
+A.6. Parameter analysis 
+
+In Figure 5, we further discuss the impact of the parameter λ associated with the balanced regularization term on the clustering performance across different datasets. We selected four datasets - CMUPIE, digits, olivetti and Palm - to investigate this relationship. The results indicate that the clustering performance exhibits varying trends as a function of λ for the different datasets. However, a emerges where the clustering performance first increases and then decreases as λ is increased. This suggests that the selection of an appropriate value for λ is crucial, as overly large or small values can lead to suboptimal clustering outcomes. The observed trends highlight the importance of dataset-specific parameter tuning to achieve the best clustering performance. The careful selection of the λ parameter, which controls the sparsity and regularization of the model, plays a significant role in the effectiveness of the clustering algorithms across diverse data domains. 13 Unified K-Means Clustering with Label-Guided Manifold Learning 
+
+A.7. Convergence 
+
+As shown in Figure 6, our method exhibits rapid convergence on the four evaluated datasets. The final objective function values reach a balanced and stable state, and the clustering performance also gradually stabilizes with increasing iteration counts. This observation demonstrates the strong convergence properties of our algorithm and the effectiveness of the optimization process underlying our algorithm. 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 100.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 
+
+> clustering performance
+> ACC NMI Purity
+
+(a) CMUPIE 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 100.1 0.2 0.3 0.4 0.5 0.6 0.7  
+
+> clustering performance
+> ACC NMI Purity
+
+(b) digits 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 100.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8  
+
+> clustering performance
+> ACC NMI Purity
+
+(c) olivetti 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 100.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1 
+
+> clustering performance
+> ACC NMI Purity
+
+(d) palm 
+
+Figure 5. The evaluations of clustering performance with parameter λ on CMUPIE and digits datasets. 0 2 4 6 8 10 iteration 1.7 1.8 1.9 22.1 2.2 2.3 2.4 Objective Loss 10 500.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 Clustering performance Obejctive loss ACC NMI Purity 
+
+(a) CMUPIE 0 2 4 6 8 10 iteration 3.04 3.06 3.08 3.1 3.12 3.14 3.16 3.18 Objective Loss 10 600.1 0.2 0.3 0.4 0.5 0.6 0.7 Clustering performance Obejctive loss ACC NMI Purity (b) digits 0 2 4 6 8 10 iteration 1.3 1.35 1.4 1.45 1.5 1.55 1.6 Objective Loss 10 500.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 Clustering performance Obejctive loss ACC NMI Purity (c) olivetti 0 2 4 6 8 10 iteration 345678Objective Loss 10 400.2 0.4 0.6 0.8 1Clustering performance Obejctive loss ACC NMI Purity (d) palm 
+
+Figure 6. Objective loss and clustering performance with iterations on CMUPIE and digits datasets. 
+
+14

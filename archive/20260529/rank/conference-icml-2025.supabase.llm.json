@@ -1,0 +1,554 @@
+{
+  "top_k": 200,
+  "generated_at": "2026-05-29T03:10:50.263131+00:00",
+  "papers": [
+    {
+      "id": "openreview-icml-2025-eanuqhf0tx",
+      "source": "ICML-2025-Accepted",
+      "title": "Algorithms and Hardness for Active Learning on Graphs",
+      "abstract": "We study the offline active learning problem on graphs. In this problem, one seeks to select k vertices whose labels are best suited for predicting the labels of all the other vertices in the graph.\nGuillory and Bilmes (Guillory & Bilmes, 2009) introduced a natural theoretical model motivated by a label smoothness assumption. Prior to our work, algorithms with theoretical guarantees were only known for restricted graph types such as trees (Cesa-Bianchi et al., 2010) despite the models simplicity. We present the first O(log n)-resource augmented algorithm for general weighted graphs. To complement our algorithm, we show constant hardness of approximation.",
+      "authors": [
+        "Vincent Cohen-Addad",
+        "Silvio Lattanzi",
+        "Simon Meierhans"
+      ],
+      "primary_category": "graph",
+      "categories": [
+        "graph",
+        "active learning",
+        "label selection",
+        "resource augmented algorithms",
+        "approximation algorithms"
+      ],
+      "published": "2025-05-01T13:12:39.889+00:00",
+      "link": "https://openreview.net/forum?id=EAnuqHF0tx",
+      "pdf_url": null,
+      "tags": [
+        "keyword:ac",
+        "query:ac"
+      ]
+    },
+    {
+      "id": "openreview-icml-2025-yd9zoquday",
+      "source": "ICML-2025-Accepted",
+      "title": "Unified K-Means Clustering with Label-Guided Manifold Learning",
+      "abstract": "K-Means clustering is a classical and effective unsupervised learning method attributed to its simplicity and efficiency. However, it faces notable challenges, including sensitivity to random initial centroid selection, a limited ability to discover the intrinsic manifold structures within nonlinear datasets, and difficulty in achieving balanced clustering in practical scenarios. To overcome these weaknesses, we introduce a novel framework for K-Means that leverages manifold learning. This approach eliminates the need for centroid calculation and utilizes a cluster indicator matrix to align the manifold structures, thereby enhancing clustering accuracy. Beyond the traditional Euclidean distance, our model incorporates Gaussian kernel distance, K-nearest neighbor distance, and low-pass filtering distance to effectively manage data that is not linearly separable. Furthermore, we introduce a balanced regularizer to achieve balanced clustering results. The detailed experimental results demonstrate the efficacy of our proposed methodology.",
+      "authors": [
+        "Qianqian Wang",
+        "Mengping Jiang",
+        "Zhengming Ding",
+        "Quanxue Gao"
+      ],
+      "primary_category": "Balanced clustering",
+      "categories": [
+        "Balanced clustering",
+        "unsupervised learning",
+        "low-pass filtering distance."
+      ],
+      "published": "2025-05-01T13:12:39.678+00:00",
+      "link": "https://openreview.net/forum?id=YD9ZoqUDAY",
+      "pdf_url": null,
+      "tags": [
+        "keyword:ac",
+        "query:ac"
+      ]
+    },
+    {
+      "id": "openreview-icml-2025-9upcp3j62m",
+      "source": "ICML-2025-Accepted",
+      "title": "Clustering via Self-Supervised Diffusion",
+      "abstract": "Diffusion models, widely recognized for their success in generative tasks, have not yet been applied to clustering. We introduce Clustering via Diffusion (CLUDI), a self-supervised framework that combines the generative power of diffusion models with pre-trained Vision Transformer features to achieve robust and accurate clustering. CLUDI is trained via a teacher–student paradigm: the teacher uses stochastic diffusion-based sampling to produce diverse cluster assignments, which the student refines into stable predictions. This stochasticity acts as a novel data augmentation strategy, enabling CLUDI to uncover intricate structures in high-dimensional data. Extensive evaluations on challenging datasets demonstrate that CLUDI achieves state-of-the-art performance in unsupervised classification, setting new benchmarks in clustering robustness and adaptability to complex data distributions.",
+      "authors": [
+        "Roy Uziel",
+        "Irit Chelly",
+        "Oren Freifeld",
+        "Ari Pakman"
+      ],
+      "primary_category": "Self-supervised",
+      "categories": [
+        "Self-supervised",
+        "Clustering",
+        "Diffusion"
+      ],
+      "published": "2025-05-01T13:18:36.809+00:00",
+      "link": "https://openreview.net/forum?id=9uPCP3j62m",
+      "pdf_url": null,
+      "tags": [
+        "keyword:ac",
+        "query:ac"
+      ]
+    },
+    {
+      "id": "openreview-icml-2025-fcm4laclih",
+      "source": "ICML-2025-Accepted",
+      "title": "Synthesizing Privacy-Preserving Text Data via Finetuning *without* Finetuning Billion-Scale LLMs",
+      "abstract": "Synthetic data offers a promising path to train models while preserving data privacy. Differentially private (DP) finetuning of large language models (LLMs) as data generator is effective, but is impractical when computation resources are limited. Meanwhile, prompt-based methods such as private evolution depend heavily on the manual prompts, and ineffectively use private information in their iterative data selection process. To overcome these limitations, we propose CTCL (Data Synthesis with **C**on**T**rollability and **CL**ustering), a novel framework for generating privacy-preserving synthetic data without extensive prompt engineering or billion-scale LLM finetuning. CTCL pretrains a lightweight 140M conditional generator and a  clustering-based topic model on large-scale public data. To further adapt to the private domain, the generator is DP finetuned on private data for fine-grained textual information, while the topic model extracts a DP histogram representing distributional information. The DP generator then samples according to the DP histogram to synthesize a desired number of data examples. Evaluation across five diverse domains demonstrates the effectiveness of our framework, particularly in the strong privacy regime. Systematic ablation validates the design of each framework component and highlights the scalability of our approach.",
+      "authors": [
+        "Bowen Tan",
+        "Zheng Xu",
+        "Eric P. Xing",
+        "Zhiting Hu",
+        "Shanshan Wu"
+      ],
+      "primary_category": "synthetic data",
+      "categories": [
+        "synthetic data",
+        "language model",
+        "differential privacy"
+      ],
+      "published": "2025-05-01T13:20:58.5+00:00",
+      "link": "https://openreview.net/forum?id=FCm4laCLiH",
+      "pdf_url": null,
+      "tags": [
+        "keyword:ac"
+      ]
+    },
+    {
+      "id": "openreview-icml-2025-99zsyzpuqp",
+      "source": "ICML-2025-Accepted",
+      "title": "Clustering Items through Bandit Feedback: Finding the Right Feature out of Many",
+      "abstract": "We study the problem of clustering a set of items based on bandit feedback. Each of the $n$ items is characterized by a feature vector, with a possibly large dimension $d$. The items are  partitioned into two unknown groups, such that items within the same group share the same feature vector. We consider a sequential and adaptive setting in which, at each round, the learner selects one item and one feature, then observes a noisy evaluation of the item's feature. The learner's objective is to recover the correct partition of the items, while keeping the number of observations as small as possible. \nWe provide an algorithm which relies on finding a relevant feature for the clustering task, leveraging the Sequential Halving algorithm. With probability at least $1-\\delta$, we obtain an accurate recovery of the partition and derive an upper bound on the required budget . Furthermore, we derive an instance-dependent lower bound, which is tight in some relevant cases.",
+      "authors": [
+        "Maximilian Graf",
+        "Thuot Victor",
+        "Nicolas Verzelen"
+      ],
+      "primary_category": "clustering",
+      "categories": [
+        "clustering",
+        "bandit theory",
+        "pure exploration",
+        "information-theoretic bounds",
+        "machine learning"
+      ],
+      "published": "2025-05-01T13:18:59.377+00:00",
+      "link": "https://openreview.net/forum?id=99zsyZpUqp",
+      "pdf_url": null,
+      "tags": [
+        "query:ac"
+      ]
+    }
+  ],
+  "queries": [
+    {
+      "type": "intent_query",
+      "tag": "ac",
+      "paper_tag": "query:ac",
+      "query_text": "Active learning clustering methods that leverage large language models",
+      "sim_scores": {
+        "openreview-icml-2025-9upcp3j62m": {
+          "score": 0.015873015873015872,
+          "rank": 3
+        },
+        "openreview-icml-2025-yd9zoquday": {
+          "score": 0.014925373134328358,
+          "rank": 7
+        },
+        "openreview-icml-2025-99zsyzpuqp": {
+          "score": 0.010416666666666666,
+          "rank": 36
+        }
+      },
+      "ranked": [
+        {
+          "paper_id": "openreview-icml-2025-9upcp3j62m",
+          "score": 0.73604826546003,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-icml-2025-fcm4laclih",
+          "score": 0.73604826546003,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-icml-2025-99zsyzpuqp",
+          "score": 0.5213675213675214,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-icml-2025-eanuqhf0tx",
+          "score": 0.46719946719946726,
+          "star_rating": 3
+        },
+        {
+          "paper_id": "openreview-icml-2025-yd9zoquday",
+          "score": 0.0483743061062648,
+          "star_rating": 2
+        }
+      ]
+    },
+    {
+      "type": "intent_query",
+      "tag": "ac",
+      "paper_tag": "query:ac",
+      "query_text": "clustering base LLM active learning",
+      "sim_scores": {
+        "openreview-icml-2025-9upcp3j62m": {
+          "score": 0.016129032258064516,
+          "rank": 2
+        },
+        "openreview-icml-2025-yd9zoquday": {
+          "score": 0.013888888888888888,
+          "rank": 12
+        },
+        "openreview-icml-2025-99zsyzpuqp": {
+          "score": 0.013333333333333334,
+          "rank": 15
+        },
+        "openreview-icml-2025-eanuqhf0tx": {
+          "score": 0.011235955056179775,
+          "rank": 29
+        }
+      },
+      "ranked": [
+        {
+          "paper_id": "openreview-icml-2025-99zsyzpuqp",
+          "score": 0.7703788748564866,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-icml-2025-yd9zoquday",
+          "score": 0.702712746191007,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-icml-2025-eanuqhf0tx",
+          "score": 0.6388587937883712,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-icml-2025-9upcp3j62m",
+          "score": 0.5213675213675214,
+          "star_rating": 4
+        },
+        {
+          "paper_id": "openreview-icml-2025-fcm4laclih",
+          "score": 0.49392712550607265,
+          "star_rating": 3
+        }
+      ]
+    },
+    {
+      "type": "keyword",
+      "tag": "ac",
+      "paper_tag": "keyword:ac",
+      "query_text": "LLM",
+      "sim_scores": {}
+    },
+    {
+      "type": "keyword",
+      "tag": "ac",
+      "paper_tag": "keyword:ac",
+      "query_text": "active learning",
+      "sim_scores": {
+        "openreview-icml-2025-eanuqhf0tx": {
+          "score": 0.015151515151515152,
+          "rank": 6
+        }
+      }
+    },
+    {
+      "type": "keyword",
+      "tag": "ac",
+      "paper_tag": "keyword:ac",
+      "query_text": "active learning clustering",
+      "sim_scores": {}
+    },
+    {
+      "type": "keyword",
+      "tag": "ac",
+      "paper_tag": "keyword:ac",
+      "query_text": "active learning clustering with large language models",
+      "sim_scores": {
+        "openreview-icml-2025-9upcp3j62m": {
+          "score": 0.015873015873015872,
+          "rank": 3
+        },
+        "openreview-icml-2025-yd9zoquday": {
+          "score": 0.014925373134328358,
+          "rank": 7
+        }
+      }
+    },
+    {
+      "type": "keyword",
+      "tag": "ac",
+      "paper_tag": "keyword:ac",
+      "query_text": "c",
+      "sim_scores": {
+        "openreview-icml-2025-fcm4laclih": {
+          "score": 0.010309278350515464,
+          "rank": 37
+        }
+      }
+    },
+    {
+      "type": "keyword",
+      "tag": "ac",
+      "paper_tag": "keyword:ac",
+      "query_text": "clustering",
+      "sim_scores": {
+        "openreview-icml-2025-yd9zoquday": {
+          "score": 0.012987012987012988,
+          "rank": 17
+        },
+        "openreview-icml-2025-9upcp3j62m": {
+          "score": 0.012048192771084338,
+          "rank": 23
+        }
+      }
+    },
+    {
+      "type": "keyword",
+      "tag": "ac",
+      "paper_tag": "keyword:ac",
+      "query_text": "clustering using large language models",
+      "sim_scores": {
+        "openreview-icml-2025-yd9zoquday": {
+          "score": 0.015873015873015872,
+          "rank": 3
+        },
+        "openreview-icml-2025-9upcp3j62m": {
+          "score": 0.015625,
+          "rank": 4
+        }
+      }
+    },
+    {
+      "type": "keyword",
+      "tag": "ac",
+      "paper_tag": "keyword:ac",
+      "query_text": "d",
+      "sim_scores": {}
+    },
+    {
+      "type": "keyword",
+      "tag": "ac",
+      "paper_tag": "keyword:ac",
+      "query_text": "large language model clustering",
+      "sim_scores": {
+        "openreview-icml-2025-fcm4laclih": {
+          "score": 0.015625,
+          "rank": 4
+        }
+      }
+    }
+  ],
+  "global_candidate_ids": [
+    "openreview-icml-2025-hslozrxzxl",
+    "openreview-icml-2025-j7tkspqotr",
+    "openreview-icml-2025-9upcp3j62m",
+    "openreview-icml-2025-wntgpncrxk",
+    "openreview-icml-2025-s1eimzs5id",
+    "openreview-icml-2025-vzhdxrnfpu",
+    "openreview-icml-2025-rm2whra1fb",
+    "openreview-icml-2025-y6at5rlrlv",
+    "openreview-icml-2025-f8ntpaz5hh",
+    "openreview-icml-2025-lcfpwxymvt",
+    "openreview-icml-2025-jimlk83nmv",
+    "openreview-icml-2025-9uby2pbfcf",
+    "openreview-icml-2025-t0x2vnbskt",
+    "openreview-icml-2025-oktw116wt2",
+    "openreview-icml-2025-dizitj8uen",
+    "openreview-icml-2025-zbbo19jldx",
+    "openreview-icml-2025-yd9zoquday",
+    "openreview-icml-2025-gtvw8co6wf",
+    "openreview-icml-2025-wsgpxqruth",
+    "openreview-icml-2025-efmajy8dvz",
+    "openreview-icml-2025-dfoqihukly",
+    "openreview-icml-2025-3goaybskfj",
+    "openreview-icml-2025-dzaqxnfkgg",
+    "openreview-icml-2025-6bjfle1f23",
+    "openreview-icml-2025-qwy6jia8os",
+    "openreview-icml-2025-fu527ycggw",
+    "openreview-icml-2025-urbvnjsgbe",
+    "openreview-icml-2025-k0haqhl87m",
+    "openreview-icml-2025-jpodvfyx2w",
+    "openreview-icml-2025-8te4dkyuex",
+    "openreview-icml-2025-0bsemzdzwr",
+    "openreview-icml-2025-x2xzidak4j",
+    "openreview-icml-2025-ub44gzjnhk",
+    "openreview-icml-2025-xagdsxajgf",
+    "openreview-icml-2025-38nh0tebxz",
+    "openreview-icml-2025-cerqdkplx7",
+    "openreview-icml-2025-m25t5ray43",
+    "openreview-icml-2025-pm8lucx6mb",
+    "openreview-icml-2025-ucn7dyya4h",
+    "openreview-icml-2025-19kqonoc2n",
+    "openreview-icml-2025-senvtfjhpr",
+    "openreview-icml-2025-svl9tiadwv",
+    "openreview-icml-2025-cymacpgddg",
+    "openreview-icml-2025-6udkbhc0mr",
+    "openreview-icml-2025-flkhxgtbj2",
+    "openreview-icml-2025-zjrid3p45t",
+    "openreview-icml-2025-tck4pv3vn4",
+    "openreview-icml-2025-1ouenfused",
+    "openreview-icml-2025-5g6lpr0dlx",
+    "openreview-icml-2025-ifoxz5h2gb",
+    "openreview-icml-2025-rgd7pomtdp",
+    "openreview-icml-2025-icybiagksr",
+    "openreview-icml-2025-fcz3jvzmtz",
+    "openreview-icml-2025-syldbsscu9",
+    "openreview-icml-2025-gkvirca8wa",
+    "openreview-icml-2025-ae5qnqxaxq",
+    "openreview-icml-2025-2xmoebpyv1",
+    "openreview-icml-2025-kgg1ndttmi",
+    "openreview-icml-2025-4wmzqaoyi4",
+    "openreview-icml-2025-6rnbm37sve",
+    "openreview-icml-2025-axu48nra2v",
+    "openreview-icml-2025-gt8jsefqas",
+    "openreview-icml-2025-wex0vl4c2y",
+    "openreview-icml-2025-fchigdcoow",
+    "openreview-icml-2025-70ygwpixbc",
+    "openreview-icml-2025-pajcdkknau",
+    "openreview-icml-2025-73fydmysdn",
+    "openreview-icml-2025-eanuqhf0tx",
+    "openreview-icml-2025-9oijvadhon",
+    "openreview-icml-2025-fcm4laclih",
+    "openreview-icml-2025-e02olebehe",
+    "openreview-icml-2025-cxjv23a8nm",
+    "openreview-icml-2025-psdwted0zz",
+    "openreview-icml-2025-jiffij5iv0",
+    "openreview-icml-2025-quecsemziy",
+    "openreview-icml-2025-c4eenwu9fe",
+    "openreview-icml-2025-clxlgpmd2v",
+    "openreview-icml-2025-4gwe7cmolh",
+    "openreview-icml-2025-tkuxfabpfq",
+    "openreview-icml-2025-clf25dahga",
+    "openreview-icml-2025-ltzeaql1r1",
+    "openreview-icml-2025-kbtgizdicq",
+    "openreview-icml-2025-4ufjbv6s4i",
+    "openreview-icml-2025-iyvcxu0rki",
+    "openreview-icml-2025-hlpwamq4wr",
+    "openreview-icml-2025-99zsyzpuqp",
+    "openreview-icml-2025-4uf0zelwye",
+    "openreview-icml-2025-ddvinygvuz",
+    "openreview-icml-2025-mdxarraty9",
+    "openreview-icml-2025-oq0t5bxilt",
+    "openreview-icml-2025-zuk00sasl6",
+    "openreview-icml-2025-ysrvf0tjvp",
+    "openreview-icml-2025-hnwcrtodd4",
+    "openreview-icml-2025-mahpzndus4",
+    "openreview-icml-2025-t9rkslsc00",
+    "openreview-icml-2025-staj9qya6l",
+    "openreview-icml-2025-0oshx1hisa",
+    "openreview-icml-2025-hhhcwcgym1",
+    "openreview-icml-2025-jgubm5hwcm",
+    "openreview-icml-2025-92obv5hagl",
+    "openreview-icml-2025-tfbibcvxkg",
+    "openreview-icml-2025-hwyisubbp7",
+    "openreview-icml-2025-wifl8pk6op",
+    "openreview-icml-2025-n52yyvewpa",
+    "openreview-icml-2025-0ysc6vs0y3",
+    "openreview-icml-2025-3xdfvqsvnm",
+    "openreview-icml-2025-k1lcmg2jqn",
+    "openreview-icml-2025-do1odzzyhr",
+    "openreview-icml-2025-ef1uhxznny",
+    "openreview-icml-2025-mkcnpnolmk",
+    "openreview-icml-2025-3xma8rdju2",
+    "openreview-icml-2025-prmxqhgjb1",
+    "openreview-icml-2025-tvdzlyvmiz",
+    "openreview-icml-2025-v2nv83q849",
+    "openreview-icml-2025-2hjcvtuovs",
+    "openreview-icml-2025-9uexqph078",
+    "openreview-icml-2025-kl7sbpfbsb",
+    "openreview-icml-2025-rqwexjucxm",
+    "openreview-icml-2025-6vsah1qbjb",
+    "openreview-icml-2025-e1e6t7khlr"
+  ],
+  "global_pool_lane_top_k": 30,
+  "global_pool_limit": 120,
+  "global_pool_guaranteed_per_lane": 2,
+  "global_pool_effective_size": 120,
+  "reranked_at": "2026-05-29T03:11:22.015551+00:00",
+  "llm_ranked": [
+    {
+      "paper_id": "openreview-icml-2025-eanuqhf0tx",
+      "score": 9.0,
+      "evidence_en": "directly addresses active learning on graphs",
+      "evidence_cn": "直接研究图上的主动学习问题",
+      "canonical_evidence": "直接研究图上的主动学习问题",
+      "tldr_en": "Provides the first O(log n)-resource augmented algorithm for offline active learning on general weighted graphs, with constant hardness of approximation.",
+      "tldr_cn": "该论文研究图上的离线主动学习问题，旨在选择最优顶点集以预测所有顶点标签。针对一般加权图，首次提出O(log n)资源增强算法，并证明了常数近似难度。这项工作为主动学习在复杂图结构上的应用奠定了理论基础，是主动学习领域的重要进展。",
+      "title_zh": "图上主动学习的算法与难度",
+      "motivation_cn": "现有主动学习算法仅对树等特殊图有理论保证，缺乏对一般加权图的算法。",
+      "method_cn": "提出首个针对一般加权图离线主动学习问题的O(log n)资源增强算法。",
+      "result_cn": "该算法具有对数近似比，同时证明了问题的常数难度下界。",
+      "conclusion_cn": "首次为一般图上的主动学习提供了理论保证和算法，推动了主动学习理论的发展。",
+      "matched_requirement_id": "req-1",
+      "matched_query_tag": "query:ac",
+      "matched_query_text": "d"
+    },
+    {
+      "paper_id": "openreview-icml-2025-99zsyzpuqp",
+      "score": 5.0,
+      "evidence_en": "Active clustering via bandit feedback: sequentially selects items and features to minimize observations while recovering clusters",
+      "evidence_cn": "利用赌博机反馈进行主动聚类：通过顺序选择物品和特征以减少观测次数",
+      "canonical_evidence": "利用赌博机反馈进行主动聚类：通过顺序选择物品和特征以减少观测次数",
+      "tldr_en": "Proposes an algorithm for clustering items using bandit feedback, actively selecting which items and features to query to efficiently recover the true partition, with theoretical guarantees.",
+      "tldr_cn": "针对带有高斯噪声的聚类问题，提出一种基于赌博机反馈的主动学习算法，在每一步选择物品和特征进行观测，利用序列消除算法找到相关特征，以最少观测次数恢复正确聚类划分。理论分析证明其样本复杂度最优。",
+      "title_zh": "通过赌博机反馈进行物品聚类：从众多特征中寻找正确特征",
+      "motivation_cn": "在特征维度高且观测成本高的场景下，需要主动选择特征来高效聚类。",
+      "method_cn": "利用序列消除算法在赌博机反馈下选择相关特征，逐步优化聚类。",
+      "result_cn": "算法能够以较少的观测次数恢复正确聚类，并具有理论保证。",
+      "conclusion_cn": "主动选择特征是降低聚类观测成本的有效策略。",
+      "matched_requirement_id": "req-composite-ac",
+      "matched_query_tag": "query:ac:composite",
+      "matched_query_text": "Papers central to 主动学习聚类相关论文，特别是利用大模型的方法, especially work that connects or combines: d; c; active learning clustering with large language models; clustering using large language models; clustering base LLM active learning; Active learning clustering methods that leverage large language models."
+    },
+    {
+      "paper_id": "openreview-icml-2025-yd9zoquday",
+      "score": 4.0,
+      "evidence_en": "proposes a new k-means clustering framework with manifold learning",
+      "evidence_cn": "提出一种结合流形学习的新K均值聚类框架",
+      "canonical_evidence": "提出一种结合流形学习的新K均值聚类框架",
+      "tldr_en": "Introduces a unified k-means clustering framework with label-guided manifold learning that eliminates centroid calculation and uses a cluster indicator matrix, improving clustering accuracy on nonlinear datasets.",
+      "tldr_cn": "该论文针对K均值聚类对初始质心敏感、难以发现非线性流形结构等问题，提出一种结合流形学习的统一K均值聚类框架。该方法消除质心计算，利用聚类指示矩阵对齐流形结构，并引入高斯核距离和K近邻等机制。实验表明该方法在非线性数据集上提升了聚类准确性，为传统聚类算法提供了新的改进方向。",
+      "title_zh": "基于标签引导流形学习的统一K均值聚类",
+      "motivation_cn": "针对K均值聚类对初始质心敏感、难以发现非线性流形结构以及聚类不平衡等问题，提出改进方法。",
+      "method_cn": "提出无需质心计算的K均值框架，利用聚类指示矩阵对齐流形结构，并引入高斯核距离和K近邻。",
+      "result_cn": "在多个非线性数据集上，新方法相比传统K均值聚类提升了聚类准确性和平衡性。",
+      "conclusion_cn": "该工作增强了K均值聚类在复杂数据上的适用性，为结合流形学习的聚类算法提供了新思路。",
+      "matched_requirement_id": "req-2",
+      "matched_query_tag": "query:ac",
+      "matched_query_text": "c"
+    },
+    {
+      "paper_id": "openreview-icml-2025-fcm4laclih",
+      "score": 4.0,
+      "evidence_en": "uses clustering in data synthesis framework",
+      "evidence_cn": "在数据合成框架中使用聚类",
+      "canonical_evidence": "在数据合成框架中使用聚类",
+      "tldr_en": "Proposes CTCL, a framework for privacy-preserving synthetic data generation that employs a lightweight conditional generator and clustering, avoiding billion-scale LLM finetuning.",
+      "tldr_cn": "该论文针对差分隐私微调大语言模型作为数据生成器计算成本高的问题，提出CTCL框架。通过预训练一个轻量级条件生成器，并引入聚类机制来控制合成数据的质量，无需提示工程或微调数十亿参数模型。实验表明该方法在隐私保护下生成的数据有效性高，为合成数据生成提供了高效实用的方案。",
+      "title_zh": "无需微调十亿级大语言模型的隐私保护文本数据合成",
+      "motivation_cn": "为了解决差分隐私微调大语言模型计算成本高、提示工程依赖手动设计的问题。",
+      "method_cn": "提出CTCL框架，预训练轻量级条件生成器，并利用聚类实现可控的数据合成。",
+      "result_cn": "在多个隐私保护数据生成任务上，CTCL生成的数据有效支持下游模型训练，且计算开销低。",
+      "conclusion_cn": "CTCL为资源受限场景下的隐私保护数据合成提供了一种高效且实用的方法。",
+      "matched_requirement_id": "req-2",
+      "matched_query_tag": "query:ac",
+      "matched_query_text": "c"
+    },
+    {
+      "paper_id": "openreview-icml-2025-9upcp3j62m",
+      "score": 4.0,
+      "evidence_en": "proposes a self-supervised clustering framework using diffusion models",
+      "evidence_cn": "提出一种利用扩散模型的自监督聚类框架",
+      "canonical_evidence": "提出一种利用扩散模型的自监督聚类框架",
+      "tldr_en": "Introduces CLUDI, a self-supervised clustering framework that combines diffusion models with vision transformer features, achieving state-of-the-art unsupervised classification.",
+      "tldr_cn": "该论文探索将扩散模型应用于聚类任务，提出自监督聚类框架CLUDI。通过教师-学生范式，教师使用随机扩散采样产生多样化聚类分配，学生精炼为稳定预测。该方法在多个高维数据集上取得最先进的无监督分类性能，展示了扩散模型在聚类中的巨大潜力。",
+      "title_zh": "基于自监督扩散的聚类",
+      "motivation_cn": "扩散模型在生成任务中成功，但尚未被应用于聚类任务。",
+      "method_cn": "提出CLUDI，结合扩散模型和Vision Transformer特征，通过教师-学生范式进行自监督聚类。",
+      "result_cn": "在多个挑战性数据集上，CLUDI在无监督分类任务中达到最先进水平。",
+      "conclusion_cn": "该工作首次将扩散模型成功应用于聚类，为无监督学习开辟了新方向。",
+      "matched_requirement_id": "req-2",
+      "matched_query_tag": "query:ac",
+      "matched_query_text": "c"
+    }
+  ],
+  "llm_ranked_at": "2026-05-29T03:12:31.236347+00:00",
+  "display_min_score": 4.0,
+  "pruned_at": "2026-05-29T03:12:31.274398+00:00"
+}
