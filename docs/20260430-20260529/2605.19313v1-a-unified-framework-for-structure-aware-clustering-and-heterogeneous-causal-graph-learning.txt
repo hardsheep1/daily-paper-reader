@@ -1,0 +1,1307 @@
+Title: A Unified Framework for Structure-Aware Clustering and Heterogeneous Causal Graph Learning
+
+URL Source: https://arxiv.org/pdf/2605.19313v1
+
+Published Time: Wed, 20 May 2026 00:43:39 GMT
+
+Number of Pages: 40
+
+Markdown Content:
+# DAG-based Penalized Clustering 
+
+Honglin Du a and Muxuan Liang b Xiang Zhong ca Department of Industrial and Systems Engineering, University of Florida, Gainesville, FL 32611, USA  
+
+> b
+
+Department of Biostatistics, MD Anderson Cancer Center, Houston, TX 77030, USA 
+
+c Department of Industrial and Systems Engineering, University of Florida, Gainesville, FL 32611, USA 
+
+A Unified Framework for Structure-Aware Clustering and Heterogeneous Causal Graph Learning 
+
+Abstract 
+
+In complex multivariate systems, interactions among variables are defined by depen-dency structures, often encoded as directed acyclic graphs (DAGs). However, depen-dency structures can vary across subjects, and ignoring this structural heterogeneity introduces bias and obscures subpopulation-specific dependencies. To address this, we propose Directed Acyclic Graph–based Dependency Clustering via Alternating Direc-tion Method of Multipliers (DAG-DC-ADMM), a unified framework built upon Struc-tural Equation Modeling (SEM) that jointly learns cluster assignments and cluster-specific dependency structures. We encode acyclicity via a smooth constraint and integrate a groupwise truncated Lasso fusion penalty (gTLP) to cluster subjects based on their structural similarity. This yields a nonconvex optimization problem that in-corporates sparsity, acyclicity, and structural consensus constraints. We address the nonconvexity by using the augmented Lagrangian method and solve it with an adapted version of the Alternating Direction Method of Multipliers (ADMM) for difference-of-convex programs. For certain graph structures, such as upper triangular adjacency matrices, our algorithm is guaranteed to converge to a Karush-Kuhn-Tucker (KKT) point. Experiments demonstrate that our method recovers cluster-specific causal de-pendency structures with a high true positive rate and a low false discovery rate. This capability enables the robust discovery of heterogeneous dependencies across subjects where the subpopulation label is unknown. 
+
+Keywords: Directed Acyclic Graphs, Heterogeneous Causal Graphs, Structure-aware Clus-tering, Structural Equation Modeling. 
+
+# 1 Introduction 
+
+In many multivariate systems where repeated measurements of individual variables are available, understanding how variables influence or depend on one another, i.e., depen-dency structures among variables, is crucial to uncovering the true mechanisms that drive 1
+
+> arXiv:2605.19313v1 [stat.ML] 19 May 2026
+
+the observed behavior. In this work, we define dependency structures as the patterns of conditional dependencies that characterize these influences. They are commonly encoded as directed acyclic graphs (DAGs) (Williams et al., 2018). Properly estimating a DAG for a multivariate system often requires that samples be structurally homogeneous. However, this assumption can be violated, especially when data or measurements come from a mixture of unlabeled subpopulations or subjects. Estimating a single dependency structure from such data can introduce bias, leading to spurious connections or omission of true dependencies. In this work, we propose a unified framework that can automatically cluster subjects based on their underlying heterogeneous dependency structures and learn heterogeneous DAGs. Towards heterogeneous causal graph learning, a naive solution is a two-step approach that first partitions subjects into homogeneous clusters and then learns a DAG separately in each cluster. However, a partition based on statistics such as means does not guarantee homogeneity in dependency structures. Consequently, traditional clustering methods, e.g., 
+
+K-means (Lloyd, 1982), or hierarchical clustering (Murtagh and Contreras, 2012a; Jain, 2010) built upon these metrics may fail to distinguish distinct dependency patterns. An alternative two-step solution is to estimate the dependency structure for each subject, and then perform clustering based on these structures. Yet, in the settings where only a few measurements are collected per subject, the dependency structure estimated using limited data is susceptible to a lack of power. To overcome these limitations, we propose a unified approach that groups subjects by their dependency-structure similarity to borrow information across subjects and subsequently gain efficiency of estimating heterogeneous dependency structures. Combining clustering with dependency-structure learning is challenging. First, for prob-lem formulation, in a unified framework, clustering and structure learning are not treated as separate or sequential tasks. We handle this by fusing an unsupervised clustering task with a supervised model-based structure learning task into a single structure-aware clustering problem in which cluster assignments are driven by similarity in the learned dependency structures. The dependency structures are parameterized using Structural Equation Mod-els (SEMs) (Deng et al., 2018), which express each feature as a linear function of its direct causes plus an independent disturbance term. This parametrization yields parameters that map transparently to causal effects. Crucially, the SEM parameterization allows us to 2define a closed-form and differentiable loss function, i.e., the reconstruction loss, which is combined with the groupwise truncated Lasso fusion penalty (gTLP), to form an objective function that encourages parameters to not only minimize loss but also form compact and well-separated clusters. Furthermore, to ensure the learned structures are valid DAGs, we adopt the smooth acyclicity constraint proposed in NOTEARS (Non-combinatorial Opti-mization via Trace Exponential and Augmented Lagrangian for Structure Learning) (Zheng et al., 2018), which enables gradient-based optimization over the space of DAGs, obviating a combinatorial search. We also impose a graph sparsity penalty to reduce spurious edges and enhance the interpretability of the learned graphs. This novel formulation simulta-neously handles cluster assignments and causal-structure learning without sacrificing the performance of either task. Second, the resulting optimization problem is inherently nonconvex in the objective function and the domain, and demands an algorithm that guarantees solutions with prov-able convergence. To solve this problem, we first address the nonconvexity term introduced by gTLP in the objective function. Following the difference-of-convex function algorithm (Wu et al., 2016), we express the objective function as the difference of two convex functions. Then, we construct a convex surrogate subproblem by replacing the subtracted convex func-tion with its first-order affine minorization. Next, we incorporate the acyclicity constraints into the objective function via the augmented Lagrangian method, which employs Lagrange multipliers and quadratic penalties. Finally, we solve the resulting unconstrained difference-of-convex program with the Alternating Direction Method of Multipliers (ADMM) method. We refer to this as Directed Acyclic Graph–based Dependency Clustering via Alternating Direction Method of Multipliers (DAG-DC-ADMM), a unified structure-aware clustering and causal graph learning framework. Under standard regularity conditions, we show that DAG-DC-ADMM converges to a stationary point of the augmented Lagrangian problem of the original constrained non-convex optimization. Furthermore, when the adjacency matrices are upper-triangular, our method is guaranteed to converge to a Karush-Kuhn-Tucker (KKT) point of the corre-sponding nonconvex optimization problem. Numerical studies show that DAG-DC-ADMM consistently achieves superior performance in structure recovery over population-level and individual-subject-based learning across various problem settings. In the case study, by 3jointly recovering cluster assignments and cluster-specific causal structures of human cell responses to biochemical perturbations, our method successfully identifies structural het-erogeneity that is masked by methods based on homogeneity assumption. In summary, our contributions include 1) a structure-aware clustering and heterogeneous causal graph learning framework capable of capturing causal heterogeneity in complex systems, and 2) an effective algorithm to solve the proposed nonconvex optimization problem, together, offering a basis for dependency-driven clustering across diverse applications. In summary, this paper makes three main contributions. First, we introduce a structure-aware clustering perspective in which subjects are grouped according to similarities in their causal dependency structures rather than distance-based similarity in observed features or summary statistics. Second, we develop a unified DAG-constrained optimization frame-work that jointly estimates subject-specific dependency structures and induces clusters through a groupwise truncated Lasso fusion penalty, thereby avoiding the potential discon-nect between clustering and structure learning in two-stage procedures. Third, we design a DC-ADMM algorithm for the resulting nonconvex problem and establish its convergence properties under appropriate regularity conditions. Numerical experiments and a real-data case study further show that the proposed framework can recover heterogeneous dependency patterns and produce interpretable subgroup-specific causal structures. The remainder of this paper is organized as follows. Section 2 reviews relevant causal dependency structure learning and clustering methods. Section 3 introduces our proposed framework, which jointly estimates cluster assignments and dependency structures using the ADMM optimization strategy. Section 4 presents numerical experiments that evaluate the performance of our method under various scenarios. Section 5 provides a real-world case study to demonstrate the practical utility of our approach. Section 6 concludes the paper and outlines potential directions for future research. 
+
+# 2 Literature Review 
+
+We review the current state and limitations of causal dependency structure learning and clustering based on dependency-structure heterogeneity to position our proposed DAG-DC-ADMM framework. 4Causal structure learning aims to uncover dependency structures among variables (Pearl, 2009). This field evolves through methods such as SEM, Granger causality in time series (Eichler, 2012), Bayesian networks as probabilistic DAG representations (Kitson et al., 2023), and nonlinear approaches based on kernel functions and neural networks (Marinazzo et al., 2008; Ke et al., 2019). Among these methods, the dependency structure is commonly represented as a DAG. However, imposing acyclicity on DAGs traditionally requires combi-natorial search, which is an NP-hard problem (Chickering, 1996). To address this challenge, Zheng et al. (2018) reformulates the combinatorial acyclicity constraint as a smooth penalty, enabling scalable gradient-based optimization over the space of DAGs. This reformulation has been subsequently extended to different applications, such as nonlinear models to cap-ture complex dependencies (Zheng et al., 2020), dynamic causal structures in time series data (Pamfil et al., 2020), and graph neural network-based formulations that accommodate mixed variable types (Yu et al., 2019). Despite the progress in continuous-optimization approaches to causal structure learning, these methods typically assume a single causal model and thus a fixed joint distribution for all observations. As a result, they often struggle to recover dependency structures in hetero-geneous settings (Huang et al., 2020). This motivates an interest in learning heterogeneous dependency structures. Approaches in this direction include the Joint Graphical Lasso (Danaher et al., 2014), which jointly estimates multiple pre-specified Gaussian graphical models by encouraging shared sparsity or edge similarity across groups. Beyond settings with known group structure, mixture-based approaches have been proposed to capture la-tent heterogeneity. Early work by Thiesson et al. (1998) uses mixture models to learn mixtures of DAGs via the Expectation–Maximization (EM) algorithm, assigning each sub-ject to the component DAG that best explains it. More recent advances further investigate causal discovery under mixtures of DAGs, including methods for identifying causal relations from heterogeneous or nonstationary data (Strobl, 2023) and theoretical analysis of iden-tifiability and separability conditions in mixture settings (Varici et al., 2024). In parallel, other works focus on modeling subject-level heterogeneity in causal structures. For example, Li et al. (2018) propose mixed-effects structural equation models to learn subject-specific DAGs by incorporating both shared and individual-specific components. From a Bayesian perspective, Castelletti and Consonni (2023) develop nonparametric mixture models of 5Gaussian DAGs to capture heterogeneous causal effects across latent subpopulations. In psychometrics, latent-class SEMs cluster individuals based on differences in SEM param-eters, thereby capturing subgroups with distinct dependency structures (Muth´ en, 2002). These methods are parametric but usually require pre-specifying the number of mixture components or relying on known group labels (Drton and Maathuis, 2017; Huang et al., 2020; Glymour et al., 2019). This motivates an alternative optimization-based formulation that can connect heterogeneous DAG learning with data-driven clustering. When the data are unlabeled, unsupervised learning approaches are typically used. Traditional clustering algorithms such as K-means and hierarchical clustering operate on geometric similarity (Jain, 2010; Murtagh and Contreras, 2012a). These methods do not rely on any parametric model assumptions for the data-generating process, and instead define clusters implicitly through pairwise distances between data points, which is typically less efficient. This motivates a shift towards fusion-penalized parametric clustering formu-lations, beginning with the sum-of-norms (SON) approach (Pelckmans et al., 2005; Hocking et al., 2011). SON reformulates clustering by assigning each subject its own centroid and penalizing pairwise centroid differences with an ℓ2 fusion term. The fusion parameter con-trols how many centroids merge, mitigating the need to pre-specify the number of clusters. This formulation yields a convex optimization problem with a unique global optimal solu-tion. However, convex fusion penalties often over-shrink and introduce bias. This leads to penalized-regression clustering methods such as PRclust, which use nonconvex penalties like the grouped truncated Lasso to obtain sharper cluster boundaries to separate the clusters (Pan et al., 2013). Chi and Lange (2015) improve scalability by separating fusion and fidelity terms via variable-splitting methods, including the Alternating Minimization Algorithm and ADMM. Hallac et al. (2015) further extend this approach to graph-structured data with distributed ADMM updates. Despite the advances, these methods remain distance-based or centroid-based and do not model dependency structures among variables. Our research fills this gap, developing a unified parametric, structure-aware clustering framework building on recent advances in causal structure learning. Our proposed approach connects DAG-based causal discovery with unsupervised clustering and provides efficient solution approaches, charting a new direction for dependency-driven clustering. 63 Methodology 
+
+# 3.1 Problem Formulation 
+
+In this study, we consider general scenarios where each subject may have multiple measure-ments, such as longitudinal data generated from a time-homogeneous stochastic process or multiple independently drawn samples from the same experiment. Multiple measure-ments, such as longitudinal data or repeated measurements, are common in medical and engineering applications. Let {Xi}ni=1 denote the observed data from n subjects, where each subject Xi contains mi independent and identically distributed (i.i.d.) measurements in a d-dimensional space. The data matrix for subject i is 
+
+Xi =
+
+
+
+x(1 ,1)  
+
+> i
+
+x(1 ,2)  
+
+> i
+
+. . . x(1 ,d )
+
+> i
+
+x(2 ,1)  
+
+> i
+
+x(2 ,2)  
+
+> i
+
+. . . x(2 ,d )
+
+> i
+
+... ... . . . ...
+
+x(mi,1)  
+
+> i
+
+x(mi,2)  
+
+> i
+
+. . . x(mi,d )
+
+> i
+
+
+
+∈ Rmi×d. (1) Each Xi is modeled by a structural equation model (SEM): 
+
+Xi = XiWi + Zi, Xi, Zi ∈ Rmi×d, (2) where the adjacency matrix Wi ∈ Rd×d encodes the dependency structure among variables, and Zi collects the exogenous disturbance terms. Zi is assumed to have zero mean, i.e., 
+
+E[Zi] = 0 (Bollen and Pearl, 2013). In this work, we do not impose a specific parametric distribution on Zi. Instead, we assume that the disturbance terms arise from the same distributional family across subjects. This assumption reflects our modeling focus that subject-level heterogeneity is driven primarily by differences in the structural matrices Wi,rather than from differences in the exogenous disturbance terms. Our goal is to cluster sub-jects based on their underlying dependency structures while simultaneously recovering a set of distinct causal adjacency matrices Wi. We define two subjects as belonging to the same cluster if their causal adjacency matrices Wi and Wj are identical. Let W = {Wi}ni=1 de-note the collection of adjacency matrices. The objective function of the structural learning problem is then formulated as: min 
+
+> W
+> n
+
+X
+
+> i=1
+
+12mi
+
+∥Xi − XiWi∥2 
+
+> F
+
++ λ1
+
+> n
+
+X
+
+> i=1
+
+∥Wi∥1. (3) 7The first term measures the reconstruction loss, and the second term encourages sparsity in each Wi. The nonnegative parameter λ1 serves as the regularization weight that controls the sparsity of each adjacency matrix Wi. In addition to the reconstruction loss, other differentiable loss functions are also compatible with our framework, such as the negative log-likelihood for additive SEMs with Gaussian errors (B¨ uhlmann et al., 2014), or the logistic loss for generalized linear models (Zheng et al., 2020). The formulation (3) entails estimating subject-specific Wi individually, which may lead to a loss in efficiency if some subjects actually share common adjacency matrices or if mi
+
+is relatively small. To improve estimation efficiency and better identify clusters that share similar dependency structures, we estimate W by minimizing a penalized loss function that includes a fusion term: min 
+
+> W
+> n
+
+X
+
+> i=1
+
+12mi
+
+∥Xi − XiWi∥2 
+
+> F
+
++ λ1
+
+> n
+
+X
+
+> i=1
+
+∥Wi∥1 + λ2P (W). (4) The term P (W) is the fusion penalty that promotes clustering by penalizing pairwise differ-ences among the {Wi}ni=1 . Assigning each subject its own Wi minimizes the reconstruction loss but can lead to poor generalization and interpretability. Conversely, forcing all Wi to be identical ignores structural heterogeneity and risks underfitting. The parameter λ2 gov-erns this balance: a larger λ2 promotes fewer clusters, while smaller values allow more variation across clusters. To avoid over-shrinking distinct dependencies, we use a nonconvex gTLP for P (W): 
+
+P (W) = X
+
+> i<j
+
+TLP  ∥Wi − Wj ∥F ; τ ,
+
+where the TLP is given by TLP( β; τ ) = min( |β|, τ ) for a scalar β and a threshold parameter 
+
+τ > 0 (Wu et al., 2016). This threshold τ controls the extent of the fusion penalty: differ-ences smaller than τ are penalized proportionally as an ℓ1-penalty, encouraging the fusion of similar Wi. In contrast, larger differences are capped at τ , allowing dissimilar matrices to remain distinct. We introduce auxiliary variables θij = Wi − Wj , 1 ≤ i < j ≤ n,which represent pairwise differences between adjacency matrices, and are referred to as the consensus constraints. The auxiliary variables θij separate the representation of pair-wise structural differences from the subject-specific adjacency matrices. This reformulation makes the subsequent optimization easier to organize by treating structural estimation and pairwise fusion as separate components. 8We also enforce acyclicity on the adjacency matrix of each subject to rule out feedback loops and retain a clear causal interpretation. Specifically, we require each Wi to be a DAG by imposing the smooth constraint: 
+
+h(Wi) = tr   exp( Wi ◦Wi) − d = 0 , i = 1 , . . . , n, 
+
+where ◦ denotes the Hadamard product and tr( ·) the matrix trace. This equality holds if and only if Wi is acyclic. Bringing together the reconstruction, sparsity, and clustering penalties, we arrive at the following constrained optimization problem over the adjacency matrices {Wi}ni=1 and their pairwise differences {θij }1≤i<j ≤n:min  
+
+> {W,θ}
+
+F(W, θ) = 
+
+> n
+
+X
+
+> i=1
+
+12mi
+
+∥Xi − XiWi∥2 
+
+> F
+
++ λ1
+
+> n
+
+X
+
+> i=1
+
+∥Wi∥1 + λ2
+
+X
+
+> i<j
+
+TLP( ∥θij ∥F ; τ )s.t. h(Wi) = 0 , i = 1 , . . . , n, 
+
+θij = Wi − Wj , 1 ≤ i < j ≤ n. 
+
+(5) In summary, we model each subject using a linear SEM with a subject-specific DAG encoded by Wi. We learn these causal adjacency matrices by minimizing a reconstruction loss, subject to sparsity and fusion penalties, and simultaneously enforcing acyclicity using the smooth constraint h(Wi) = 0. The gTLP fusion term clusters subjects by shrinking similar Wi together, yielding a structure-aware clustering of subjects according to their dependency structures. 
+
+# 3.2 DAG-DC-ADMM Algorithm 
+
+To solve the nonconvex problem in equation (5), we develop DAG-DC-ADMM, which ex-tends the solution to penalized clustering by Wu et al. (2016), tailored to two sources of nonconvexity: (i) the gTLP term in the objective and (ii) the acyclicity constraint on 
+
+{Wi}ni=1 . We employ an iterative approach where difference-of-convex programming is used to handle the gTLP nonconvexity by linearizing the objective function’s subtracted convex part at each iteration. Then, the resulting optimization problem, which remains noncon-vex due to the acyclicity constraint, is solved by ADMM and the Augmented Lagrangian method. The gTLP penalty has a capped-linear form, which is naturally compatible with a DC representation: it can be written as a convex fusion term minus a convex correction 9term that prevents excessive shrinkage for sufficiently separated pairs. We therefore use difference-of-convex (DC) programming (Pan et al., 2013; Ma et al., 2021) to split For source (i), we use difference of convex (DC) programming (Pan et al., 2013; Ma et al., 2021) to split the objective function F(W, θ)into a difference of two convex functions: 
+
+F(W, θ) = F1(W, θ) − F 2(θ),
+
+where F1 is fully convex, and F2 captures exactly the nonconvex portion of gTLP. Specifi-cally, the components are defined as: 
+
+F1(W, θ) = 
+
+> n
+
+X
+
+> i=1
+
+12mi
+
+∥Xi − XiWi∥2 
+
+> F
+
++ λ1
+
+> n
+
+X
+
+> i=1
+
+∥Wi∥1 + λ2
+
+X
+
+> i<j
+
+∥θij ∥F
+
+and 
+
+F2(θ) = λ2
+
+X
+
+> i<j
+
+(∥θij ∥F − τ )+,
+
+where ( β)+ = max( β, 0). At each difference-of-convex iteration s, we replace the subtracted term F2(θ) by its first-order affine minorant around the current estimate ˆθ(s). This yields the linearized approximation ¯F(s)2 (θ): ¯F(s)2 (θ) = F2(ˆθ(s)) + λ2
+
+X
+
+> i<j
+
+
+
+∥θij ∥F − ∥ ˆθ(s) 
+
+> ij
+
+∥F
+
+
+
+I
+
+
+
+∥ˆθ(s) 
+
+> ij
+
+∥F ≥ τ
+
+
+
+,
+
+where I(·) denotes the indicator function. Substituting this minorant into the original function F1 − F 2 gives an upper convex approximating function ¯F(s+1) at iteration s + 1: ¯F(s+1) (W, θ) = 
+
+> n
+
+X
+
+> i=1
+
+12mi
+
+∥Xi − XiWi∥2 
+
+> F
+
++ λ1
+
+> n
+
+X
+
+> i=1
+
+∥Wi∥1
+
++ λ2
+
+X
+
+> i<j
+
+∥θij ∥F I
+
+
+
+∥ˆθ(s) 
+
+> ij
+
+∥F < τ 
+
+
+
++ λ2τ X
+
+> i<j
+
+I
+
+
+
+∥ˆθ(s) 
+
+> ij
+
+∥F ≥ τ
+
+
+
+.
+
+(6) We address source (ii) by incorporating the smooth acyclicity constraint, together with the consensus constraints in equation (5), into an augmented Lagrangian. This enables gradient-based updates of W within ADMM while maintaining acyclicity. 
+
+Laug (W, θ) = 
+
+> n
+
+X
+
+> i=1
+
+12mi
+
+∥Xi − XiWi∥2 
+
+> F
+
++ λ1
+
+> n
+
+X
+
+> i=1
+
+∥Wi∥1 +
+
+> n
+
+X
+
+> i=1
+
+h
+
+αih(Wi) + ρ1
+
+2 h(Wi)2i
+
++ λ2
+
+X
+
+> i<j
+
+∥θij ∥F I
+
+
+
+∥ˆθ(s) 
+
+> ij
+
+∥F < τ 
+
+
+
++ λ2τ X
+
+> i<j
+
+I
+
+
+
+∥ˆθ(s) 
+
+> ij
+
+∥F ≥ τ
+
+
+
++ X
+
+> i<j
+
+⟨Yij , θij − (Wi − Wj )⟩ + ρ2
+
+2
+
+X
+
+> i<j
+
+∥θij − (Wi − Wj )∥2 
+
+> F
+
+,
+
+(7) 10 where α = ( α1, . . . , α n) is the vector of Lagrange multipliers enforcing the acyclicity con-straints h(Wi) = 0, and {Yij }i<j are matrix-valued Lagrange multipliers for the consensus constraints θij = Wi − Wj . The nonnegative scalars ρ1 and ρ2 serve as penalty param-eters for the respective constraint violations. We write ⟨A, B⟩ = trace  A⊤B to denote the Frobenius inner product between two matrices of the same dimension. Finally, defining the scaled dual variables Uij = Yij /ρ 2, we reformulate ADMM updates accordingly. This reparameterization combines the linear dual term and the quadratic penalty term into a single quadratic form. The scaled form is equivalent to the unscaled dual update but yields simpler ADMM update expressions. 
+
+cW(s,k +1)  
+
+> i
+
+= arg min 
+
+> Wi
+
+12mi
+
+∥Xi − XiWi∥2 
+
+> F
+
++ λ1∥Wi∥1 + ˆ α(s,k ) 
+
+> i
+
+h(Wi) + ρ1
+
+2 h(Wi)2
+
++ ρ2
+
+2
+
+X
+
+> j>i
+
+ˆθ(s,k ) 
+
+> ij
+
+− (Wi − cW(s,k ) 
+
+> j
+
+) + ˆU(s,k )
+
+> ij
+> 2
+> F
+
++ ρ2
+
+2
+
+X
+
+> j<i
+
+ˆθ(s,k ) 
+
+> ij
+
+− (Wi − cW(s,k +1)  
+
+> j
+
+) + ˆU(s,k ) 
+
+> ij
+> 2
+> F
+
+,
+
+ˆθ(s,k +1)  
+
+> ij
+
+= arg min 
+
+> θij
+
+
+
+λ2τ + ρ2 
+
+> 2
+
+θij − ( cW(s,k +1)  
+
+> i
+
+− cW(s,k +1)  
+
+> j
+
+) + ˆU(s,k ) 
+
+> ij
+> 2
+> F
+
+, if ˆθ(s)  
+
+> ij F
+
+≥ τ ;
+
+λ2 ∥θij ∥F + ρ2 
+
+> 2
+
+θij − ( cW(s,k +1)  
+
+> i
+
+− cW(s,k +1)  
+
+> j
+
+) + ˆU(s,k ) 
+
+> ij
+> 2
+> F
+
+, if ˆθ(s)  
+
+> ij F
+
+< τ ;ˆα(s,k +1)  
+
+> i
+
+= ˆ α(s,k ) 
+
+> i
+
++ ρ1 h
+
+ cW(s,k +1) 
+
+> i
+
+
+
+, 1 ≤ i ≤ n, 
+
+ˆU(s,k +1)  
+
+> ij
+
+= ˆU(s,k ) 
+
+> ij
+
++ ˆθ(s,k +1)  
+
+> ij
+
+−
+
+ cW(s,k +1)  
+
+> i
+
+− cW(s,k +1) 
+
+> j
+
+
+
+, 1 ≤ i < j ≤ n, (8) where k indicates the k-th iteration in ADMM. Using the scaled dual variables ˆU(s,k ) 
+
+> ij
+
+and the current difference ∆ ij = cW(s,k +1)  
+
+> i
+
+− cW(s,k +1)  
+
+> j
+
+− ˆU(s,k ) 
+
+> ij
+
+, we apply a block soft thresholding operator for the gTLP to update ˆθ(s,k +1)  
+
+> ij
+
+:ˆθ(s,k +1)  
+
+> ij
+
+=
+
+
+
+∆ij , if ∥ˆθ(s−1)  
+
+> ij
+
+∥F ≥ τ, 
+
+ST  ∆ij ; λ2/ρ 2
+
+, if ∥ˆθ(s−1)  
+
+> ij
+
+∥F < τ, 
+
+(9) where ST( θ; γ) = ( ∥θ∥F − γ)+ · θ/∥θ∥F is the block soft-thresholding operator (Parikh and Boyd, 2014). Blocks with norm below the threshold λ2/ρ 2 are driven exactly to zero, elimi-nating weak deviations, while larger blocks are shrunk proportionally. When ∥ˆθ(s−1)  
+
+> ij
+
+∥F ≥ τ ,11 the penalty becomes constant, so no further shrinkage is applied and large deviations are re-tained. The variables cW(s,k +1)  
+
+> i
+
+and bθ(s,k +1)  
+
+> ij
+
+are updated according to standard ADMM (8) until the ADMM primal and dual residuals fall below prescribed tolerances. We summarize the procedure in Algorithm 1. 
+
+Algorithm 1 DAG–DC–ADMM for SEM-based clustering with acyclicity constraint 
+
+Require: Observations {Xi}ni=1 ; tuning parameters ( λ1, λ 2, τ ); initial penalties ( ρ1, ρ 2); outer tolerance εout > 0 
+
+> 1:
+
+Initialize: s ← 0; initialize cW(0)  
+
+> i
+
+, bθ(0)  
+
+> ij
+
+, duals bα(0) = 0, bU(0)  
+
+> ij
+
+= 0 for all 1 ≤ i < j ≤ n;compute ¯F(0)  
+
+> 2:
+
+while s = 0 or ¯F(s) − ¯F(s−1) > ε out do  
+
+> 3:
+
+s ← s + 1  
+
+> 4:
+
+Using ADMM to obtain cW(s) 
+
+> i
+
+, bθ(s) 
+
+> ij
+
+, and updated duals bα(s), bU(s) 
+
+> ij
+
+in Equation (8).  
+
+> 5:
+
+Update ¯F(s) 
+
+> 6:
+
+end while  
+
+> 7:
+
+Output: { cWi}ni=1 and {bθij }1≤i<j ≤n; these estimates are then used to assign cluster labels. 
+
+Remark 1. Good initial values are important to obtain meaningful shrinkage in the soft-thresholding step in (9). We initialize ( cW(0)  
+
+> i
+
+, bθ(0)  
+
+> ij
+
+) and the ADMM dual variables as follows. For each subject i, cW(0)  
+
+> i
+
+is obtained by solving the ℓ1-regularized reconstruction problem 
+
+min 
+
+> Wi
+
+12mi
+
+XiWi − Xi 2 
+
+> F
+
++ λ1 Wi 1 s.t. diag( Wi) = 0,
+
+with the DAG and consensus penalties switched off (i.e., ρ1 = ρ2 = 0 ). In implemen-tation, we solve this initialization problem using L-BFGS-B (Byrd et al., 1995). We adopt a variable-splitting strategy (Zheng et al., 2018) and write Wi = W+ 
+
+> i
+
+− W− 
+
+> i
+
+with 
+
+W+ 
+
+> i
+
+, W− 
+
+> i
+
+≥ 0, which converts the ℓ1 penalty into a smooth bound-constrained optimiza-tion problem. We then set the pairwise deviation variables as bθ(0)  
+
+> ij
+
+= cW(0)  
+
+> i
+
+− cW(0)  
+
+> j
+
+,
+
+bθ(0)  
+
+> ji
+
+= − bθ(0)  
+
+> ij
+
+, and initialize all ADMM dual variables to 0. This initialization is consis-tent with the consensus constraint and provides a well-scaled starting point. A poor choice of ρ1 and ρ2 can also slow down the ADMM subroutine and hence the overall DAG-DC-ADMM algorithm. We therefore adopt an adaptive strategy for the DAG-penalty parameter 
+
+12 ρ1. At each iteration, ρ1 is increased by a constant factor ηρ1 > 1 (e.g., ηρ1 = 10 ) when-ever the total acyclicity residual does not decrease sufficiently between iterations, namely, 
+
+h( cW(s,k +1) ) > ξ h ( cW(s,k )), where ξ ∈ (0 , 1) is a tolerance parameter (e.g., ξ = 0 .25 ). The parameter ηρ1 controls the rate at which the acyclicity penalty is increased, while ξ de-termines when the current decrease in acyclicity violation is considered insufficient. This schedule promotes faster early progress and stricter acyclicity enforcement. In contrast, we keep the consensus-penalty parameter ρ2 fixed, as moderate values of ρ2 are empirically robust across datasets. 
+
+After running Algorithm 1, each subject i yields an estimated adjacency matrix cWi and pairwise auxiliary variables bθij that capture between-subject differences. Although the cWi
+
+estimates are driven toward proximity by the fusion penalty’s shrinkage effect, they are not necessarily identical. Consequently, bθij explicitly quantifies the remaining between-subject differences. We form a symmetric dissimilarity matrix Θ ∈ Rn×n with entries Θ ij = ∥bθij ∥F
+
+and Θ ii = 0. We then perform complete–linkage hierarchical clustering (Murtagh and Contreras, 2012b) on Θ.Let Cu and Cv be two distinct clusters. The inter–cluster distance between them is defined as the maximum pairwise dissimilarity between their members: D(Cu, Cv) = max i∈C u, j ∈C v Θij . Clusters are obtained by cutting the dendrogram at height τ : starting from singletons, we iteratively merge the two clusters with the smallest inter–cluster dis-tance while D(Cu, Cv) ≤ τ , and stop once all inter–cluster distances exceed τ . Subsequently, the resulting partition {C r}Rr=1 consists of maximal sets whose complete–linkage diameter (the maximum pairwise dissimilarity within the set) does not exceed τ . For each cluster 
+
+Cr, we define the cluster consensus matrix as cWCr = Cr −1 P
+
+> i∈C r
+
+cWi, optionally followed by hard–thresholding at level δ > 0. Each subject i ∈ C r is then assigned the consensus matrix cWCr , yielding the cluster–specific dependency structures { cWCr }Rr=1 .
+
+# 3.3 Theoretical Results 
+
+In this section, we first analyze the computational complexity of the proposed DAG-DC-ADMM algorithm to assess its scalability for large-scale data. We then establish the con-vergence properties of the method under both the general and the strictly upper-triangular constrained problem formulations. 13 For the computational complexity analysis, in each ADMM iteration, the primary com-putational costs stem from three sources: updating adjacency matrices, enforcing acyclicity, and performing the consensus updates. Let M = Pni=1 mi denote the total number of ob-servations across all subjects. For each subject i, the reconstruction term in the Wi-update can be written as 
+
+∥XiWi − Xi∥2 
+
+> F
+
+= tr 
+
+
+
+W⊤ 
+
+> i
+
+X⊤ 
+
+> i
+
+XiWi
+
+
+
+− 2 tr 
+
+
+
+X⊤ 
+
+> i
+
+XiWi
+
+
+
++ tr 
+
+
+
+X⊤ 
+
+> i
+
+Xi
+
+
+
+.
+
+Since each matrix X⊤ 
+
+> i
+
+Xi ∈ Rd×d can be precomputed once, the one-time preprocessing cost for constructing all subject-level Gram matrices is Pni=1 O(mid2) = O(M d 2). After this preprocessing step, the iterative updates involving the reconstruction term depend on 
+
+d × d matrix operations rather than directly on the individual sample sizes mi. Second, enforcing acyclicity using the smooth penalty h(·) on the weight matrices { cWi}ni=1 requires a total cost of O(nd 3), which stems from calculating the matrix exponential and its gradient across all n subjects. Finally, performing the consensus update requires operations over all 
+
+n(n − 1) pairs of adjacency matrices. The current implementation incurs a cost of O(n2d2)per iteration for this step. Therefore, one ADMM iteration costs O nd 3 + n2d2. With K
+
+inner ADMM iterations nested inside S difference-of-convex iterations, the total runtime is 
+
+O(nmd 2) + O SK (nd 3 + n2d2). This overall complexity shows that the sequence length 
+
+m affects the algorithm only through a one-time preprocessing step, while the iterative computational burden is governed primarily by the number of subjects n and the dimension 
+
+d. Specifically, the computational cost is governed primarily by the acyclicity term O(nd 3)and the quadratic consensus term O(n2d2). The total cost is dominated by the acyclicity term when d ≫ n, while the cost is primarily limited by the quadratic consensus term 
+
+O(n2d2) when n is large. Domain-guided feature selection and pre-clustering or subsampling can help control d and n in practice, thereby improving tractability in clinical or engineering applications. On the convergence property, at each difference-of-convex iteration s, the augmented Lagrangian in (7) is nonconvex because it includes the smooth acyclicity term h(·). By leveraging nonconvex ADMM theory together with the Kurdyka Lojasiewicz (KL) property (Attouch et al., 2010) of our objective function, we establish the following convergence result under the standing assumptions on the penalty parameters. 14 Theorem 1. Fix a difference-of-convex iteration s and consider L(s)aug (W, θ) defined in (7) .Assume that L(s)aug is a KL function and that the penalty parameters satisfy the standing as-sumptions (namely, ρ2 > 0 is fixed and ρ1 is nondecreasing and sufficiently large). Let 
+
+{(W(s,k ), θ(s,k ))}k≥0 be the sequence of ADMM iterates for this subproblem. Then the fol-lowing conclusions hold. The sequence of iterates {(W(s,k ), θ(s,k ))} is guaranteed to be bounded. It has finite length, and the entire sequence converges to a first-order stationary point: 
+
+(W(s,k ), θ(s,k )) → (W(s,⋆ ), θ(s,⋆ )) as k → ∞ .
+
+Here, (W(s,⋆ ), θ(s,⋆ )) denotes a stationary point of the ADMM subproblem for the fixed difference-of-convex iteration s.
+
+While ADMM convergence to a stationary point of the augmented Lagrangian problem is guaranteed by Theorem 1, the limit may not be a feasible solution to the original con-strained problem and thus may not be a KKT point of the original constrained problem. In fact, for any feasible solution to the original constrained problem, unless it is also a sta-tionary point of the unconstrained objective function, it cannot be a stationary point of the augmented Lagrangian objective. This result stems from a crucial property (Lemma 5 and Proposition 2 in Wei et al. (2020)): for any feasible solution where the acyclicity constraint is exactly satisfied ( h(W) = 0), the constraint gradient vanishes, i.e., ∇Wh(W) = 0. Thus, for any feasible solution, the KKT condition for the constrained problem is reduced to: 
+
+0 ∈ ∇ W
+
+> n
+
+X
+
+> i=1
+
+12mi
+
+∥Xi − XiWi∥2
+
+> F
+
+!
+
++ ∂W λ1
+
+> n
+
+X
+
+> i=1
+
+∥Wi∥1 + λ2P (W)
+
+!
+
++ α∇Wh(W)with ∇Wh(W) = 0, which implies that the solution has to be a stationary point of the unconstrained objective function. 
+
+Remark 2. Despite lacking an optimality guarantee, the method is empirically effective. The NOTEARS paper demonstrates that the stationary points found by their method are comparable to the globally optimal solution (see Table 1 of Zheng et al. (2018)). Given that our DAG-DC-ADMM framework leverages the same smooth acyclicity constraint, the resulting solutions are also high-quality, as demonstrated in our numerical analysis. 
+
+While Theorem 1 addresses the fully nonconvex formulation, the optimization problem simplifies significantly when a causal ordering is known a priori. Given this ordering, we 15 restrict the adjacency matrix to be strictly upper triangular, thereby excluding cycles by construction, noting that the adjacency matrix of any DAG can be arranged into an upper triangular matrix by reordering the vertices according to a topological sort. When such ordering information is available, the explicit acyclicity penalty term h(W) becomes redun-dant. This structural imposition simplifies the difference-of-convex subproblems, allowing us to leverage stronger convergence statements from convex optimization theory. 
+
+Assumption 1 (Strict upper-triangular structural prior) . Variables are indexed in a fixed order 1 , . . . , d , and ( Wi)ab denotes the weight on the edge a → b. Let 
+
+U = W ∈ Rd×d : tril( W, 0) = 0 = W : Wab = 0 for all a ≥ b .
+
+Here, tril( W, 0) denotes the lower triangular part of W including the main diagonal. Impose 
+
+Wi ∈ U for all i = 1 , . . . , n . Only entries with a < b are permitted to be nonzero. Under this constraint, every feasible Wi is acyclic; hence the acyclicity term h(Wi) is omitted. Under Assumption 1, the set {Wi : tril( Wi, 0) = 0} is a convex linear subspace, and the constraints {θij = Wi −Wj }1≤i<j ≤n are affine. Therefore, the feasible region is convex. The resulting optimization problem is min  
+
+> W,θ
+
+F(W, θ) = 
+
+> n
+
+X
+
+> i=1
+
+12mi
+
+Xi − XiWi 2 
+
+> F
+
++ λ1
+
+> n
+
+X
+
+> i=1
+
+∥Wi∥1 + λ2
+
+X
+
+> i<j
+
+TLP  ∥θij ∥F ; τ 
+
+s.t. tril( Wi, 0) = 0, i = 1 , . . . , n, 
+
+θij = Wi − Wj , 1 ≤ i < j ≤ n. 
+
+(10) Within the difference-of-convex step, replacing TLP( ·; τ ) by its convex majorizer yields a convex approximation objective over this convex feasible region; consequently, the resulting subproblem can be solved as a convex program. 
+
+Theorem 2. Let {(W(s), θ(s))}s≥0 be the difference-of-convex outer-iteration sequence of DAG-DC-ADMM, and let F(W, θ) denote the difference-of-convex objective under Assump-tion 1. Then there exists a finite index s⋆ < ∞ such that 
+
+F W(s), θ(s) = F W(s⋆), θ(s⋆), s ≥ s⋆,
+
+and (W(s⋆), θ(s⋆)) is a KKT point. 
+
+16 This result highlights that incorporating domain knowledge into the causal structure not only simplifies the problem but also strengthens the theoretical optimality guarantees. The proofs of the theorems can be found in the Supplemental Material. 
+
+# 4 Experiments 
+
+To assess the performance and robustness of the proposed DAG–DC–ADMM approach, we perform a set of experiments, tuning regularization parameters λ1, λ2 and τ using cross-validation. Specifically, λ1 weights the ℓ1 sparsity penalty on the adjacency matrix of each subject. λ2 weights the fusion penalty that encourages similar matrices to merge into the same cluster and τ defines the truncation threshold parameter that controls the shrinkage of pairwise differences between matrices. In the following subsections, we first introduce our experimental design, which consists of two data regimes (small-sample/long-series vs. large-sample/short-series), along with the grid of λ1, λ2, and τ values. Next, we describe how we generate synthetic data, detailing cluster assignments, DAG topolo-gies, edge-weight distributions, and choices of the exogenous disturbance Z that represents unexplained variability. Then, we specify evaluation metrics in two aspects as clustering accuracy and structure-recovery accuracy. Finally, we present results across settings and threshold sweeps. 
+
+# 4.1 Setup 
+
+We examine six experimental settings defined by two sampling regimes—small-sample/long-series ( n = 50 subjects, m = 300 measurements each) and large-sample/short-series ( n =200 subjects, m = 50 measurements each)—combined with three levels of structural distur-bance variance σ ∈ { 0.5, 1, 2}. In all cases, each subject has the same number of measure-ments mi = m, and the disturbance terms are generated as Zi ∼ N  0, σ 2Id
+
+. This design allows us to systematically evaluate how the proposed algorithm performs under varying cohort sizes, per-subject sequence lengths, and disturbance variances, and how these factors influence clustering performance and structure recovery. For each scenario, we proceed as follows. We consider Rtruth = 2 clusters, where Rtruth 
+
+denotes the true number of clusters and partition the n subjects into two groups according 17 to proportions [0 .6, 0.4]. Let Cr denote the set of subjects in cluster r, for r ∈ { 1, 2}.For each cluster Cr, we construct a cluster-specific DAG encoded by an adjacency matrix 
+
+WCr ∈ Rd×d. To guarantee acyclicity, we select a pre-specified number of edges from the strict upper-triangular index set {(a, b ) : a < b }, assign each selected edge a weight drawn uniformly from [ −0.5, −0.2] ∪ [0 .2, 0.5], and then apply a random node permutation to remove any implicit ordering. Next, for each subject i ∈ C r, we simulate an independent data matrix Xi ∈ Rmi×d according to the SEM in (2): 
+
+Xi = Zi(I − WCr )−1.
+
+Finally, we randomly permute the entire set of subjects, i.e., the matrices {Xi}ni=1 , their true cluster labels, and the corresponding generating DAGs {WCr }2
+
+> r=1
+
+, to eliminate any residual ordering before applying the DAG–DC–ADMM algorithm. We perform 50 independent repetitions of the entire pipeline for each scenario. In each repetition, we first generate a new dataset {Xi}ni=1 under the specified sampling regime and disturbance scale, and then conduct three-fold cross-validation over a predefined grid of ( λ1, λ 2, τ ). Because our goal is to assign each subject to a cluster, we do not split subjects into disjoint train-test sets. Instead, we partition the mi rows of each Xi into three equally sized parts: in each fold, one part per subject forms the validation set {Xi, val }ni=1 , and the remaining two parts form the training set. Within the cross-validation loop, each hyper-parameter triplet yields candidate cluster-specific adjacency matrices { cWCr } bRr=1 , where bR
+
+denotes the estimated number of clusters. Let r(i) denote the assigned cluster of subject 
+
+i’s current fold. We compute the validation reconstruction loss as 
+
+Lrec = 1
+
+n
+
+> n
+
+X
+
+> i=1
+
+12mi
+
+Xi, val − Xi, val cWCr(i) 
+
+> 2
+> F
+
+.
+
+The hyperparameters achieving the lowest average validation loss are selected, after which we refit the DAG–DC–ADMM model on the full dataset for that repetition and record both clustering accuracy and structure-recovery accuracy. Clustering quality is eval-uated using the Adjusted Rand Index (ARI), homogeneity, and completeness. Given a reference partition and an algorithm-induced partition, ARI measures pairwise agreement between two clusterings, with an adjustment that removes the similarity expected from random label assignments. It equals 1 for identical partitions and is approximately 0 un-der random assignment (Hubert and Arabie, 1985). Homogeneity measures cluster purity: 18 whether each predicted cluster contains only members of a single reference group. Com-pleteness measures class aggregation: whether all members of a reference group are assigned to the same predicted cluster (Rosenberg and Hirschberg, 2007). Both scores range from 0 to 1; high homogeneity with low completeness typically indicates over-segmentation, while the converse suggests over-merging. In our synthetic setting, the reference partition cor-responds to the ground-truth labeling, and the induced partition is the labeling predicted by our method. Structure recovery is evaluated in two stages. In the skeleton stage, for each cluster-specific estimate cWCr , we binarize entries and ignore directions to extract an undirected skeleton bBCr . Given a sparsity threshold δ > 0, for any distinct nodes a̸ = b, we define ( bBCr )ab = I
+
+
+
+max 
+
+n
+
+( cWCr )ab , ( cWCr )ba 
+
+o
+
+≥ δ
+
+
+
+, ( bBCr )ba = ( bBCr )ab , diag( bBCr ) = 0.
+
+That is, we place an undirected edge between nodes a and b if the magnitude of either directional weight is at least δ; otherwise, the edge is set to 0. Let the corresponding ground-truth DAG for cluster r be WCr and its undirected skeleton BCr . For any subject i
+
+assigned to cluster r, we evaluate (i) the undirected skeleton bBCr against BCr and (ii) the directed matrix cWCr against WCr . From these comparisons, we compute the true positive rate (TPR), the false discovery rate (FDR), and the true negative rate (TNR). Here, TPR is the proportion of true edges correctly identified, FDR is the proportion of identified edges that are false, and TNR is the proportion of true non-edges correctly identified. The final reported scores are the macro-averages over all n subjects. Although high DAG recovery typically implies strong skeleton recovery, reporting skeleton metrics separately allows us to distinguish errors due to missing or spurious links from those due to incorrect edge orientations. Together, the skeleton and directed metrics quantify the method’s ability both to detect the presence of associations and to recover their correct causal directions. Across all 50 repetitions, we report the mean results for each scenario and compare them against the three NOTEARS-based benchmarks. 
+
+• Population: learn a single DAG from all subjects’ data pooled together. 
+
+• Individual: learn one DAG per subject by applying NOTEARS separately to each 
+
+Xi.19 • Oracle: given the true cluster labels, aggregate data within each cluster and learn one DAG per cluster. These three NOTEARS-based methods represent distinct modeling scenarios. The pop-ulation baseline corresponds to a homogeneous setting, where data from all subjects are pooled as if drawn from a single distribution. This ignores individual variability. The indi-vidual baseline represents the fully heterogeneous case, fitting one DAG per subject without information sharing and risking high variance and overfitting. The oracle cluster bench-mark assumes perfect knowledge of the true clusters, pools data within each true group, and learns one DAG per cluster. Although infeasible in practice, it serves as an oracle upper bound on performance when the cluster label is known. We limit baselines to NOTEARS variants because our method adopts the same smooth acyclicity constraint, enabling a con-trolled comparison under shared optimization constraints and assumptions. Methods from other paradigms (e.g., the Peter Clark (PC) algorithm, Fast Causal Inference (FCI), and Greedy Equivalence Search (GES)) optimize different objectives and rely on distinct data assumptions, which would confound attribution of gains. Moreover, NOTEARS, as a con-tinuous approach to DAG learning, has already been extensively benchmarked against these families and has shown competitive performance. Focusing our evaluation on it therefore isolates the effect of the proposed clustering and consensus components. 
+
+# 4.2 Results 
+
+For all comparable methods, the only hyperparameter is the sparsity parameter λ1, which is selected via three-fold cross-validation on held-out measurements within each subject. To tune the proposed algorithm, we perform three-fold cross-validation over the following grid: 
+
+λ1 ∈ { 10 −4, 10 −3, 10 −2, 10 −1}, λ2 ∈ { 10 −5, 10 −4, 10 −3, 10 −2}, τ ∈ { 0.05 , 0.1, 0.4, 0.7}.
+
+We fix ρ2 = 0 .05, while ρ1 is initialized at 0 .1 and adaptively increased during optimization. The final hyperparameter combination is selected by minimizing the average reconstruction loss across validation folds. 20 4.2.1 Small-sample/Long-series scenario 
+
+In this scenario, we use n = 50 subjects, each with m = 300 independent measurements, and consider three disturbance scales σ ∈ { 0.5, 1, 2}.Table 1: Clustering Results (Small-sample/Long-series, n = 50, m = 300). Values are mean 
+
+± 95% CI over 50 runs; The true number of clusters Rtruth = 2 is fixed, and estimated bR
+
+is reported as the mode over repetitions.                                                             
+
+> Setting ARI Homogeneity Completeness Recon. Error truth Recon. Error est Rtruth bRσ= 0 .50.91 ±0.03 1.00 ±0.00 0.85 ±0.04 1.25 ±0.00 1.25 ±0.00 22
+> σ= 1 0.81 ±0.05 1.00 ±0.00 0.71 ±0.05 5.00 ±0.01 4.98 ±0.01 23
+> σ= 2 0.83 ±0.05 1.00 ±0.00 0.76 ±0.05 20 .01 ±0.03 19 .90 ±0.03 22
+
+Across 50 repetitions (Table 1), the method attains consistently high cluster purity (homogeneity ≈ 1.00). Completeness dips at a higher disturbance level (e.g., σ = 1), indicating mild over-segmentation in which each true cluster is split into smaller subpop-ulations. ARI remains high ( > 0.8), reflecting stable clustering, and reconstruction errors increase monotonically with σ, as expected. The reconstruction errors computed under the true and estimated cluster assignments are nearly identical across all σ levels. Table 2 then reports structure-recovery metrics for the proposed DAG-DC-ADMM approach and the three NOTEARS-based benchmarks. 
+
+# 4.2.2 Large-sample/Short-series scenario 
+
+In this scenario, we use n = 200 subjects with m = 50 independent measurements and the same disturbance scales σ ∈ { 0.5, 1, 2}. At σ = 0 .5, the model tends to over-segment (larger 
+
+nest ), yet the resulting clusters remain internally coherent, as reflected by high homogeneity (0 .90). Moreover, the near-equality of Recon. Error truth and Recon. Error est shows that, despite finer partitions, the learned labels deliver reconstruction quality comparable to that under the ground truth. As σ increases to 1 and 2, over-segmentation is alleviated ( nest = 3 and 5), completeness rises, and ARI increases while homogeneity remains high ( > 0.90). Reconstruction errors grow monotonically with σ as expected, and remain nearly identical under true versus estimated labels across all σ levels. 21 Table 2: Skeleton and DAG recovery metrics for different methods under varying distur-bance levels ( σ). (Small-sample/Long-series, n = 50 , m = 300; mean ± 95% CI over 50 runs, threshold = 0 .02). 
+
+Method Skel TPR Skel FDR Skel TNR DAG TPR DAG FDR DAG TNR 
+
+Disturbance Scale σ = 0 .5Population 0.94 ± 0.03 0.47 ± 0.02 0.17 ± 0.05 0.64 ± 0.04 0.64 ± 0.02 0.62 ± 0.02 Individual 1.00 ± 0.00 0.21 ± 0.00 0.70 ± 0.01 0.81 ± 0.02 0.36 ± 0.01 0.84 ± 0.01 DAG-DC-ADMM 1.00 ± 0.00 0.16 ± 0.03 0.77 ± 0.04 0.94 ± 0.02 0.30 ± 0.03 0.85 ± 0.02 Oracle 1.00 ± 0.00 0.08 ± 0.02 0.89 ± 0.03 0.88 ± 0.03 0.18 ± 0.04 0.92 ± 0.02 
+
+Disturbance Scale σ = 1 .0Population 0.95 ± 0.03 0.46 ± 0.02 0.18 ± 0.05 0.64 ± 0.04 0.63 ± 0.03 0.63 ± 0.02 Individual 1.00 ± 0.00 0.36 ± 0.00 0.40 ± 0.01 0.80 ± 0.02 0.49 ± 0.01 0.73 ± 0.01 DAG-DC-ADMM 1.00 ± 0.00 0.14 ± 0.02 0.80 ± 0.01 0.93 ± 0.02 0.28 ± 0.03 0.86 ± 0.02 Oracle 1.00 ± 0.00 0.07 ± 0.02 0.91 ± 0.03 0.88 ± 0.03 0.17 ± 0.04 0.93 ± 0.02 
+
+Disturbance Scale σ = 2 .0Population 0.96 ± 0.03 0.46 ± 0.02 0.19 ± 0.04 0.66 ± 0.04 0.62 ± 0.03 0.63 ± 0.02 Individual 1.00 ± 0.00 0.29 ± 0.01 0.57 ± 0.01 0.80 ± 0.02 0.42 ± 0.01 0.79 ± 0.01 DAG-DC-ADMM 1.00 ± 0.00 0.09 ± 0.02 0.87 ± 0.03 0.95 ± 0.01 0.26 ± 0.03 0.87 ± 0.02 Oracle 1.00 ± 0.00 0.07 ± 0.02 0.90 ± 0.03 0.89 ± 0.03 0.16 ± 0.04 0.93 ± 0.02 
+
+22 Table 3: Clustering Results (Large-sample/Short-series, n = 200, m = 50). Values are mean 
+
+± 95% CI over 50 runs; The true number of clusters Rtruth = 2 is fixed, and estimated bR
+
+is reported as the mode over repetitions.                                                             
+
+> Setting ARI Homogeneity Completeness Recon. Error truth Recon. Error est Rtruth bRσ= 0 .50.44 ±0.06 0.90 ±0.07 0.36 ±0.04 1.25 ±0.00 1.25 ±0.00 218
+> σ= 1 0.68 ±0.10 0.98 ±0.01 0.64 ±0.09 4.99 ±0.01 4.99 ±0.01 23
+> σ= 2 0.86 ±0.08 0.92 ±0.07 0.76 ±0.06 19 .96 ±0.03 19 .98 ±0.07 25
+
+Across both the small-sample long-series and large-sample short-series regimes, and for all σ ∈ { 0.5, 1, 2}, the proposed DAG-DC-ADMM consistently outperforms the baselines (Population and Individual) in structure recovery (Tables 2 and 4). The improvement is consistent across both the undirected skeleton and directed DAG stages: our method achieves higher TPR, lower FDR, and higher TNR than either baseline. True-edge detection remains close to the oracle at both stages, and the small residual gap is largely due to the model’s suppression of weak or ambiguous edges and minor orientation errors. As σ
+
+increases, TPR remains near-oracle while FDR approaches the oracle level, demonstrating stable false-discovery control without sacrificing TPR. These patterns can be understood from the interaction between cross-subject consis-tency and the consensus regularization in DAG–DC–ADMM. Within each cluster, true causal dependencies tend to recur across subjects, whereas spurious edges tend to vary in-consistently. The consensus penalty promotes edges that are expressed consistently across subjects and shrinks those that appear inconsistently. Because Xi = Zi(I − Wi)−1, in-creasing σ scales all variances uniformly but leaves the causal relationships implied by Wi
+
+unchanged. As a result, TPR remains high across σ levels while FDR decreases and TNR increases as inconsistent edges are progressively suppressed. In the large-sample short-series regime, the consensus effect intensifies as the number of subjects grows. With more subjects per cluster, the statistical signal strengthens: true dependencies are consistently observed across subjects, while subject-specific artifacts be-have as outliers penalized by the consensus term. This yields tighter false-discovery control and higher TNR without diminishing recall, further widening the performance gap between DAG-DC-ADMM and the NOTEARS baselines. The Supplementary Material reports addi-23 Table 4: Skeleton and DAG recovery metrics for different methods under varying distur-bance levels ( σ). (Large-sample/Short-series, n = 200 , m = 50; mean ± 95% CI over 50 runs, threshold = 0 .02). 
+
+Method Skel TPR Skel FDR Skel TNR DAG TPR DAG FDR DAG TNR 
+
+Disturbance Scale σ = 0 .5Population 0.93 ± 0.03 0.46 ± 0.02 0.18 ± 0.05 0.64 ± 0.04 0.63 ± 0.02 0.63 ± 0.02 Individual 0.95 ± 0.00 0.39 ± 0.00 0.36 ± 0.00 0.66 ± 0.01 0.58 ± 0.01 0.69 ± 0.00 DAG-DC-ADMM 0.99 ± 0.01 0.21 ± 0.02 0.68 ± 0.04 0.87 ± 0.02 0.38 ± 0.03 0.79 ± 0.02 Oracle 1.00 ± 0.00 0.08 ± 0.02 0.89 ± 0.03 0.88 ± 0.03 0.18 ± 0.04 0.92 ± 0.02 
+
+Disturbance Scale σ = 1 .0Population 0.93 ± 0.03 0.46 ± 0.02 0.19 ± 0.04 0.64 ± 0.04 0.63 ± 0.03 0.63 ± 0.02 Individual 0.88 ± 0.01 0.28 ± 0.00 0.63 ± 0.00 0.61 ± 0.01 0.51 ± 0.01 0.79 ± 0.00 DAG-DC-ADMM 0.99 ± 0.00 0.11 ± 0.02 0.85 ± 0.03 0.87 ± 0.02 0.25 ± 0.04 0.88 ± 0.02 Oracle 1.00 ± 0.00 0.07 ± 0.02 0.91 ± 0.03 0.88 ± 0.03 0.17 ± 0.04 0.93 ± 0.02 
+
+Disturbance Scale σ = 2 .0Population 0.94 ± 0.03 0.46 ± 0.02 0.19 ± 0.05 0.64 ± 0.04 0.63 ± 0.02 0.63 ± 0.02 Individual 0.96 ± 0.00 0.43 ± 0.00 0.27 ± 0.00 0.66 ± 0.01 0.60 ± 0.01 0.66 ± 0.00 DAG-DC-ADMM 0.99 ± 0.01 0.07 ± 0.03 0.89 ± 0.04 0.89 ± 0.03 0.16 ± 0.04 0.93 ± 0.02 Oracle 1.00 ± 0.00 0.07 ± 0.02 0.90 ± 0.03 0.89 ± 0.03 0.16 ± 0.04 0.93 ± 0.02 
+
+tional results, including a three-cluster scenario and thresholding robustness analysis where we sweep the δ to evaluate robustness of skeleton and directed DAG recovery across different sparsity levels. 
+
+# 5 Case Study 
+
+We evaluate our method on the multivariate single-cell dataset of Sachs et al. (2005), which consists of flow cytometry measurements from thousands of primary human CD4 +T cells collected under nine perturbation conditions. Cell reactions are fixed 15 minutes after stimulation to capture how each perturbation affects the intracellular signaling networks. For each cell, the amounts of 11 molecules—Raf, Mek, Erk, P38, Jnk, Akt, PKC, PKA, 24 PLC-γ, and the phospholipids PIP 2 and PIP 3—are measured. 
+
+# 5.1 Data Preprocessing 
+
+In the Sachs et al. (2005) dataset, approximately 7,745 single-cell measurements are col-lected and split into nine experimental subsets, each corresponding to a distinct biochemical perturbation condition. Single-cell signaling responses are inherently heterogeneous, even under the same external perturbation, and signal loss can occur when unique response pat-terns of heterogeneous cellular subsets are masked by averaging techniques (Sachs et al., 2005). To address this and recover meaningful structure, we aggregate cells within each perturbation into coherent subpopulations via a pre-clustering step. For each perturbation dataset, we first Z-score standardize all 11 signaling features. We then apply Principal Component Analysis (PCA) (Jolliffe, 2005) and retain the smallest number of principal components that explain at least 80% of the total variance. These low-dimensional PCA embeddings then serve as input for K-means clustering. To determine the optimal number of subpopulations, we run K-means between two and ten clusters and evaluate the results using the Silhouette Score (Shahapure and Nicholas, 2020). We then choose the smallest number of clusters whose Silhouette Score lies within 1% of the maximum value. Finally, to ensure robustness of subsequent causal dependency structure estimation, any subpopulation containing fewer than 20 cells is removed from the analysis. This procedure yields a total of 28 distinct subpopulations across the nine perturbation conditions, which we use as input to the DAG-DC-ADMM algorithm. 
+
+# 5.2 Results 
+
+We consider three modeling scenarios with different assumptions. First, a pooled-population model that assumes all cells share a single response pattern across perturbations. This yields one causal dependency structure for the entire dataset. Second, a per-perturbation model, which assumes that cells respond similarly within each perturbation but may differ across perturbations, resulting in nine causal dependency structures. Third, our method, which takes the 28 subpopulations as the input. It identifies 6 clusters, each with its own causal dependency structure. For all scenarios, we tune hyperparameters via the same three-fold cross-validation. For the first two scenarios, we tune the sparsity parameter 25 λ1 over {0.001 , 0.005 , 0.01 , 0.1}. For the DAG-DC-ADMM algorithm, we search over the following grid: λ1 ∈ { 0.001 , 0.005 , 0.01 , 0.1}, λ2 ∈ { 0.0001 , 0.001 , 0.005 , 0.01 , 0.03 , 0.05 , 0.1},
+
+τ ∈ { 0.7, 1, 1.5, 2, 2.5, 3, 3.5, 4}, while fixing ρ2 = 0 .05 and initializing ρ1 = 0 .1. The optimal combination of parameters is selected by minimizing the mean reconstruction error on the validation folds. Table 5 reports the resulting average validation reconstruction errors for these three scenarios. The results show that DAG-DC-ADMM yields a smaller reconstruction error, outperforming both the pooled population model and the per-perturbation model. This observation bolsters the hypothesis that cells respond differently even to the same pertur-bation, and grouping by perturbation might not be the best approach for understanding signaling pathways. Table 5: Reconstruction error comparison under three-fold cross-validation.         
+
+> Modeling scenario Fitting granularity Average Validation Recon. Error Pooled population 1 population-level model (7,446 cells) 9.02 Per-perturbation 9 perturbation-level models 8.66 DAG-DC-ADMM 6 cluster-level models 8.50
+
+On heterogeneous causal graph discovery, our method identified 6 distinct clusters. Sizes range from small cohorts (e.g., cluster 1: 99 cells, cluster 6: 24 cells) to larger groups (e.g., cluster 4: 4,117 cells). Each cluster presents a distinct adjacency matrix. They differ in edge presence (or absence), and in the sign and magnitude of edge weights—differences that a single global model would obscure. Fig. 1 and Fig. 2 present the DAGs and adjacency matrices of the global model, and two randomly picked clusters, to illustrate these contrasts. For example, Cluster 2 contains directed links that are absent in Cluster 4 and in the population graph, such as edges from PIP3 to Akt and PLC-γ to PKC. Biologically, the edge from PIP3 to Akt reflects the PI3K-Akt signaling axis, where PIP3 serves as a membrane anchor that recruits Akt for phosphorylation-based activation (Hoxhaj and Manning, 2020). The edge from PLC-γ to PKC represents activation of PKC through the PLC-γ pathway. PLC-γ hydrolyzes the membrane lipid PIP2 into two second messengers: diacylglycerol and IP3. Diacylglycerol remains in the membrane and directly activates PKC (Nosbisch et al., 2020). The selective presence of these edges across clusters indicates 26 subpopulation heterogeneity. In some subpopulations, these pathways appear coherently engaged, in line with stronger upstream receptor signaling and more favorable cofactor conditions. In others, the connections are weaker, diverted through alternative routes, or suppressed, for example through dephosphorylation by phosphatases or competition from parallel signaling pathways.   
+
+> (a) Population-level DAG (b) Cluster 2 DAG (c) Cluster 4 DAG
+
+Figure 1: Comparison of DAG structures across population and representative clusters. 
+
+Figure 2: Adjacency matrix comparison In contrast, the population-level DAG, built by pooling all cells, omits connections that are clearly present within specific subpopulations. This is a classic effect of population averaging: heterogeneous signaling states are smoothed together, and edges that are strong only in certain subsets fall below detection (Sachs et al., 2005). The identification of these biologically meaningful links confirms that distinct cellular reaction patterns coexist in the data, emphasizing the importance of a unified clustering and graph structure learning framework that is essential to recover specific causal dependency mechanisms that a single 27 global model would mask. 
+
+# 6 Discussion and Conclusion 
+
+This work presents DAG–DC–ADMM, a unified framework for joint causal structure learn-ing and structure-aware clustering. Our method recovers cluster-specific causal dependency structures from heterogeneous data and achieves superior structure recovery accuracy com-pared with baseline methods. The framework provides a foundation for modeling popu-lation heterogeneity in underlying causal mechanisms. We next outline future directions: (i) integrating temporal causal relationships, (ii) extending to nonlinear dependencies with nonparametric SEMs, and (iii) allowing heterogeneous exogenous disturbance distributions across subjects and formalizing the associated clustering criterion. Our framework naturally extends to dynamic settings where time-varying behaviors are captured using time-series data. Specifically, for each subject i, the data matrix Xi
+
+represents the measurements of d features over mi time points, where each row corresponds to a time index. With such data, we can formulate a dynamic SEM that incorporates lagged effects: Xi = XiWi + Ppq=1 Yi,q Ai,q + Zi, where Wi captures contemporaneous dependencies, Yi,q ∈ Rm×d stores the lagged measurements for subpopulation i at lag q,and {Ai,q }pq=1 encode lagged dependencies for subject i. This extension allows for the joint estimation of both intra-time and inter-time dependencies with acyclicity enforced on 
+
+Wi. Crucially, our existing consensus penalty can be readily adapted to jointly regularize both contemporaneous Wi and lagged {Ai,q }pq=1 dependency matrices, thereby identifying structure-aware clusters based on dynamic causal dependencies. Another promising future direction is to incorporate nonlinear dependencies through nonparametric SEMs, in which each feature is generated by a differentiable function f of its parent features plus independent unexplained variability. Following recent advances in nonparametric DAG learning (Zheng et al., 2020), the edge strength could be defined through functional derivatives, allowing flexible modeling of causal effects beyond linearity. The core of this extension involves minimizing a differentiable loss function L(f ) over the functional space, subject to a continuous acyclicity constraint expressed through the trace exponential as h(W(f )) = 0. Developing an effective way to integrate this nonlinear opti-28 mization problem into the clustering framework and define meaningful structure similarity metrics to facilitate clustering efficiency remains a challenge for future research. 
+
+# Acknowledgements 
+
+The authors acknowledge the support from the funding agency (removed for double-blinded review). 
+
+# References 
+
+Attouch, H., Bolte, J., Redont, P., and Soubeyran, A. (2010). Proximal alternating min-imization and projection methods for nonconvex problems: An approach based on the kurdyka-lojasiewicz inequality. Mathematics of operations research , 35(2):438–457. Attouch, H., Bolte, J., and Svaiter, B. F. (2013). Convergence of descent methods for semi-algebraic and tame problems: proximal algorithms, forward–backward splitting, and regularized gauss–seidel methods. Mathematical Programming , 137:91–129. Bollen, K. A. and Pearl, J. (2013). Eight myths about causality and structural equation models. In Handbook of causal analysis for social research , pages 301–328. Springer. B¨ uhlmann, P., Peters, J., and Ernest, J. (2014). Cam: Causal additive models, high-dimensional order search and penalized regression. The Annals of Statistics , 42(6):2526 – 2556. Byrd, R. H., Lu, P., Nocedal, J., and Zhu, C. (1995). A limited memory algorithm for bound constrained optimization. SIAM Journal on scientific computing , 16(5):1190–1208. Castelletti, F. and Consonni, G. (2023). Bayesian graphical modeling for heterogeneous causal effects. Statistics in medicine , 42(1):15–32. Chi, E. C. and Lange, K. (2015). Splitting methods for convex clustering. Journal of Computational and Graphical Statistics , 24(4):994–1013. Chickering, D. M. (1996). Learning bayesian networks is np-complete. In Learning from data: Artificial intelligence and statistics V , pages 121–130. Springer. Danaher, P., Wang, P., and Witten, D. M. (2014). The joint graphical lasso for inverse covariance estimation across multiple classes. Journal of the Royal Statistical Society Series B: Statistical Methodology , 76(2):373–397. Deng, L., Yang, M., and Marcoulides, K. M. (2018). Structural equation modeling with many variables: A systematic review of issues and developments. Frontiers in psychology ,9:580. Drton, M. and Maathuis, M. H. (2017). Structure learning in graphical modeling. Annual Review of Statistics and Its Application , 4(1):365–393. 29 Eichler, M. (2012). Causal inference in time series analysis. Causality: Statistical perspec-tives and applications , pages 327–354. Glymour, C., Zhang, K., and Spirtes, P. (2019). Review of causal discovery methods based on graphical models. Frontiers in genetics , 10:524. Hallac, D., Leskovec, J., and Boyd, S. (2015). Network lasso: Clustering and optimization in large graphs. In Proceedings of the 21th ACM SIGKDD international conference on knowledge discovery and data mining , pages 387–396. Hocking, T. D., Joulin, A., Bach, F., and Vert, J.-P. (2011). Clusterpath an algorithm for clustering using convex fusion penalties. In 28th international conference on machine learning , page 1. Hoxhaj, G. and Manning, B. D. (2020). The pi3k–akt network at the interface of oncogenic signalling and cancer metabolism. Nature Reviews Cancer , 20(2):74–88. Huang, B., Zhang, K., Zhang, J., Ramsey, J., Sanchez-Romero, R., Glymour, C., and Sch¨ olkopf, B. (2020). Causal discovery from heterogeneous/nonstationary data. Journal of Machine Learning Research , 21(89):1–53. Hubert, L. J. and Arabie, P. (1985). Comparing partitions. Journal of Classification ,2:193–218. Jain, A. K. (2010). Data clustering: 50 years beyond k-means. Pattern Recognition Letters ,31(8):651–666. Jolliffe, I. (2005). Principal component analysis. Ke, N. R., Bilaniuk, O., Goyal, A., Bauer, S., Larochelle, H., Sch¨ olkopf, B., Mozer, M. C., Pal, C., and Bengio, Y. (2019). Learning neural causal models from unknown interven-tions. arXiv preprint arXiv:1910.01075 .Kitson, N. K., Constantinou, A. C., Guo, Z., Liu, Y., and Chobtham, K. (2023). A survey of bayesian network structure learning. Artificial Intelligence Review , 56(8):8721–8814. Li, X., Xie, S., McColgan, P., Tabrizi, S. J., Scahill, R. I., Zeng, D., and Wang, Y. (2018). Learning subject-specific directed acyclic graphs with mixed effects structural equation models from observational data. Frontiers in genetics , 9:430. Lloyd, S. (1982). Least squares quantization in pcm. IEEE transactions on information theory , 28(2):129–137. Ma, X., Ballal, T., Chen, H., Aldayel, O., and Al-Naffouri, T. Y. (2021). A maximum-likelihood tdoa localization algorithm using difference-of-convex programming. IEEE Signal Processing Letters , 28:309–313. Marinazzo, D., Pellicoro, M., and Stramaglia, S. (2008). Kernel method for nonlinear granger causality. Physical review letters , 100(14):144103. Murtagh, F. and Contreras, P. (2012a). Algorithms for hierarchical clustering: an overview. 
+
+Wiley Interdisciplinary Reviews: Data Mining and Knowledge Discovery , 2(1):86–97. 30 Murtagh, F. and Contreras, P. (2012b). Algorithms for hierarchical clustering: an overview. 
+
+Wiley Interdisciplinary Reviews: Data Mining and Knowledge Discovery , 2(1):86–97. Muth´ en, B. O. (2002). Beyond sem: General latent variable modeling. Behaviormetrika ,29(1):81–117. Nosbisch, J. L., Rahman, A., Mohan, K., Elston, T. C., Bear, J. E., and Haugh, J. M. (2020). Mechanistic models of plc/pkc signaling implicate phosphatidic acid as a key amplifier of chemotactic gradient sensing. PLOS Computational Biology , 16(4):e1007708. Pamfil, R., Sriwattanaworachai, N., Desai, S., Pilgerstorfer, P., Beaumont, P., Georgatzis, K., and Aragam, B. (2020). Dynotears: Structure learning from time-series data. In 
+
+International Conference on Artificial Intelligence and Statistics .Pan, W., Shen, X., and Liu, B. (2013). Cluster analysis: unsupervised learning via super-vised learning with a non-convex penalty. The Journal of Machine Learning Research ,14(1):1865–1889. Parikh, N. and Boyd, S. (2014). Proximal algorithms. Foundations and Trends in opti-mization , 1(3):127–239. Pearl, J. (2009). Causality . Cambridge university press. Pelckmans, K., De Brabanter, J., Suykens, J. A., and De Moor, B. (2005). Convex clustering shrinkage. In PASCAL workshop on statistics and optimization of clustering workshop ,volume 1524. Rosenberg, A. and Hirschberg, J. (2007). V-measure: A conditional entropy-based exter-nal cluster evaluation measure. In Proceedings of the 2007 joint conference on empiri-cal methods in natural language processing and computational natural language learning (EMNLP-CoNLL) , pages 410–420. Sachs, K., Perez, O., Pe’er, D., Lauffenburger, D. A., and Nolan, G. P. (2005). Causal protein-signaling networks derived from multiparameter single-cell data. Science ,308(5721):523–529. Shahapure, K. R. and Nicholas, C. (2020). Cluster quality analysis using silhouette score. In 2020 IEEE 7th International Conference on Data Science and Advanced Analytics (DSAA) , pages 747–748. Strobl, E. V. (2023). Causal discovery with a mixture of dags. Machine Learning ,112(11):4201–4225. Thiesson, B., Meek, C., Chickering, D. M., and Heckerman, D. (1998). Learning mixtures of dag models. In Proceedings of the Fourteenth conference on Uncertainty in artificial intelligence , pages 504–513. Varici, B., Katz, D., Wei, D., Sattigeri, P., and Tajer, A. (2024). Separability analysis for causal discovery in mixture of dags. Transactions on Machine Learning Research .31 Wei, D., Gao, T., and Yu, Y. (2020). Dags with no fears: A closer look at continuous optimization for learning bayesian networks. Advances in Neural Information Processing Systems , 33:3895–3906. Williams, T. C., Bach, C. C., Matthiesen, N. B., Henriksen, T. B., and Gagliardi, L. (2018). Directed acyclic graphs: a tool for causal studies in paediatrics. Pediatric research ,84(4):487–493. Wu, C., Kwon, S., Shen, X., and Pan, W. (2016). A new algorithm and theory for penalized regression-based clustering. Journal of Machine Learning Research , 17(188):1–25. Yu, Y., Chen, J., Gao, T., and Yu, M. (2019). Dag-gnn: Dag structure learning with graph neural networks. In International conference on machine learning , pages 7154–7163. PMLR. Zheng, X., Aragam, B., Ravikumar, P. K., and Xing, E. P. (2018). Dags with no tears: Con-tinuous optimization for structure learning. Advances in neural information processing systems , 31. Zheng, X., Dan, C., Aragam, B., Ravikumar, P., and Xing, E. (2020). Learning sparse nonparametric dags. In International conference on artificial intelligence and statistics ,pages 3414–3425. 32 Supplementary Material for Manuscript “A Unified Frame-work for Structure Aware Clustering and Heterogeneous Causal Graph Learning” A Proofs of Theorems 1 and 2 
+
+Proof of Theorem 1. Each term in L(s)aug is either a smooth semi–algebraic function (quadratic loss, acyclicity penalty) or a proper, lower–semicontinuous semi–algebraic func-tion ( ℓ1, gTLP). Therefore, L(s)aug is proper, lower–semicontinuous (LSC), and satisfies the KL property (Attouch et al., 2010, 2013). The coercivity of the quadratic terms in the full Lagrangian implies that the ADMM sequence {(Wk, θk)} is bounded. The updates of W and θ are obtained via sequential minimization: 
+
+Wk+1 = arg min  
+
+> W
+
+L(s)aug (W, θk), θk+1 = arg min  
+
+> θ
+
+L(s)aug (Wk+1 , θ).
+
+The reconstruction loss and acyclicity terms in L(s)aug have Lipschitz-continuous gradi-ents on bounded sets, while the ℓ1 and gTLP terms are proper lower-semicontinuous with bounded subgradients on bounded sets. In addition, the quadratic term ρ2
+
+P 
+
+> i<j
+
+θij −
+
+(Wi − Wj ) 2 
+
+> F
+
+/2 is strongly convex jointly in ( W, θ) and is proportional to ρ2. Standard non-convex ADMM theory confirms that because of this strong convexity and the Lipschitz continuity, the sequential minimization satisfies the sufficient decrease condition (H1). More explicitly, for the W-step, the strong convexity guarantees the existence of a constant g1 > 0 such that: 
+
+L(s)aug (Wk+1 , θk) ≤ L (s)aug (Wk, θk) − g1 Wk+1 − Wk 2 
+
+> F
+
+.
+
+Similarly, the θ-step yields a constant g2 > 0 such that: 
+
+L(s)aug (Wk+1 , θk+1 ) ≤ L (s)aug (Wk+1 , θk) − g2 θk+1 − θk 2 
+
+> F
+
+.
+
+By summing these two inequalities and setting a = min( g1, g 2) > 0, we obtain the overall sufficient decrease condition (H1) for the sequence {(Wk, θk)}:
+
+L(s)aug (Wk+1 , θk+1 ) ≤ L (s)aug (Wk, θk) − a
+
+
+
+Wk+1 − Wk 2 
+
+> F
+
++ θk+1 − θk 2
+
+> F
+
+
+
+.
+
+Moreover, the ADMM dual update for the consensus constraint is Uk+1  
+
+> ij
+
+= Ukij + θk+1  
+
+> ij
+
+−
+
+(Wk+1  
+
+> i
+
+− Wk+1  
+
+> j
+
+). This implies that the constraint residual is proportional to the change in the dual variables: θk+1  
+
+> ij
+
+− (Wk+1  
+
+> i
+
+− Wk+1  
+
+> j
+
+) = Uk+1  
+
+> ij
+
+− Ukij . The first-order optimality conditions for the W- and θ-updates then give a subgradient ωk+1 ∈ ∂L(s)aug (Wk+1 , θk+1 ). It combines (i) gradients of smooth terms with Lipschitz-continuous gradient, (ii) bounded subgradients of the nonsmooth penalties on bounded level sets, and (iii) the quadratic consensus term, which is proportional to the dual step Uk+1  
+
+> ij
+
+− Ukij .Consequently, there exists a constant L > 0, depending only on the Lipschitz con-stants of the smooth terms and the fixed penalty parameter ρ2, such that the relative error condition (H2) holds: 33 ∥ωk+1 ∥F ≤ L
+
+
+
+∥Wk+1 − Wk∥F + ∥θk+1 − θk∥F
+
+
+
+.
+
+For continuity condition (H3), the ADMM sequence {(Wk, θk)} is bounded, thus guar-anteeing the existence of a convergent subsequence. And the objective function L(s)aug (W, θ)is lower-semicontinuous. By the sufficient decrease condition (H1) and the boundedness of the sequence, the objective values L(s)aug (Wk, θk) form a non-increasing sequence. Since the objective function is bounded below, this sequence of objective values is guaranteed to converge to a finite limit. The LSC property of L(s)aug ensures that when the sequence converges to the limit point (W⋆, θ⋆), the function values satisfy: 
+
+L(s)aug (W⋆, θ⋆) ≤ lim inf  
+
+> k→∞
+
+L(s)aug (Wk, θk).
+
+This convergence of the objective function values to the function value at the limit point verifies continuity condition (H3). Because the augmented objective L(s)aug satisfies these conditions, the convergence result of Attouch et al. applies. Therefore, by Lemma 2.6 and Theorem 2.9 in Attouch et al. (2013), the entire sequence {(Wk, θk)} has finite length and converges to a first-order stationary point ( W⋆, θ⋆) of the Augmented Lagrangian L(s)aug .
+
+Proof of Theorem 2. The convergence of the outer difference-of-convex iteration se-quence {(W(s), θ(s))}s≥0 to a KKT point in a finite number of steps is guaranteed by the fundamental properties of the difference-of-convex programming framework, as leveraged in prior work on penalized clustering (Wu et al., 2016). First, the convex majorization applied at each step ensures that the objective value F( cW(s), bθ(s)) is monotonically non-increasing throughout the optimization, as the convex objective F(s)(·) is constructed to upper-bound the true objective F(·) at the previous iteration. The monotonicity follows directly from the sequence of inequalities: 0 ≤ F   cW(s), bθ(s) = F(s+1)   cW(s), bθ(s) ≤ F (s)  cW(s), bθ(s)
+
+≤ F (s)  cW(s−1) , bθ(s−1)  = F  cW(s−1) , bθ(s−1) .
+
+Since the objective is bounded below, this sequence of objective values is guaranteed to converge. Second, and critically, the convex approximation objective F(s)(W, θ) depends on the iteration s only through the set of indicator functions I(∥θ(s−1)  
+
+> ij
+
+∥F < τ ). Because these indicators only take a binary value 0 or 1 for each of the n(n − 1) /2 pairs, the function F(s)(W, θ) can only adopt a finite number of distinct functional forms across all iterations. The combination of monotonic decrease and a finite set of possible optimal values guarantees that the algorithm must stop at a fixed point, ( W(s⋆), θ(s⋆)), within a finite number of iterations, s⋆ < ∞. Standard difference-of-convex programming theory then asserts that this limit point is a KKT point of F(W, θ). 
+
+# B Thresholding Robustness Analysis 
+
+In Fig. S1 to Fig. S6, each panel reports a metric as the sparsity threshold δ varies from 0.01 to 0.10. Across the full threshold sweep, DAG-DC-ADMM consistently outperforms 34 NOTEARS-Individual and NOTEARS-Population for both skeleton and DAG recovery. It achieves higher TPR together with lower FDR and higher TNR than both baselines. As the sparsity threshold δ increases, TPR declines slightly but still stays closer to the oracle than either baseline. Meanwhile, FDR decreases and TNR increases, and both metrics approach the oracle. This reflects stronger error control for only a modest trade-off in TPR. Moreover, there is a practical operating window δ ∈ [0 .01 , 0.04] where increasing δ improves FDR and TNR without materially affecting TPR, rendering conclusions insensitive to the precise threshold choice. With respect to threshold selection, the method requires minimal tuning: it tends to separate true from spurious edges with a clear margin, so tightening the threshold mainly removes spurious edges while leaving true ones largely intact. 
+
+Figure S1: Thresholding robustness in the small-sample/long-series setting ( n = 50, σ =0.5). 35 Figure S2: Thresholding robustness in the small-sample/long-series setting ( n = 50, σ = 1). 
+
+Figure S3: Thresholding robustness in the small-sample/long-series setting ( n = 50, σ = 2). 36 Figure S4: Thresholding robustness in the small-sample/long-series setting ( n = 200, σ =0.5). 
+
+Figure S5: Thresholding robustness in the large-sample/short-series setting ( n = 200, σ =1). 37 Figure S6: Thresholding robustness in the large-sample/short-series setting ( n = 200, σ =2). 
+
+# C Three-Cluster Scenario 
+
+We additionally evaluated a three-cluster scenario for both the small-sample/long-series case and the large-sample/short-series case; the same conclusions hold. This confirms that our method’s advantages over baselines persist under multi-cluster scenario. Table S1: Three Clusters: Clustering Results (Small-sample/Long-series, n = 50, m = 300). Values are mean ± 95% CI over 50 runs; The true number of clusters Rtruth = 3 is fixed, and estimated bR is reported as the mode over repetitions. 
+
+Setting ARI Homogeneity Completeness Recon. Error truth Recon. Error est Rtruth bRσ = 0 .5 0.90 ± 0.03 1.00 ± 0.01 0.86 ± 0.03 1.25 ± 0.00 1.25 ± 0.00 3 4
+
+σ = 1 0.83 ± 0.04 1.00 ± 0.00 0.78 ± 0.03 5.00 ± 0.01 4.97 ± 0.01 3 5
+
+σ = 2 0.87 ± 0.04 1.00 ± 0.00 0.83 ± 0.04 20 .01 ± 0.03 19 .89 ± 0.03 3 3
+
+38 Table S2: Three Clusters: Skeleton and DAG recovery metrics for different methods under varying disturbance levels ( σ). (Small-sample/Long-series, n = 50 , m = 300; mean ± 95% CI over 50 runs, threshold = 0 .02). 
+
+Method Skel TPR Skel FDR Skel TNR DAG TPR DAG FDR DAG TNR 
+
+Disturbance Scale σ = 0 .5Population 0.91 ± 0.03 0.47 ± 0.02 0.17 ± 0.04 0.62 ± 0.04 0.64 ± 0.02 0.63 ± 0.02 Individual 1.00 ± 0.00 0.36 ± 0.00 0.40 ± 0.01 0.79 ± 0.02 0.49 ± 0.01 0.73 ± 0.01 DAG-DC-ADMM 1.00 ± 0.00 0.19 ± 0.03 0.73 ± 0.05 0.92 ± 0.02 0.33 ± 0.03 0.82 ± 0.02 Oracle 1.00 ± 0.00 0.08 ± 0.02 0.88 ± 0.03 0.88 ± 0.03 0.18 ± 0.04 0.92 ± 0.02 
+
+Disturbance Scale σ = 1 .0Population 0.90 ± 0.03 0.48 ± 0.02 0.16 ± 0.04 0.61 ± 0.04 0.65 ± 0.02 0.62 ± 0.02 Individual 1.00 ± 0.00 0.36 ± 0.00 0.40 ± 0.01 0.79 ± 0.02 0.49 ± 0.01 0.73 ± 0.01 DAG-DC-ADMM 1.00 ± 0.00 0.15 ± 0.02 0.78 ± 0.03 0.93 ± 0.01 0.31 ± 0.03 0.84 ± 0.02 Oracle 1.00 ± 0.00 0.09 ± 0.02 0.88 ± 0.03 0.87 ± 0.03 0.19 ± 0.04 0.92 ± 0.02 
+
+Disturbance Scale σ = 2 .0Population 0.90 ± 0.03 0.47 ± 0.02 0.17 ± 0.05 0.60 ± 0.04 0.65 ± 0.02 0.62 ± 0.02 Individual 1.00 ± 0.00 0.28 ± 0.00 0.57 ± 0.01 0.80 ± 0.01 0.42 ± 0.01 0.79 ± 0.01 DAG-DC-ADMM 1.00 ± 0.00 0.09 ± 0.02 0.87 ± 0.03 0.96 ± 0.01 0.26 ± 0.03 0.87 ± 0.02 Oracle 1.00 ± 0.00 0.08 ± 0.02 0.88 ± 0.03 0.88 ± 0.03 0.18 ± 0.04 0.92 ± 0.02 
+
+Table S3: Three Clusters: Clustering Results (Large-sample/Short-series, n = 200, m =50). Values are mean ± 95% CI over 50 runs; The true number of clusters Rtruth = 3 is fixed, and estimated bR is reported as the mode over repetitions. 
+
+Setting ARI Homogeneity Completeness Recon. Error truth Recon. Error est Rtruth bRσ = 0 .5 0.36 ± 0.04 0.93 ± 0.04 0.40 ± 0.02 1.25 ± 0.00 1.25 ± 0.00 3 35 
+
+σ = 1 0.52 ± 0.09 0.98 ± 0.01 0.56 ± 0.07 5.00 ± 0.01 4.98 ± 0.01 3 5
+
+σ = 2 0.74 ± 0.08 0.91 ± 0.04 0.72 ± 0.05 19 .96 ± 0.03 19 .95 ± 0.08 3 9
+
+39 Table S4: Three Clusters: Skeleton and DAG recovery metrics for different methods under varying disturbance levels ( σ). (Large-sample/Small-series, n = 200 , m = 50; mean ± 95% CI over 50 runs, threshold = 0 .02). 
+
+Method Skel TPR Skel FDR Skel TNR DAG TPR DAG FDR DAG TNR 
+
+Disturbance Scale σ = 0 .5Population 0.90 ± 0.04 0.48 ± 0.02 0.16 ± 0.05 0.60 ± 0.04 0.65 ± 0.02 0.62 ± 0.02 Individual 0.94 ± 0.00 0.39 ± 0.00 0.36 ± 0.00 0.65 ± 0.01 0.58 ± 0.01 0.69 ± 0.00 DAG-DC-ADMM 1.00 ± 0.00 0.23 ± 0.03 0.65 ± 0.05 0.87 ± 0.02 0.40 ± 0.03 0.77 ± 0.02 Oracle 1.00 ± 0.00 0.13 ± 0.02 0.81 ± 0.03 0.87 ± 0.03 0.24 ± 0.03 0.89 ± 0.02 
+
+Disturbance Scale σ = 1 .0Population 0.89 ± 0.04 0.48 ± 0.02 0.15 ± 0.04 0.60 ± 0.04 0.66 ± 0.02 0.62 ± 0.02 Individual 0.88 ± 0.01 0.28 ± 0.00 0.63 ± 0.00 0.60 ± 0.01 0.51 ± 0.01 0.79 ± 0.00 DAG-DC-ADMM 0.99 ± 0.00 0.17 ± 0.02 0.75 ± 0.03 0.88 ± 0.02 0.36 ± 0.03 0.81 ± 0.02 Oracle 1.00 ± 0.00 0.13 ± 0.02 0.81 ± 0.03 0.86 ± 0.03 0.25 ± 0.04 0.89 ± 0.02 
+
+Disturbance Scale σ = 2 .0Population 0.91 ± 0.03 0.48 ± 0.02 0.16 ± 0.04 0.59 ± 0.03 0.66 ± 0.02 0.62 ± 0.02 Individual 0.96 ± 0.00 0.43 ± 0.00 0.27 ± 0.00 0.66 ± 0.01 0.60 ± 0.01 0.66 ± 0.00 DAG-DC-ADMM 0.99 ± 0.01 0.16 ± 0.04 0.75 ± 0.06 0.86 ± 0.02 0.27 ± 0.05 0.86 ± 0.03 Oracle 1.00 ± 0.00 0.12 ± 0.02 0.83 ± 0.04 0.88 ± 0.03 0.22 ± 0.04 0.90 ± 0.02 
+
+40

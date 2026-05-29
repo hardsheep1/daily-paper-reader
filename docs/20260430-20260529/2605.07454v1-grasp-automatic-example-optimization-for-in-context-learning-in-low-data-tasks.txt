@@ -1,0 +1,211 @@
+Title: GRaSp: Automatic Example Optimization for In-Context Learning in Low-Data Tasks
+
+URL Source: https://arxiv.org/pdf/2605.07454v1
+
+Published Time: Mon, 11 May 2026 00:55:28 GMT
+
+Number of Pages: 12
+
+Markdown Content:
+# GRaSp: Automatic Example Optimization for In-Context Learning in Low-Data Tasks ⋆
+
+Simen Bihaug-Frøyland 1⋆⋆ and Henrik Brådland 1,2,3 
+
+> 1
+
+Centre for Artificial Intelligence Research, University of Agder  
+
+> 2
+
+School of Computing and Information, University of Pittsburgh  
+
+> 3
+
+Norkart AS 
+
+Abstract. In-context learning enables large language models to adapt to new tasks, but their performance is highly sensitive to the selected examples. Finding effective demonstrations is particularly difficult in domain-specific, low-data settings where high-quality examples are scarce. We propose GRaSp, a three-stage framework for automatic in-context ex-ample optimization. By first generating a large synthetic candidate pool, then structuring it with clustering and dimensionality reduction, and fi-nally using genetic algorithms to find the optimal in-context examples, the framework shows consistent improvements on the NER task. We also introduce a custom diversity-adaptive mutation mechanism, allowing it to transition from the initial broad inter-cluster exploration to focused intra-cluster refinement as the population converges. We evaluate GRaSp on financial named entity recognition (FiNER-139), comparing synthetic and human-annotated candidate pools across pool sizes k ∈ { 500 , 5000 }.With non-synthetic data, GRaSp achieves 45.84% μ-F 1, consistently out-performing both zero-shot and random few-shot baselines. Synthetic data matches the random baseline but does not exceed it, suggesting that dis-tributional variety in the candidate pool is critical for generalization. 
+
+Keywords: In-Context Learning · Prompt Optimization · Genetic Al-gorithms. 
+
+# 1 Introduction 
+
+Large Language Models (LLMs) have been shown to improve significantly when given carefully crafted task-specific instructions, or prompts, without performing updates to the model’s parameters [9]. Optimizing the instructions, known as prompt engineering, has produced several techniques for constructing effective prompts. The most prominent is In-Context Learning (ICL) [2], where relevant examples are included in the prompt to guide the model toward the correct behavior. However, ICL relies heavily on high-quality examples as irrelevant or poorly chosen inputs have been shown to degrade performance [10].  
+
+> ⋆
+
+Code is available at https://github.com/sbfroy/GRaSp.  
+
+> ⋆⋆
+
+simenbih@uia.no  
+
+> arXiv:2605.07454v1 [cs.CL] 8 May 2026 2S. Bihaug-Frøyland and H. Brådland
+
+Finding suitable examples is especially difficult for narrow, domain-specific tasks with limited data, as the available demonstrations may not cover the range of inputs encountered at inference, causing queries to fall outside the distribution of the provided examples [3]. This makes ICL less effective in low-data settings. In our work, we therefore use LLM-generated synthetic data to build can-didate pools as a first step toward optimizing example selection for few-shot prompting. Combined with clustering and Genetic Algorithms (GAs), we pro-pose GRaSp, a three-stage framework for automatic prompt engineering in low-data tasks. Although there is ongoing work on dynamic example selection [6, 5], we focus exclusively on static prompts. For this work, we seek a single optimal prompt fixed before inference. 
+
+# 2 Related Work 
+
+ICL performance is highly sensitive to the prompt’s composition. Research in-dicates that even subtle shifts in the choice or sequence of demonstrations can swing model performance from near-random to state-of-the-art [11]. This section reviews contemporary efforts to mitigate this instability through automated se-lection, retrieval, and evolutionary optimization. To move beyond stochastic example selection, several frameworks prioritize instance-specific retrieval. Liu et al. [6] demonstrated that selecting examples based on semantic proximity to the test query (KATE) significantly outper-forms random sampling. Beyond similarity, information-theoretic metrics such as entropy have been employed to identify performant prompt configurations that minimize model uncertainty [8]. While these dynamic methods offer high precision, they incur significant computational overhead at inference time. Our work instead aligns with static optimization, seeking a robust, universal set of demonstrations that performs consistently across a task domain without requir-ing per-query retrieval. The arrangement of examples is as critical as their content. The Se 2 frame-work [5] treats prompt construction as a sequential decision process, utilizing beam search and LLM feedback to model dependencies between examples. Sim-ilarly, PERO [4] highlights that reordering the same set of examples can yield substantial performance gains. While PERO explicitly searches the permutation space, our proposed method treats the entire prompt sequence as a single indi-vidual within a GA. This allows the model to implicitly optimize for order and content simultaneously, favoring configurations where the interaction between order and content maximizes task accuracy. In scenarios where high-quality human-annotated data is sparse, synthetic augmentation has emerged as a viable alternative. Recent studies have used LLMs to expand candidate pools before using GAs to prune these sets for opti-mal performance [1]. However, such methods often struggle with overfitting when the candidate pool is restricted. Our approach builds upon the strengths of evolu-tionary search but focuses on improving the search space through density-based GRaSp: In-Context Example Optimization for Low-Data Tasks 3
+
+clustering and a diversity-adaptive mutation scheme that prevents convergence on a narrow subset of examples, addressing the generalization gaps noted. 
+
+# 3 Method 
+
+We propose a three-stage approach to overcome the issue of optimizing prompt ICL-examples, termed GRaSp after its stages: Generate, Reduce, and Select. Each stage leverages established algorithms, combining the generative capabil-ities of LLMs with clustering and evolutionary search. GRaSp is designed to automatically identify the most effective example set for ICL within a specific task domain, enabling LLMs to adapt effectively to low-data settings. Figure 1 illustrates the overall process.   
+
+> Generate Reduce Select
+
+Fig. 1: Conceptual overview of GRaSp. Generate: Produce a broad set of syn-thetic examples. Reduce: Cluster and filter the candidate pool. Select: Identify the most effective combination of examples by using a GA. 
+
+3.1 Generate Stage 
+
+At first a large candidate pool of synthetic examples, denoted by S, is produced to cover the semantic space of the task domain. The examples are generated by an LLM prompted with an unlabeled domain corpus D (e.g., PDF files). The purpose of this stage is to create a broad and diverse representation of the domain, ensuring that all relevant subtopics are captured. The focus lies on quantity and coverage rather than precision, as later stages will refine and filter the examples. 
+
+3.2 Reduce Stage 
+
+Then the candidate pool is structured and refined. Each example is first embed-ded into a vector space using a dense neural embedding model. Then, to uncover the semantic structure among examples, we employ a hierarchical density-based clustering algorithm, which groups semantically similar examples into clusters 4 S. Bihaug-Frøyland and H. Brådland 
+
+and marks outliers as noise. Removing this noise eliminates ambiguous or irrele-vant examples, resulting in stable and coherent clusters that reflect the domain’s main themes, forming a reduced pool SR ⊂ S . This ensures that the subsequent GA focuses on optimizing between meaningful semantic patterns rather than wasting effort on misleading examples that could degrade learning quality. 
+
+3.3 Select Stage 
+
+At last, an evolutionary algorithm identifies the most effective combination of examples from SR. Each individual represents a fixed-length sequence of genes, where each gene encodes a cluster–example pair (c, e ): the cluster c from which the example e is drawn. The GA evolves the population based on a fitness function that reflects task performance (see Section 4.3 for details). We also introduce a diversity-adaptive mutation strategy to balance the se-lection across versus within clusters (detailed in Section 4.2). Initially, the al-gorithm explores broadly across clusters through inter-cluster mutations to dis-cover which semantic regions contribute most to performance. As evolution pro-gresses, the search shifts toward intra-cluster mutation, refining examples within the most promising clusters. The process ultimately produces the optimized set 
+
+S⋆ ⊂ S R, representing the most effective combination of examples. By combining synthetic example generation, noise-resistant semantic clus-tering, and adaptive evolutionary optimization, GRaSp provides a systematic pipeline for optimizing ICL examples. 
+
+# 4 Experimental Setup and Implementation 
+
+4.1 Task and Data 
+
+The task design and label space are inspired by the FiNER-139 [7] and Financial-NER-NLP datasets 4, which convert XBRL annotations into natural language contexts to support entity recognition in realistic financial narratives. Following the same idea, examples are derived from two publicly available 10-K annual re-ports (Microsoft’s FY2019 and Apple’s FY2018) and expressed as self-contained, sentence-level inputs – both sentences containing extractable financial entities and sentences without them. Extracted entity values are kept in their original surface form to retain the natural linguistic variety typical of financial reporting. 
+
+4.2 Implementation Details 
+
+In the Generate stage, domain-specific examples are created from the 10-K re-ports. To maximize diversity, text chunks are sampled from the documents at random. The LLM gpt-oss-120b 5 generates S using two separate generation             
+
+> 4https://huggingface.co/datasets/Josephgflowers/Financial-NER-NLP
+> 5An open-source large language model released by OpenAI, available at https://huggingface.co/openai/gpt-oss-120b. GRaSp: In-Context Example Optimization for Low-Data Tasks 5
+
+streams: one for positive examples (containing target entities) and one for nega-tive examples (without target entities), ensuring balanced representation. Each stream uses dedicated prompts with explicit constraints. In the Reduce stage, each example is first embedded using Qwen3-Embedding-4B 6
+
+and projected into a lower-dimensional space using UMAP (Uniform Manifold Approximation and Projection). Clustering is then performed with HDBSCAN (Hierarchical Density-Based Spatial Clustering of Applications with Noise). In the Select stage, a (μ+λ) GA – implemented using DEAP’s eaMuPlusLambda 
+
+strategy – is applied to derive S⋆. It employs tournament selection, two-point crossover, and a diversity-adaptive mutation mechanism that combines inter-and intra-cluster operations (Figure 2). To balance exploration and exploitation, GRaSp uses a diversity-adaptive mutation probability. Population diversity Dg
+
+is measured as the proportion of unique clusters represented at generation g. The inter-cluster mutation probability is then pinter (g) = pmin + ( pmax − pmin ) · Dg :when diversity is high, inter-cluster mutations dominate; as diversity falls, intra-cluster mutations take over. 
+
+> (a) Inter-cluster mutation altering both cluster assignment and example.
+> (b) Intra-cluster mutation altering the example while preserving the cluster.
+
+Fig. 2: Illustration of the diversity-adaptive mutation. Colors denote cluster membership. For a given individual, one gene (c, e ) is selected and mutated. Inter-cluster mutation replaces both c and e, whereas intra-cluster mutation re-places only e while preserving the original cluster. Each individual is evaluated by measuring performance on the validation set. The LLM output is compared against gold annotations using the set-based extraction metric described in Section 4.3.   
+
+> 6A pretrained sentence embedding model developed by Alibaba Cloud, available at https://huggingface.co/Qwen/Qwen3-Embedding-4B. 6S. Bihaug-Frøyland and H. Brådland
+
+4.3 Hyperparameters and Evaluation Settings 
+
+The data generation used a batch size of 20 examples per API call. Temperature was varied across batches (base temperature 0.7 ± 0.2) to encourage semantic diversity. In total, 10,000 examples were generated and split into 9,000 candidate examples and 1,000 validation instances. The candidate pool was sized to ensure that sufficient examples survived noise filtering in the Reduce stage to support the largest pool size k=5000 .For the Reduce stage, the high-dimensional embeddings were first projected to R20 using UMAP. HDBSCAN was then applied with a minimum cluster size of 9, a minimum sample size of 1, and a cluster selection epsilon of 0.18 . For the non-synthetic data (Section 4.4), these parameters were re-tuned to account for differences in pool structure, using a minimum cluster size of 10 , a minimum sample size of 1, and epsilon of 0.15 . In both cases, hyperparameters were chosen empirically to obtain semantically coherent clusters while avoiding groups that were excessively small, overly broad, or dominated by noise. In the Select stage, the GA operated with a parent population size μ = 80 and 
+
+λ = 180 offspring per generation, for a maximum of 20 generations. The crossover probability was set to pcx = 0 .30 and the mutation probability to pmut = 0 .50 ,with tournament selection of size 3. The diversity-adaptive mutation scheme was configured with pmin = 0 .05 and pmax = 0 .70 , so that high cluster diversity favored exploration via inter-cluster mutation, while reduced diversity shifted the search towards intra-cluster exploitation. Generational early stopping was applied with a patience of 5 generations and a minimum relative improvement of 0.003 , activated after an initial warm-up of 5 generations. For fitness evaluation, we used an LLM run deterministically with a tem-perature of 0.0. We evaluate predictions using a set-based extraction metric. For each example, the model outputs one or more labels, and for each label it outputs a set of extractable values. A predicted value counts as correct only if it exactly matches a gold value for the same label (order does not matter). We accumulate true positives, false positives, and false negatives per label across the validation set. We report the same evaluation metrics as the FiNER-139 paper: micro-precision ( μ-P), micro-recall ( μ-R), and micro-F 1 (μ-F 1) computed by pooling counts across all labels (so frequent labels contribute more), and macro-F 1 (m-F 1) computed by averaging F 1 across labels (so each label has equal weight). 
+
+4.4 Experimental Procedure 
+
+We evaluate GRaSp in two stages: (i) sensitivity to the size of S, and (ii) com-parison between synthetic and human-annotated data. All experiments follow the pipeline described in Sections 4.1–4.3. To study the impact of pool size, we construct two candidate pools with 
+
+k ∈ { 500 , 5000 } in-context examples. We first run the Generate and Reduce stages to obtain a clustered, noise-filtered set SR. Then, for each value of k, we build Sk via round-robin sampling over clusters: examples are drawn one at a GRaSp: In-Context Example Optimization for Low-Data Tasks 7
+
+time from each cluster in turn, cycling from the largest to the smallest until k
+
+examples have been selected. This ensures that all clusters are represented as uniformly as possible. We also apply the same procedure directly to the original Financial-NER-NLP dataset. In these cases, the labeled Financial-NER-NLP examples form the initial candidate pool S, and the same clustering, sampling, and evolutionary procedure is repeated. This allows us to assess GRaSp under near-ideal condi-tions using non-synthetic data. Reduced subsets are used during evolutionary optimization due to the large size of the available training and validation data. The subsets are sampled to preserve the original label distribution and to align with the size of the gen-erated synthetic data. Specifically, 9, 000 training instances are used instead of 
+
+∼ 900 , 000 , and 1, 000 validation instances instead of ∼ 100 , 000 .
+
+# 5 Results and Discussion 0 4 8 12 16 20 
+
+> Generation
+> 0.67
+> 0.69
+> 0.70
+> 0.72
+> 0.73
+> 0.75
+> Avg. Fitness (  -F1)
+> k=5000
+> k=500
+
+(a) Synthetic data 0 4 8 12 16 20  
+
+> Generation
+> 0.43
+> 0.45
+> 0.47
+> 0.49
+> 0.51
+> 0.53
+> Avg. Fitness (  -F1)
+> k=5000
+> k=500
+
+(b) Non-synthetic data 
+
+Fig. 3: Average validation fitness over generations for different pool sizes. Each curve shows the mean fitness ( μ-F 1) across the population at each generation. Figure 3 shows the average population fitness on the validation set across generations. Note that the synthetic and non-synthetic configurations use sep-arate validation sets: the synthetic runs are evaluated against LLM-generated validation data, while the non-synthetic runs use human-annotated examples. Fitness scores are therefore not directly comparable across the two settings. All configurations show steady improvement, confirming that the GA effectively op-timizes example selection. The synthetic runs start at a notably higher fitness ( ∼
+
+0.68 μ-F 1) than the non-synthetic ones ( ∼ 0.45), with k=5000 reaching ∼0.73 by generation 20. This higher starting point likely reflects that the synthetic validation set was generated by the same LLM as the candidate pool S, making it easier for any example set to score well. The non-synthetic runs, drawn from human-annotated data with greater linguistic and factual variety, start lower but 8 S. Bihaug-Frøyland and H. Brådland 
+
+Table 1: Test set results for ICL methods. Random baselines report mean ± std over 3 independent draws. GRaSp configurations use five in-context examples selected from candidate pools of size k. Bold indicates best result per column.                                                  
+
+> μ-P (%) μ-R (%) μ-F 1(%) m-F 1(%) Zero-shot 30.64 58.58 40.23 33.22
+> Synthetic data
+> Random 35.14 ±0.43 57.11 ±0.58 43.51 ±0.48 36.38 ±0.20 GRaSp ( k=5000 )39.53 47.62 43.20 35.55 GRaSp ( k=500 )36.69 52.84 43.31 36.58
+> Non-synthetic data
+> Random 33.93 ±0.86 58.40 ±1.80 42.91 ±1.06 36.43 ±1.22 GRaSp ( k=5000 )36.96 60.32 45.84 39.18
+> GRaSp ( k=500 )36.37 61.01 45.57 38.86
+
+show consistent gains across all pool sizes, with k=5000 reaching the highest final fitness ( ∼ 0.52). As seen in Table 1, all few-shot methods improve over zero-shot, which achieves high recall ( 58 .58% ) but low precision ( 30 .64% ), yielding a μ-F 1 of 
+
+40 .23% . Among non-synthetic configurations, GRaSp consistently outperforms the random baseline across all metrics. The best result, μ-F 1 = 45 .84% with 
+
+k=5000 , represents a 2.93 percentage point (pp) improvement over the random baseline ( 42 .91% ) and a 5.61 point gain over zero-shot. Performance is remark-ably stable across pool sizes. This stability suggests that the Reduce stage plays an important role: by clustering S and sampling across clusters, GRaSp ensures that even small pools cover the semantic space of the task, giving the GA a well-structured search space regardless of k.The synthetic results tell a different story. GRaSp ( k=500 ) and GRaSp (k=5000 ) roughly match the random baseline on μ-F 1 (∼ 43% ) but do not exceed it. Notably, GRaSp ( k=5000 ) achieves the highest precision overall ( 39 .53% ) at the cost of lower recall ( 47 .62% ), indicating that the GA converged on a conser-vative example set that favors precision. The contrast between synthetic and non-synthetic results is noticeable. De-spite the higher validation fitness observed for synthetic data (Figure 3), this advantage does not transfer to the test set. The synthetic examples, while suffi-cient for the GA to optimize against its own validation data, appear to lack the distributional variety needed to produce prompts that generalize to real text. Figure 4 visualizes the diversity-adaptive mutation mechanism. In all config-urations, the inter-cluster mutation probability starts high and decays over the course of evolution, confirming that the mechanism operates as intended: the population begins with broad exploration across clusters and gradually shifts toward intra-cluster refinement as the GA converges on the most promising se-GRaSp: In-Context Example Optimization for Low-Data Tasks 90 4 8 12 16 20 
+
+> Generation
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> Inter-cluster prob.  k=5000
+> k=500
+
+(a) Synthetic data 0 4 8 12 16 20  
+
+> Generation
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> Inter-cluster prob.  k=5000
+> k=500
+
+(b) Non-synthetic data 
+
+Fig. 4: Adaptive inter-cluster mutation probability over generations for different pool sizes. Each curve shows the inter-cluster mutation probability at each gen-eration. mantic regions. The decay is steepest for k=5000 , where the larger pool offers more initial diversity that is progressively narrowed. This validates the core de-sign premise of the adaptive mutation, namely that the exploration–exploitation balance is driven by the population itself rather than by a fixed schedule. The non-synthetic results demonstrate that GRaSp’s optimization does gen-eralize to unseen data: both pool sizes consistently outperform the random base-line on the held-out test set (Table 1). This is notable because prior work on GA-based prompt optimization has reported poor generalization [1]. Balkus and Yan used a GA to select in-context examples for GPT-3 and achieved 85% vali-dation accuracy but only 67% on unseen data, attributing the gap to overfitting from a small candidate pool. GRaSp’s clustering and noise filtering mitigate this by structuring the search space into semantically coherent clusters, allowing the GA to select examples that cover the task domain rather than overfitting to idiosyncratic validation patterns. The synthetic configurations, however, do not share this advantage. Despite higher validation fitness (Figure 3), the GA-optimized synthetic prompts fail to outperform random selection on the test set. The issue is not overfitting in the traditional sense – the GA operates correctly and fitness improves – but rather a distributional mismatch between the synthetic S and the real evaluation data. The LLM-generated examples likely capture frequent patterns in the domain but underrepresent the linguistic and factual variation found in actual financial 10-K reports. The high synthetic validation fitness further supports this interpretation as the synthetic validation set, generated by the same process, is easy for any synthetic prompt to score well on, but this does not indicate genuine task com-petence on real financial texts. These results suggest that GRaSp’s clustering and evolutionary optimization are effective when the candidate pool is represen-tative of the target domain, but that the framework’s performance is ultimately bounded by the quality of the data it operates on. 10 S. Bihaug-Frøyland and H. Brådland 
+
+Table 2: Comparison to supervised baselines fine-tuned on the full training set (mean ± std over 3 seeds). GRaSp reports the best-performing configuration (non-synthetic, k=5000 ).                                  
+
+> μ-F 1(%) m-F 1(%) spaCy 48.6 ±0.4 37.6 ±0.2 BiLSTM 71.3 ±0.2 68.6 ±0.2 BERT 75.1 ±1.1 72.6 ±1.4 FinBERT 74.0 ±1.1 –SEC-BERT 75.7 ±0.1 72.6 ±0.4 GRaSp 45.84 39.18
+
+For completeness, Table 2 compares GRaSp to supervised baselines from the FiNER-139 benchmark. These models are fine-tuned on the full training set (∼900k examples) and, as expected, substantially outperform GRaSp. The gap underscores the difficulty of the task: representing over 139 XBRL tags is inher-ently challenging for ICL with only five examples. Nevertheless, GRaSp operates in a fundamentally different regime – no parameter updates, no labeled training data beyond the few-shot prompt – and its best configuration approaches the performance of spaCy (48.6% μ-F 1), which itself uses supervised training. 
+
+# 6 Conclusion 
+
+In this paper, we present GRaSp, a three-stage framework for automatic in-context example optimization in low-data tasks. By combining synthetic data generation, density-based clustering, and a GA with diversity-adaptive muta-tion, GRaSp provides a systematic approach to constructing effective few-shot prompts without requiring labeled training data. Applied to financial NER on the FiNER-139 task, GRaSp with non-synthetic data achieves 45 .84% μ-F 1, im-proving over both zero-shot (+ 5.61 pp) and random few-shot baselines (+ 2.93 
+
+pp). The adaptive mutation mechanism successfully transitions from exploration to exploitation as the population converges, as confirmed by the decay in inter-cluster mutation probability across generations. Our results also reveal some important limitations. While GRaSp general-izes well with non-synthetic data, synthetic candidate pools do not yield gains over random selection, pointing to data quality as the binding constraint. Fur-thermore, the absolute performance gap to supervised baselines remains large, reflecting the difficulty of 139-class NER with only five in-context examples. Several directions remain for future work. Evaluating GRaSp on additional tasks and domains would test the generality of the framework. Improving syn-thetic data quality – for instance through filtering, iterative refinement, or incor-porating real examples as seeds during generation – is perhaps the most pressing GRaSp: In-Context Example Optimization for Low-Data Tasks 11 
+
+direction, as closing the gap between synthetic and non-synthetic performance would make GRaSp fully viable in tasks where no labeled data exists at all. Finally, scaling to larger candidate pools and longer evolutionary runs may yield further gains, as most configurations did not trigger early stopping within the allocated budget. 
+
+Disclosure of Interests. The authors have no competing interests to declare. 
+
+# References 
+
+1. Balkus, S., Yan, D.: Improving short text classification with augmented data using GPT-3. Natural Language Engineering 30 (5), 943–972 (2024). https://doi.org/10.1017/S1351324923000438 2. Dong, Q., Li, L., Dai, D., Zheng, C., Ma, J., Li, R., Xia, H., Xu, J., Wu, Z., Liu, T., Chang, B., Sun, X., Li, L., Sui, Z.: A survey on in-context learning. In: Proceedings of the 2024 Conference on Empirical Methods in Natural Language Processing. pp. 1107–1128. Association for Computational Linguistics, Miami, Florida, USA (2024). https://doi.org/10.18653/v1/2024.emnlp-main.64 3. He, W., Liu, S., Zhao, J., Ding, Y., Lu, Y., Xi, Z., Gui, T., Zhang, Q., Huang, X.: Self-Demos: Eliciting out-of-demonstration generalizability in large language mod-els. In: Findings of the Association for Computational Linguistics: NAACL 2024. pp. 3829–3845. Association for Computational Linguistics, Mexico City, Mexico (2024). https://doi.org/10.18653/v1/2024.findings-naacl.243 4. Kumar, S., Talukdar, P.: Reordering examples helps during priming-based few-shot learning. In: Findings of the Association for Computational Linguistics: ACL-IJCNLP 2021. pp. 4507–4518. Association for Computational Linguistics, Online (2021). https://doi.org/10.18653/v1/2021.findings-acl.395 5. Liu, H., Liu, J., Huang, S., Zhan, Y., Sun, H., Deng, W., Wei, F., Zhang, Q.: Se 2: Sequential example selection for in-context learning. In: Findings of the Association for Computational Linguistics: ACL 2024. pp. 5262– 5284. Association for Computational Linguistics, Bangkok, Thailand (2024). https://doi.org/10.18653/v1/2024.findings-acl.312 6. Liu, J., Shen, D., Zhang, Y., Dolan, B., Carin, L., Chen, W.: What makes good in-context examples for GPT-3? In: Proceedings of Deep Learning Inside Out (Dee-LIO 2022): The 3rd Workshop on Knowledge Extraction and Integration for Deep Learning Architectures. pp. 100–114. Association for Computational Linguistics, Dublin, Ireland and Online (2022). https://doi.org/10.18653/v1/2022.deelio-1.10 7. Loukas, L., Fergadiotis, M., Chalkidis, I., Spyropoulou, E., Malakasiotis, P., An-droutsopoulos, I., Paliouras, G.: FiNER: Financial numeric entity recognition for XBRL tagging. In: Proceedings of the 60th Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers). pp. 4419–4431. Associa-tion for Computational Linguistics (2022). https://doi.org/10.18653/v1/2022.acl-long.303 8. Lu, Y., Bartolo, M., Moore, A., Riedel, S., Stenetorp, P.: Fantastically ordered prompts and where to find them: Overcoming few-shot prompt order sensitivity. In: Proceedings of the 60th Annual Meeting of the Association for Computational Lin-guistics (Volume 1: Long Papers). pp. 8086–8098. Association for Computational Linguistics, Dublin, Ireland (2022). https://doi.org/10.18653/v1/2022.acl-long.556 12 S. Bihaug-Frøyland and H. Brådland 9. Sahoo, P., Singh, A.K., Saha, S., Jain, V., Chadha, A.: A systematic survey of prompt engineering in large language models: Techniques and applications (2024), arXiv:2402.07927 10. Wu, S., Xie, J., Chen, J., Zhu, T., Zhang, K., Xiao, Y.: How easily do irrelevant inputs skew the responses of large language models? In: First Conference on Lan-guage Modeling (2024), https://openreview.net/forum?id=S7NVVfuRv8 11. Zhao, T.Z., Wallace, E., Feng, S., Klein, D., Singh, S.: Calibrate before use: Im-proving few-shot performance of language models. In: Proceedings of the 38th International Conference on Machine Learning. Proceedings of Machine Learning Research, vol. 139, pp. 12697–12706. PMLR (2021)

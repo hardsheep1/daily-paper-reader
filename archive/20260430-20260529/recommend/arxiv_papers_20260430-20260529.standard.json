@@ -1,0 +1,411 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-05-29T02:53:38.565516+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 3,
+    "deep_cap": 6,
+    "deep_selected": 3,
+    "quick_candidates": 7,
+    "quick_skim_target": 11,
+    "quick_selected": 7
+  },
+  "deep_dive": [
+    {
+      "id": "2605.03299v1",
+      "source": "arxiv",
+      "title": "LLM-XTM: Enhancing Cross-Lingual Topic Models with Large Language Models",
+      "abstract": "Cross-lingual topic modeling aims to discover shared semantic structures across languages, yet existing models depend on sparse bilingual resources and often yield incoherent or weakly aligned topics. Recent LLM-based refinements improve interpretability but are costly, document-level, and prone to hallucination, with prior white-box approaches requiring inaccessible token probabilities. We propose LLM-XTM, a framework that integrates LLM-guided topic refinement with self-consistency uncertainty quantification, enabling black-box, stable, and scalable enhancement of cross-lingual topic models. Experiments on multilingual corpora show that LLM-XTM achieves superior topic coherence and alignment while reducing reliance on bilingual dictionaries and expensive LLM calls.",
+      "authors": [
+        "Minh Chu Xuan",
+        "Tien-Phat Nguyen",
+        "Linh Ngo Van",
+        "Dinh Viet Sang",
+        "Nguyen Thi Ngoc Diep",
+        "Trung Le"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-05-05T02:40:39+00:00",
+      "link": "https://arxiv.org/pdf/2605.03299v1",
+      "tags": [
+        "keyword:ac",
+        "query:ac"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "LLM-guided refinement for cross-lingual topic models, a form of clustering",
+      "llm_evidence_cn": "利用大语言模型精炼跨语言主题模型，一种聚类形式",
+      "llm_evidence": "利用大语言模型精炼跨语言主题模型，一种聚类形式",
+      "canonical_evidence": "利用大语言模型精炼跨语言主题模型，一种聚类形式",
+      "llm_tldr_en": "Proposes LLM-XTM framework that integrates LLM-guided topic refinement with self-consistency uncertainty quantification to enhance cross-lingual topic models in a black-box, stable, and scalable manner.",
+      "llm_tldr_cn": "跨语言主题建模依赖稀疏双语资源且主题不连贯。本文提出LLM-XTM，利用大语言模型进行主题精炼，并结合自一致性不确定性量化，实现黑盒、稳定、可扩展的增强。实验表明其在多语语料上取得更优的主题连贯性和对齐，减少了对双语词典和资源的需求，展示了LLM在主题聚类中的潜力。",
+      "llm_tldr": "跨语言主题建模依赖稀疏双语资源且主题不连贯。本文提出LLM-XTM，利用大语言模型进行主题精炼，并结合自一致性不确定性量化，实现黑盒、稳定、可扩展的增强。实验表明其在多语语料上取得更优的主题连贯性和对齐，减少了对双语词典和资源的需求，展示了LLM在主题聚类中的潜力。",
+      "llm_tags": [
+        "query:ac"
+      ],
+      "matched_query_tag": "query:ac",
+      "matched_query_text": "clustering using large language models",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2605.17110v1",
+      "source": "arxiv",
+      "title": "Capturing LLM Capabilities via Evidence-Calibrated Query Clustering",
+      "abstract": "Query clustering organizes queries into groups that reflect shared latent capability demands, enabling capability-aware LLM evaluation. Existing clustering methods, which primarily rely on semantic taxonomies or embeddings, often fail to capture such latent capability requirements due to a misalignment between surface-level semantics and actual model performance. We propose ECC, an algorithm that calibrates prior semantic embeddings using limited posterior model comparisons to bridge the gap between surface-level semantics and latent capability requirements. ECC characterizes each cluster through a capability profile parameterized by a Bradley-Terry model and uses trainable mixture weights to accommodate queries with mixed capability demands, jointly learning a flexible, capability-aware clustering structure that supports query-specific inference of LLM capabilities. Extensive quantitative and qualitative evaluations demonstrate that ECC significantly improves LLM capability ranking quality, outperforming human-labeled and embedding-based baselines by an average of 17.64 and 18.02 percentage points, respectively, and proves effective in downstream tasks such as query routing.",
+      "authors": [
+        "Fangzhou Wu",
+        "Sandeep Silwal",
+        "Qiuyi Zhang"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.LG"
+      ],
+      "published": "2026-05-16T18:30:37+00:00",
+      "link": "https://arxiv.org/pdf/2605.17110v1",
+      "tags": [
+        "keyword:ac",
+        "query:ac"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Evidence-calibrated query clustering for LLM capability evaluation",
+      "llm_evidence_cn": "用于LLM能力评估的证据校准查询聚类",
+      "llm_evidence": "用于LLM能力评估的证据校准查询聚类",
+      "canonical_evidence": "用于LLM能力评估的证据校准查询聚类",
+      "llm_tldr_en": "Proposes ECC algorithm that calibrates semantic embeddings using limited model comparisons to cluster queries by latent capability demands, enabling more accurate LLM evaluation.",
+      "llm_tldr_cn": "现有查询聚类依赖语义分类或嵌入，无法反映真实能力需求。本文提出ECC，利用少量模型比较校准先验语义嵌入，通过Bradley-Terry模型参数化能力轮廓，并自适应混合权重处理多能力查询。实验证明ECC捕获的聚类与LLM实际能力更一致，提升评估有效性。",
+      "llm_tldr": "现有查询聚类依赖语义分类或嵌入，无法反映真实能力需求。本文提出ECC，利用少量模型比较校准先验语义嵌入，通过Bradley-Terry模型参数化能力轮廓，并自适应混合权重处理多能力查询。实验证明ECC捕获的聚类与LLM实际能力更一致，提升评估有效性。",
+      "llm_tags": [
+        "query:ac"
+      ],
+      "matched_query_tag": "query:ac",
+      "matched_query_text": "clustering using large language models",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2605.24867v1",
+      "source": "arxiv",
+      "title": "Clustering as Reasoning: A $k$-Means Interpretation of Chain-of-Thought Graph Learning",
+      "abstract": "Chain-of-Thought (CoT) prompting has shown promise in enhancing the reasoning capabilities of large language models (LLMs) on text-attributed graphs (TAGs). This work reframes CoT-based graph learning through the principle of clustering as reasoning, offering a $k$-means interpretation of how iterative reasoning operates over graph-structured data. We observe that existing graph CoT methods rely on disjoint architectures and fixed graph representations, limiting step-by-step semantic-topological interaction and interpretability. To overcome this limitation, we propose a unified framework named KCoT that integrates CoT reasoning with graph representation learning. Our key theoretical result reveals a formal mathematical correspondence between a Transformer block and the $k$-means algorithm, allowing reasoning to be interpreted as iterative assignment and update steps. Based on this insight, we introduce a Semantic Discriminating Prompt that explicitly formulates these steps as structured CoT reasoning, together with a structure-grounded alignment strategy to fuse topological priors with evolving thought-conditioned representations. Experiments on standard benchmarks demonstrate consistent improvements over state-of-the-art methods, validating clustering as a principled mechanism for CoT-based graph learning.",
+      "authors": [
+        "Xuanting Xie",
+        "Zhaochen Guo",
+        "Bingheng Li",
+        "Xingtong Yu",
+        "Zhifei Liao",
+        "Zhao Kang",
+        "Yuan Fang"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.CL",
+        "cs.NI"
+      ],
+      "published": "2026-05-24T04:58:44+00:00",
+      "link": "https://arxiv.org/pdf/2605.24867v1",
+      "tags": [
+        "keyword:ac",
+        "query:ac"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Reframes graph CoT learning via k-means clustering as reasoning with LLMs",
+      "llm_evidence_cn": "通过k-means聚类将图CoT学习重新解释为LLM推理",
+      "llm_evidence": "通过k-means聚类将图CoT学习重新解释为LLM推理",
+      "canonical_evidence": "通过k-means聚类将图CoT学习重新解释为LLM推理",
+      "llm_tldr_en": "Proposes KCoT, a unified framework integrating CoT reasoning with graph representation learning through a k-means interpretation, showing strong results on text-attributed graphs.",
+      "llm_tldr_cn": "该论文将链式思考（CoT）图学习重新解释为聚类即推理，提出KCoT框架。它融合了CoT推理和图表示学习，理论揭示了k-means与逐步推理的数学对应关系。实验表明该方法在文本属性图任务上提升了推理可解释性和性能，为LLM在图数据上的应用提供了新视角。",
+      "llm_tldr": "该论文将链式思考（CoT）图学习重新解释为聚类即推理，提出KCoT框架。它融合了CoT推理和图表示学习，理论揭示了k-means与逐步推理的数学对应关系。实验表明该方法在文本属性图任务上提升了推理可解释性和性能，为LLM在图数据上的应用提供了新视角。",
+      "llm_tags": [
+        "query:ac"
+      ],
+      "matched_query_tag": "query:ac",
+      "matched_query_text": "clustering using large language models",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2604.27510v1",
+      "source": "arxiv",
+      "title": "FMCL: Class-Aware Client Clustering with Foundation Model Representations for Heterogeneous Federated Learning",
+      "abstract": "Federated Learning (FL) enables collaborative model training across distributed clients without sharing raw data, yet its performance deteriorates under statistical heterogeneity. Clustered Federated Learning addresses this challenge by grouping similar clients and training separate models per cluster. However, existing clustering strategies often rely on raw data statistics, model parameters, or heuristic similarity measures that fail to capture class-level semantic structure across heterogeneous domains and frequently require iterative coordination. We propose FMCL, a one-shot, class-aware client clustering framework that leverages foundation model representations to construct semantic client signatures. Using a frozen foundation model, FMCL computes class-level embedding prototypes for each client and measures similarity via cosine distance between their class-aware representations. Clustering is performed once prior to training, introducing no additional communication during federated optimization and remaining agnostic to the downstream model architecture. Extensive experiments across heterogeneous benchmarks demonstrate that FMCL improves federated performance and yields more stable clustering behavior compared to existing clustering-based methods under non-identically distributed data partitioning.",
+      "authors": [
+        "Mahad Ali",
+        "Laura J. Brattain"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.CV"
+      ],
+      "published": "2026-04-30T07:08:52+00:00",
+      "link": "https://arxiv.org/pdf/2604.27510v1",
+      "tags": [
+        "keyword:ac",
+        "query:ac"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Client clustering using foundation model representations",
+      "llm_evidence_cn": "使用基础模型表示的客户端聚类",
+      "llm_evidence": "使用基础模型表示的客户端聚类",
+      "canonical_evidence": "使用基础模型表示的客户端聚类",
+      "llm_tldr_en": "Proposes FMCL, a one-shot class-aware client clustering framework leveraging foundation model representations to capture semantic structure across heterogeneous domains, outperforming prior clustering methods.",
+      "llm_tldr_cn": "联邦学习中客户端数据异质性导致性能下降。现有聚类方法难以捕捉跨域的语义结构。本文提出FMCL，利用基础模型表示构建语义客户端签名，实现单次类别感知聚类。实验表明FMCL在多个异质数据集上优于现有方法，为联邦学习中的客户端分组提供了高效方案。",
+      "llm_tldr": "联邦学习中客户端数据异质性导致性能下降。现有聚类方法难以捕捉跨域的语义结构。本文提出FMCL，利用基础模型表示构建语义客户端签名，实现单次类别感知聚类。实验表明FMCL在多个异质数据集上优于现有方法，为联邦学习中的客户端分组提供了高效方案。",
+      "llm_tags": [
+        "query:ac"
+      ],
+      "matched_query_tag": "query:ac",
+      "matched_query_text": "clustering using large language models",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2605.07454v1",
+      "source": "arxiv",
+      "title": "GRaSp: Automatic Example Optimization for In-Context Learning in Low-Data Tasks",
+      "abstract": "In-context learning enables large language models to adapt to new tasks, but their performance is highly sensitive to the selected examples. Finding effective demonstrations is particularly difficult in domain-specific, low-data settings where high-quality examples are scarce. We propose GRaSp, a three-stage framework for automatic in-context example optimization. By first generating a large synthetic candidate pool, then structuring it with clustering and dimensionality reduction, and finally using genetic algorithms to find the optimal in-context examples, the framework shows consistent improvements on the NER task. We also introduce a custom diversity-adaptive mutation mechanism, allowing it to transition from the initial broad inter-cluster exploration to focused intra-cluster refinement as the population converges. We evaluate GRaSp on financial named entity recognition (FiNER-139), comparing synthetic and human-annotated candidate pools across pool sizes of 500 and 5000. With non-synthetic data, GRaSp achieves 45.84% micro-F1, consistently outperforming both zero-shot and random few-shot baselines. Synthetic data matches the random baseline but does not exceed it, suggesting that distributional variety in the candidate pool is critical for generalization.",
+      "authors": [
+        "Simen Bihaug-Frøyland",
+        "Henrik Brådland"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-05-08T09:00:28+00:00",
+      "link": "https://arxiv.org/pdf/2605.07454v1",
+      "tags": [
+        "keyword:ac",
+        "query:ac"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Uses clustering and LLM for example optimization in in-context learning",
+      "llm_evidence_cn": "使用聚类和LLM进行上下文学习中的示例优化",
+      "llm_evidence": "使用聚类和LLM进行上下文学习中的示例优化",
+      "canonical_evidence": "使用聚类和LLM进行上下文学习中的示例优化",
+      "llm_tldr_en": "Proposes GRaSp, a framework combining clustering, dimensionality reduction, and genetic algorithms to optimize in-context examples for LLMs, improving NER performance.",
+      "llm_tldr_cn": "该论文提出GRaSp框架，用于低数据任务中自动优化上下文学习示例。它首先生成大量合成候选，再用聚类和降维结构化，最后用遗传算法选择最佳示例。在命名实体识别任务上取得一致改进，展示了聚类在LLM示例选择中的有效性。",
+      "llm_tldr": "该论文提出GRaSp框架，用于低数据任务中自动优化上下文学习示例。它首先生成大量合成候选，再用聚类和降维结构化，最后用遗传算法选择最佳示例。在命名实体识别任务上取得一致改进，展示了聚类在LLM示例选择中的有效性。",
+      "llm_tags": [
+        "query:ac"
+      ],
+      "matched_query_tag": "query:ac",
+      "matched_query_text": "clustering using large language models",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2605.19313v1",
+      "source": "arxiv",
+      "title": "A Unified Framework for Structure-Aware Clustering and Heterogeneous Causal Graph Learning",
+      "abstract": "In complex multivariate systems, interactions among variables are defined by dependency structures, often encoded as directed acyclic graphs ($\\text{DAGs}$). However, dependency structures can vary across subjects, and ignoring this structural heterogeneity introduces bias and obscures subpopulation-specific dependencies. To address this, we propose Directed Acyclic Graph-based Dependency Clustering via Alternating Direction Method of Multipliers (DAG-DC-ADMM), a unified framework built upon Structural Equation Modeling (SEM) that jointly learns cluster assignments and cluster-specific dependency structures. We encode acyclicity via a smooth constraint and integrate a groupwise truncated Lasso fusion penalty (gTLP) to cluster subjects based on their structural similarity. This yields a nonconvex optimization problem that incorporates sparsity, acyclicity, and structural consensus constraints. We address the nonconvexity by using the augmented Lagrangian method and solve it with an adapted version of the Alternating Direction Method of Multipliers (ADMM) for difference-of-convex programs. For certain graph structures, such as upper triangular adjacency matrices, our algorithm is guaranteed to converge to a Karush-Kuhn-Tucker (KKT) point. Experiments demonstrate that our method recovers cluster-specific causal dependency structures with a high true positive rate and a low false discovery rate. This capability enables the robust discovery of heterogeneous dependencies across subjects where the subpopulation label is unknown.",
+      "authors": [
+        "Honglin Du",
+        "Muxuan Liang",
+        "Xiang Zhong"
+      ],
+      "primary_category": "stat.ML",
+      "categories": [
+        "stat.ML",
+        "cs.LG",
+        "stat.ME"
+      ],
+      "published": "2026-05-19T03:48:54+00:00",
+      "link": "https://arxiv.org/pdf/2605.19313v1",
+      "tags": [
+        "keyword:ac",
+        "query:ac"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Structure-aware clustering method for heterogeneous causal graphs",
+      "llm_evidence_cn": "面向异质因果图的结构感知聚类方法",
+      "llm_evidence": "面向异质因果图的结构感知聚类方法",
+      "canonical_evidence": "面向异质因果图的结构感知聚类方法",
+      "llm_tldr_en": "Proposes a unified framework DAG-DC-ADMM that jointly learns cluster assignments and cluster-specific dependency structures using SEM and a groupwise fusion penalty.",
+      "llm_tldr_cn": "现有聚类方法忽略了不同主体间依赖结构的异质性，导致偏差和子群体特定依赖信息的丢失。本文提出DAG-DC-ADMM框架，基于结构方程模型联合学习聚类分配和簇特定依赖结构，通过平滑的循环约束和组截断Lasso融合惩罚实现。实验表明该方法能有效识别异质子群体并恢复其因果图，为结构感知聚类提供了新思路。",
+      "llm_tldr": "现有聚类方法忽略了不同主体间依赖结构的异质性，导致偏差和子群体特定依赖信息的丢失。本文提出DAG-DC-ADMM框架，基于结构方程模型联合学习聚类分配和簇特定依赖结构，通过平滑的循环约束和组截断Lasso融合惩罚实现。实验表明该方法能有效识别异质子群体并恢复其因果图，为结构感知聚类提供了新思路。",
+      "llm_tags": [
+        "query:ac"
+      ],
+      "matched_query_tag": "query:ac",
+      "matched_query_text": "c",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2605.11939v1",
+      "source": "arxiv",
+      "title": "Cluster-Aware Neural Collapse Prompt Tuning for Long-Tailed Generalization of Vision-Language Models",
+      "abstract": "Prompt learning has emerged as an efficient alternative to fine-tuning pre-trained vision-language models (VLMs). Despite its promise, current methods still struggle to maintain tail-class discriminability when adapting to class-imbalanced datasets. In this work, we propose cluster-aware neural collapse prompt tuning (CPT), which enhances the discriminability of tail classes in prompt-tuned VLMs without sacrificing their overall generalization. First, we design a cluster-invariant space by mining semantic assignments from the pre-trained VLM and mapping them to prompt-tuned features. This computes cluster-level boundaries and restricts the constraints to local neighborhoods, which reduces interference with the global semantic structure of the pre-trained VLM. Second, we introduce neural-collapse-driven discriminability optimization with three losses: textual Equiangular Tight Frame (ETF) separation loss, class-wise convergence loss, and rotation stabilization loss. These losses work together to shape intra-cluster geometry for better inter-class separation and intra-class alignment. Extensive experiments on 11 diverse datasets demonstrate that CPT outperforms SOTA methods, with stronger performance on long-tail classes and good generalization to unseen classes.",
+      "authors": [
+        "Boyang Guo",
+        "Liang Li",
+        "Lin Peng",
+        "Yuhan Gao",
+        "Xichun Sheng",
+        "Chenggang Yan"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-05-12T10:50:43+00:00",
+      "link": "https://arxiv.org/pdf/2605.11939v1",
+      "tags": [
+        "keyword:ac",
+        "query:ac"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Cluster-aware prompt tuning for vision-language models",
+      "llm_evidence_cn": "面向视觉语言模型的聚类感知提示调优",
+      "llm_evidence": "面向视觉语言模型的聚类感知提示调优",
+      "canonical_evidence": "面向视觉语言模型的聚类感知提示调优",
+      "llm_tldr_en": "Proposes cluster-aware neural collapse prompt tuning (CPT) to enhance tail-class discriminability in prompt-tuned VLMs, using cluster-invariant space mining from pre-trained VLMs.",
+      "llm_tldr_cn": "提示调优在长尾数据上难以保持尾类判别性。本文提出CPT，通过挖掘预训练VLM的语义分配构建聚类不变空间，将聚类边界约束限制在局部邻域，减少对全局语义的干扰。实验表明CPT显著提升长尾分类准确率，且保持总体泛化能力。",
+      "llm_tldr": "提示调优在长尾数据上难以保持尾类判别性。本文提出CPT，通过挖掘预训练VLM的语义分配构建聚类不变空间，将聚类边界约束限制在局部邻域，减少对全局语义的干扰。实验表明CPT显著提升长尾分类准确率，且保持总体泛化能力。",
+      "llm_tags": [
+        "query:ac"
+      ],
+      "matched_query_tag": "query:ac",
+      "matched_query_text": "clustering using large language models",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2605.25814v1",
+      "source": "arxiv",
+      "title": "Adaptive Graph Refinement and Label Propagation with LLMs for Cost-Effective Entity Resolution",
+      "abstract": "Dirty entity resolution (ER), which identifies records referring to the same real-world entity from a single, messy dataset, is a fundamental task in data management and mining. However, the dominant blocking-matching-clustering paradigm for ER suffers from critical flaws. Its cascaded, decoupled workflow essentially produces a static, sparse graph plagued by missing edges (due to blocking failures) and noisy links (due to matching errors), causing error propagation and yielding suboptimal clusters, particularly when rigid transitivity is imposed in the clustering. We contend that matching and clustering are fundamentally synergistic, both optimizing for the construction of an ideal entity graph. Building upon this insight, we propose Alper, a unified framework that integrates these steps into an iterative probabilistic label propagation process over a global, evolving graph. Unlike disjoint blocking, Alper refines the graph structure and labels dynamically by adaptively integrating \"weak but cheap\" signals from graph propagation with \"strong but expensive\" LLM-based pairwise queries. For higher cost-effectiveness, we formulate the signal selection as a constrained optimization problem maximizing cumulative marginal gain under a query budget, solved via our greedy algorithm with provable theoretical guarantees. Our extensive experiments over eight benchmark datasets demonstrate that Alper is consistently superior to state-of-the-art cascaded pipelines.",
+      "authors": [
+        "Hongtao Wang",
+        "Renchi Yang",
+        "Haoran Zheng",
+        "Xiangyu Ke"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.AI"
+      ],
+      "published": "2026-05-25T13:11:33+00:00",
+      "link": "https://arxiv.org/pdf/2605.25814v1",
+      "tags": [
+        "keyword:ac",
+        "query:ac"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "LLM-enhanced graph refinement and label propagation for entity clustering",
+      "llm_evidence_cn": "利用LLM增强图改进和标签传播进行实体聚类",
+      "llm_evidence": "利用LLM增强图改进和标签传播进行实体聚类",
+      "canonical_evidence": "利用LLM增强图改进和标签传播进行实体聚类",
+      "llm_tldr_en": "Proposes adaptive graph refinement and LLM-based label propagation to improve clustering in entity resolution, addressing error propagation from cascaded pipeline.",
+      "llm_tldr_cn": "实体解析中传统的阻塞-匹配-聚类级联流程易产生错误传播。本文提出将匹配和聚类协同优化，利用LLM进行自适应图改进和标签传播。实验表明该方法有效修复缺失边和噪声链接，提升聚类质量，为实体聚类提供了鲁棒方案。",
+      "llm_tldr": "实体解析中传统的阻塞-匹配-聚类级联流程易产生错误传播。本文提出将匹配和聚类协同优化，利用LLM进行自适应图改进和标签传播。实验表明该方法有效修复缺失边和噪声链接，提升聚类质量，为实体聚类提供了鲁棒方案。",
+      "llm_tags": [
+        "query:ac"
+      ],
+      "matched_query_tag": "query:ac",
+      "matched_query_text": "clustering using large language models",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2605.27354v1",
+      "source": "arxiv",
+      "title": "Guiding LLM Post-training Data Engineering with Model Internals from Sparse Autoencoders",
+      "abstract": "Model internals encode rich information about how a large language model (LLM) processes its training data; however, post-training data engineering largely relies on external signals and ignores rich intrinsic signals lying in model internals. We propose SAERL, a data engineering framework for LLM reinforcement learning (RL). It models three intrinsic data properties: diversity, difficulty, and quality, using model internals extracted with Sparse Autoencoder (SAE), an advanced mechanistic interpretability tool. Each property grounds a concrete data engineering operation: SAE-space clustering with moderate batch mixing for batch diversity control, a difficulty proxy for easy-to-hard curriculum ordering, and a quality probe for data filtering. SAERL improves average accuracy by 3.00% over vanilla GRPO and reaches target accuracy with 20% fewer training steps on Qwen2.5-Math-1.5B, with consistent gains across model scales and RL algorithms. Experiments show that SAE transfers effectively across model families and scales, serving as a lightweight and reusable data engineering tool. These results demonstrate that model internals are a powerful and practical source of signals for post-training data engineering.",
+      "authors": [
+        "Yi Jing",
+        "Zao Dai",
+        "Jinwu Hu",
+        "Zijun Yao",
+        "Lei Hou",
+        "Juanzi Li",
+        "Xiaozhi Wang"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI",
+        "cs.CL"
+      ],
+      "published": "2026-05-26T17:55:59+00:00",
+      "link": "https://arxiv.org/pdf/2605.27354v1",
+      "tags": [
+        "keyword:ac",
+        "query:ac"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Uses SAE-space clustering for batch diversity in LLM data engineering",
+      "llm_evidence_cn": "使用稀疏自编码器空间聚类控制批次多样性，用于大语言模型数据工程",
+      "llm_evidence": "使用稀疏自编码器空间聚类控制批次多样性，用于大语言模型数据工程",
+      "canonical_evidence": "使用稀疏自编码器空间聚类控制批次多样性，用于大语言模型数据工程",
+      "llm_tldr_en": "Proposes SAERL framework that uses sparse autoencoder internals to model diversity, difficulty, and quality, including SAE-space clustering for batch diversity control in LLM post-training data engineering.",
+      "llm_tldr_cn": "大语言模型后训练数据工程忽略模型内部信号。本文提出SAERL，利用稀疏自编码器提取内部表示，建模数据多样性、难度和质量。其中通过SAE空间聚类与适度批次混合控制批次多样性。实验表明该方法能有效提升强化学习训练效果，展示了模型内部信号在数据工程中的价值。",
+      "llm_tldr": "大语言模型后训练数据工程忽略模型内部信号。本文提出SAERL，利用稀疏自编码器提取内部表示，建模数据多样性、难度和质量。其中通过SAE空间聚类与适度批次混合控制批次多样性。实验表明该方法能有效提升强化学习训练效果，展示了模型内部信号在数据工程中的价值。",
+      "llm_tags": [
+        "query:ac"
+      ],
+      "matched_query_tag": "query:ac",
+      "matched_query_text": "clustering using large language models",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2605.27810v1",
+      "source": "arxiv",
+      "title": "LRanker: LLM Ranker for Massive Candidates",
+      "abstract": "Large language models (LLMs) have recently shown strong potential for ranking by capturing semantic relevance and adapting across diverse domains, yet existing methods remain constrained by limited context length and high computational costs, restricting their applicability to real-world scenarios where candidate pools often scale to millions. To address this challenge, we propose LRanker, a framework tailored for large-candidate ranking. LRanker incorporates a candidate aggregation encoder that leverages K-means clustering to explicitly model global candidate information, and a graph-based test-time scaling mechanism that partitions candidates into subsets, generates multiple query embeddings, and integrates them through an ensemble procedure. By aggregating diverse embeddings instead of relying on a single representation, this mechanism enhances robustness and expressiveness, leading to more accurate ranking over massive candidate pools. We evaluate LRanker on seven tasks across three scenarios in RBench with different candidate scales. Experimental results show that LRanker achieves over 30% gains in the RBench-Small scenario, improves by 3-9% in MRR in the RBench-Large scenario, and sustains scalability with 20-30% improvements in the RBench-Ultra scenario with more than 6.8M candidates. Ablation studies further verify the effectiveness of its key components. Together, these findings demonstrate the robustness, scalability, and effectiveness of LRanker for massive-candidate ranking.",
+      "authors": [
+        "Tao Feng",
+        "Zijie Lei",
+        "Zhigang Hua",
+        "Yan Xie",
+        "Shuang Yang",
+        "Ge Liu",
+        "Jiaxuan You"
+      ],
+      "primary_category": "cs.IR",
+      "categories": [
+        "cs.IR"
+      ],
+      "published": "2026-05-27T01:04:36+00:00",
+      "link": "https://arxiv.org/pdf/2605.27810v1",
+      "tags": [
+        "keyword:ac",
+        "query:ac"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Uses K-means clustering with LLM for ranking",
+      "llm_evidence_cn": "使用K-means聚类与LLM进行排序",
+      "llm_evidence": "使用K-means聚类与LLM进行排序",
+      "canonical_evidence": "使用K-means聚类与LLM进行排序",
+      "llm_tldr_en": "Proposes LRanker, a framework using K-means clustering to aggregate candidates and graph-based scaling for LLM ranking, achieving efficiency for large-scale candidates.",
+      "llm_tldr_cn": "该论文提出LRanker框架，用于大规模候选排序。它使用K-means聚类显式建模全局候选信息，并通过图基测试时缩放机制分割子集、生成多查询嵌入。实验表明该方法在保持高效的同时提升了排序性能，展示了聚类在LLM排序中的实用价值。",
+      "llm_tldr": "该论文提出LRanker框架，用于大规模候选排序。它使用K-means聚类显式建模全局候选信息，并通过图基测试时缩放机制分割子集、生成多查询嵌入。实验表明该方法在保持高效的同时提升了排序性能，展示了聚类在LLM排序中的实用价值。",
+      "llm_tags": [
+        "query:ac"
+      ],
+      "matched_query_tag": "query:ac",
+      "matched_query_text": "clustering using large language models",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

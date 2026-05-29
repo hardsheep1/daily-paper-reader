@@ -1,0 +1,349 @@
+Title: Cluster-Aware Neural Collapse Prompt Tuning for Long-Tailed Generalization of Vision-Language Models
+
+URL Source: https://arxiv.org/pdf/2605.11939v1
+
+Published Time: Wed, 13 May 2026 01:07:46 GMT
+
+Number of Pages: 13
+
+Markdown Content:
+# Cluster-Aware Neural Collapse Prompt Tuning for Long-Tailed Generalization of Vision-Language Models 
+
+## Boyang Guo 1,2* Liang Li 2† Lin Peng 3 Yuhan Gao 1 Xichun Sheng 4 Chenggang Yan 1,51 Hangzhou Dianzi University, Hangzhou, China  
+
+> 2
+
+## Institute of Computing Technology, Chinese Academy of Sciences, Beijing, China  
+
+> 3
+
+## The Hong Kong Polytechnic University, Hong Kong, China  
+
+> 4
+
+## Macao Polytechnic University, Macao, China 
+
+> 5
+
+## Zhejiang Provincial Key Laboratory of Low Altitude Ubiquitous Networking Technology, HDU 
+
+{boyang.guo, yuhangao, cgyan }@hdu.edu.cn, liang.li@ict.ac.cn p2314922@mpu.edu.mo, noreen.peng@connect.polyu.hk 
+
+## Abstract 
+
+Prompt learning has emerged as an efficient alternative to fine-tuning pre-trained vision-language models (VLMs). De-spite its promise, current methods still struggle to main-tain tail-class discriminability when adapting to class-imbalanced datasets. In this work, we propose cluster-aware neural collapse prompt tuning (CPT), which enhances the discriminability of tail classes in prompt-tuned VLMs without sacrificing their overall generalization. First, we design a cluster-invariant space by mining semantic as-signments from the pre-trained VLM and mapping them to prompt-tuned features. This computes cluster-level bound-aries and restricts the constraints to local neighborhoods, which reduces interference with the global semantic struc-ture of the pre-trained VLM. Second, we introduce neural-collapse–driven discriminability optimization with three losses: textual Equiangular Tight Frame (ETF) separation loss, class-wise convergence loss, and rotation stabilization loss. These losses work together to shape intra-cluster geom-etry for better inter-class separation and intra-class align-ment. Extensive experiments on 11 diverse datasets demon-strate that CPT outperforms SOTA methods, with stronger performance on long-tail classes and good generalization to unseen classes. 
+
+## 1. Introduction 
+
+Vision-language models such as CLIP [ 35 ] and EVA-CLIP [ 42 ] align images and text in a shared embedding space through large-scale contrastive pre-training, and they 
+
+> *This work is done during the intern in VIPL group, ICT, CAS.
+> †Corresponding author: Liang Li (liang.li@ict.ac.cn).
+
+show strong zero-shot recognition across many downstream datasets. However, adapting these models to specific tasks is still challenging. Full fine-tuning is expensive and may degrade the generalization ability of the pre-trained back-bone. Prompt tuning [ 14 , 22 , 27 , 47 – 49 ] has emerged as a compelling alternative. Instead of updating the entire model, it learns a small number of prompt tokens for the vision and text encoders, which efficiently preserves trans-ferability. Despite this progress, prompt tuning fails to suffi-ciently represent tail classes on class-imbalanced data [ 40 ]. Due to its reliance on a small number of learnable param-eters, prompt tuning is especially sensitive to class imbal-ance, where head classes dominate the optimization and tail classes with few examples remain difficult to distinguish. Bridging the tail-class discriminability gap on real-world long-tailed data remains a major challenge for adapting pre-trained VLMs. To improve tail-class discriminability, recent methods [ 3, 39 , 59 ] draw inspiration from Neural Collapse (NC). NC [ 23 , 32 ] is a phenomenon observed in the terminal phase of supervised training: features within each class con-centrate around a single prototype, and these prototypes form an Equiangular Tight Frame (ETF), i.e., they become maxi-mally separated with uniform pairwise angles. Some prompt tuning methods enforce a global ETF structure on the textual prototypes of all classes in order to enlarge the geometric margins between classes. This increases inter-class angular separation and improves discrimination of rare classes. How-ever, we find that relying on a single global ETF has two main limitations. First, it distorts the high-level semantic ge-ometry learned by the VLM. Pre-trained VLMs encode rich hierarchical structure, where semantically related classes remain closer than unrelated ones. A strict global ETF flat-tens this hierarchy by forcing all off-diagonal similarities to 
+
+> arXiv:2605.11939v1 [cs.CV] 12 May 2026 Figure 1. (a-c): Cosine-similarity matrices of textual features of 96 categories from ZeroshotCLIP, NPT, and CPT. CPT applies the ETF constraint only within clusters while keeping variation between clusters. These results show that improving geometric separability can reduce semantic flexibility, while CPT offers a better trade-off by enhancing local separability without collapsing global semantics. (d): Training stability on EuroSAT (15 epochs, 5 seeds). The shaded area represents ±1 standard deviation. CPT shows significantly lower seed-to-seed variance than NPT.
+
+become nearly identical. This compresses the effective rank of the similarity matrix, which harms cross-dataset and out-of-distribution (OOD) generalization [ 15 , 18 ]. We visualize this effect in Fig. 1(a–c): global ETF drives the prototypes toward a single simplex, while semantic clusters that exist in the pre-trained model disappear. Second, global ETF con-straints enforce fixed angular separations but lack control over absolute orientations, so the constraints are incomplete and training becomes unstable. Fig. 1(d) illustrates that the performance of the SOTA method varies greatly across ran-dom seeds. Overall, existing prompt tuning methods still struggle to achieve both strong tail-class discriminability and robust cross-dataset generalization. Motivated by these limitations, we propose cluster-aware neural collapse prompt tuning (CPT), a framework that enhances the discriminabil-ity of tail classes in prompt-tuned VLMs while preserving their overall generalization. Specifically, we first design a cluster-invariant space by mining semantic assignments from the pre-trained VLM and mapping them to prompt-tuned fea-tures. This computes cluster-level boundaries and restricts the constraints to local neighborhoods, which reduces inter-ference with the global semantic structure of the pre-trained VLM. Second, we introduce neural-collapse-driven discrim-inability optimization with three losses that together shape the intra-cluster geometry for better inter-class separation and more stable intra-class alignment. (1) Textual ETF sepa-ration loss enforces an ETF constraint among intra-cluster textual features to improve local inter-class separation. (2) Class-wise convergence loss pulls visual features toward their corresponding textual feature, minimizing intra-class angular deviation. (3) Rotation stabilization loss anchors each textual feature to its corresponding frozen VLM feature by minimizing their absolute distance to enhance training stability. Overall, our approach offers an efficient solution for long-tailed recognition when adapting pre-trained VLMs to class-imbalanced data. We evaluate CPT on base-to-new, cross-dataset, and domain generalization across 11 diverse datasets, and CPT consistently outperforms state-of-the-art methods. In summary, our contributions are as follows: • We propose CPT, which introduces cluster-aware neural collapse constraints, enhancing tail-class discriminability while preserving the generalizability of pre-trained VLMs. • We propose three losses: textual ETF separation loss, class-wise convergence loss, and rotation stabilization loss, which together constrain the intra-cluster embedding space for better inter-class separation and intra-class alignment. • We conduct extensive experiments on 11 diverse datasets to validate CPT, demonstrating superior tail-class discrim-inability and generalization. 
+
+## 2. Related Work 
+
+Vision-Language Models: Vision-Language models[ 50 , 52 ,53 ] have emerged as transformative tools for multimodal un-derstanding, integrating visual and textual modalities to en-code powerful and transferable representations. Early mod-els such as CLIP [ 35 ] and ALIGN [ 20 ] use large-scale image-text pairs and contrastive objectives to build strong joint embeddings, showing strong generalization in zero-shot clas-sification, object detection, and cross-domain transfer. Re-cent work further extends this line toward finer-grained and broader multimodal modeling, including change captioning, active learning, open-set sample selection, fine-grained mul-timodal LLMs, and audio-visual dubbing [ 26 , 34 , 43 , 45 , 54 ]. 
+
+Prompt tuning: Prompt tuning [ 28 , 38 , 57 ] has become a powerful paradigm for adapting pre-trained vision-language models, such as CLIP and ALIGN, to a variety of down-stream tasks. By introducing task-specific prompts, it en-ables efficient adaptation with minimal parameter updates, while enhancing the generalizability of VLMs across differ-ent domains and categories. This approach has been success-fully applied to tasks including few-shot image recognition [13 , 51 , 55 , 56 ], object detection [ 6, 7 , 36 ], and beyond. Neu-Figure 2. Overview of our proposed cluster-aware neural collapse prompt tuning (CPT). CPT introduces cluster-invariant space structuring to partition pre-trained features into stable semantic clusters, preserving global semantic flexibility. Within each cluster, it employs NC-driven discriminability optimization with three targeted loss functions, enhancing local separability and training stability. 
+
+ral Collapse: Neural Collapse (NC) describes a geometric regime that often emerges at the end of supervised training: (i) features from the same class concentrate around a sin-gle prototype (“class mean”), (ii) different class prototypes become maximally separated and approximately form a sim-plex Equiangular Tight Frame (ETF) with uniform pairwise angles, and (iii) the classifier weights align with these proto-types [ 10 , 11 , 19 , 32 , 44 , 60 ]. This structure is attractive for long-tailed recognition because it increases inter-class mar-gins and can help prevent tail classes from being absorbed by dominant head classes. Motivated by this, recent prompt tuning methods for vision-language models attempt to di-rectly impose an ETF-like arrangement on all class textual prototypes. In these approaches, the textual prompts of every class are optimized so that the resulting prototypes become nearly equiangular, effectively enforcing global, uniform sep-aration across the entire label space [ 39 , 59 ]. Long-Tailed Adaptation and Logit Adjustment: Long-tailed recogni-tion has traditionally been addressed by loss reweighting, class-balanced sampling, or logit adjustment based on esti-mated class priors [ 2, 5 , 30 , 37 ]. These techniques explicitly favor under-represented (tail) classes by either amplifying their contribution to the loss or directly shifting the deci-sion boundary in their favor [ 2, 30 ]. Recent efforts have begun to bring this idea into the vision-language setting by applying class-frequency-aware calibration or logit-adjusted training during prompt tuning [ 9, 17 , 58 ]. These approaches are attractive because they are simple, require minimal ar-chitectural change, and often improve recall on rare classes in-distribution [ 9 , 30 , 58 ]. Despite these advantages, such reweighting-style or logit-adjusted methods operate primar-ily at the classifier level: they change how scores are pro-duced, not how features are organized [ 21 , 30 , 37 ]. They do not restructure the joint image–text embedding space that the vision–language model relies on for transfer. In prac-tice, this can introduce a new failure mode. While head–tail balance improves on the source task, the modified decision surface may deviate from the semantic geometry learned during large-scale pre-training, and full fine-tuning or naive rebalancing can hurt generalization and robustness under domain shift [ 9]. In other words, reweighting compensates for class frequency but does not explicitly recover a stable, semantically meaningful arrangement of prototypes in fea-ture space [ 21 ]. Our approach is designed to address exactly this gap. Instead of only shifting logits, we directly shape the representation space in a way that (i) improves tail-class sep-arability and (ii) preserves the high-level semantic structure of the pre-trained model. 
+
+## 3. Methodology 
+
+Our goal is to adapt a pre-trained vision-language model such as CLIP to class-imbalanced downstream tasks in a way that (i) improves separability for tail classes, (ii) preserves the global semantic structure that enables transfer, and (iii) remains stable across random seeds. We first review the basic setup of prompt tuning. We then present our two core components. 
+
+3.1. Preliminaries 
+
+Prompt-tuned CLIP. We adopt a CLIP-style model with a frozen image encoder Gv and a frozen text encoder Gt.Instead of updating all weights, we insert learnable continu-ous prompts into both encoders. For an image x, the visual encoder with prompts produces an image feature f ∈ Rd.For a class label c, the text encoder with prompts produces a class textual feature gc ∈ Rd. The original pre-trained tex-tual feature for the same class without learnable prompts is denoted ˆgc. CLIP is trained with a contrastive objective that aligns matched image–text pairs and separates mismatched pairs: 
+
+LCLIP = −
+
+> B
+
+X
+
+> i=1
+
+log exp(sim( gi, fi)/τ )
+
+PBj=1 exp(sim( gi, fj )/τ ) , (1) where sim( ·, ·) is cosine similarity and τ is a temperature. We operate in the prompt tuning regime: only the prompts are updated, while the backbone parameters remain frozen. This is attractive for efficiency and transferability, but on class-imbalanced data it tends to overfit head classes and underfit tail classes. 
+
+3.2. Cluster-Invariant Space Structuring 
+
+The purpose of cluster-invariant space structuring is to (i) pre-serve the high-level semantic assignments of the pre-trained VLM, which is crucial for transfer and OOD generalization, and (ii) create local semantic fences where we can safely impose stronger geometric constraints within local neigh-borhoods. To achieve this, we perform the following three steps: Step 1: Static Cluster Mining. For each class 
+
+c ∈ C , we first extract its textual feature ˆgc from the VLM text encoder. We run K-means once on {ˆgc}Kc=1 to obtain 
+
+M disjoint semantic clusters { ˆS1, . . . , ˆSM }. Let ˆSm denote the set of classes assigned to cluster m, and let ˆμm denote its centroid: 
+
+ˆμm = 1
+
+| ˆSm|
+
+X 
+
+> c∈ˆSm
+
+ˆgc. (2) We do not re-cluster during training for two reasons. First, the frozen partition preserves the high-level semantic struc-ture learned during pre-training, which plays a crucial role in preserving the generalizability of the model. Second, allow-ing cluster membership to change with every gradient step would cause the cluster-level objectives to receive highly unstable targets, injecting noise into the optimization pro-cess and impeding convergence. Step 2: Prompt Cluster Mapping. To leverage the frozen clusters { ˆS1, . . . , ˆSM }
+
+constructed in the previous step, we define a fixed mapping from classes to cluster indices: 
+
+π : C → { 1, . . . , M }, π(c) = m ⇐⇒ c ∈ ˆSm. (3) This mapping π encodes the class-to-cluster assignments and acts as a conduit to transfer the semantic structure pre-served during pre-training into the training phase. Using π,we define a set of training-time clusters {S 1, . . . , SM } as follows: 
+
+Sm = {c ∈ C | π(c) = m}, ∀m ∈ { 1, . . . , M }. (4) 
+
+Step 3: Common Space Cliquing. Each Sm thus inherits its class composition directly from the corresponding frozen cluster ˆSm. All learnable textual features gc and their asso-ciated visual features {fc,i }Nc 
+
+> i=1
+
+are consistently aligned with their assigned semantic cluster: 
+
+{gc} ∪ { fc,i }Nc 
+
+> i=1
+
+⊆ S π(c). (5) The invariant clustering structure provides a stable seman-tic structure. We allow different clusters to remain sepa-rated according to the pre-trained geometry. This preserves high-level relationships and maintains a richer, higher-rank similarity structure. 
+
+3.3. NC-Driven Discriminability Optimization 
+
+Given the semantic structure above, we impose Neural Col-lapse–inspired constraints within each semantic cluster. This improves separability among classes, while not destroying the global structure across clusters. We introduce three complementary losses. (1) Textual ETF Separation Loss (LTETF ). Due to the design of CLIP, each class has only one text embedding generated from its label. We use this embedding as the prototype of the class. Within each cluster 
+
+Sm, we collect textual prototypes of all classes: 
+
+Pm = [ gc1 , gc2 , . . . , gckm ] ∈ Rd×km , ci ∈ Sm, (6) and normalize them: 
+
+˜Pm =
+
+ gc1
+
+∥gc1 ∥2
+
+, . . . , gckm 
+
+∥gckm ∥2
+
+
+
+. (7) We then form the cosine-similarity matrix 
+
+Cm = ˜P ⊤ 
+
+> m
+
+˜Pm ∈ Rkm×km . (8) An ideal ETF inside the cluster would produce uniform off-diagonal similarity (equal pairwise angles). We encourage this via 
+
+LTETF = 1
+
+M
+
+> M
+
+X
+
+> m=1
+
+Cm + 1
+
+km − 1 (1 − I)
+
+> 2
+> F
+
+, (9) where 1 is the all-ones matrix and I is the identity. Intu-itively, LTETF increases angular separation among classes that occupy the same semantic neighborhood, which is ex-actly where tail classes are most likely to be confused with dominant head classes. Unlike a global ETF, LTETF never forces unrelated clusters to become equidistant. Thus we gain local discriminability (especially for rare classes) with-out globally flattening the semantic hierarchy. (2) Class-wise Convergence Loss ( LCC ). Neural Collapse predicts that, at convergence, all samples from a class align with a single class prototype. We mimic that behavior across modalities Figure 3. Sensitivity of CPT to the loss weights λTETF , λCC , and λRS 
+
+on the ImageNet base-to-new setting. We vary one coefficient while fixing the other two at their default values: λTETF = 0 .25 , λ CC =0.15 , λ RS = 0 .10 . We plot harmonic mean accuracy under two imbalance levels ( τ =0 .25 and τ =0 .06 ). 
+
+by making visual features collapse toward their correspond-ing textual prototype. For class c with Nc training samples 
+
+{fc,i }Nc
+
+> i=1
+
+, we define: 
+
+LCC = 1
+
+K
+
+> K
+
+X
+
+> c=1
+
+1
+
+NcNcX
+
+> i=1
+
+fc,i 
+
+∥fc,i ∥2
+
+− gc
+
+∥gc∥2
+
+> 22
+
+!
+
+. (10) This loss reduces intra-class angular spread and enforces cross-modal alignment: the image features for class c are ex-plicitly pulled toward the prompt-tuned textual prototype gc.As a result, the textual prototype acts as a cluster-anchored semantic center for that class. (3) Rotation Stabilization Loss ( LRS ). ETF-style constraints specify relative geome-try (pairwise angles) but leave the absolute orientation of the prototypes underdetermined. Any global rotation of all prototypes preserves pairwise angles and thus leaves LTETF 
+
+nearly unchanged. Because CLIP-style models rely on con-sistent alignment between the vision and text encoders, this uncontrolled drift manifests as higher seed-to-seed variance in downstream accuracy. We remove this source of instabil-ity by softly anchoring each learnable textual prototype gc
+
+to its frozen pre-trained prototype ˆgc. We define: 
+
+LRS = 1
+
+K
+
+> K
+
+X
+
+> c=1
+
+∥gc − ˆgc∥1 . (11) This term penalizes large absolute deviations from the orig-inal pre-trained representation while still allowing moder-ate adaptation. Geometrically, LRS fixes the otherwise free global rotation and prevents prototype drift across seeds. Em-pirically, this produces substantially lower variance across random seeds and more reproducible performance. 
+
+3.4. Overall Objective 
+
+The final training objective is the sum of the CLIP contrastive loss and the three cluster-aware Neural Collapse losses: 
+
+Ltotal = LCLIP + λTETF LTETF + λCC LCC + λRS LRS . (12) We report a sensitivity analysis of these hyperparameters in Section 4.5. In summary, CPT helps preserve the high-level semantic structure of the pre-trained model, enforces                                                               
+
+> Imbalance Ratio τ= 0 .25
+> Components Results
+> LTETF LCC LRS Base-to-New Cross-Dataset Domain Gen.
+> (1) 70.35 63.89 57.99 (2) ✓72.03 65.75 59.21 (3) ✓✓73.22 66.03 59.66 (4) ✓✓72.42 65.94 59.49 (5) ✓✓✓73.58 66.76 60.16 Imbalance Ratio τ= 0 .06
+> Components Results
+> LTETF LCC LRS Base-to-New Cross-Dataset Domain Gen.
+> (1) 69.99 63.84 57.03 (2) ✓71.10 64.88 57.92 (3) ✓✓71.85 65.49 58.56 (4) ✓✓71.93 65.63 58.64 (5) ✓✓✓72.47 65.97 59.12
+
+Table 1. Ablation study of components in CPT under two imbalance ratios. Results are reported as harmonic mean over 11 datasets. 
+
+stronger separation within local neighborhoods, aligns vi-sual features with textual prototypes, and anchors prototype orientations to stabilize optimization. As a result, CPT im-proves tail-class separability and generalization under class imbalance. 
+
+## 4. Experiments 
+
+4.1. Evaluation settings 
+
+Following DPC [ 25 ], DeKg [ 27 ] and NPT [ 59 ], we evaluate our CPT under base-to-new generalization, domain general-ization, and cross-dataset transfer generalization over 11 im-age classification benchmark datasets [ 1, 4, 8, 12 , 16 , 24 , 29 ,31 , 33 , 41 , 46 ]. To simulate imbalance, we downsample each class to follow an exponential decay distribution, controlled by imbalance ratios τ ∈ { 1, 0.25 , 0.06 }. Here, τ is defined as the ratio between the smallest and largest class sizes, i.e., 
+
+τ = min {nk}/ max {nk}, where nk denotes the number of training samples in the k-th class. We fix max {nk} = 16 
+
+across all settings. Refer to the supplementary material for implementation details. 
+
+4.2. Base-to-new Generalization 
+
+We follow a base-to-new evaluation protocol across 11 di-verse classification datasets. Each dataset is evenly split into base and novel classes. To thoroughly evaluate the effective-ness of CPT in terms of generalizability and tail-class dis-criminability, we conduct experiments under three different imbalance settings, corresponding to imbalance ratios τ ∈{1, 0.25 , 0.06 }. τ is defined as the ratio between the small-est and largest class sizes, i.e., τ = min {nk}/ max {nk},Imbalance Ratio τ = 1 (Balance)                                                                                                                                                                                                                                                                 
+
+> Method IN. Cal. OP. SC. Flw. Food. FA. SUN. DTD ES. UCF. Avg MaPLe(CVPR’23) 73.47 96.02 96.28 73.47 82.56 91.38 36.50 79.75 68.16 82.35 80.77 78.25 CoPrompt(ICLR’24) 72.86 95.94 96.33 75.47 84.51 90.95 37.82 79.29 68.93 83.07 80.78 78.72 NPT(KDD’24) 73.82 96.23 96.24 72.49 82.37 91.67 36.46 79.76 68.88 82.12 81.42 78.31 DeKg(ICLR’25) 73.07 96.89 96.09 77.83 84.51 91.14 39.51 80.35 69.70 87.42 84.80 80.12 DPC(CVPR’25) 73.85 96.50 96.71 78.46 83.59 91.49 40.24 80.76 66.84 84.13 83.21 79.62
+> CPT(Ours) 73.92 96.53 96.37 77.21 84.69 91.17 40.13 80.50 71.20 87.54 83.83 80.28 Imbalance Ratio τ= 0 .25
+> Method IN. Cal. OP. SC. Flw. Food. FA. SUN. DTD ES. UCF. Avg MaPLe(CVPR’23) 70.93 95.38 94.22 70.25 76.59 88.71 28.62 75.98 55.15 53.97 75.43 71.38 CoPrompt(ICLR’24) 71.50 94.71 95.24 70.20 77.77 89.35 29.56 76.12 56.58 57.89 75.69 72.24 NPT(KDD’24) 72.22 95.66 96.20 70.89 78.58 90.23 29.86 76.88 57.16 58.48 76.65 72.98 DeKg(ICLR’25) 72.08 95.86 95.30 71.12 78.98 90.46 29.91 76.90 57.58 58.61 76.11 72.99 DPC(CVPR’25) 71.85 95.35 96.26 71.41 78.11 90.00 29.74 77.18 57.08 58.85 76.28 72.92
+> CPT(Ours) 72.62 96.44 96.16 71.58 79.37 91.13 30.16 77.65 57.74 59.09 77.42 73.58 Imbalance Ratio τ= 0 .06
+> Method IN. Cal. OP. SC. Flw. Food. FA. SUN. DTD ES. UCF. Avg MaPLe(CVPR’23) 70.10 95.53 94.21 69.29 72.29 89.74 21.89 75.00 47.37 51.10 73.85 69.12 CoPrompt(ICLR’24) 70.20 94.69 93.64 69.88 73.71 89.27 27.43 75.13 56.42 56.89 74.20 71.04 NPT(KDD’24) 70.89 95.64 94.56 70.58 74.46 90.20 27.72 75.89 56.98 57.47 74.95 71.76 DeKg(ICLR’25) 70.37 95.20 94.52 70.19 73.78 90.49 27.73 75.24 56.66 57.92 74.42 71.50 DPC(CVPR’25) 70.62 95.75 94.77 70.37 74.87 90.25 27.75 75.39 56.91 57.38 75.19 71.75
+> CPT(Ours) 71.58 96.58 95.50 71.27 75.20 91.10 27.99 76.65 57.54 58.03 75.69 72.47
+
+Table 2. Base-to-New classification accuracy (%) across 11 downstream datasets under varying class-imbalance ratios. Prompt-based methods are trained from base classes, using ViT-B/16 as the backbone. All reported values in the table indicate the harmonic mean (H) between base and novel class accuracy. The cases with imbalance ratio τ = 0 .25 , 0.06 represent highly imbalanced scenarios, designed to assess the robustness of tail-class recognition. 
+
+where nk denotes the number of training samples in the 
+
+k-th class. We fix max {nk} = 16 across all settings. As shown in Table 2, when the data is balanced ( τ = 1 ), CPT achieves comparable performance to other leading meth-ods across both base and new classes, indicating that our method does not sacrifice generalization when no imbalance is present. Under more challenging settings with τ = 0 .25 
+
+and τ = 0 .06 , where long-tailed distributions heavily im-pact model performance, CPT consistently delivers notable improvements on new classes, demonstrating its ability to enhance tail-class recognition. These results highlight the key advantage of our design: by preserving the pre-trained semantic structure through cluster-aware constraints, CPT improves tail-class discriminability without compromising generalizability. 
+
+4.3. Cross Dataset Evaluation 
+
+To assess the cross-domain generalizability of CPT, we con-duct a cross-dataset transfer experiment, where all models are trained on the full ImageNet-1K dataset and directly evaluated on ten diverse target datasets without further adap-tation. This setup simulates a real-world distribution shift scenario, where the learned features must generalize to novel, out-of-distribution (OOD) domains with varying label spaces and image statistics. Table 3 reports the performance of dif-ferent methods across these target datasets. Compared with existing methods, CPT achieves the highest average accuracy of 67.78%, outperforming DPC (66.27%), DeKg (66.92%), and NPT (67.11%). This is consistent with our findings un-der the settings with τ = 0 .25 and τ = 0 .06 , where CPT notably enhances tail-class performance across imbalanced domains. This demonstrates that CPT can preserve the high-level semantic structure learned from pre-training, which enhances generalizability across heterogeneous domains. 
+
+4.4. Domain Generalization Experiments 
+
+To further assess the out-of-distribution robustness of CPT, we conduct domain generalization experiments using the Im-ageNet dataset as the source domain. Specifically, we train the model on the original ImageNet-1K dataset and evalu-ate it on four OOD variants—ImageNet-V2, ImageNet-S (Sketch), ImageNet-A (Adversarial), and ImageNet-R (Ren-dition). The results are summarized in Table 4. Across all four datasets, CPT consistently achieves top-tier perfor-Imbalance Ratio τ = 1 (Balance)                                                                                                                                                                                                                                                                 
+
+> Method IN. Cal. OP. SC. Flw. Food. FA. SUN. DTD ES. UCF. Avg MaPLe(CVPR’23) 70.72 93.53 90.49 65.57 72.23 86.20 24.74 67.01 46.49 48.06 68.69 66.30 CoPrompt(ICLR’24) 70.10 94.40 91.13 66.67 72.60 86.23 25.40 68.92 47.73 49.77 69.43 67.23 NPT(KDD’24) 70.70 94.50 90.64 66.73 72.62 86.21 25.23 68.37 47.63 50.25 68.87 67.11 DeKg(ICLR’25) 72.33 94.73 90.68 66.05 73.20 86.59 25.05 67.19 45.61 51.37 68.78 66.92 DPC(CVPR’25) 71.42 93.60 90.25 65.70 71.73 86.15 23.90 67.10 46.87 48.68 68.75 66.27
+> CPT(Ours) 71.40 95.42 91.54 67.38 73.35 87.09 25.49 69.03 48.13 50.74 69.53 67.78 Imbalance Ratio τ= 0 .25
+> Method IN. Cal. OP. SC. Flw. Food. FA. SUN. DTD ES. UCF. Avg MaPLe(CVPR’23) 69.20 92.63 90.34 65.17 71.54 85.03 21.39 65.57 45.84 47.83 65.34 65.07 CoPrompt(ICLR’24) 69.34 92.64 89.76 65.27 71.89 85.35 22.54 66.24 45.58 49.20 66.42 65.49 NPT(KDD’24) 69.40 93.60 90.40 65.95 72.33 86.19 22.78 66.89 46.05 49.67 67.12 66.10 DeKg(ICLR’25) 69.46 93.79 90.02 65.49 72.39 86.59 22.60 66.96 44.57 49.96 67.33 65.97 DPC(CVPR’25) 69.21 92.63 89.96 64.65 70.36 85.33 21.44 65.75 45.60 45.50 65.76 64.70
+> CPT(Ours) 69.89 94.56 91.27 66.64 73.09 87.03 23.02 67.54 46.53 50.16 67.82 66.76 Imbalance Ratio τ= 0 .06
+> Method IN. Cal. OP. SC. Flw. Food. FA. SUN. DTD ES. UCF. Avg MaPLe(CVPR’23) 68.32 92.23 90.07 64.38 70.37 84.77 20.47 64.53 45.17 47.03 64.40 64.34 CoPrompt(ICLR’24) 68.22 92.35 89.01 64.64 71.02 85.35 21.29 65.38 44.54 47.90 65.53 64.70 NPT(KDD’24) 68.90 93.31 89.93 65.28 71.77 86.00 21.51 66.07 44.97 48.17 66.20 65.32 DeKg(ICLR’25) 69.42 92.89 89.63 65.07 72.02 85.99 21.35 66.17 44.47 49.90 65.86 65.33 DPC(CVPR’25) 68.23 91.79 89.09 64.40 70.25 84.68 21.14 65.35 44.17 44.20 64.46 63.95
+> CPT(Ours) 69.58 94.23 90.82 65.92 72.50 86.86 21.71 66.71 45.42 48.65 66.89 65.97
+
+Table 3. Cross-dataset generalization accuracy (%) under varying class-imbalance ratios. All other settings follow the Base-to-New classification. 
+
+mance, surpassing MaPLe, NPT, and CoPrompt. Even under extreme class imbalance ( τ = 0 .06 ), CPT exhibits robust tail-class accuracy, confirming the effectiveness of its cluster-aware neural collapse optimization strategy. 
+
+4.5. Ablative Analysis 
+
+Effectiveness of CPT: We conduct an ablation study to assess the contribution of each core component in the CPT framework, as illustrated in Table 1. Starting from a lightweight baseline that only applies instance-level prompt tuning (IVLP), we progressively introduce our three key modules. Table 1 summarizes the performance of each vari-ant, reporting results across three benchmark experiments. We observe that each loss consistently contributes additional gains on top of the previous configuration. Under both im-balance ratios, the full model with all three losses achieves the best performance across all metrics. Hyperparameter Sensitivity: To evaluate robustness to the choice of loss weights, we sweep each coefficient around its default value while holding the others fixed, as illustrated in Fig. 3. Con-cretely, we vary each hyperparameter around the default setting: λTETF = 0 .25 , λ CC = 0 .15 , λ RS = 0 .10 . We report harmonic mean accuracy on the ImageNet base-to-new set-ting under two imbalance ratios ( τ = 0 .25 and τ = 0 .06 ). Across these sweeps, performance changes by less than 3% on average, even in the most imbalanced regime ( τ = 0 .06 ). 
+
+Training Stability and Seed Variance: Prompt tuning is known to be sensitive to random seeds, especially in few-shot and long-tailed regimes. We quantify stability by repeating each experiment with multiple random seeds and reporting both the mean accuracy and standard deviation, as illustrated in Fig. 4. We observe two consistent trends: Methods that enforce a global ETF without anchoring exhibit large vari-ance across seeds. This is expected: a global ETF constrains pairwise angles but not absolute orientation. Different seeds tend to settle into different rotations, leading to run-to-run differences in downstream accuracy. CPT shows substan-tially lower standard deviation across seeds, often cutting the variance by roughly half compared to global-ETF base-lines. The rotation stabilization loss LRS , which anchors each learnable textual prototype gc to its frozen pre-trained prototype ˆgc, is critical here. By penalizing large absolute deviations, LRS removes the unconstrained global-rotation degree of freedom and keeps different runs aligned to the same semantic frame of reference. Ablation on Cluster-ing Strategy. We design a cluster-invariant space by static clustering on frozen textual features. We test four algorithms: Euclidean K-means, cosine K-means, spectral (cosine affin-Imbalance Ratio τ = 1 (Balance)                                                                                                                                                     
+
+> Method IN. IN.-V2 IN.-S IN.-A IN.-R Avg CoCoOp 71.02 64.07 48.75 50.63 76.18 59.91 MaPLe 70.72 64.07 49.15 50.90 76.98 60.27 NPT 70.70 64.23 48.10 49.70 76.89 59.73 CoPrompt 70.10 64.15 48.83 50.58 77.31 60.22 DeKg 72.33 64.21 48.82 50.62 76.64 60.07 DPC 71.42 64.05 49.55 50.65 77.50 60.44
+> CPT(Ours) 71.40 64.23 49.40 50.66 77.70 60.50 Imbalance Ratio τ= 0 .25
+> Method IN. IN.-V2 IN.-S IN.-A IN.-R Avg CoCoOp 68.43 62.21 46.89 48.56 75.64 58.33 MaPLe 69.20 62.40 47.70 48.98 75.83 58.73 NPT 69.40 63.10 47.83 49.10 76.20 59.06 CoPrompt 69.34 62.47 48.37 49.60 76.46 59.22 DeKg 69.79 63.34 48.72 50.51 76.37 59.73 DPC 69.71 63.12 49.25 50.64 76.85 59.96
+> CPT(Ours) 69.89 63.74 49.35 50.64 76.89 60.16 Imbalance Ratio τ= 0 .06
+> Method IN. IN.-V2 IN.-S IN.-A IN.-R Avg CoCoOp 66.21 60.35 46.13 48.25 74.56 57.32 MaPLe 67.32 62.33 47.20 48.47 74.47 58.12 NPT 68.70 62.83 47.53 48.07 74.70 58.28 CoPrompt 68.22 62.20 48.03 48.56 74.92 58.43 DeKg 69.20 62.64 48.38 48.56 75.12 58.68 DPC 69.19 62.77 49.00 48.56 75.27 58.90
+> CPT(Ours) 69.58 63.43 49.02 48.56 75.46 59.12
+
+Table 4. Domain generalization accuracy (%) under varying class-imbalance ratios. 
+
+Figure 4. Training stability on class-imbalanced data ( τ =0 .06 )in the ImageNet base-to-new setting. Violin plots illustrate the distribution of harmonic-mean accuracy across five random seeds for four methods, namely Standard PT (COOP), Global-ETF PT, Ours w/o RS, and CPT. The dots indicate the mean, and the error bars represent one standard deviation. 
+
+ity), and K-medoids. We keep the cluster count M and the 
+
+Clustering τ = 0 .25 τ = 0 .06 
+
+H ↑ Std ↓ H ↑ Std ↓
+
+Cosine K-means 72.62 0.35 71.58 0.52 Euclidean K-means 72.19 0.48 71.52 0.66 Spectral (cosine) 71.72 0.74 71.39 1.10 K-medoids (cosine) 71.86 0.92 71.49 1.32 Table 5. Clustering choice ablation. We use static clustering on frozen textual prototypes with fixed M = 16 , identical seeds, and cosine-silhouette model selection. We report the base-to-new harmonic mean H for τ ∈ { 0.25 , 0.06 } and the standard deviation across seeds. Cosine-aligned partitioners give higher H and lower variance. Numbers are averaged over datasets; Std is computed across seeds. 
+
+seed grid fixed, and we tune only on frozen features with a cosine-silhouette score. We report the base-to-new harmonic mean H (τ ∈ { 0.25 , 0.06 }) and the seed-to-seed standard deviation. Cosine K-means gives the best H and lower vari-ance than Euclidean K-means; spectral is close but more sensitive; K-medoids is worse in both H and stability. Ta-ble 5 shows that CPT does not rely on a specific clustering heuristic. Full analysis and additional ablations, including the effect of the number of samples per cluster, are provided in the supplementary material. 
+
+## 5. Conclusion 
+
+We address the challenge of enhancing tail-class discrim-inability in prompt-tuned VLMs without sacrificing their overall generalization. Specifically, CPT integrates cluster-invariant space structuring that preserves the high-level se-mantics of the pre-trained VLM, while applying NC-driven discriminability optimization with three losses. The three targeted losses—Textual ETF Separation, Class-wise Con-vergence, and Rotation Stabilization—jointly shape intra-cluster geometry for better inter-class separation and stable intra-class alignment. Extensive experiments on 11 bench-marks show consistent gains under different settings, partic-ularly in long-tailed regimes. CPT demonstrates stronger tail-class performance than SOTA methods, while maintain-ing generalization to new classes. 
+
+## Acknowledgements 
+
+This work was supported by the National Na-ture Science Foundation of China (62322211, 62336008), the ”Pioneer” and ”Leading Goose” R&D Program of Zhejiang Province(2024C01023). 
+
+## References 
+
+[1] Lukas Bossard, Matthieu Guillaumin, and Luc Van Gool. Food-101–mining discriminative components with random forests. In ECCV , 2014. 5 [2] Kaidi Cao, Colin Wei, Adrien Gaidon, Nikos Arechiga, and Tengyu Ma. Learning imbalanced datasets with label-distribution-aware margin loss. In Advances in Neural Infor-mation Processing Systems (NeurIPS) , 2019. 3 [3] Eulrang Cho, Jooyeon Kim, and Hyunwoo J. Kim. Distribution-aware prompt tuning for vision-language models, 2023. 1 [4] Mircea Cimpoi, Subhransu Maji, Iasonas Kokkinos, Sammy Mohamed, and Andrea Vedaldi. Describing textures in the wild. In CVPR , 2014. 5 [5] Yin Cui, Menglin Jia, Tsung-Yi Lin, Yang Song, and Serge Belongie. Class-balanced loss based on effective number of samples. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , pages 9268–9277, 2019. 3 [6] Yiming Cui, Liang Li, Jiehua Zhang, Chenggang Yan, Hongkui Wang, Shuai Wang, Heng Jin, and Li Wu. Stochas-tic context consistency reasoning for domain adaptive object detection. In Proceedings of the 32nd ACM International Conference on Multimedia , pages 1331–1340, 2024. 2 [7] Yiming Cui, Liang Li, Haibing Yin, Yuhan Gao, Yaoqi Sun, and Chenggang Yan. Debiased teacher for day-to-night domain adaptive object detection. In Proceedings of the IEEE/CVF International Conference on Computer Vision ,pages 2577–2587, 2025. 2 [8] Jia Deng, Wei Dong, Richard Socher, Li-Jia Li, Kai Li, and Li Fei-Fei. Imagenet: A large-scale hierarchical image database. In CVPR , 2009. 5 [9] Bowen Dong, Pan Zhou, Shuicheng Yan, and Wangmeng Zuo. Lpt: Long-tailed prompt tuning for image classification. In International Conference on Learning Representations (ICLR) , 2023. 3 [10] Weinan E and Stephan Wojtowytsch. On the emergence of simplex symmetry in the final and penultimate layers of neural network classifiers. In Mathematical and Scientific Machine Learning , pages 270–290, 2021. 3 [11] Cong Fang, Hangfeng He, Qi Long, and Weijie J. Su. Explor-ing deep neural networks via layer-peeled model: Minority collapse in imbalanced training. Proceedings of the National Academy of Sciences , 118(43):e2103091118, 2021. 3 [12] Li Fei-Fei, Rob Fergus, and Pietro Perona. Learning gener-ative visual models from few training examples: An incre-mental bayesian approach tested on 101 object categories. In 
+
+CVPRW , 2004. 5 [13] Peng Gao, Shijie Geng, Renrui Zhang, Teli Ma, Rongyao Fang, Yongfeng Zhang, Hongsheng Li, and Yu Qiao. Clip-adapter: Better vision-language models with feature adapters. 
+
+arXiv preprint arXiv:2110.04544 , 2021. 2 [14] Yuncheng Guo and Xiaodong Gu. Mmrl: Multi-modal repre-sentation learning for vision-language models. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , pages 25015–25025, 2025. 1 [15] Md Yousuf Harun, Jhair Gallardo, and Christopher Kanan. Controlling neural collapse enhances out-of-distribution de-tection and transfer learning, 2025. 2 [16] Patrick Helber, Benjamin Bischke, Andreas Dengel, and Damian Borth. Eurosat: A novel dataset and deep learning benchmark for land use and land cover classification. IEEE Journal of Selected Topics in Applied Earth Observations and Remote Sensing , 2019. 5 [17] Shihao Hou, Xinyi Shang, Shreyank N Gowda, Yang Lu, Chao Wu, Yan Yan, and Hanzi Wang. Capt: Class-aware prompt tuning for federated long-tailed learning with vision-language model. arXiv preprint arXiv:2503.06993 , 2025. 3[18] Like Hui, Mikhail Belkin, and Preetum Nakkiran. Limitations of neural collapse for understanding generalization in deep learning, 2022. 2 [19] Wenlong Ji, Yiping Lu, Yiliang Zhang, Zhun Deng, and Wei-jie J. Su. An unconstrained layer-peeled perspective on neural collapse. arXiv preprint arXiv:2110.02796, 2021. 3 [20] Chao Jia, Yinfei Yang, Ye Xia, Yi-Ting Chen, Zarana Parekh, Hieu Pham, Quoc Le, Yun-Hsuan Sung, Zhen Li, and Tom Duerig. Scaling up visual and vision-language representation learning with noisy text supervision. In ICML , pages 4904– 4916. PMLR, 2021. 2 [21] Bingyi Kang, Saining Xie, Marcus Rohrbach, Zhicheng Yan, Albert Gordo, Jiashi Feng, and Yannis Kalantidis. Decoupling representation and classifier for long-tailed recognition. In In-ternational Conference on Learning Representations (ICLR) ,2020. 3 [22] Muhammad Uzair Khattak, Syed Talal Wasim, Muzammal Naseer, Salman Khan, Ming-Hsuan Yang, and Fahad Shahbaz Khan. Self-regulating prompts: Foundational model adap-tation without forgetting. In Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV) , pages 15190–15200, 2023. 1 [23] Vignesh Kothapalli. Neural collapse: A review on modelling principles and generalization, 2023. 1 [24] Jonathan Krause, Michael Stark, Jia Deng, and Li Fei-Fei. 3d object representations for fine-grained categorization. In 
+
+ICCVW , 2013. 5 [25] Haoyang Li, Liang Wang, Chao Wang, Jing Jiang, Yan Peng, and Guodong Long. Dpc: Dual-prompt collaboration for tun-ing vision-language models. In Proceedings of the Computer Vision and Pattern Recognition Conference , pages 25623– 25632, 2025. 5 [26] Liang Li, Gaoxiang Cong, Yuankai Qi, Zheng-Jun Zha, Qi Wu, Michael Sheng, Qingming Huang, and Ming-Hsuan Yang. Dubbing movies via hierarchical phoneme modeling and acoustic diffusion denoising. IEEE Transactions on Pat-tern Analysis and Machine Intelligence , 47(11):10361–10377, 2025. 2 [27] Yilun Li, Miaomiao Cheng, Xu Han, and Wei Song. Divergence-enhanced knowledge-guided context optimiza-tion for visual-language prompt tuning. In Proceedings of the International Conference on Learning Representations (ICLR) , 2025. 1, 5 [28] Chengcheng Ma, Yang Liu, Jiankang Deng, Lingxi Xie, Weiming Dong, and Changsheng Xu. Understanding and mitigating overfitting in prompt tuning for vision-language models, 2023. 2 [29] Subhransu Maji, Esa Rahtu, Juho Kannala, Matthew Blaschko, and Andrea Vedaldi. Fine-grained visual clas-sification of aircraft. arXiv preprint arXiv:1306.5151 , 2013. 5[30] Aditya Krishna Menon, Sadeep Jayasumana, Ankit Singh Rawat, Himanshu Jain, Andreas Veit, and Sanjiv Kumar. Long-tail learning via logit adjustment. In International Con-ference on Learning Representations (ICLR) , 2021. 3 [31] Maria-Elena Nilsback and Andrew Zisserman. Automated flower classification over a large number of classes. In 2008 Sixth Indian Conference on Computer Vision, Graphics & Image Processing , 2008. 5 [32] Vardan Papyan, X. Y. Han, and David L. Donoho. Prevalence of neural collapse during the terminal phase of deep learning training. Proceedings of the National Academy of Sciences ,117(40):24652–24663, 2020. 1, 3 [33] Omkar M Parkhi, Andrea Vedaldi, Andrew Zisserman, and CV Jawahar. Cats and dogs. In CVPR , 2012. 5 [34] Yuxin Peng, Zishuo Wang, Geng Li, Xiangtian Zheng, Sibo Yin, and Hulingxiao He. A survey on fine-grained multimodal large language models. Chinese Journal of Electronics , 35 (2):1–33, 2026. 2 [35] Alec Radford, Jong Wook Kim, Chris Hallacy, Aditya Ramesh, Gabriel Goh, Sandhini Agarwal, Girish Sastry, Amanda Askell, Pamela Mishkin, Jack Clark, Gretchen Krueger, and Ilya Sutskever. Learning transferable visual models from natural language supervision. In Proceedings of the 38th International Conference on Machine Learning (ICML) , 2021. 1, 2 [36] Hanoona Rasheed, Muhammad Maaz, Muhammad Uzair Khattak, Salman Khan, and Fahad Shahbaz Khan. Bridg-ing the gap between object and image-level representations for open-vocabulary detection. In NeurIPS , 2022. 2 [37] Jiawei Ren, Cunjun Yu, Shunan Sheng, Xiao Ma, Haiyu Zhao, Shuai Yi, and Hongsheng Li. Balanced meta-softmax for long-tailed visual recognition. In Advances in Neural Information Processing Systems (NeurIPS) , 2020. 3 [38] Shuvendu Roy and Ali Etemad. Consistency-guided prompt learning for vision-language models. 2024. 2 [39] Sergey Sedov, Sumanth Bharadwaj Hachalli Karanam, and Venu Gopal Kadamba. Exploring embedding priors in prompt-tuning for improved interpretability and control, 2024. 1, 3 [40] Jiang-Xin Shi, Chi Zhang, Tong Wei, and Yu-Feng Li. Ef-ficient and long-tailed generalization for pre-trained vision-language model, 2024. 1 [41] Khurram Soomro, Amir Roshan Zamir, and Mubarak Shah. Ucf101: A dataset of 101 human actions classes from videos in the wild. arXiv preprint arXiv:1212.0402 , 2012. 5 [42] Quan Sun, Yuxin Fang, Ledell Wu, Xinlong Wang, and Yue Cao. Eva-clip: Improved training techniques for clip at scale, 2023. 1 [43] Jingyi Tang, Li Liang, Beichen Zhang, and Qingming Huang. Lmda: Llm-guided marginal distribution alignment for open-set active learning. Chinese Journal of Electronics , 2026. 2[44] Tom Tirer and Joan Bruna. Extended unconstrained features model for exploring deep neural collapse. In Proceedings of Machine Learning Research , pages 21478–21505, 2022. 3 [45] Yunbin Tu, Liang Li, Li Su, Zheng-Jun Zha, and Qingming Huang. Smart: Syntax-calibrated multi-aspect relation trans-former for change captioning. IEEE Transactions on Pattern Analysis and Machine Intelligence , 46(7):4926–4943, 2024. 2[46] Jianxiong Xiao, James Hays, Krista A Ehinger, Aude Oliva, and Antonio Torralba. Sun database: Large-scale scene recog-nition from abbey to zoo. In CVPR , 2010. 5 [47] Hantao Yao and et al. Bi-modality individual-aware prompt tuning for visual-language model. IEEE Transactions on Pattern Analysis and Machine Intelligence , 2025. 1 [48] Hantao Yao, Rui Zhang, and Changsheng Xu. Visual-language prompt tuning with knowledge-guided context op-timization. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , pages 6757–6767, 2023. [49] Hantao Yao, Rui Zhang, and Changsheng Xu. Tcp: Textual-based class-aware prompt tuning for visual-language model. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) , 2024. 1 [50] Lewei Yao, Runhui Huang, Lu Hou, Guansong Lu, Minzhe Niu, Hang Xu, Xiaodan Liang, Zhenguo Li, Xin Jiang, and Chunjing Xu. Filip: Fine-grained interactive language-image pre-training. arXiv preprint arXiv:2111.07783 , 2021. 2 [51] Zhaoda Ye, Xiangteng He, and Yuxin Peng. Unsupervised cross-media hashing learning via knowledge graph. Chinese Journal of Electronics , 31(6):1081–1091, 2022. 2 [52] Lu Yuan, Dongdong Chen, Yi-Ling Chen, Noel Codella, Xiyang Dai, Jianfeng Gao, Houdong Hu, Xuedong Huang, Boxin Li, Chunyuan Li, et al. Florence: A new foundation model for computer vision. arXiv preprint arXiv:2111.11432 ,2021. 2 [53] Xiaohua Zhai, Xiao Wang, Basil Mustafa, Andreas Steiner, Daniel Keysers, Alexander Kolesnikov, and Lucas Beyer. Lit: Zero-shot transfer with locked-image text tuning. In CVPR ,pages 18123–18133, 2022. 2 [54] Beichen Zhang, Liang Li, Shuhui Wang, Shaofei Cai, Zheng-Jun Zha, Qi Tian, and Qingming Huang. Inductive state-relabeling adversarial active learning with heuristic clique rescaling. IEEE Transactions on Pattern Analysis and Ma-chine Intelligence , 46(12):9780–9796, 2024. 2 [55] Renrui Zhang, Rongyao Fang, Peng Gao, Wei Zhang, Kun-chang Li, Jifeng Dai, Yu Qiao, and Hongsheng Li. Tip-adapter: Training-free clip-adapter for better vision-language modeling. In ECCV , 2022. 2 [56] Kaiyang Zhou, Jingkang Yang, Chen Change Loy, and Ziwei Liu. Conditional prompt learning for vision-language models. In CVPR , pages 16816–16825, 2022. 2 [57] Beier Zhu, Yulei Niu, Saeil Lee, Minhoe Hur, and Hanwang Zhang. Debiased fine-tuning for vision-language models by prompt regularization. In Proceedings of the Thirty-Seventh AAAI Conference on Artificial Intelligence and Thirty-Fifth Conference on Innovative Applications of Artificial Intelli-gence and Thirteenth Symposium on Educational Advances in Artificial Intelligence . AAAI Press, 2023. 2 [58] Beier Zhu, Kaihua Tang, Qianru Sun, and Hanwang Zhang. Generalized logit adjustment: Calibrating fine-tuned models by removing label bias in foundation models. In Advances in Neural Information Processing Systems (NeurIPS) , 2023. 3 [59] Didi Zhu, Zexi Li, Min Zhang, Junkun Yuan, Jiashuo Liu, Kun Kuang, and Chao Wu. Neural collapse anchored prompt tuning for generalizable vision-language models. In Proceed-ings of the 30th ACM SIGKDD Conference on Knowledge Discovery and Data Mining , page 4631–4640, New York, NY, USA, 2024. Association for Computing Machinery. 1, 3, 5 [60] Zhihui Zhu, Tianyu Ding, Jinxin Zhou, Xiao Li, Chong You, Jeremias Sulam, and Qing Qu. A geometric analysis of neural collapse with unconstrained features. 34:29820–29834, 2021. 3Cluster-Aware Neural Collapse Prompt Tuning for Long-Tailed Generalization of Vision-Language Models 
+
+# Supplementary Material 
+
+## 6. Experiments Setting 
+
+6.1. Training Details. 
+
+We evaluate our CPT under base-to-new generalization, do-main generalization, and cross-dataset transfer generaliza-tion over 11 image classification benchmark datasets. We conduct the experiments based on the vision backbone with Vit-B/16. We set the number of visual and textual prompts to 4, initializing them with the template ’a photo of a []’. All our models are trained with a batch size of 4. We utilize SGD as our optimization method, starting with an initial learning rate of 0.0025 and employing a cosine annealing scheduler that includes one warm-up epoch. Depending on the spe-cific experiment setup, the training duration varies: 1)in the base-to-new setting, models are trained for 12 epochs; 2)in the few-shot setting, the training extends to 25 epochs; 3)in domain generalization and cross-dataset evaluation, we limit training to 8 epochs. All experiments are conducted based on a single NVIDIA 3090 GPU. To simulate imbalance, we downsample each class to follow an exponential decay dis-tribution, controlled by imbalance ratios τ ∈ { 1, 0.25 , 0.6}.Here, τ is defined as the ratio between the smallest and largest class sizes, i.e., τ = min {nk}/ max {nk}, where nk
+
+denotes the number of training samples in the k-th class. We fix max {nk} = 16 across all settings. 
+
+## 7. Ablative Analysis 
+
+7.1. Ablation on the Number of Samples per Cluster. 
+
+To investigate the sensitivity of our method to the number of samples per cluster, we conduct an ablation study by varying this value across a range of settings. This analysis explores how the granularity of semantic grouping—measured by how many class prototypes are grouped into each cluster—affects model performance and stability. In our framework, frozen textual prototypes are grouped into disjoint semantic clus-ters using K-means before training. The number of sam-ples per cluster determines how coarse or fine the seman-tic partitioning is. Larger clusters (i.e., more samples per cluster) result in coarser partitions, enabling broader seman-tic sharing but potentially reducing local discriminability. In contrast, smaller clusters offer finer-grained separation, which may improve within-cluster alignment but risks over-fitting due to reduced intra-cluster diversity. To better under-stand this trade-off, we evaluate CPT under varying cluster sizes, specifically using average per-cluster sample counts of {4, 8, 16 , 32 , 64 } prototypes. Results in Table 5 show that 
+
+> Figure 5. Effect of the number of samples per cluster on base-to-new generalization performance. Results are reported on the ImageNet dataset, where each point represents the harmonic mean (H) between base and novel class accuracy.
+
+performance improves as cluster size decreases, peaking at 73.92% when each cluster contains 16 prototypes. 
+
+7.2. Ablation on the choice of clustering algorithm. 
+
+Our scaffold (Sec. 3.2) performs static clustering on frozen textual features to preserve the pre-trained semantic struc-ture and to provide cluster-local neighborhoods for NC con-straints. While the main paper uses K-means for static clus-ter mining, we examine whether alternative clustering algo-rithms affect the scaffold quality and the final performance, as shown in Table5. We evaluate four common algorithms in the ImageNet base-to-new setting: (1) Euclidean K-means, (2) Cosine K-means (spherical), (3) Spectral clustering (co-sine affinity, normalized Laplacian), and (4) K-medoids (PAM, cosine distance). For fairness, we fix the cluster count M across algorithms, use the same random-seed grid, and tune algorithm-specific hyperparameters only on the frozen features via a cosine-silhouette criterion (no label or test data is used). We report two metrics: (i) base-to-new harmonic mean (H) under τ ∈ { 0.25 , 0.06 } and (ii) seed-to-seed standard deviation (stability). Across datasets we observe three consistent trends. First, cosine-consistent par-titioners (Cosine K-means) achieve the best H on both imbal-ance levels, with lower run-to-run variance than Euclidean K-means. Second, Spectral clustering is competitive but more sensitive to initialization and the affinity scale, yield-ing slightly lower H and higher variance. Third, K-medoids tends to underperform in both H and stability, indicating that medoid-only representatives provide a weaker scaffold for our cluster-local NC losses. These results support our choice of a cosine-aligned partitioner for the static scaffold while confirming that the gains of CPT do not rely on a specific clustering heuristic.
