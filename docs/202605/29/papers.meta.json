@@ -1,0 +1,24 @@
+{
+  "label": "2026-05-29",
+  "date": "2026-05-29",
+  "generated_at": "2026-05-29T21:52:43",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "202605/29/2605.24534v1-generating-legal-commentaries-from-case-databases-via-retrieval-clustering-and-generation",
+      "section": "quick",
+      "title_en": "Generating Legal Commentaries from Case Databases via Retrieval, Clustering, and Generation",
+      "authors": "Max Prior, Niklas Wais, Matthias Grabmair",
+      "date": "2026-05-23",
+      "pdf": "https://arxiv.org/pdf/2605.24534v1",
+      "score": "6.0",
+      "evidence": "聚类与LLM生成流水线",
+      "tldr": "法律评注通常由专家手工编写，耗时且更新慢。本文提出全自动流水线，从4，555个德国联邦法院判决中提取、聚类并生成评注。使用四种LLM合成评论，通过人工和LLM法官评估五个维度。结果表明该方法可行且成本低，但仍受限于可用来源和法律推理的规范性。",
+      "tags": "query:ac",
+      "abstract_en": "We present a fully automated pipeline that transforms large collections of court decisions into legal commentaries for statutes - without providing any handcrafted doctrinal framework. Using 4.555 decisions of the German Federal Court of Justice that cite sections 242, 280, 812 and 823 of the German Civil Code (BGB), we extract paragraph-level chunks, summarize their reasoning, and derive keywords, which are embedded and clustered. For each cluster, an LLM generates headings and synthesizes citation-rich sections, which are then merged into coherent commentaries by four state-of-the-art LLMs. We evaluate along five dimensions - topical relevance, heading-match, citation faithfulness, cluster distinction and logical ordering - using both a human expert and an LLM-judge. Our results show that commentary-like argument mining from court decisions to generate reports that can be refreshed within minutes at minimal cost is feasible, yet they highlight limitations arising from restricted sources and the normativity of legal reasoning.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}
