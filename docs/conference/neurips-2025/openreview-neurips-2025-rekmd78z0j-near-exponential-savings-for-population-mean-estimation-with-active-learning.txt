@@ -1,0 +1,1778 @@
+Title: 17839_Near_Exponential_Savings.pdf
+
+URL Source: https://openreview.net/pdf?id=REKmD78Z0J
+
+Number of Pages: 31
+
+Markdown Content:
+# Near-Exponential Savings for Mean Estimation with Active Learning 
+
+Julian M. Morimoto ∗
+
+jmmorimoto@berkeley.edu 
+
+Jacob Goldin †
+
+jsgoldin@uchicago.edu 
+
+Daniel E. Ho ‡
+
+dho@law.stanford.edu 
+
+# Abstract 
+
+We study the problem of efficiently estimating the mean of a k-class random variable, Y , using a limited number of labels, N , in settings where the analyst has access to auxiliary information (i.e.: covariates) X that may be informa-tive about Y . We propose an active learning algorithm (“PartiBandits”) to esti-mate E[Y ]. The algorithm yields an estimate, bμPB , such that (bμPB − E[Y ]) 2 is 
+
+˜O
+
+ ν+exp( c·(−N/ log( N ))) 
+
+> N
+
+
+
+, where c > 0 is a constant and ν is the risk of the Bayes-optimal classifier. PartiBandits is essentially a two-stage algorithm. In the first stage, it learns a partition of the unlabeled data that shrinks the average conditional variance of Y . In the second stage it uses a UCB-style subroutine (“WarmStart-UCB”) to request labels from each stratum round-by-round. Both the main algorithm’s and the subroutine’s convergence rates are minimax optimal in classical settings. PartiBandits bridges the UCB and disagreement-based ap-proaches to active learning despite these two approaches being designed to tackle very different tasks. We illustrate our methods through simulation using nationwide electronic health records. Our methods can be implemented using the PartiBandits 
+
+package in R. 
+
+# 1 Introduction 
+
+Estimating the mean of a k-class random variable, Y , with limited data from a subset of the population of interest is a pervasive problem in statistics and machine learning. A classical solution to this problem is to draw a simple random sample (SRS) of N independent and identically distributed (IID) labels and compute the resulting sample mean. However, this may be an inefficient use of the label budget if one has information X (i.e., covariates) that may be related to Y . In such cases, one approach is to leverage X to get a better estimate of E[Y ] with fewer labels, perhaps through stratified random sampling (StRS) over X and allocating the label budget across strata in proportion to how frequently each stratum occurs in the population. But in practice, there are many ways to define strata, and choosing a poor definition can result in minimal gains, or even worse performance than SRS. In general, analysts who use X poorly, through stratification or otherwise, may over-sample some subpopulations and neglect others, resulting in biased or sub-optimally noisy estimates ( see, e.g., Aznag et al. (2023); Henderson et al. (2022)). This challenge has motivated the development of different adaptive sampling techniques for mean estimation (see, e.g., Seber and Mohammad Salehi (2015); Thompson (1991)), but these approaches focus on asymptotic performance and do not address whether fast rates of convergence can be achieved in finite samples. In parallel, the active learning literature has developed strategies for learning with limited labels. While classical active learning 
+
+> ∗
+
+Department of Statistics, University of California, Berkeley; Regulation, Evaluation, and Governance Lab, Stanford Law School; World Bank Group 
+
+> †
+
+University of Chicago; American Bar Foundation 
+
+> ‡
+
+Stanford University 39th Conference on Neural Information Processing Systems (NeurIPS 2025). results primarily focus on classification ( see, e.g., Puchkin and Zhivotovskiy (2022); Hanneke and Yang (2014); Hanneke (2011)), recent work uses active learning to efficiently estimate subgroup (i.e. within-strata) means in settings where strata are predefined (Aznag et al., 2023). However, there has been no thorough exploration of active learning methods for population mean estimation when the researcher does not know an optimal stratification scheme. In this paper, we carry out such an exploration by developing an active learning framework for population mean estimation of 
+
+k-class random variables, its convergence guarantees, and to what extent fast rates of convergence are achievable. Our main problem setup revolves around estimating the mean of a k-class random variable Y , where the analyst has access to auxiliary information X that may be informative about Y . The analyst may adaptively choose which instances to query for their corresponding labels, Y , round by round, with a budget of N label requests. This setup parallels the pool-based active learning setup, where the analyst observes a large collection of IID unlabeled instances X1, X 2, . . . and sequentially selects which ones to label, ultimately giving the analyst the labeled dataset, (X1, Y 1), . . . , (XN , Y N ). The hope is to obtain an estimate of E[Y ] that is closer to E[Y ] than the SRS strategies with high probability, where the latter convergence rates are on the order of O
+
+ Var (Y )
+
+> N
+
+
+
+.There are two important reasons why it is hard to efficiently estimate population means in this problem setup. An ideal strategy would first partition the data into strata that minimize the average within-stratum variance of Y , then allocate the label budget across these strata according to the Neyman allocation to minimize the variance of the mean estimate that aggregates the subgroup mean estimates ( see Jo et al. (2025); Bosch et al. (2003)). But in most settings, this optimal stratification is not known ahead of time. Moreover, variance within each stratum is not observed directly and must be estimated from noisy samples, so an allocation strategy that may seem optimal early on—based on preliminary variance estimates—may prove suboptimal as more data is collected. Thus, the analyst must (1) learn a good stratification from unlabeled data, and (2) decide how to allocate labels across strata adaptively in a way that reflects estimated (as opposed to oracle) variances. 
+
+1.1 Summary of Contributions 
+
+Our contributions are five-fold. First, we develop an active learning algorithm (“PartiBandits”) for efficiently estimating the mean of a k-class variable Y . This algorithm yields an estimate, bμPB , such that (bμPB − E[Y ]) 2 is ˜O
+
+ ν+exp( c·(−N/ log( N ))) 
+
+> N
+
+
+
+, where c > 0 is a constant and ν is the risk of the Bayes-optimal classifier (Theorem 3, Figure 1). It performs at least as well as SRS in N , and almost exponentially better when X is predictive of Y (i.e., when ν is small). It also closely resembles the exponential savings observed in disagreement-based active learning for classification (Puchkin and Zhivotovskiy, 2022; Hanneke and Yang, 2014; Hanneke, 2011), even though such results do not help with the task of mean estimation of Y when X does not perfectly predict Y (see Dong et al. (2025)). Second, we show that if X can be stratified in advance using a stratification scheme G, the PartiBandits subroutine (“WarmStart-UCB”) achieves error ˜O
+
+ Σ1(G)
+
+> N
+
+
+
+, where Σ1(G) is the average within-group variance of Y (Theorem 1, Figure 1). Third, we show that both convergence rates are minimax optimal in classical settings (Theorems 2 and 4). Fourth, we bridge a gap between Upper Confidence Bound (UCB) algorithms and disagreement-based approaches in the active learning literature despite these two approaches being developed for very different tasks (Section 4.2). Finally, we conduct simulation studies using real-world data from over 6 million electronic health records and find that the gains predicted by our theory for population mean estimation can be achieved even in realistic small-sample regimes (Section 5). 
+
+# 2 Related Work 
+
+Our work builds on, and bridges, two different strands of prior work in active learning. The first is disagreement-based theory, as developed and refined by Hanneke (2011). This theory was originally designed for classification where labeled data are costly but unlabeled data are abundant. In this setting, the analyst queries labels for instances drawn from a large pool, concentrating effort on regions of the input space where candidate hypotheses disagree. A defining feature of this approach is its potential for “exponential savings”, which refers to the convergence rate of excess classification error 2Figure 1: This plot compares the performance of PartiBandits and WarmStart-UCB, to SRS in different problem settings. The left panel compares SRS to PartiBandits for label budgets from 10 to 100 . Here, X ∼ Unif [0 , 1]                                       
+
+> and Y=1{X≥0.5}, with a fixed fraction of Y’s (between 0% and 10%) randomly flipped to introduce noise. The proportion of flipped labels is equal to νby definition. For each label budget, we generate 500 hypothetical datasets in this way, apply SRS and PartiBandits to each, and compute the resulting error rates. We then take the 90th percentile of these error rates to obtain a classical 90% high-probability/confidence bound. PartiBandits eventually outperforms SRS with relatively fewer samples, with performance gains becoming more pronounced when Xbetter predicts Yand νdecreases. The right panel compares SRS to WarmStart-UCB for label budgets from 50 to 200 . In this panel, X∼Unif [0 ,1] and Y=1{X≥0.5}, with 5% of the labels randomly flipped to introduce noise. We examine the effect of specifying different stratification schemes beforehand that reduce the within-group variance of Yto varying degrees, where lower values of Σ1(G)indicate better average within-group variance reduction. Each scheme defines strata by applying a threshold between 0.3 and 0.5 and grouping observations based on whether Xfalls to the left or right of the threshold. We run the same simulation procedure as above to obtain the 90% confidence bounds. WarmStart-UCB consistently outperforms SRS, and the gap grows when stratification reduces variance more effectively (i.e., when Σ1(G)shrinks).
+
+(relative to the risk of the Bayes optimal classifier) shrinking at roughly ˜O (exp( c · (−N/ log( N )))) ,far faster than the O(Var (Y )/N ) rate typical in passive learning. While disagreement-based learning has been extensively studied in classification, it has not, to our knowledge, been applied to the problem of estimating population means. Our work is the first to show that the core insights of this framework can be used to construct stratification schemes that substantially reduce estimation variance in the mean estimation setting. The second strand that our work connects to is UCB-style active learning. In particular, our proposed WarmStart-UCB subroutine is closely related to the work of Aznag et al. (2023), which developed a Variance-UCB algorithm for estimating the means of predefined subgroups using a fixed label budget, using upper confidence bounds on within-group variance to guide sampling. Our subroutine uses a similar approach to estimate the overall population mean using the strata selected by the first stage of our algorithm. Additionally, we build on the Aznag et al. (2023) results by showing in Theorem 1, that the rate of our subroutine for estimating population means from pre-defined strata explicitly quantifies the effect of how “informative” the subgroups are for estimating the quantity of interest, something that cannot be obtained through direct application of the main Aznag et al. results alone. Our rate also has improved dependence on key parameters such as the number of strata and σmin , the smallest conditional variance of Y over all strata. 
+
+# 3 Notation and Problem Setups 
+
+3.1 Main Setup 
+
+Our main problem setup is that of estimating the population mean of a k-class random variable, Y ,whose realizations come from the set {0, . . . , k } using a limited label budget N . Where appropriate, the realizations of Y may also be any set with k distinct elements in R. The analyst has abundant access to unlabeled information X ∈ X (ex: covariates), which may be informative about Y , and can choose which examples to label in order to estimate μ := E[Y ]. The analyst uses an algorithm to 3construct an estimator bμ(N ) of the population mean μ, that uses auxiliary information X and only N
+
+labels. The goal is to minimize the squared error, (bμ(N ) − μ)2.We also have the following terms and notations. A hypothesis class C is any set of measurable classifiers h : X → R ⊂ R where |R| is finite. As we will show in Section 4.2, PartiBandits parallels classical disagreement-based active learning algorithms in that it requires C as an input. For any measurable h : X → { 0, . . . , k }, we define the squared loss of h as er( h) = E[( h(X) − Y )2]. Let 
+
+ν = inf h∈C er( h), the infimum loss of C.As discussed in the Appendix, our main results still hold for other loss functions, including asym-metric misclassification costs. Such alternatives can produce more informative Bayes classifiers in applications where the ordinary squared-loss version fails to identify the threshold (such as when 
+
+Pr( Y = 1 | X) ≤ 1/2 for all X). Our main assumption is the following: 
+
+Assumption 1 (Exponential Savings in Classification) . We assume that the joint of distribution 
+
+(X, Y ) and the hypothesis class C are such that an active learning algorithm, S, can be used to learn a classifier ˆh such that with high probability, E[( ˆh(X) − Y )2] − ν ≲ exp 
+
+
+
+c · −N 
+
+> log( N)
+
+
+
+, where N
+
+is the label budget, and c > 0 is some N -independent constant. 
+
+There are many problem setups in which this assumption is satisfied, as we discuss in Corollaries 1–4. 
+
+3.2 Setup for a PartiBandits Subroutine, WarmStart-UCB 
+
+Additionally, PartiBandits contains a subroutine that depends on the following problem setup that builds on the one discussed above. The following notation and definitions are drawn from Aznag et al. (2023). We assume that we can partition X using a stratification scheme G = {A1, . . . , A G},where Ag ⊆ Rd are disjoint. Let Pg = P(X ∈ Ag ) and μg = E[Y | X ∈ Ag ]P(X ∈ Ag ), so the population mean is μ = PGg=1 μg . We define σ2 
+
+> g
+
+:= Var( Pg · Y | X ∈ Ag ), which equals 
+
+P 2 
+
+> g
+
+· σ′2 
+
+> g
+
+, where σ′2 
+
+> g
+
+:= Var( Y | X ∈ Ag ) is the unweighted conditional variance of Y given 
+
+X ∈ Ag . The distribution of X is assumed to be virtually known (as is the case in classical active learning setups), so Pg is also known to the analyst. Σ1(G) is the average within-group variance of Y ,P 
+
+> g∈[G]
+
+σ′2 
+
+> g
+
+Pg . The analyst wishes to compute an unbiased estimate of the population mean with N
+
+label requests, sampling only one group from {A1, . . . , A G} at a time. The set of feasible policies for estimating μ is defined as Π := π = {πt}t∈[N ] | πt ∈ Gt−1 × Rt−1 → ∆( G), ∀t ∈ [N ] , where 
+
+∆( G) is the set of measures supported on [G]. For some policy π ∈ Π, let ng,N (π) denote the number of collected samples from group Ag after N label requests by way of policy π ∈ Π, and let ˆμg,N (π) be the weighted sample mean estimator of μg for ng,T (π) collected samples, that is: 
+
+bμg,N (π) := 1 
+
+> ng,N (π)
+
+P 
+
+> t:Xt∈Ag
+
+Yt · Pg . Once all data have been collected using the full label budget, 
+
+N , the analyst will compute the population mean by aggregating the subgroup mean estimates obtained from the policy π ∈ Π: bμ(π, N ) = P 
+
+> g
+
+ˆμg,N (π). Going forward, we drop the explicit dependence on π and N in the notation when the policy is clear from context. As long as at least one sample is collected from each group, each bμg,N is an unbiased estimator of μg = E[Y | X ∈ Ag ] · Pg ,and hence the aggregated mean estimator bμ is an unbiased estimator of the population mean μ. The analyst wishes to obtain a high probability bound on the variance of bμ. The analyst does not know the true standard deviation vector σ := ( σ1, . . . , σ G), which can be used to obtain an upper bound on the variance of bμ via Var( bμ) = Var 
+
+PGg=1 bμg,N 
+
+
+
+≤ PGg=1  
+
+> σ2
+> g
+> ng,N
+
+. Therefore the analyst must learn 
+
+σ through their decisions. We define the regret of a policy as Regret N (π) := ( bμ(π, N ) − μ)2 .
+
+# 4 Our Algorithms and Performance Guarantees 
+
+We now discuss our algorithms and their performance guarantees in turn. The proofs are in the Appendix. PartiBandits is our main algorithm, but since it incorporates a UCB-style subroutine, WarmStart-UCB, we first analyze the subroutine. 44.1 PartiBandits Subroutine: WarmStart-UCB 
+
+The first Algorithm is similar to the Variance-UCB algorithm of Aznag et al. (2023) except that we include an initial “warm-start” step (Step 1). We estimate σg via the sample standard deviation, 
+
+bσg,t := 
+
+q 1
+
+> ng,t −1
+
+P 
+
+> s≤t:Xs=g
+
+(Pg Ys − bμg,t )2. We can then define UCB t(σg ) := bσg,t + CN (δ) 
+
+> √ng,t
+
+,
+
+where CN (δ) := 2 
+
+q
+
+2c1 log   2
+
+> δ
+
+ log   c2
+
+> δ
+
+ + 2 
+
+> q
+> c1log
+
+( 2 
+
+> δ
+
+)(1+ c2+log ( c2 
+
+> δ
+
+))(1 −δ)
+
+> q
+> 2 log
+
+( 2 
+
+> δ
+
+) · 1  
+
+> N2
+
+. In CN (δ), c1 and c2
+
+are constant upper bounds on the sub-gaussian parameters of Y (which exist since Y is k-class), and δ ∈ (0 , 1) is parameter representing the confidence level for obtaining a high probability bound. WarmStart-UCB selects at each round the group with the largest upper confidence bound on its variance estimate, but begins with a “warm-start” phase that allocates a fixed fraction of the label budget, τ , evenly across all groups (initiated by Step 1). 
+
+Algorithm 1 WarmStart-UCB 
+
+Require: Label budget N , stratification scheme G, confidence level δ, buffer fraction τ
+
+1: Initialize ng, 0 = 0 , and ˆσg,t = + ∞ for all g ∈ [G] and t ≤ τG N
+
+2: Compute CN (δ)
+
+3: for t = 0 , . . . , N − 1 do 
+
+4: Compute UCB t(σg ) = ˆ σg,t + CN√ng,t , ∀g ∈ [G]
+
+5: Select group Xt+1 = arg max g UCB t(σg )
+
+> ng,t
+
+6: Observe feedback Yt+1 
+
+7: Update the number of samples: ng,t +1 = ng,t + 1Xt+1 =g , ∀g ∈ [G]
+
+8: Update the mean estimates, ˆμg,t +1 = 1
+
+> ng,t +1
+
+Pt+1  
+
+> s=1
+
+1Xs=g · Pg Ys, ∀g ∈ [G]
+
+9: Update the standard deviation estimates, 
+
+ˆσg,t +1 =
+
+q 1
+
+> ng,t +1 −1
+
+P 
+
+> s≤t+1: Xs=g
+
+(Pg Ys − ˆμg,t +1 )2, ∀g ∈ [G]
+
+10: end for Output: bμWS-UCB (N ) = P 
+
+> g
+
+ˆμg,N .The following is an upper bound on the performance of WarmStart-UCB. 
+
+Theorem 1. |bμWS-UCB − E[Y ]|2 = ˜O
+
+ Σ1(G)
+
+> N
+
+
+
+.
+
+Theorem 1 shows that when a stratification scheme G is given a priori , WarmStart-UCB efficiently estimates the population mean with error scaling as ˜O
+
+ Σ1(G)
+
+> N
+
+
+
+, where Σ1(G) captures how informa-tive the grouping is. The more informative the grouping, the smaller Σ1(G) is, and the faster the rate of convergence. By the law of total variance, Σ1(G) ≤ Var (Y ), so this rate is always at least as fast as that obtained with SRS. The proof is relatively straightforward. In Section A.5 of their work, Aznag et al. (2023) showed that R1(n)−R1(n∗) 
+
+> R1(n∗)
+
+= ˜O(1 /N ). We do not define R1(n) and R1(n∗) explicitly here as this would involve significant technical detail. However, we show in the Appendix that R1(n)
+
+is equivalent to the variance of bμWS-UCB , while R1(n∗) corresponds to Σ1(G)/N . This identification allows us to directly leverage this bound from Section A.5 of Aznag et al. (2023). We then calculate how large N must be in order for this quotient to be bounded from above by some constant (though this threshold is quite large, as it is inversely proportional to σmin ), and we get a bound on the variance of bμ1 for sufficiently large N . For all other N , we use the fact that a minimum fraction of the label budget is allocated to each group and obtain a similar high probability bound using classical Hoeffding arguments. This is why τ and the WarmStart step are important, as they safeguard the Variance-UCB procedure by ensuring that part of the label budget is allocated to StRS (every group gets a minimum number of samples), and this allows for nice convergence guarantees even when the proper rate of Aznag et al. (2023) does not hold. This allows us to obtain an analogous rate for label budgets that do not meet the threshold, thereby eliminating the counterintuitive dependence on 
+
+σmin that is typical in the active learning literature (Aznag et al., 2023; Carpentier et al., 2015). This ensures that our rate holds uniformly over all label budgets and constitutes a proper non-asymptotic, high-probability bound. 5We note in the Appendix that when the dependence on the constants τ and G is made explicit, the rate is |bμWS-UCB − E[Y ]|2 = ˜O
+
+ G·Σ1(G) 
+
+> N·τ
+
+
+
+; however, we follow Aznag et al. (2023) in treating G as a constant, and do the same for τ . As we allude to above and show in the Appendix, the dependence on τ vanishes for large N relative to σmin , and for all other N , the rate still holds with slightly larger constants (including a constant factor of τ −1). We also discuss in the Appendix the special cases when τ ∈ { 0, 1}.While Aznag et al. (2023) established a rate of ˜O(N −2) for the task of multi-group mean estimation (which can be extended to the task of population mean estimation) for a particular regret definition, the upper bound for WarmStart-UCB both (1) explicitly accounts for the signal of Y in X through Σ1(G),and (2) exhibits tighter dependence on the number of groups, G, and eliminates the dependence on the smallest conditional variance of Y across all subgroups, σmin . The latter result in particular addresses an open problem in the active learning literature on mean estimation by demonstrating that not all active learning mean estimation frameworks result in the counterintuitive inverse dependence on σmin (see, e.g. , Aznag et al. (2023); Carpentier et al. (2015); Ganti and Gray (2013)). While these improvements to the rate of convergence come at the cost of slower dependence on the label budget 
+
+N (from N −2 to N −1), this is expected as the ˜O(N −2) of Aznag et al. (2023) is for a different definition of regret than the one we are interested in here, (bμ − μ)2.The following provides a matching lower bound. 
+
+Theorem 2 (Lower Bound for WarmStart-UCB) . Let X ∼ Unif [0 , 1] and Y = 1{X ≥ t} for some 
+
+t ∈ [0 , 1] . Assume that a ρ≤-fraction of labels of Y is flipped at random over X ≤ t, and analogously with ρ> for X > t and that ρ≤, ρ > < 1/4. The stratification scheme G partitions the covariate space at the true threshold (i.e., groups X < t and X ≥ t). Then, 
+
+|bμ′ − E[Y ]|2 ≥ c1
+
+Σ1(G)
+
+N
+
+for some constant c1 > 0 and all estimators bμ′ of E[Y ] in this setup. 
+
+Since this lower bound matches the upper bound of Theorem 1, we have that the rate of Theorem 1 is minimax optimal in this classical setting. This lower bound is based on the classical threshold example where the stratification scheme is such that the strata are chosen according to the decision boundary, and represents a favorable case where X is highly predictive of Y and the analyst has knowledge of how to group observations to reduce within-stratum variance—exactly the kind of setting any analyst would hope to operate in. The main point to note about this lower bound is that when the stratification scheme is well-chosen, the dependence in N is still on the order of 1/N . This will be important in the discussion of the lower bound for the main PartiBandits algorithm (Theorem 4). 
+
+4.2 PartiBandits 
+
+We now present our main algorithm, PartiBandits (Algorithm 2). 
+
+Algorithm 2 PartiBandits 
+
+Require: hypothesis class C, active learning classification algorithm S, label budget N , confidence level δ, buffer fraction τ . 
+
+> 1:
+
+Stage 1: Learn stratification using S 
+
+> 2:
+
+Run S with hypothesis class C, label budget ⌊N/ 2⌋, and confidence level δ to obtain classifier bh 
+
+> 3:
+
+Construct a stratification scheme G by defining Ai = bh−1(i) for all i ∈ Im (bh) and setting 
+
+G = {Ai}i 
+
+> 4:
+
+Stage 2: Apply Stratified Sampling Subroutine (WarmStart-UCB) to estimate means over 
+
+G 
+
+> 5:
+
+Run WarmStart-UCB with label budget N − ⌊ N/ 2⌋, stratification scheme G and buffer fraction τ
+
+Output: bμPB = P 
+
+> g
+
+ˆμg,N .It is essentially a two-stage algorithm. In the first stage, it runs a disagreement-based algorithm, S,that the analyst chooses. S helps identify a partition of the unlabeled data that shrinks the average 6conditional variance of Y . In the second stage, it runs the WarmStart-UCB subroutine on that learned stratification. Examples of S to handle the case when Y is binary ( k = 1 ) include the A2 algorithm of Balcan et al. (2006) and Algorithm 1 of Puchkin and Zhivotovskiy (2022). For the multiclass setting ( k > 1), one may instead use algorithms such as Algorithm 1 of Agarwal (2013) to learn a partition of the unlabeled data reduces the mean conditional variance of Y . In Algorithm 2 we present PartiBandits with a general choice of S, and show in Theorem 3 that it can achieve near-exponential savings whenever Assumption 1 is satisfied given the data-generating process, hypothesis class, and the choice of S. We then illustrate in Corollaries 1-4 how different choices of S can accommodate different data-generating processes (e.g., binary vs. multiclass Y ) and assumptions about the problem setup (such as the hard margin condition or the assumption that the Bayes optimal classifier is in the hypothesis class). The main theorem and its corollaries show that PartiBandits allows efficient mean estimation for multiclass outcomes across a wide range of structural assumptions and problem settings. The following is an upper bound on the performance of Algorithm 2. 
+
+Theorem 3. For any joint distribution of (X, Y ), hypothesis class C, and S such that Assumption 1 holds, we have 
+
+|bμPB − E[Y ]|2 = ˜O
+
+ ν + exp( c · (−N/ log( N ))) 
+
+N
+
+
+
+,
+
+where c > 0 is a constant. 
+
+We note in the Appendix that when the dependence on τ and G is made explicit, the rate is 
+
+|bμPB − E[Y ]|2 = ˜O
+
+
+
+|G| · 
+
+ ν+exp( c·(−N/ log( N )))  
+
+> N·τ
+
+ 
+
+where |G| is the number of strata. Theorem 3 shows that PartiBandits efficiently estimates E[Y ] by learning a stratification scheme G of Y that yields an average within-stratum variance, Σ1(G), that is bounded from above by ν +exp( c·(−N/ log( N ))) .Asymptotically, this rate is faster than—or at least as fast as—the 1/N decay achieved by classical adaptive sampling methods (Félix-Medina, 2003; Thompson, 1991), since our bound decays at the rate of roughly exp( −cN/ log N )/N when ν is small. 
+
+Result Intuition. Disagreement-based active learning algorithms effectively learn a stratification scheme where within-group variance is reduced, since the labels in each stratum (i.e., strata induced by the inverse mapping of the classifier’s prediction function) will tend to concentrate around a single class. Furthermore, they can do this with very few labels. Because active learning algorithms can identify these low-variance strata rapidly, we can then perform an adaptive stratified sampling procedure (Algorithm 1) using the learned stratification to estimate the population mean. Since estimation error depends primarily on the average within-group variance, reducing that variance quickly leads to a correspondingly fast decline in estimation error. We discuss in Corollary 4 how PartiBandits can further decompose relatively homogenous strata into sub-strata with higher and lower conditional variances, which allows the algorithm to allocate more samples to more heterogeneous sub-strata, yielding even better estimates of the population mean. 
+
+Proof Sketch. If Assumption 1 is satisfied, then there is an active learning algorithm, S, such that when S is used in Step 2 of PartiBandits, we obtain a classifier, bh, whose excess risk decays at an exponential rate, E[( bh(X) − Y )2] − ν ≲ exp( c · (−N/ log N )) for some constant c > 0. We can then show that the variance of the mean estimate, bμPB , is bounded from above by E[( bh(X) − Y )2]. In particular, we first use the law of total expectation to show that E[( bh(X)−Y )2] = P 
+
+> j∈J
+
+E[( j −Y )2 |
+
+bh(X) = j] Pr( bh(X) = j), where J is the image of bh. Then we use the Bias-Variance decomposition to show that the latter quantity is equal to P 
+
+> j∈J
+
+(Var (Y | bh = j) + ( j − E[Y | bh = j]) 2) Pr( bh = j).Then it easily follows that this quantity is an upper bound on the average within-group variance of Y
+
+using the stratification induced by bh, and therefore an upper bound on the variance (and therefore the estimation error) of bμPB .The constant c depends on C’s VC-dimension and disagreement coefficient (Hanneke, 2011). Part-iBandits yields better mean estimates with smaller label budgets if C is well constructed and relatively small (as is the case when the analyst has good prior knowledge about possible ways in which X may be related to Y ), since less of the label budget is needed to eliminate incorrect hypotheses. It is typical for disagreement-based active learning algorithms to exhibit this dependence on the hypothesis class 
+
+C (Puchkin and Zhivotovskiy, 2022; Hanneke and Yang, 2014). 7With different choices of S, we can obtain the following corollaries that allow for different assump-tions and problem setups regarding the joint distribution of (X, Y ) and the hypothesis class C. All proofs may be found in the Appendix. 
+
+Corollary 1 (Classical Binary case with low noise) . Suppose Y is binary, and the joint distribution of 
+
+(X, Y ) and hypothesis class C are such that there exists μ < ∞ such that for all ε > 0, diam( ε; C) ≤
+
+με , where diam( ε; C) is the diameter of the ε-minimal set of C (this is the “hard margin” condition. For further details, see Section 2 and Theorem 4 of Hanneke (2011)). If we set S to be the A2
+
+algorithm of Balcan et al. (2006), then, given a label budget of N and δ ∈ (0 , 1/2) , we have with probability at least 1 − δ that |bμPB − E[Y ]|2 = ˜O
+
+ ν+exp( c·(−N/ log N )) 
+
+> N
+
+
+
+.
+
+Corollary 2 (Binary, weaker structural conditions on C). Assume Y ∈ { 0, 1} and that the joint distribution of (X, Y ) and hypothesis class C are such that Massart’s noise condition is satisfied (Assumption 4 in Puchkin and Zhivotovskiy (2022)), without requiring that C contain the Bayes optimal classifier. Suppose further that the joint distribution and hypothesis class are such that the star number s and the (combinatorial) diameter of C are finite (see Section 2 and Theorem 4.1 of Puchkin and Zhivotovskiy (2022)). If we set S to be Algorithm 4.2 of Puchkin and Zhivotovskiy (2022), then, given a label budget of N and δ ∈ (0 , 1/2) , we have with probability at least 1 − δ that 
+
+|bμPB − E[Y ]|2 = ˜O
+
+ ν+exp( c·(−N/ log N )) 
+
+> N
+
+
+
+.
+
+Corollary 3 (Multiclass) . Suppose Y is k-class ( k > 2) and that the joint distribution of (X, Y ) and hypothesis class C satisfy Assumptions 1–3 and the multiclass Tsybakov noise condition (Assumption 4) of Agarwal (2013). If we set S to be Algorithm 1 of Agarwal (2013), then, given a label budget of N and δ ∈ (0 , 1/e ), we have with probability at least 1 − δ that |bμPB − E[Y ]|2 =˜O
+
+ ν+exp( c·(−N/ log N )) 
+
+> N
+
+
+
+.
+
+Corollary 3 effectively allows PartiBandits to also handle real-valued outcomes (ex: Y ∼ Unif [0 , 1] )if the analyst first discretizes Y into bins, effectively turning the problem setup into that of Corollary 3. Up to this point, we have focused on active learning algorithms S that guarantee exponential savings by grouping together instances that are likely to have similar labels. However, we may also consider S
+
+that not only identify homogeneous regions but also heterogeneous regions. Such S would be helpful for identifying strata for a distribution where labels are assigned by a simple threshold rule that outputs 0 if x ≤ 1/2 and 1 otherwise, except that in the regions x ∈ (1 /4, 1/2] and x ∈ (1 /2, 3/4] 
+
+the label is flipped with probability 0.1. The optimal stratification scheme here splits the domain into four intervals [0 , 1/4] , (1 /4, 1/2] , (1 /2, 3/4] , (3 /4, 1] , and allocate more of the Stage-2 samples to the middle two strata where the labels are noisier. In Corollary 4 below, we introduce an example of an S that helps identify such a scheme. The proof is in the Appendix. 
+
+Corollary 4 (Heterogeneity-Aware S). Assume the setup of Corollary 2. Define S in the following way: 
+
+Algorithm 3 Heterogeneity-Aware Active Learning Algorithm 
+
+Require: hypothesis class C, label budget N , confidence level δ. 
+
+> 1:
+
+Run Algorithm 4.2 of Puchkin and Zhivotovskiy (2022) with a given label budget N ′ and hypothesis class C to obtain a classifier, bh 
+
+> 2:
+
+Let X∗ denote the abstention region obtained in Step 2 of Algorithm 4.2 of Puchkin and Zhivo-tovskiy (2022).  
+
+> 3:
+
+Define bh∗(x) = bh(x) + ε(N ) if x ∈ X ∗, and bh∗(x) = bh(x) otherwise. ε(N ) is an arbitrarily small number relative to N (we may choose ε(N ) = exp( −N/ log N )). 
+
+Output: bh∗(x)
+
+Then we have that given a label budget of N and δ ∈ (0 , 1/2) , we have with probability at least 1 − δ,
+
+|bμPB − E[Y ]|2 = ˜O
+
+ ν+exp( c·(−N/ log N )) 
+
+> N
+
+
+
+.
+
+What this S does is capture heterogeneity via the abstention region X∗ produced within Algorithm 4.2 of Puchkin and Zhivotovskiy (2022): the region where labels are more likely to be ambiguous. It 8converts the final classifier bh returned by Algorithm 4.2 of Puchkin and Zhivotovskiy (2022) into a new classifier bh∗ that takes values in {0, ε, 1, 1 + ε}, splitting the space into four strata that isolate both homogeneous and heterogeneous regions. The result is intuitive because the difference between 
+
+bh from Corollary 2 and bh∗ is small, so Assumption 1 is satisfied for ch∗ if it is satisfied for that bh.The following yields a matching lower bound. 
+
+Theorem 4 (Lower Bound for PartiBandits) . Consider the data-generating process where X ∼
+
+Unif [0 , 1] and Y = 1{X ≥ t} for some t ∈ [0 , 1] , with a ρ≤- and ρ>- fraction of labels Y flipped at random over X ≤ t and X > t , respectively, and ρ≤, ρ > ≤ 1/4. Let C = {1 {(·) ≥ t} : t ∈ [0 , 1] }.Then we have that for sufficiently large N ,
+
+|bμ − E[Y ]|2 ≥ c2
+
+ν + exp( c · (−N/ log( N ))) 
+
+N
+
+for constants c, c 2 > 0 and all estimators bμ of E[Y ] in this setup. 
+
+Since this lower bound matches the upper bound in Theorem 3, we have that the rate of Theorem 3 is minimax optimal for this classical setting. This lower bound is based on a simple threshold setup with segmented label noise. As we will show in Section 5, this setup reflects a common situation where a subset of the unlabeled data is highly predictive of Y . The proof of Theorem 4 starts by noting that the minimimum of Σ1(G) among all possible stratification schemes, G, is precisely ν because of the way Y is generated. We can then use the lower bounds in Hanneke and Yang (2014) and Hanneke (2011) to show that the exponential decay of the excess risk is the optimal rate in this setup, so no algorithm can cause Σ1(G) to converge to its optimal value faster than this exponential rate. 
+
+# 5 Empirical Illustration 
+
+We empirically evaluate the performance of our main algorithm, PartiBandits, and comparing it to SRS. We also test the WarmStart-UCB subroutine on the analogous mean estimation task when 
+
+X can be stratified according to some stratification scheme a priori . In most settings, SRS and stratified random sampling (StRS) are the standard approaches—and often the only realistic choices available—since the effectiveness of more sophisticated methods is highly domain- and application-specific. In practice, whether alternative sampling algorithms outperform SRS or StRS depends crucially on the relationship between observed covariates and the outcome of interest, which may not always be known or exploitable. That said, we present comparisons to other baselines, as well as analyses with other data generating processes, in the Appendix. We use Monte Carlo simulations and simulations involving nationwide electronic health records, with further details in the Appendix. 
+
+5.1 Simulations for Theorems 1 and 3 
+
+The error of the PartiBandits mean estimate is ˜O
+
+ ν+exp( c·(−N/ log( N ))) 
+
+> N
+
+
+
+, as shown in Theorem 3. Hence the critical parameter that affects this rate is ν, which is closely related to X’s relationship with 
+
+Y . The left panel of Figure 1 shows how PartiBandits performs as the strength of the relationship between X and Y varies. We see that generally, PartiBandits eventually outperforms SRS with relatively fewer samples, and this performance gap increases as the relationship between X and Y
+
+strengthens. We set S = A2 for our runs of PartiBandits. The right panel shows the performance of the WarmStart-UCB subroutine, which estimates the mean of Y when X can be stratified in advance according to some stratification scheme G. We see that WarmStart-UCB consistently outperforms SRS when the stratification scheme closely aligns with the underlying decision boundary, effectively grouping observations with similar values of Y . We do not compare PartiBandits to A2. A2 is an active learning algorithm for classification, not mean estimation, so comparing its output directly to mean estimates from PartiBandits or SRS might not be meaningful, and attempting to do so can yield biased results Dong et al. (2025). 
+
+5.2 Simulations for Theorem 3 Using Health Records Data 
+
+To illustrate the gains of PartiBandits in a real-world setting, we leverage access to the American Family Cohort (AFC) dataset, which contains patient-level data from over 1,000 practices participating 9in the American Board of Family Medicines PRIME Registry. AFC contains fine-grained longitudinal records of patient race and clinical diagnoses. Our outcome of interest is a binary random variable, Y = HB , where H indicates the presence of hypertension and B is an indicator for whether the patient is Black. The estimand is E[Y ], which corresponds to the fraction of patients who (1) are Black and (2) have hypertension. X is the probability that an individual is Black based on their zip code, Z, which is available in the data. This setup reflects a common scenario in which researchers are studying demographic prevalences but lack access to direct demographic labels (Andrus et al., 2021; U.S. E.O., 2021), which motivates the use of proxy information like geolocation to guide sampling decisions. Though X is defined as a probability mapping, it can also be viewed as an upper bound on the probability that Y = 1 for an individual from a certain zip code since Pr( HB = 1 | Z) ≤ (Pr( H = 1 |Z) ∧ Pr( B = 1 | Z)) , and therefore also a bound on the variance of Y . If H is known but B is not (analogous to the problem setting of Elzayn et al. (2025)), we can obtain even more sampling efficiency gains by forcibly setting X = 0 
+
+for all H = 0 , since the variance of Y is 0 for all such H. As a result, PartiBandits will not request labels B from individuals such that H = 0 . We compare the PartiBandits and SRS estimates of E[Y ]
+
+under different label budgets. Because obtaining diagnosis and race data is often costly, this setting is such that labels are expensive, making it well suited to illustrate the benefits of using PartiBandits. We focus on individuals whose derived probabilities of being Black, X, fall in the top and bottom 5th percentiles of the distribution. Although we restrict to these tails, this experimental setup does not simplify the problem. We are interested in the interaction variable HB rather than a single class label, which makes identifying any separation more difficult. Even when B = 1 , not all such individuals have hypertension, so HB is not always 1 and can even be 0 more often than when B = 0 .Since, AFC data are not IID draws from the general population, the upper tail may, for example, include individuals from predominantly Black but affluent neighborhoods who are less likely to have hypertension. Thus, HB may even be 0 more often than for those classified as B = 0 , so the class separation is not immediate. This setup reflects the reality of many datasets that are not IID samples from the general population. Our focus on the tails also shows that X does not need to be highly predictive of Y across the entire population. We show that the mean within these tails where X is highly predictive can be estimated accurately with much fewer labels than SRS requires, freeing up the remainder of the label budget for regions where X is less informative of Y . This experimental setup thus illustrates how PartiBandits still offers a way of efficiently estimating the population mean. To run this simulation, we draw, for each label budget, 500 random subsets of 10,000 patients each from the full AFC dataset of 6 million patients. Within each subset, we restrict attention to individuals whose geocoding-derived probabilities of being Black, X, fall in the top or bottom 5th percentile, and estimate the mean of Y for this subpopulation using both PartiBandits and SRS. We compute the 90th percentile of the resulting estimation errors to obtain a high-probability bound for each method. Our choice of S is the classical A2 algorithm of Balcan et al. (2006) (thus putting us in the regime of Corollary 1). Figure 2 shows the results and confirms that PartiBandits eventually outperforms SRS with relatively fewer samples. For smaller label budgets, SRS fares better but only by a universal constant factor.  
+
+> Figure 2: Comparison of estimation error for different label budgets using the AFC data.
+
+10 References 
+
+Agarwal, A. (2013). Selective sampling algorithms for cost-sensitive multiclass prediction. In 
+
+Proceedings of the 30th International Conference on Machine Learning , pages 1220–1228. PMLR. ISSN: 1938-7228. Andrus, M., Spitzer, E., Brown, J., and Xiang, A. (2021). “What We Can’t Measure, We Can’t Under-stand”: Challenges to Demographic Data Procurement in the Pursuit of Fairness. arXiv:2011.02282 [cs]. Aznag, A., Cummings, R., and Elmachtoub, A. N. (2023). An active learning framework for multi-group mean estimation. Advances in Neural Information Processing Systems , 36:32602–32635. Balcan, M.-F., Beygelzimer, A., and Langford, J. (2006). Agnostic active learning. In Proceedings of the 23rd international conference on Machine learning , ICML ’06, pages 65–72, New York, NY, USA. Association for Computing Machinery. Bosch, V., , and Wildner, R. (2003). Optimum Allocation of Stratified Random Samples Designed for Multiple Mean Estimates and Multiple Observed Variables. Communications in Statistics - Theory and Methods , 32(10):1897–1909. Publisher: Taylor & Francis _eprint: https://doi.org/10.1081/STA-120023258. Burnashev, M. and Zigangirov, K. (1974). An Interval Estimation Problem for Controlled Observa-tions. Probl. Peredachi Inf. , 10(3):51–61. Carpentier, A., Lazaric, A., Ghavamzadeh, M., Munos, R., Auer, P., and Antos, A. (2015). Upper-Confidence-Bound Algorithms for Active Learning in Multi-Armed Bandits. arXiv:1507.04523 [cs]. Castro, R. M. and Nowak, R. D. (2008). Minimax Bounds for Active Learning. IEEE Transactions on Information Theory , 54(5):2339–2353. Cohn, D., Atlas, L., and Ladner, R. (1994). Improving generalization with active learning. Machine Learning , 15(2):201–221. Dong, E., Schein, A., Wang, Y., and Garg, N. (2025). Addressing discretization-induced bias in demographic prediction. PNAS Nexus , 4(2):pgaf027. Elzayn, H., Smith, E., Hertz, T., Guage, C., Ramesh, A., Fisher, R., Ho, D. E., and Goldin, J. (2025). Measuring and Mitigating Racial Disparities in Tax Audits*. The Quarterly Journal of Economics ,140(1):113–163. Félix-Medina, M. H. (2003). Asymptotics in adaptive cluster sampling. Environmental and Ecological Statistics , 10(1):61–82. Ganti, R. and Gray, A. G. (2013). Building Bridges: Viewing Active Learning from the Multi-Armed Bandit Lens. arXiv:1309.6830 [cs]. Hanneke, S. (2011). Rates of Convergence in Active Learning. The Annals of Statistics , 39(1):333– 361. Publisher: Institute of Mathematical Statistics. Hanneke, S. and Yang, L. (2010). Negative Results for Active Learning with Convex Losses. In 
+
+Proceedings of the Thirteenth International Conference on Artificial Intelligence and Statistics ,pages 321–325. JMLR Workshop and Conference Proceedings. ISSN: 1938-7228. Hanneke, S. and Yang, L. (2014). Minimax Analysis of Active Learning. arXiv:1410.0996 [cs]. Henderson, P., Chugg, B., Anderson, B., and Ho, D. E. (2022). Beyond Ads: Sequential Decision-Making Algorithms in Law and Public Policy. In Proceedings of the 2022 Symposium on Computer Science and Law , pages 87–100, Washington DC USA. ACM. Jo, N., , Andrea, V., , Derek, O., , and Ho, D. E. (2025). Not (Officially) in My Backyard: Characterizing Informal Accessory Dwelling Units and Informing Housing Policy With Remote Sensing. Journal of the American Planning Association , 91(1):30–45. Publisher: Routledge _eprint: https://doi.org/10.1080/01944363.2024.2345730. 11 Puchkin, N. and Zhivotovskiy, N. (2022). Exponential Savings in Agnostic Active Learning through Abstention. IEEE Transactions on Information Theory , 68(7):4651–4665. arXiv:2102.00451 [cs, math, stat]. Seber, G. A. F. and Mohammad Salehi, M. (2015). Adaptive Sampling. In Wiley StatsRef: Statistics Reference Online , pages 1–11. John Wiley & Sons, Ltd. _eprint: https://onlinelibrary.wiley.com/doi/pdf/10.1002/9781118445112.stat05692.pub2. Shin, J., Ramdas, A., and Rinaldo, A. (2019). Are sample means in multi-armed bandits positively or negatively biased? arXiv:1905.11397 [math]. Thompson, S. K. (1991). Stratified Adaptive Cluster Sampling. Biometrika , 78(2):389–397. Publisher: [Oxford University Press, Biometrika Trust]. U.S. E.O., . (2021). Advancing Racial Equity and Support for Underserved Communities Through the Federal Government. 12 Appendix 
+
+5.3 Proofs 
+
+Before proving Theorem 1, we need a few auxiliary lemmas. 
+
+Lemma 1. Let δ ∈ (0 , 1) and 
+
+R1(nN ) = R1(n) := σ2
+
+> g
+
+ng,N 
+
+!Gg=1 ℓ1
+
+,
+
+where nN = n = ( n1,N , . . . , n G,N ). Then we have that with probability at least 1 − δ,
+
+|bμWS-UCB − μ|2 ≤ C
+
+
+
+R1(nN ) log 2
+
+δ
+
+
+
+for some absolute constant C > 0.Proof. We begin by recalling that for any policy we have: 
+
+bμg,N = 1
+
+ng,N 
+
+X
+
+> t:Xt∈Ag
+
+Yt · Pg ,
+
+and 
+
+bμWS-UCB = X
+
+> g
+
+ˆμg,N .
+
+Since bμWS-UCB is an unbiased estimator for μ and Var (bμg,N ) = 1
+
+> n2
+> g,N
+
+P 
+
+> t:Xt∈Ag
+
+Var (YtPg ) = σ2 
+
+> g
+> ng,N
+
+,we have: 
+
+Pr ( |bμWS-UCB − μ| ≥ s) = Pr X
+
+> g
+
+(ˆ μg,N − E[ˆ μg,N ]) ≥ s
+
+!
+
+(Linearity) 
+
+≤ 2 exp 
+
+− s2
+
+2 Pgi=1 
+
+> σ2
+> g
+> ng,N
+
+ . (Hoeffding) Through the classical exercise of setting the left-hand-side to δ and writing s in terms of δ, we have: 
+
+s2 = 2 
+
+> G
+
+X
+
+> g=1
+
+σ2
+
+> g
+
+ng,N 
+
+| {z } 
+
+> R1(nN)
+
+log 2
+
+δ . (1) The next Lemma is simple but is important for linking the results of Aznag et al. (2023) to our work here. 
+
+Lemma 2. Let 
+
+R1(n∗) := 
+
+P 
+
+> g∈[G]
+
+σg
+
+2
+
+N .
+
+13 Then, 
+
+R1(n∗) ≤ G Σ1(G)
+
+N ,
+
+where Σ1(G) is the expected conditional variance of Y given the stratification G:
+
+Σ1(G) = X
+
+> g∈[G]
+
+σ′2 
+
+> g
+
+Pg .
+
+Proof. This follows immediately from the fact that σ2 
+
+> g
+
+= P 2 
+
+> g
+
+· σ′2 
+
+> g
+
+and Pg ∈ (0 , 1) for all g ∈ [G]
+
+and from the norm equivalence property of ℓ1 and ℓ2 norms on Rd.
+
+Proof of Theorem 1. We have the following directly from Section A.5 of Aznag et al. (2023): 
+
+R1(n) − R1(n∗)
+
+R1(n∗) ≤ G∥n − n∗∥2
+
+> ∞
+
+N min g n∗
+
+> g,N
+
++ 7(3) 2Σ21
+
+σ2min 
+
+max 
+
+> g
+
+ n∗
+
+> g,N
+
+ng,N 
+
+6 ∥n − n∗∥3
+
+> ∞
+
+N 3 ,
+
+where: • σmin = min g∈[G] σg ,• Σ1 = P 
+
+> g∈[G]
+
+σg ,• n∗ 
+
+> g,N
+
+= σg 
+
+> Σ1
+
+N ,• and n∗ =  n∗ 
+
+> 1,N
+
+, . . . , n ∗
+
+> G,N
+
+.This simplifies to: 
+
+R1(n) − R1(n∗)
+
+R1(n∗) ≤ G∥n − n∗∥2
+
+> ∞
+
+N min g n∗
+
+> g,N
+
+| {z }
+
+> (I)
+
++ 63Σ 21
+
+σ2min 
+
+max 
+
+> g
+
+ n∗
+
+> g,N
+
+ng,N 
+
+6 ∥n − n∗∥3
+
+> ∞
+
+N 3
+
+| {z }
+
+> (II )
+
+. (2) By Lemmas 1 and 2, it is sufficient to show that for sufficiently large N , the right hand side of Equation 2 is upper bounded by some constant. We first show that term (I) is upper bounded by a constant and then we show that the same goes for term (II ). For all N that are not sufficiently large, we will perform a classical Hoeffding analysis. • Bounding Term (I). We have that 
+
+∥n − n∗∥∞ ≤ 3G + 2GC N
+
+Σ1
+
+qmin  
+
+> h
+
+n∗ 
+
+> h,N
+
+(3) by Equation 23 of Aznag et al. (2023), and 
+
+min  
+
+> h
+
+n∗ 
+
+> h,N
+
+= σmin 
+
+Σ1
+
+N
+
+by the analysis in Lemma 1 of Aznag et al. (2023). What we want to do first is combine the summation on the right hand side of 3 into one term. As long as 
+
+N ≥ 2Σ 1
+
+r Σ1
+
+σmin 
+
+!2
+
+| {z }
+
+> C1(Σ ,σ 1)
+
+, (Condition 1) 14 then: 
+
+qmin  
+
+> h
+
+n∗ 
+
+> h,N
+
+=
+
+r σmin 
+
+Σ1
+
+N
+
+≥ 2Σ 1, (by Condition 1) which implies that: 
+
+2GC N
+
+Σ1
+
+qmin  
+
+> h
+
+n∗ 
+
+> h,N
+
+≥ 4G ≥ 3G, (CN ≥ 1 by construction) and so we can write: 
+
+∥n − n∗∥∞ ≤ 8GC N
+
+Σ1
+
+qmin  
+
+> h
+
+n∗ 
+
+> h,N
+
+.
+
+Thus, if we assume Condition 1 and 
+
+N ≥ 64 G3C2
+
+> N
+
+Σ21
+
+| {z }
+
+> C2(G, Σ1,σ min )
+
+, (Condition 2) then we have that 
+
+G∥n − n∗∥2
+
+> ∞
+
+N min g n∗
+
+> g,N
+
+| {z }
+
+> (I)
+
+≤
+
+G
+
+ 8GC N
+
+> Σ1
+
+pmin h n∗
+
+> h,N
+
+2
+
+N · min g n∗
+
+> g,N
+
+=
+
+G ·
+
+ 64 G2C2
+
+> N
+> Σ21
+
+· min h n∗
+
+> h,N
+
+
+
+N · min g n∗
+
+> g,N
+
+= 64 G3C2
+
+> N
+
+Σ21N
+
+≤ 1.
+
+• Bounding Term (II). We rewrite this term as the product of two terms, 
+
+ 63Σ 21 
+
+> σ2min
+> ∥n−n∗∥3
+> ∞
+> N3
+
+
+
+·
+
+
+
+max g
+
+ n∗
+
+> g,N
+> ng,N
+
+6
+
+, and focus on each term in the product separately. We first consider the term 63Σ 21  
+
+> σ2min
+> ∥n−n∗∥3
+> ∞
+> N3
+
+. We observe that if we assume Condition 1 and 
+
+N ≥ 200 2 · G3C3
+
+> N
+
+Σ11 /21 σ1/2min 
+
+!2/3
+
+| {z }
+
+> C3(G, Σ1,σ min )
+
+, (Condition 3) then 15 N 3 ≥ 200 2 · G3C3
+
+> N
+
+Σ11 /21 σ1/2min 
+
+· N 3/2 (by Condition 3) 
+
+≥ 32256 · G3C3
+
+> N
+
+Σ11 /21 σ1/2min 
+
+· N 3/2
+
+= 63 · 512 · G3C3
+
+> N
+
+Σ11 /21 σ1/2min 
+
+· N 3/2
+
+= 63Σ 21
+
+σ2min 
+
+· 512 G3C3
+
+> N
+
+Σ31
+
+ σmin 
+
+Σ1
+
+N
+
+3/2
+
+= 63Σ 21
+
+σ2min 
+
+·
+
+ 8GC N
+
+Σ1
+
+r σmin 
+
+Σ1
+
+N
+
+3
+
+≥ 63Σ 21
+
+σ2min 
+
+· ∥ n − n∗∥3
+
+> ∞
+
+, (by Condition 1) which implies 
+
+63Σ 21
+
+σ2min 
+
+∥n − n∗∥3
+
+> ∞
+
+N 3 ≤ 1.
+
+Next, we consider the term max g
+
+ n∗
+
+> g,N
+> ng,N
+
+6
+
+. We have by the proof of Theorem 1 in Aznag et al. (2023) that if N is sufficiently large such that ∥n−n∗∥∞ 
+
+> min hn∗
+> h,N
+
+≤ 1, then 
+
+max 
+
+> g
+
+n∗
+
+> g,N
+
+ng,N 
+
+≤ 11 − ∥n−n∗∥∞ 
+
+> min hn∗
+> h,N
+
+.
+
+Hence, we have that as long as Condition 1 is satisfied and 
+
+N ≥ (16 GC N )2
+
+Σ1σmin 
+
+| {z }
+
+> C4(G, Σ1,σ min )
+
+, (Condition 4) then, dividing both sides of that inequality by 2√N , we have 
+
+12 ≥ 8GC N
+
+√Σ1σmin N
+
+=
+
+> 8GC N
+> Σ1
+
+q σmin  
+
+> Σ1
+
+N 
+
+> σmin
+> Σ1
+
+N
+
+= ∥n − n∗∥∞
+
+min h n∗
+
+> h,N
+
+,
+
+and therefore we have: 
+
+max 
+
+> g
+
+ n∗
+
+> g,N
+
+ng,N 
+
+6
+
+≤
+
+ 11 − 1/2
+
+6
+
+≤ 64 .
+
+This gives us that: 16 63Σ 21
+
+σ2min 
+
+max 
+
+> g
+
+ n∗
+
+> g,N
+
+ng,N 
+
+6 ∥n − n∗∥3
+
+> ∞
+
+N 3 ≤ 1 · 64 
+
+if Conditions 1, 3, and 4 hold. Hence, if we let: 
+
+C(G, Σ1, σ min ) := max {C1(Σ 1, σ min ), C 2(G, Σ1, σ min ), C 3(G, Σ1, σ min ), C 4(G, Σ1, σ min )}
+
+then we have that as long as N ≥ C(G, Σ1, σ min ), then 
+
+R1(n) − R1(n∗)
+
+R1(n∗) ≤ 1 + 64 
+
+≤ 65 ,
+
+which means that 
+
+R1(n) ≤ C′ · R1(n∗)
+
+for some absolute constant C′ > 0, and so: 
+
+(bμWS-UCB − μ)2 ≤ C′
+
+
+
+R1(nN ) log 2
+
+δ
+
+
+
+≤ C′ · R1(n∗) · log 2
+
+δ
+
+≤
+
+
+
+C′ log 2
+
+δ
+
+
+
+G Σ1(G)
+
+N . (Lemma 2) Now for the analysis when N < C (G, Σ1, σ min ). By construction of Algorithm 1, we have that for all g ∈ [G]:
+
+ng,N ≥ τG N. 
+
+So by 1 we have: 
+
+(bμWS-UCB − μ)2 ≤ 2
+
+> G
+
+X
+
+> g=1
+
+σ2
+
+> g
+
+ng,N 
+
+· log 2
+
+δ (4) 
+
+≤ C · Gτ
+
+> G
+
+X
+
+> g=1
+
+σ2
+
+> g
+
+N · log 2
+
+δ (5) 
+
+≤
+
+
+
+C · Gτ log 2
+
+δ
+
+ Σ1(G)
+
+N . (6) We follow Aznag et al. (2023) in treating G as a constant, and do the same with τ to obtain: 
+
+(bμWS-UCB − μ)2 = ˜O
+
+ Σ1(G)
+
+N
+
+
+
+.
+
+17 Remark 1 (Dependence on τ and G.) . We note that by 6, when the dependence on the constants τ
+
+and G is made explicit, the rate is 
+
+|bμWS-UCB − E[Y ]|2 = ˜O
+
+ G · Σ1(G)
+
+N · τ
+
+
+
+.
+
+We discuss the dependencies on τ and G further below. Proof of Theorem 2. The proof follows from the fact that the Neyman allocation corresponding to this G yields the smallest value of Σ1(G′) over all possible stratification schemes G′ and classical results about the estimation of the mean of IID Bernoulli random variables (ex: Lemma 1 from Hanneke and Yang (2010)). The idea is that first, Σ1(G) minimizes Σ1(G′) among all possible stratification schemes G′ (precisely because G aligns with the way the data are generated) and the fastest possible rate for estimating the conditional mean of Y on each stratum of G is simply the conditional variance divided by the number of labels requested on that stratum (ex: Lemma 1 from Hanneke and Yang (2010)). Combining the results yields the bound. 
+
+Proof of Theorem 3. The proof essentially amounts to showing that the value of Σ1(G) produced by Algorithm 2 is bounded from above by ν + exp( c · (−N/ log( N ))) . To do this, we first show that: 
+
+E[( bh(X) − Y )2] ≥ C · Σ1(G).
+
+We first use the law of total expectation to obtain that: 
+
+E[( bh(X) − Y )2] = X
+
+> j∈J
+
+E[( j − Y )2 | bh(X) = j] Pr( bh(X) = j) (7) where J is the image of bh. We will now proceed with a bias-variance decomposition. We have that for all j ∈ J,
+
+E(bh(X) − Y )2 | bh(X) = j = E(j − Y )2 | bh(X) = j.
+
+Define 
+
+μj := E[Y | bh(X) = j].
+
+Then we have that 
+
+E[( j − Y )2 | bh(X) = j] = E[( j − μj + μj − Y )2 | bh(X) = j].
+
+Expanding using the identity 
+
+(a − c + c − b)2 = ( a − c)2 + ( c − b)2 + 2( a − c)( c − b),
+
+we get: 
+
+E[( j − μj + μj − Y )2 | bh(X) = j] = ( j − μj )2 + E[( μj − Y )2 | bh(X) = j]+ 2( j − μj ) · E[( μj − Y ) | bh(X) = j].
+
+Note that the last term, 2( j − μj ) · E[( μj − Y ) | bh(X) = j], is 0 by linearity of expectation and the definition of μj .So ultimately we have that: 
+
+E(bh(X) − Y )2 | bh(X) = j = ( j − μj )2 + E[( μj − Y )2 | bh(X) = j].
+
+18 Now using 7 we can rewrite: 
+
+E[( bh(X) − Y )2] = X
+
+> j∈J
+
+h
+
+(j − μj )2 + E[( μj − Y )2 | bh(X) = j]
+
+i
+
+· Pr( bh(X) = j). (8) If we let σ′2 
+
+> j
+
+= Var (Y | Aj ) for each j ∈ J, then by definition of μj we have that: 
+
+E[( bh(X) − Y )2] ≥ X
+
+> j∈J
+
+σ′2 
+
+> j
+
+Pr( bh(X) = j)= Σ 1(G).
+
+Now by Assumption 1, we have that: 
+
+E[( bh(X) − Y )2] ≤ ν + exp( c · (−N/ log( N ))) ,
+
+so we have that: 
+
+Σ1(G) ≤ ν + exp( c · (−N/ log( N ))) 
+
+for some constant c > 0. Applying Theorem 1 with our choice of G and the remaining label budget of N/ 2 we obtain that: 
+
+(bμPB − E[Y ]) 2 = ˜O
+
+ ν + exp( c · (−N/ log( N ))) 
+
+N
+
+
+
+.
+
+Remark 2 (More on the Dependence on τ and G (| G| )) . We note that by Remark 1, it is straightforward to show that when the dependence on τ and G is made explicit, the rate is 
+
+|bμPB − E[Y ]|2 = ˜O
+
+
+
+|G| · 
+
+ ν+exp( c·(−N/ log( N )))  
+
+> N·τ
+
+ 
+
+where |G| is the number of strata. 
+
+Remark 3 (Different Loss Functions) . We note that Theorem 3 still holds if one is interested in an asymmetric misclassification cost, a · 1{h(X) = 0 , Y = 1 } + b · 1{h(X) = 1 , Y = 0 } instead of the ordinary squared loss. We assume here that Y is binary. Proof. To see why we first start by doing an analogous decomposition to 7: 
+
+E
+
+h
+
+a · 1{bh(X) = 0 , Y = 1 } + b · 1{bh(X) = 1 , Y = 0 }
+
+i
+
+= E
+
+h
+
+b · 1{Y = 0 } | bh(X) = 1 
+
+i
+
+· P (bh(X) = 1) + E
+
+h
+
+a · 1{Y = 1 } | bh(X) = 0 
+
+i
+
+· P (bh(X) = 0) ,
+
+and this is precisely equal to: 
+
+= b·E(bh(X)−Y )2 | bh(X) = 1 ·P (bh(X) = 1)+ a·E(bh(X)−Y )2 | bh(X) = 0 ·P (bh(X) = 0) .
+
+Therefore the rest of the proof for this alternative misclassification cost is analogous to the proof of Theorem 3, just with adjustments for the constants a and b.This result is helpful in a setting where X ∼ Unif [0 , 1] and 
+
+Y ∼
+
+(Bern (0) , X ≤ 0.5,
+
+Bern (0 .25) , X > 0.5.
+
+Here, an alternative loss would be helpful because the typical Bayes optimal classifier based on the squared loss would not distinguish between X ≤ 0.5 and X ≥ 0.5, but the Bayes optimal classifier resulting from an asymmetric misclassification loss would. 19 Proof of Corollary 1. By Theorem 5 of Hanneke (2011), S = A2 learns a classifier with exponential savings in Stage 1 of P ARTI BANDITS . Hence Assumption 1 is satisfied, and Theorem 3 follows. 
+
+Proof of Corollary 2. By Theorem 4.1 of Puchkin and Zhivotovskiy (2022), Algorithm 4.2 of Puchkin and Zhivotovskiy (2022) learns a classifier with exponential savings in Stage 1 of P ARTI BANDITS .Hence Assumption 1 is satisfied, and Theorem 3 follows. 
+
+Proof of Corollary 3. As demonstrated by Corollary 1 of Agarwal (2013), Algorithm 1 of Agarwal (2013) learns a classifier with exponential savings in Stage 1 of P ARTI BANDITS . Hence Assumption 1 is satisfied, and Theorem 3 follows. 
+
+Proof of Corollary 4. We assume without loss of generality that exp 
+
+ −N 
+
+> log( N)
+
+
+
+≤ 1 (the result can be easily adjusted when this assumption does not hold). By Theorem 3, it is sufficient to show that Assumption 1 is satisfied: 
+
+E[( ˆh∗(X) − Y )2] − ν ≲ exp 
+
+
+
+c · −N 
+
+> log( N)
+
+
+
+,
+
+for some constant c > 0. For this, it is sufficient to show that the excess risk of bh and bh∗ differ by at most exp 
+
+
+
+c · −N 
+
+> log( N)
+
+
+
+, since bh already satisfies assumption 1 (Corollary 2). Formally, this means showing that: 
+
+E[( ˆh(X) − Y )2] − E[( ˆh∗(X) − Y )2] ≲ exp 
+
+
+
+c · −N 
+
+> log( N)
+
+
+
+.
+
+We have that: 
+
+E[( ˆh(X) − Y )2] − E[( ˆh∗(X) − Y )2] = E(ˆh(X) − Y )2 − (ˆh∗(X) − Y )2 (linearity) 
+
+= E
+
+hˆh(X)2 − 2ˆh(X)Y + Y 2 − ˆh∗(X)2 + 2 ˆh∗(X)Y − Y 2i
+
+= E
+
+hˆh(X)2 − ˆh∗(X)2 − 2Y  ˆh(X) − ˆh∗(X) : bh̸ = bh∗i
+
+≤ E
+
+hˆh(X)2 − ˆh∗(X)2 : bh̸ = bh∗i
+
++ 2 E
+
+h
+
+Y  ˆh(X) − ˆh∗(X) : bh̸ = bh∗i
+
+.
+
+(triangle inequality) We note that 2 E
+
+h
+
+Y  ˆh(X) − ˆh∗(X) : bh̸ = bh∗
+
+i
+
+≤ c1 exp 
+
+ −N 
+
+> log( N)
+
+
+
+for some c1 ≥ 0 by construc-tion of bh∗. Furthermore, we have using the difference of squares decomposition that: 
+
+E
+
+hˆh(X)2 − ˆh∗(X)2 : bh̸ = bh∗i
+
+= E
+
+h
+
+(ˆh(X) − ˆh∗(X))( ˆh(X) + ˆh∗(X)) : bh̸ = bh∗i
+
+≤ 2E
+
+h
+
+(ˆh(X) − ˆh∗(X)) : bh̸ = bh∗i
+
+,
+
+where the inequality follows from Jensen’s inequality, definition of bh∗, and the assumption that 
+
+exp 
+
+ −N 
+
+> log( N)
+
+
+
+≤ 1. Again by definition of bh∗, we have that 2E
+
+h
+
+(ˆh(X) − ˆh∗(X)) : bh̸ = bh∗
+
+i
+
+≤
+
+c2 exp 
+
+ −N 
+
+> log( N)
+
+
+
+for some c2 > 0. Thus, we have that E
+
+hˆh(X)2 − ˆh∗(X)2 : bh̸ = bh∗
+
+i
+
+≤
+
+c2 exp 
+
+ −N 
+
+> log( N)
+
+
+
+, and therefore that: 
+
+E[( ˆh(X) − Y )2] − E[( ˆh∗(X) − Y )2] ≲ exp 
+
+
+
+c · −N 
+
+> log( N)
+
+
+
+.
+
+20 Proof of Theorem 4. As shown in Theorem 2, the best possible performance achievable by any algorithm is C√N for some constant C > 0 that may depend on other parameters of the problem. So determining the lower bound for any algorithm returns an estimate of μ becomes a task of determining the lower bound of C > 0 for any algorithm. We were able to deduce the lower bound of C in Theorem 2 by restricting to a particular situation (that in which the analyst basically is able to leverage 
+
+X perfectly in a sense). We consider here a more general problem setting where the analyst is limited to estimators bμ that compute weighted aggregates of stratum means over partitions consisting of exactly two strata, S0 and S1, which make up some stratification scheme G. The analyst learns S0
+
+and S1 through some procedure after N/ 2 label requests, and uses the rest of the label budget to estimate the means within each stratum and then aggregating them at the end. This is a best case scenario because this is aligns with the data generation process and helps approximate the optimal value of C > 0 (one only needs to learn the best choice of S0 and S1 to arrive at the optimal C, as shown in Theorem 2). Hence, the lower bound on (bμ − E[Y ]) 2) is simply the lower bound on Σ1(G),so we focus on the latter quantity in this proof. Assume without loss of generality that μ0 = E[Y | X ∈ S0] ≤ 1/2 and μ1 = E[Y | X ∈ S1] ≥ 1/2.There exists a classifier h such that h−1(0) = S0 and h−1(1) = S1. Recall from 8 that we have the following for any h:
+
+E[( h(X) − Y )2] =  (1 − μ1)2 + E[( μ1 − Y )2 | h(X) = 1]  · P (h(X) = 1) +  μ20 + E[( μ0 − Y )2 | h(X) = 0]  · P (h(X) = 0) 
+
+Since μ0 ≤ 1/2 and μ1 ≥ 1/2, we have that (1 − μ1)2 ≤ (1 − μ1)μ1 and μ20 ≤ μ0(1 − μ0). Thus, we have that: 
+
+E[( h(X) − Y )2] ≤  (1 − μ1)μ1 + E[( μ1 − Y )2 | h(X) = 1]  · P (h(X) = 1) +  μ0(1 − μ0) + E[( μ0 − Y )2 | h(X) = 0]  · P (h(X) = 0) 
+
+Since Y is Bernoulli, we have by the corresponding variance formula that: 
+
+E[( h(X) − Y )2] ≤ 2E[( μ1 − Y )2 | h(X) = 1] · P (h(X) = 1) + 2 E[( μ0 − Y )2 | h(X) = 0] · P (h(X) = 0) 
+
+≤ 2Σ 1(G).
+
+What this shows is that if we can lower bound E[( h(X) − Y )2], then we can lower bound Σ1(G). In their discussion of Theorem 4, Hanneke (2011) noted that the rate: 
+
+E[( h(X) − Y )2] − ν ≤ + exp( c · (−N/ log( N ))) 
+
+is minimax optimal in precisely this situation where the strata map on to threshold classifiers ( see also Castro and Nowak (2008); Cohn et al. (1994); Burnashev and Zigangirov (1974)), so we have that there is a D ∈ D such that with probability at least δ,
+
+ED [( h(X) − Y )2] ≥ K (ν + exp( c · (−N/ log( N )))) ,
+
+for some absolute constant K > 0, and therefore that: 
+
+2Σ 1(G) ≥ K (ν + exp( c · (−N/ log( N )))) ,
+
+for (X, Y ) ∼ D.21 Additional Details Regarding Simulations Details Regarding Simulations for Figure 1 
+
+In both simulations, each dataset contains 10,000 unlabeled instances. For each label budget from 80 to 140, we run 500 simulations. For each run, we compute the absolute difference between the mean estimated by the algorithm and the true mean; we then report the 90th percentile of these 500 errors. 
+
+Details Regarding AFC Simulations 
+
+In each simulation, we construct the mapping from ZIP code to the probability of being Black using the 10,000-patient sample drawn for that run. This means that the probability mapping X is re-estimated in every simulation based on the ZIP code–race distribution within the sampled subset. 
+
+Additional Notes Note 1 (Notes about Theorem 1) . When the dependence on the constants τ and G is made explicit, the rate is 
+
+|bμWS-UCB − E[Y ]|2 = ˜O
+
+ G · Σ1(G)
+
+N · τ
+
+
+
+.
+
+Following Aznag et al. (2023), we treat G as a constant, and do the same for τ . As discussed above and shown here, the dependence on τ vanishes for large N relative to σmin , and for all other N , the rate still holds with slightly larger constants (including a linear factor of τ −1). We also discuss the special cases when τ ∈ { 0, 1}.Setting τ = 0 allocates all labels to Variance-UCB, achieving optimal rates when both σmin and the label budget are sufficiently large. For sufficiently large N relative to σmin , τ is no longer relevant to the problem and the ordinary rate holds thanks to the main result of Aznag et al. (2023). However, a positive τ ensures that at least some samples are drawn uniformly from every group, preserving the guarantee of Theorem 1 with only slightly larger constants. For large label budgets, the effect of τ
+
+disappears and the optimal rates of Aznag et al. (2023) apply. Since the rate’s dependence on the label budget remains unchanged (only the constants differ), we present the simplified rate ˜O
+
+ Σ1(G)
+
+> N
+
+
+
+in Theorem 1. When τ is small (close to 0), we rely more heavily on the Variance-UCB adaptive sampling strategy, which is reasonable if the label budget is large and/or σmin is not too small. When τ is large (close to 1), the procedure defaults to simple stratified random sampling, ensuring the stated dependence on the label budget in the theorem but resulting in slightly less optimal constants. In the final bounds, τ
+
+essentially appears as a constant in the denominator, but for sufficiently large label budgets, its effect becomes negligible as the guarantees of the Variance-UCB procedure dominate. The WarmStart in Algorithm 1 serves as a buffer, ensuring that Variance-UCB remains effective when the overall label budget is small and the algorithm might otherwise undersample low-variance groups. As Aznag et al. (2023) discuss, the regret of Variance-UCB can scale inversely with σmin , the smallest group variance. By assigning each group a minimum number of samples, the warmstart helps guarantee the algorithm’s fast-rate properties. For small N , the risk bound behaves as ˜O(1 /τ N ),where τ is the warmstart proportion. As N grows and the fast-rate conditions hold, the dependence on τ vanishes and the sharper rates of Aznag et al. (2023) apply. We follow Aznag et al. (2023) in focusing only on the dependence on the label budget in the bound. 
+
+Note 2 (Note about Empirical Illustration.) . Here present additional experiments using alternative data-generating processes, varying degrees of class separation, and asymmetric class distributions. We also consider the comparison of PartiBandits to alternative baselines. 
+
+22 Figure 3: This plot compares the performance of PartiBandits to SRS when the labels are generated according to the following logistic data generating process: X ∼ Unif[0 , 1] and Y ∼ Bernoulli 
+
+ 11+exp[ −(β0+β1X)] 
+
+
+
+,where β0 = −1/ν and β1 = 2 /ν . This corresponds to a Logit-type DGP, with 1/ν governing the steepness of the logistic curve. For each label budget, we generate 500 hypothetical datasets in this way, apply SRS and PartiBandits to each, and compute the resulting error rates. We then take the 90th percentile of these error rates to obtain a classical 90% high-probability/confidence bound. PartiBandits eventually outperforms SRS with relatively fewer samples, with performance gains becoming more pronounced when X better predicts Y and ν
+
+decreases. 
+
+Figure 4: This plot compares the performance of PartiBandits to SRS when the labels are generated according to the following asymmetric probit data generating process: X ∼ Unif[ −5, 5] and Y ∼
+
+Bernoulli  Φ (1 /ν ) ( X − 0.25)  , where Φ( ·) denotes the standard normal CDF. This corresponds to a Probit-type DGP, with 1/ν controlling the steepness of the probability curve and X ≈ 0.25 marking the midpoint threshold. For each label budget, we generate 500 hypothetical datasets in this way, apply SRS and PartiBandits to each, and compute the resulting error rates. We then take the 90th percentile of these error rates to obtain a classical 90% high-probability/confidence bound. PartiBandits eventually outperforms SRS with relatively fewer samples, with performance gains becoming more pronounced when X better predicts Y and ν decreases. 
+
+23 Figure 5: This plot compares the performance of PartiBandits to SRS and Thompson sampling and SRS for label budgets from 10 to 100 . Here, X ∼ Unif [0 , 1] and Y = 1 {X ≥ 0.5}, with a fixed fraction of Y ’s (between 0% and 10%) randomly flipped to introduce noise. The proportion of flipped labels is equal to ν by definition. For each label budget, we generate 500 hypothetical datasets in this way, apply SRS, Thompson sampling, and PartiBandits to each, and compute the resulting error rates. To execute the Thompson sampling, we use the standard Beta-Bernoulli Thompson Sampling algorithm with an uninformative prior Beta(1 , 1) . At each round, the algorithm samples a success probability from each arm’s posterior, selects the arm with the highest draw, observes a Bernoulli reward, and updates the corresponding posterior. In our setup, we ran T = 3000                     
+
+> rounds with K= 3 arms (true p= (0 .1,0.5,0.8) ) for the prototype and K= 5 bins over [0 ,1] with a threshold of 0.5for the binned variant. We then take the 90th percentile of these error rates to obtain a classical 90% high-probability/confidence bound. PartiBandits eventually outperforms SRS and Thompson sampling with relatively fewer samples, with performance gains becoming more pronounced when Xbetter predicts Yand ν
+> decreases. We also observe that, over time, Thompson sampling ceases to yield better mean estimates, consistent with theoretical results suggesting that this procedure can yield biased mean estimates in common settings (Shin et al., 2019).
+
+# NeurIPS Paper Checklist 
+
+The checklist is designed to encourage best practices for responsible machine learning research, addressing issues of reproducibility, transparency, research ethics, and societal impact. Do not remove the checklist: The papers not including the checklist will be desk rejected. The checklist should follow the references and follow the (optional) supplemental material. The checklist does NOT count towards the page limit. Please read the checklist guidelines carefully for information on how to answer these questions. For each question in the checklist: • You should answer [Yes] , [No] , or [NA] . • [NA] means either that the question is Not Applicable for that particular paper or the relevant information is Not Available. • Please provide a short (1–2 sentence) justification right after your answer (even for NA). 
+
+The checklist answers are an integral part of your paper submission. They are visible to the reviewers, area chairs, senior area chairs, and ethics reviewers. You will be asked to also include it (after eventual revisions) with the final version of your paper, and its final version will be published with the paper. The reviewers of your paper will be asked to use the checklist as one of the factors in their evaluation. While “[Yes] ” is generally preferable to “[No] ”, it is perfectly acceptable to answer “[No] ” provided a proper justification is given (e.g., “error bars are not reported because it would be too computationally expensive” or “we were unable to find the license for the dataset we used”). In general, answering “[No] ” or “[NA] ” is not grounds for rejection. While the questions are phrased in a binary way, we acknowledge that the true answer is often more nuanced, so please just use your best judgment and write a justification to elaborate. All supporting evidence can appear either in the 24 main paper or the supplemental material, provided in appendix. If you answer [Yes] to a question, in the justification please point to the section(s) where related material for the question can be found. IMPORTANT, please: 1. Claims 
+
+Question: Do the main claims made in the abstract and introduction accurately reflect the paper’s contributions and scope? Answer: [Yes] Justification: The claims in the abstract and the introduction are directly supported by the Theorems and the empirical results in our paper. Guidelines: • The answer NA means that the abstract and introduction do not include the claims made in the paper. • The abstract and/or introduction should clearly state the claims made, including the contributions made in the paper and important assumptions and limitations. A No or NA answer to this question will not be perceived well by the reviewers. • The claims made should match theoretical and experimental results, and reflect how much the results can be expected to generalize to other settings. • It is fine to include aspirational goals as motivation as long as it is clear that these goals are not attained by the paper. 2. Limitations 
+
+Question: Does the paper discuss the limitations of the work performed by the authors? Answer: [Yes] Justification: We discuss the assumptions required for our theoretical results to hold. We also state the parameters and contours of the simulations we conducted. Guidelines: • The answer NA means that the paper has no limitation while the answer No means that the paper has limitations, but those are not discussed in the paper. • The authors are encouraged to create a separate “Limitations” section in their paper. • The paper should point out any strong assumptions and how robust the results are to violations of these assumptions (e.g., independence assumptions, noiseless settings, model well-specification, asymptotic approximations only holding locally). The authors should reflect on how these assumptions might be violated in practice and what the implications would be. • The authors should reflect on the scope of the claims made, e.g., if the approach was only tested on a few datasets or with a few runs. In general, empirical results often depend on implicit assumptions, which should be articulated. • The authors should reflect on the factors that influence the performance of the approach. For example, a facial recognition algorithm may perform poorly when image resolution is low or images are taken in low lighting. Or a speech-to-text system might not be used reliably to provide closed captions for online lectures because it fails to handle technical jargon. • The authors should discuss the computational efficiency of the proposed algorithms and how they scale with dataset size. • If applicable, the authors should discuss possible limitations of their approach to address problems of privacy and fairness. • While the authors might fear that complete honesty about limitations might be used by reviewers as grounds for rejection, a worse outcome might be that reviewers discover limitations that aren’t acknowledged in the paper. The authors should use their best judgment and recognize that individual actions in favor of transparency play an impor-tant role in developing norms that preserve the integrity of the community. Reviewers will be specifically instructed to not penalize honesty concerning limitations. 3. Theory assumptions and proofs 
+
+25 Question: For each theoretical result, does the paper provide the full set of assumptions and a complete (and correct) proof? Answer: [Yes] Justification: The paper does provide the full set of assumptions for each theoretical results. The complete and correct proofs are available in the supplementary material. Guidelines: • The answer NA means that the paper does not include theoretical results. • All the theorems, formulas, and proofs in the paper should be numbered and cross-referenced. • All assumptions should be clearly stated or referenced in the statement of any theorems. • The proofs can either appear in the main paper or the supplemental material, but if they appear in the supplemental material, the authors are encouraged to provide a short proof sketch to provide intuition. • Inversely, any informal proof provided in the core of the paper should be complemented by formal proofs provided in appendix or supplemental material. • Theorems and Lemmas that the proof relies upon should be properly referenced. 4. Experimental result reproducibility 
+
+Question: Does the paper fully disclose all the information needed to reproduce the main ex-perimental results of the paper to the extent that it affects the main claims and/or conclusions of the paper (regardless of whether the code and data are provided or not)? Answer: [Yes] Justification: The paper provides the details behind the simulations we conducted, the specific data generating processes, etc. The code for the monte carlo simulations is available in the supplementary material. The data for the AFC simulations cannot be provided as it contains highly sensitive personal identifying information and would present significant ethics concerns if released. Guidelines: • The answer NA means that the paper does not include experiments. • If the paper includes experiments, a No answer to this question will not be perceived well by the reviewers: Making the paper reproducible is important, regardless of whether the code and data are provided or not. • If the contribution is a dataset and/or model, the authors should describe the steps taken to make their results reproducible or verifiable. • Depending on the contribution, reproducibility can be accomplished in various ways. For example, if the contribution is a novel architecture, describing the architecture fully might suffice, or if the contribution is a specific model and empirical evaluation, it may be necessary to either make it possible for others to replicate the model with the same dataset, or provide access to the model. In general. releasing code and data is often one good way to accomplish this, but reproducibility can also be provided via detailed instructions for how to replicate the results, access to a hosted model (e.g., in the case of a large language model), releasing of a model checkpoint, or other means that are appropriate to the research performed. • While NeurIPS does not require releasing code, the conference does require all submis-sions to provide some reasonable avenue for reproducibility, which may depend on the nature of the contribution. For example (a) If the contribution is primarily a new algorithm, the paper should make it clear how to reproduce that algorithm. (b) If the contribution is primarily a new model architecture, the paper should describe the architecture clearly and fully. (c) If the contribution is a new model (e.g., a large language model), then there should either be a way to access this model for reproducing the results or a way to reproduce the model (e.g., with an open-source dataset or instructions for how to construct the dataset). 26 (d) We recognize that reproducibility may be tricky in some cases, in which case authors are welcome to describe the particular way they provide for reproducibility. In the case of closed-source models, it may be that access to the model is limited in some way (e.g., to registered users), but it should be possible for other researchers to have some path to reproducing or verifying the results. 5. Open access to data and code 
+
+Question: Does the paper provide open access to the data and code, with sufficient instruc-tions to faithfully reproduce the main experimental results, as described in supplemental material? Answer: [Yes] Justification: As noted above, we will the data and code for the monte carlo simulations will be made available in the supplemental material. However, this cannot be done for the AFC data for the reasons discussed above. Guidelines: • The answer NA means that paper does not include experiments requiring code. • Please see the NeurIPS code and data submission guidelines ( https://nips.cc/ public/guides/CodeSubmissionPolicy ) for more details. • While we encourage the release of code and data, we understand that this might not be possible, so “No” is an acceptable answer. Papers cannot be rejected simply for not including code, unless this is central to the contribution (e.g., for a new open-source benchmark). • The instructions should contain the exact command and environment needed to run to reproduce the results. See the NeurIPS code and data submission guidelines ( https: //nips.cc/public/guides/CodeSubmissionPolicy ) for more details. • The authors should provide instructions on data access and preparation, including how to access the raw data, preprocessed data, intermediate data, and generated data, etc. • The authors should provide scripts to reproduce all experimental results for the new proposed method and baselines. If only a subset of experiments are reproducible, they should state which ones are omitted from the script and why. • At submission time, to preserve anonymity, the authors should release anonymized versions (if applicable). • Providing as much information as possible in supplemental material (appended to the paper) is recommended, but including URLs to data and code is permitted. 6. Experimental setting/details 
+
+Question: Does the paper specify all the training and test details (e.g., data splits, hyper-parameters, how they were chosen, type of optimizer, etc.) necessary to understand the results? Answer: [Yes] Justification: Please see the answers above regarding data and code and the details for conducting our experiments. Guidelines: • The answer NA means that the paper does not include experiments. • The experimental setting should be presented in the core of the paper to a level of detail that is necessary to appreciate the results and make sense of them. • The full details can be provided either with the code, in appendix, or as supplemental material. 7. Experiment statistical significance 
+
+Question: Does the paper report error bars suitably and correctly defined or other appropriate information about the statistical significance of the experiments? Answer: [Yes] 27 Justification: The simulations do not report “error bars”, however, the main metric in the simulations is the 90% confidence bound on the estimation error, which functions as the upper end of a confidence interval on the estimation error. Thus, the experimental results already incorporate a measurement of uncertainty. Guidelines: • The answer NA means that the paper does not include experiments. • The authors should answer “Yes” if the results are accompanied by error bars, confi-dence intervals, or statistical significance tests, at least for the experiments that support the main claims of the paper. • The factors of variability that the error bars are capturing should be clearly stated (for example, train/test split, initialization, random drawing of some parameter, or overall run with given experimental conditions). • The method for calculating the error bars should be explained (closed form formula, call to a library function, bootstrap, etc.) • The assumptions made should be given (e.g., Normally distributed errors). • It should be clear whether the error bar is the standard deviation or the standard error of the mean. • It is OK to report 1-sigma error bars, but one should state it. The authors should preferably report a 2-sigma error bar than state that they have a 96% CI, if the hypothesis of Normality of errors is not verified. • For asymmetric distributions, the authors should be careful not to show in tables or figures symmetric error bars that would yield results that are out of range (e.g. negative error rates). • If error bars are reported in tables or plots, The authors should explain in the text how they were calculated and reference the corresponding figures or tables in the text. 8. Experiments compute resources 
+
+Question: For each experiment, does the paper provide sufficient information on the com-puter resources (type of compute workers, memory, time of execution) needed to reproduce the experiments? Answer: [Yes] Justification: We describe the procedure for the monte carlo simulations which are quite simple and do not take long to run. Guidelines: • The answer NA means that the paper does not include experiments. • The paper should indicate the type of compute workers CPU or GPU, internal cluster, or cloud provider, including relevant memory and storage. • The paper should provide the amount of compute required for each of the individual experimental runs as well as estimate the total compute. • The paper should disclose whether the full research project required more compute than the experiments reported in the paper (e.g., preliminary or failed experiments that didn’t make it into the paper). 9. Code of ethics 
+
+Question: Does the research conducted in the paper conform, in every respect, with the NeurIPS Code of Ethics https://neurips.cc/public/EthicsGuidelines ?Answer: [Yes] Justification: We confirm that this submission complies with the NeurIPS Code of Ethics. Guidelines: • The answer NA means that the authors have not reviewed the NeurIPS Code of Ethics. • If the authors answer No, they should explain the special circumstances that require a deviation from the Code of Ethics. • The authors should make sure to preserve anonymity (e.g., if there is a special consid-eration due to laws or regulations in their jurisdiction). 28 10. Broader impacts 
+
+Question: Does the paper discuss both potential positive societal impacts and negative societal impacts of the work performed? Answer: [Yes] Justification: This work contributes positively by reducing the number of data intrusions required to obtain accurate estimates, which can minimize burden, cost, and potential harm in sensitive applications. Guidelines: • The answer NA means that there is no societal impact of the work performed. • If the authors answer NA or No, they should explain why their work has no societal impact or why the paper does not address societal impact. • Examples of negative societal impacts include potential malicious or unintended uses (e.g., disinformation, generating fake profiles, surveillance), fairness considerations (e.g., deployment of technologies that could make decisions that unfairly impact specific groups), privacy considerations, and security considerations. • The conference expects that many papers will be foundational research and not tied to particular applications, let alone deployments. However, if there is a direct path to any negative applications, the authors should point it out. For example, it is legitimate to point out that an improvement in the quality of generative models could be used to generate deepfakes for disinformation. On the other hand, it is not needed to point out that a generic algorithm for optimizing neural networks could enable people to train models that generate Deepfakes faster. • The authors should consider possible harms that could arise when the technology is being used as intended and functioning correctly, harms that could arise when the technology is being used as intended but gives incorrect results, and harms following from (intentional or unintentional) misuse of the technology. • If there are negative societal impacts, the authors could also discuss possible mitigation strategies (e.g., gated release of models, providing defenses in addition to attacks, mechanisms for monitoring misuse, mechanisms to monitor how a system learns from feedback over time, improving the efficiency and accessibility of ML). 11. Safeguards 
+
+Question: Does the paper describe safeguards that have been put in place for responsible release of data or models that have a high risk for misuse (e.g., pretrained language models, image generators, or scraped datasets)? Answer: [NA] Justification: We do not use pretrained language models, image generators, or scraped datasets. Guidelines: • The answer NA means that the paper poses no such risks. • Released models that have a high risk for misuse or dual-use should be released with necessary safeguards to allow for controlled use of the model, for example by requiring that users adhere to usage guidelines or restrictions to access the model or implementing safety filters. • Datasets that have been scraped from the Internet could pose safety risks. The authors should describe how they avoided releasing unsafe images. • We recognize that providing effective safeguards is challenging, and many papers do not require this, but we encourage authors to take this into account and make a best faith effort. 12. Licenses for existing assets 
+
+Question: Are the creators or original owners of assets (e.g., code, data, models), used in the paper, properly credited and are the license and terms of use explicitly mentioned and properly respected? Answer: [Yes] 29 Justification: All datasets and code packages used in this paper are properly credited, and their licenses (including CC-BY 4.0 and equivalent open-source licenses) have been reviewed and respected. Guidelines: • The answer NA means that the paper does not use existing assets. • The authors should cite the original paper that produced the code package or dataset. • The authors should state which version of the asset is used and, if possible, include a URL. • The name of the license (e.g., CC-BY 4.0) should be included for each asset. • For scraped data from a particular source (e.g., website), the copyright and terms of service of that source should be provided. • If assets are released, the license, copyright information, and terms of use in the package should be provided. For popular datasets, paperswithcode.com/datasets 
+
+has curated licenses for some datasets. Their licensing guide can help determine the license of a dataset. • For existing datasets that are re-packaged, both the original license and the license of the derived asset (if it has changed) should be provided. • If this information is not available online, the authors are encouraged to reach out to the asset’s creators. 13. New assets 
+
+Question: Are new assets introduced in the paper well documented and is the documentation provided alongside the assets? Answer: [Yes] Justification: We introduce a new R package, PartiBandits , and provide documentation, usage examples, and licensing information alongside the code. Guidelines: • The answer NA means that the paper does not release new assets. • Researchers should communicate the details of the dataset/code/model as part of their submissions via structured templates. This includes details about training, license, limitations, etc. • The paper should discuss whether and how consent was obtained from people whose asset is used. • At submission time, remember to anonymize your assets (if applicable). You can either create an anonymized URL or include an anonymized zip file. 14. Crowdsourcing and research with human subjects 
+
+Question: For crowdsourcing experiments and research with human subjects, does the paper include the full text of instructions given to participants and screenshots, if applicable, as well as details about compensation (if any)? Answer: [NA] Justification: The paper does not invovle crowdsourcing nor research with human subjects. Guidelines: • The answer NA means that the paper does not involve crowdsourcing nor research with human subjects. • Including this information in the supplemental material is fine, but if the main contribu-tion of the paper involves human subjects, then as much detail as possible should be included in the main paper. • According to the NeurIPS Code of Ethics, workers involved in data collection, curation, or other labor should be paid at least the minimum wage in the country of the data collector. 15. Institutional review board (IRB) approvals or equivalent for research with human subjects 
+
+30 Question: Does the paper describe potential risks incurred by study participants, whether such risks were disclosed to the subjects, and whether Institutional Review Board (IRB) approvals (or an equivalent approval/review based on the requirements of your country or institution) were obtained? Answer: [NA] Justification: The paper does not involve crowdsourcing nor research with human subjects. Guidelines: • The answer NA means that the paper does not involve crowdsourcing nor research with human subjects. • Depending on the country in which research is conducted, IRB approval (or equivalent) may be required for any human subjects research. If you obtained IRB approval, you should clearly state this in the paper. • We recognize that the procedures for this may vary significantly between institutions and locations, and we expect authors to adhere to the NeurIPS Code of Ethics and the guidelines for their institution. • For initial submissions, do not include any information that would break anonymity (if applicable), such as the institution conducting the review. 16. Declaration of LLM usage 
+
+Question: Does the paper describe the usage of LLMs if it is an important, original, or non-standard component of the core methods in this research? Note that if the LLM is used only for writing, editing, or formatting purposes and does not impact the core methodology, scientific rigorousness, or originality of the research, declaration is not required. Answer: [NA] Justification: The core method development in this research does not involve LLMs as any important, original, or non-standard components. Guidelines: • The answer NA means that the core method development in this research does not involve LLMs as any important, original, or non-standard components. • Please refer to our LLM policy ( https://neurips.cc/Conferences/2025/LLM )for what should or should not be described. 31
