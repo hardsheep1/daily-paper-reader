@@ -1,0 +1,54 @@
+{
+  "label": "2026-05-30",
+  "date": "2026-05-30",
+  "generated_at": "2026-05-30T20:03:20",
+  "count": 3,
+  "papers": [
+    {
+      "paper_id": "202605/30/2605.29829v1-optskills-learning-generalizable-optimization-skills-from-problem-archetypes-via-cluster-based-distillation",
+      "section": "quick",
+      "title_en": "OptSkills: Learning Generalizable Optimization Skills from Problem Archetypes via Cluster-Based Distillation",
+      "authors": "Haochen Yang, Ke Zhao, Mengyuan Ma, Xingyu Lu, Xiangfeng Wang, Hong Qian",
+      "date": "2026-05-28",
+      "pdf": "https://arxiv.org/pdf/2605.29829v1",
+      "score": "7.0",
+      "evidence": "使用基于原型的聚类和LLM蒸馏进行优化技能学习",
+      "tldr": "针对基于大型语言模型的自动优化方法泛化性差、易受问题表面叙事影响且经验复用局限于案例级的问题，提出OptSkills系统。该系统按问题底层原型对任务聚类，在各簇内探索多样化建模与求解配置，并将成功轨迹蒸馏为可重用工作流级技能，同时通过新轨迹扩展技能库以提升分布外泛化。在多个数据集上达到68.27%的微平均准确率，在大型高维基准MIPLIB-NL上超越DeepSeek-V3.2-Thinking 4.53%，代码已开源。",
+      "tags": "query:ac",
+      "abstract_en": "Leveraging Large Language Models (LLMs) to automatically formulate and solve optimization problems from natural language has emerged as an efficient paradigm for automated optimization. However, existing methods still exhibit limited generalization: they are sensitive to superficial narrative variations, reuse experience mainly at the case level, and struggle to adapt to shifted or emerging problem types. We propose OptSkills, an archetype-centric skill learning and reasoning agent system for optimization modeling and solving. To improve robust generalization, our system clusters problems by their underlying archetypes rather than surface narratives. To improve in-distribution generalization, it explores diverse modeling paradigms and solver configurations within each cluster, then distills successful trajectories into reusable workflow-level skills. To improve out-of-distribution generalization, it refines existing skills or expands the skill library using newly obtained trajectories. Our system achieves a state-of-the-art micro-averaged accuracy of 68.27% on datasets encompassing diverse problem types and scenarios. In addition, on MIPLIB-NL, a highly challenging large-scale and high-dimensional benchmark, it achieves 26.91% accuracy, outperforming DeepSeek-V3.2-Thinking by 4.53%. After skill learning on Nano-CO, it reaches 72.79% on the OOD NLCO benchmark. Code and skills are available at https://github.com/fujiwaranoM0kou/OptSkills.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202605/30/2605.29933v1-clubench-a-clustering-benchmark",
+      "section": "quick",
+      "title_en": "CLUBench: A Clustering Benchmark",
+      "authors": "Feng Xiao, Dazhi Fu, Chris Ding, Jicong Fan",
+      "date": "2026-05-28",
+      "pdf": "https://arxiv.org/pdf/2605.29933v1",
+      "score": "7.0",
+      "evidence": "聚类基准测试包含基于基础模型的方法",
+      "tldr": "聚类研究长期以来缺乏涵盖传统算法、深度学习方法及基础模型的大规模系统性基准。本文构建CLUBench，在131个数据集上评估24种算法，进行178,815次实验。结果表明，深度聚类方法平均性能不优于传统KMeans和谱聚类；预训练嵌入结合传统算法在图像和文本任务中高效；聚类在基础模型时代仍具挑战。贡献在于提供全面的性能洞察并利用低秩结构近似整体评估。",
+      "tags": "query:ac",
+      "abstract_en": "Clustering is a fundamental problem in data science with a long-standing research history, yielding numerous insightful algorithms. Despite this progress, a systematic and large-scale empirical evaluation that jointly considers conventional algorithms, deep learning-based methods, and recent foundation model-based clustering remains largely absent, leading to limited guidance on algorithm selection and deployment. To address this gap, we introduce CLUBench, a comprehensive clustering benchmark comprising 24 algorithms of diverse principles evaluated on 131 datasets across tabular, text, and image data, involving 178,815 experiments. Importantly, our analyses of (i) the impact of hyperparameter tuning,(ii) the impact of data types and characteristics,(iii) the impact of pretrained embeddings,(iv) large language model-based clustering,(v) the similarity of algorithms, and (vi) the low-rank structures of performance matrices, yield meaningful insights and promising pathways for clustering research. For instance, our study reveals that: 1) All evaluated deep clustering methods do not exhibit a significant advantage compared with the top-performing conventional clustering algorithms (e.g., KMeans, SpeClu) in terms of average performance; 2) For image and text clustering tasks, combining pretrained embeddings with conventional clustering algorithms (e.g., KMeans, SpeClu) offers effective and efficient clustering; 3) Clustering remains a challenging and nontrivial problem, even in the era of increasingly dominant foundation models. Moreover, we propose to use the low-rank structure in cross-model performance matrices to efficiently approximate the overall performance evaluation in practical applications. We further demonstrate the feasibility of model selection based on the performance matrices across all hyperparameter configurations.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202605/30/2605.24351v1-how-much-structure-do-llms-need-evaluating-llms-for-bibliometric-cluster-description",
+      "section": "quick",
+      "title_en": "How Much Structure Do LLMs Need? Evaluating LLMs for Bibliometric Cluster Description",
+      "authors": "Abraham Camelo-Guerrero, Jairo Diaz-Rodriguez",
+      "date": "2026-05-23",
+      "pdf": "https://arxiv.org/pdf/2605.24351v1",
+      "score": "6.0",
+      "evidence": "评估大模型描述文献计量聚类的效果",
+      "tldr": "大型语言模型在科学文献综述中易产生幻觉与主题组织薄弱。本研究通过六种流程的对比实验，发现LLM直接推断文献计量结构不可靠；当由算法预先定义聚类后让LLM进行解释时，性能明显提升。结果表明，结合算法的可审计结构与LLM的可读描述是更优的混合工作流方案。",
+      "tags": "query:ac",
+      "abstract_en": "Large language models (LLMs) can support scientific literature synthesis, but remain prone to hallucinated references, uneven coverage, and weakly grounded thematic organization. We evaluate whether bibliometric structure improves LLM-assisted synthesis by comparing six pipelines for generating cluster descriptions under different levels of evidence and structure. Using 100 published bibliometric analyses, we reconstruct Scopus corpora, extract human-written cluster descriptions, and assess outputs by human alignment, semantic coverage, clustering quality, graph quality, and reference grounding. Results show that LLMs produce descriptions semantically close to human-written ones, but are unreliable when asked to infer bibliometric structure from scratch. Performance improves when bibliometric algorithms define the clusters and the LLM interprets them. Overall, LLM-assisted bibliometric synthesis is most promising as a hybrid workflow in which algorithms provide auditable structure and LLMs generate readable descriptions.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

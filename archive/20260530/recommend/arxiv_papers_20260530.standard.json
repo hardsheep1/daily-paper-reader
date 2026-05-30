@@ -1,0 +1,132 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-05-30T19:59:47.991450+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 0,
+    "deep_cap": 6,
+    "deep_selected": 0,
+    "quick_candidates": 3,
+    "quick_skim_target": 11,
+    "quick_selected": 3
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2605.29829v1",
+      "source": "arxiv",
+      "title": "OptSkills: Learning Generalizable Optimization Skills from Problem Archetypes via Cluster-Based Distillation",
+      "abstract": "Leveraging Large Language Models (LLMs) to automatically formulate and solve optimization problems from natural language has emerged as an efficient paradigm for automated optimization. However, existing methods still exhibit limited generalization: they are sensitive to superficial narrative variations, reuse experience mainly at the case level, and struggle to adapt to shifted or emerging problem types. We propose OptSkills, an archetype-centric skill learning and reasoning agent system for optimization modeling and solving. To improve robust generalization, our system clusters problems by their underlying archetypes rather than surface narratives. To improve in-distribution generalization, it explores diverse modeling paradigms and solver configurations within each cluster, then distills successful trajectories into reusable workflow-level skills. To improve out-of-distribution generalization, it refines existing skills or expands the skill library using newly obtained trajectories. Our system achieves a state-of-the-art micro-averaged accuracy of 68.27% on datasets encompassing diverse problem types and scenarios. In addition, on MIPLIB-NL, a highly challenging large-scale and high-dimensional benchmark, it achieves 26.91% accuracy, outperforming DeepSeek-V3.2-Thinking by 4.53%. After skill learning on Nano-CO, it reaches 72.79% on the OOD NLCO benchmark. Code and skills are available at https://github.com/fujiwaranoM0kou/OptSkills.",
+      "authors": [
+        "Haochen Yang",
+        "Ke Zhao",
+        "Mengyuan Ma",
+        "Xingyu Lu",
+        "Xiangfeng Wang",
+        "Hong Qian"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.LG"
+      ],
+      "published": "2026-05-28T12:07:28+00:00",
+      "link": "https://arxiv.org/pdf/2605.29829v1",
+      "tags": [
+        "keyword:ac",
+        "query:ac"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "uses clustering of problem archetypes with LLM-based distillation",
+      "llm_evidence_cn": "使用基于原型的聚类和LLM蒸馏进行优化技能学习",
+      "llm_evidence": "使用基于原型的聚类和LLM蒸馏进行优化技能学习",
+      "canonical_evidence": "使用基于原型的聚类和LLM蒸馏进行优化技能学习",
+      "llm_tldr_en": "OptSkills clusters problems by archetypes and uses LLMs to learn generalizable optimization skills, improving robustness against narrative variations.",
+      "llm_tldr_cn": "现有方法在自动优化中对表面叙事变化敏感，泛化能力有限。本文提出OptSkills，一种基于原型的技能学习与推理智能体系统，通过聚类问题原型而非表面形式来提高鲁棒泛化，并利用LLM进行多样化模型探索与蒸馏。实验表明，该方法在多种优化任务上显著提升了泛化性能。",
+      "llm_tldr": "现有方法在自动优化中对表面叙事变化敏感，泛化能力有限。本文提出OptSkills，一种基于原型的技能学习与推理智能体系统，通过聚类问题原型而非表面形式来提高鲁棒泛化，并利用LLM进行多样化模型探索与蒸馏。实验表明，该方法在多种优化任务上显著提升了泛化性能。",
+      "llm_tags": [
+        "query:ac"
+      ],
+      "matched_query_tag": "query:ac",
+      "matched_query_text": "clustering using large language models",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2605.24351v1",
+      "source": "arxiv",
+      "title": "How Much Structure Do LLMs Need? Evaluating LLMs for Bibliometric Cluster Description",
+      "abstract": "Large language models (LLMs) can support scientific literature synthesis, but remain prone to hallucinated references, uneven coverage, and weakly grounded thematic organization. We evaluate whether bibliometric structure improves LLM-assisted synthesis by comparing six pipelines for generating cluster descriptions under different levels of evidence and structure. Using 100 published bibliometric analyses, we reconstruct Scopus corpora, extract human-written cluster descriptions, and assess outputs by human alignment, semantic coverage, clustering quality, graph quality, and reference grounding. Results show that LLMs produce descriptions semantically close to human-written ones, but are unreliable when asked to infer bibliometric structure from scratch. Performance improves when bibliometric algorithms define the clusters and the LLM interprets them. Overall, LLM-assisted bibliometric synthesis is most promising as a hybrid workflow in which algorithms provide auditable structure and LLMs generate readable descriptions.",
+      "authors": [
+        "Abraham Camelo-Guerrero",
+        "Jairo Diaz-Rodriguez"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-05-23T02:24:09+00:00",
+      "link": "https://arxiv.org/pdf/2605.24351v1",
+      "tags": [
+        "keyword:ac",
+        "query:ac"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "evaluates LLMs for describing bibliometric clusters",
+      "llm_evidence_cn": "评估大模型描述文献计量聚类的效果",
+      "llm_evidence": "评估大模型描述文献计量聚类的效果",
+      "canonical_evidence": "评估大模型描述文献计量聚类的效果",
+      "llm_tldr_en": "The paper evaluates LLMs for generating cluster descriptions in bibliometric analyses, finding they are semantically close to human-written ones but unreliable for structure inference.",
+      "llm_tldr_cn": "该论文评估了大模型在文献计量聚类描述任务中的表现，发现大模型生成的描述在语义上与人类撰写的接近，但在推断聚类结构时不可靠。研究通过100个已发表的文献计量分析，对比了六种不同证据级别的流水线，表明大模型需要更多结构化信息来提升合成质量。",
+      "llm_tldr": "该论文评估了大模型在文献计量聚类描述任务中的表现，发现大模型生成的描述在语义上与人类撰写的接近，但在推断聚类结构时不可靠。研究通过100个已发表的文献计量分析，对比了六种不同证据级别的流水线，表明大模型需要更多结构化信息来提升合成质量。",
+      "llm_tags": [
+        "query:ac"
+      ],
+      "matched_query_tag": "query:ac",
+      "matched_query_text": "clustering using large language models",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2605.29933v1",
+      "source": "arxiv",
+      "title": "CLUBench: A Clustering Benchmark",
+      "abstract": "Clustering is a fundamental problem in data science with a long-standing research history, yielding numerous insightful algorithms. Despite this progress, a systematic and large-scale empirical evaluation that jointly considers conventional algorithms, deep learning-based methods, and recent foundation model-based clustering remains largely absent, leading to limited guidance on algorithm selection and deployment. To address this gap, we introduce CLUBench, a comprehensive clustering benchmark comprising 24 algorithms of diverse principles evaluated on 131 datasets across tabular, text, and image data, involving 178,815 experiments. Importantly, our analyses of (i) the impact of hyperparameter tuning,(ii) the impact of data types and characteristics,(iii) the impact of pretrained embeddings,(iv) large language model-based clustering,(v) the similarity of algorithms, and (vi) the low-rank structures of performance matrices, yield meaningful insights and promising pathways for clustering research. For instance, our study reveals that: 1) All evaluated deep clustering methods do not exhibit a significant advantage compared with the top-performing conventional clustering algorithms (e.g., KMeans, SpeClu) in terms of average performance; 2) For image and text clustering tasks, combining pretrained embeddings with conventional clustering algorithms (e.g., KMeans, SpeClu) offers effective and efficient clustering; 3) Clustering remains a challenging and nontrivial problem, even in the era of increasingly dominant foundation models. Moreover, we propose to use the low-rank structure in cross-model performance matrices to efficiently approximate the overall performance evaluation in practical applications. We further demonstrate the feasibility of model selection based on the performance matrices across all hyperparameter configurations.",
+      "authors": [
+        "Feng Xiao",
+        "Dazhi Fu",
+        "Chris Ding",
+        "Jicong Fan"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-05-28T13:45:37+00:00",
+      "link": "https://arxiv.org/pdf/2605.29933v1",
+      "tags": [
+        "keyword:ac",
+        "query:ac"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "clustering benchmark including foundation model-based methods",
+      "llm_evidence_cn": "聚类基准测试包含基于基础模型的方法",
+      "llm_evidence": "聚类基准测试包含基于基础模型的方法",
+      "canonical_evidence": "聚类基准测试包含基于基础模型的方法",
+      "llm_tldr_en": "CLUBench provides a comprehensive evaluation of 24 clustering algorithms including foundation model-based ones on 131 datasets.",
+      "llm_tldr_cn": "CLUBench是一个全面的聚类基准测试，包含24种聚类算法（包括基于基础模型的方法）在131个数据集上的大规模评估，为算法选择提供指导。该基准涵盖了表格、文本和图像数据，涉及近18万次实验，分析了超参数、数据类型和预训练嵌入的影响。",
+      "llm_tldr": "CLUBench是一个全面的聚类基准测试，包含24种聚类算法（包括基于基础模型的方法）在131个数据集上的大规模评估，为算法选择提供指导。该基准涵盖了表格、文本和图像数据，涉及近18万次实验，分析了超参数、数据类型和预训练嵌入的影响。",
+      "llm_tags": [
+        "query:ac"
+      ],
+      "matched_query_tag": "query:ac",
+      "matched_query_text": "clustering using large language models",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}
