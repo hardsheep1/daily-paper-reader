@@ -1,0 +1,773 @@
+Title: Where LLM Annotators Fail: Label-Free Learning on Graphs with LLMs
+
+URL Source: https://arxiv.org/pdf/2605.27913v1
+
+Published Time: Thu, 28 May 2026 00:48:25 GMT
+
+Number of Pages: 18
+
+Markdown Content:
+# Where LLM Annotators Fail: Label-Free Learning on Graphs with LLMs 
+
+Safal Thapaliya, Jiatan Huang, Chuxu Zhang †
+
+University of Connecticut, USA 
+
+{safal.thapaliya,jiatan.huang,chuxu.zhang}@uconn.edu 
+
+> †
+
+Corresponding Author 
+
+Abstract 
+
+Node classification on graphs often requires labeled nodes, yet obtaining labels at graph scale is expensive. When node attributes con-tain semantic content, such as paper abstracts, web pages, or product descriptions, large lan-guage models (LLMs) can provide low-cost supervision by annotating a small subset of nodes. However, these LLM-generated labels are noisy, and existing label-free graph learning methods usually treat this noise as either global or class-conditional. We find that LLM anno-tation errors are not only class-dependent but also region-dependent: within the same class, reliability can vary sharply across feature-space clusters. In light of this, we propose Cluster-
+
+Aware Noise Estimation ( CANE ), a label-free learning framework that estimates cluster-conditional LLM reliability without ground truth labels, and uses this estimate to decide which pseudo-labels to trust, and which labels to correct. Across various graph benchmarks and GNN backbones, CANE improves over the strongest label-free baselines, with the largest gains on datasets exhibiting stronger cluster-conditional noise. 
+
+1 Introduction 
+
+Graphs are a common representation for relational data in which each node is associated with at-tributes like descriptive content, metadata, or other features. In many graphs, these attributes contain semantic information. For example, papers have ti-tles and abstracts, products have descriptions, web pages have text, and users or entities may be as-sociated with profiles or records (Yan et al., 2023; Jin et al., 2024). Such attributes make large lan-guage models (LLMs) useful beyond direct text classification: an LLM can read the node content and provide a candidate label when human anno-tation is unavailable or expensive (He et al., 2024; Wang et al., 2025). This creates a label-free route to graph learning, especially when manual labeling does not scale to large graphs (Chen et al., 2024b). Recent label-free classification methods build on this idea by using LLMs as annotators rather than as end-to-end predictors (Chen et al., 2024b; Zhang et al., 2025; Sheng et al., 2025). Instead of querying an LLM for every node, they select a small subset of nodes, ask the LLM to assign labels from the task label space, and train a graph neural network (GNN) on the resulting supervision. This design combines the semantic knowledge of LLMs with the relational inductive bias of GNNs: the LLM provides inexpensive initial supervision, while the GNN propagates information through graph structure to classify remaining nodes (Kipf and Welling, 2017; Veliˇ ckovi´ c et al., 2018). The effectiveness of the above pipeline depends on a question that is often hidden inside the an-notation step: when should an LLM-generated la-bel be trusted? LLM annotations are inexpensive, but they are not uniformly reliable. Once an in-correct label enters a graph learning pipeline, its effect can spread through message passing, pseudo-label expansion, and iterative correction (Zhang et al., 2025). Existing label-free methods reduce this risk using confidence filtering (Chen et al., 2024b), class-level correction (Sheng et al., 2025), or refinement heuristics (Zhang et al., 2025), but they typically represent LLM reliability at a coarse granularity: either as a global property of the anno-tator or as a class-conditional confusion pattern. Our central observation is that this perspective is overly coarse-grained. In graphs with seman-tic node attributes, LLM reliability can vary sub-stantially not only across classes, but also across feature-space regions within the same class. Fig-ure 1 illustrates this pattern on DBLP (Tang et al., 2008): the "Database" class has an average LLM annotation accuracy of 64.7%, but its cluster-level accuracy ranges from 81.0% in one region to 21.6% in another. A class-level estimate therefore as-1                       
+
+> arXiv:2605.27913v1 [cs.LG] 27 May 2026 025 50 75 100
+> LLM accuracy (%)
+> 64.7 Database
+> 84.5 Data Mining
+> 66.6 AI
+> 69.7 IR
+> 025 50 75 100
+> LLM accuracy (%)
+> class avg = 64.7
+> 81.0
+> High
+> cluster
+> 38.9
+> Mid
+> cluster
+> 21.6
+> Low
+> cluster
+> 81% →22%
+> within-class
+> spread ≈ 59 pp
+> 025 50 75 100
+> LLM accuracy (%)
+> 7.1 93.7
+> 67.2
+> Cora
+> Neural Nets
+> 26.5 85.9
+> 63.5
+> CiteSeer
+> DB
+> 59.9 92.3
+> 80.3
+> PubMed
+> Diabetes T1
+> 11.7 88.5
+> 72.5
+> WikiCS
+> Comp. Sec.
+> (a) Class-level view (b) Cluster-level view (c) Across datasets
+> average class accuracy high accuracy cluster mid accuracy cluster low accuracy cluster
+
+Figure 1: A single class-level accuracy hides large gaps between clusters of the same class. (a) The class-level view gives each DBLP class one average LLM accuracy. (b) Splitting one class into feature-space clusters reveals wide within-class variation in LLM accuracy. (c) Low-to-high cluster reliability gaps are consistently observed across different graph benchmarks. 
+
+signs the same reliability to regions where the LLM behaves very differently, over trusting unreliable clusters and under-using reliable ones. Appendix A shows that this pattern appears across multiple benchmarks and is not an artifact of the clustering procedure. This observation suggests that label-free graph learning should estimate how LLM errors vary across local regions of the graph, rather than only how often one class is confused with another on average. The challenge is that such a cluster-conditional estimate appears to require ground-truth labels: for each cluster and class, one would need to know how often the LLM predicts each la-bel given the true class. We address this challenge with Cluster-Aware Noise Estimation ( CANE ), a label-free framework that estimates local LLM reliability from self-supervised graph representa-tions. CANE leverages these reliability estimates throughout the learning pipeline to filter pseudo-label acceptance, and adaptively determine which labels to correct during iterative refinement. Our contributions are as follows: • We identify cluster-conditional LLM annota-tion noise as a failure mode in label-free learn-ing on graphs with semantic node attributes. Even within the same true class, LLM relia-bility can differ substantially across feature-space regions. • We propose CANE, a label-free node classifi-cation framework that estimates a per-cluster transition matrix from self-supervised graph embeddings and LLM annotation statistics, without using ground-truth labels. • Across various graph benchmarks and GNN backbones, CANE improves over the strongest label-free baseline, with the largest gains on datasets that exhibit stronger cluster-conditional noise. 
+
+2 Methodology 
+
+2.1 Problem Setup 
+
+In this work, we study label-free node classification on text-attributed graphs (TAG), where no ground-truth labels are available during training. Given a graph G = ( V, E ), where V and E denote the node and edge sets, each node v ∈ V is associated with a semantic text description tv and an unobserved true label yv ∈ { 1, . . . , C }, where C is the number of classes in G. The goal is to assign a class to every node in V without access to any ground-truth label. Given a query budget B, a method selects a subset S ⊆ V with |S| ≤ B and queries the LLM once per node, obtaining a noisy annotation ˆyv ∈{1, . . . , C } for each v ∈ S. A GNN is then trained on these annotated seeds and used to classify the remaining nodes. Two properties make the setting hard. The supervision is scarce –the budget covers only a small fraction of the graph ( B ≪ | V |)–so labels must be propagated well beyond S. And it is noisy : the LLM’s error rate is not uniform across classes but varies sharply between regions of the graph (Figure 1). CANE is organized around both challenges: extending scarce labels across the graph while accounting for where the annotator errs, as we describe next. 2Input TAG 
+
+> node text
+> unlabeled nodes
+
+Cluster -Conditional Noise Estimation 2       
+
+> Cluster into K=2C
+> regions
+> Cluster -conditional
+> transition matrix 𝑻 𝒄
+> 𝑇 !𝑘 ,𝑐 ,𝑐 =𝑚𝑒𝑎𝑛 {𝑎 "}
+
+1 Representative Seed Selection and Annotation 
+
+> LLM
+> Query
+
+3 Pseudo -label Expansion          
+
+> Train GNN on annotated seeds
+> GNN
+> predict on unlabeled nodes
+> 𝜏 #𝑘 =𝜏 #
+> +𝛼 (1−𝑇 !𝑘 ,𝑔 ,𝑔 )
+> accepted confident
+> pseudo -labels
+
+5 Final training and 
+
+prediction 
+
+> Final cleaned training set
+> Final GNN
+> Final node predictions
+
+4 Iterative Label Correction      
+
+> Current label pool
+> GNN
+> repeat until convergence
+> Keep
+> (reliable)
+> Correct
+> (most likely)
+> 𝑇 !-modulated threshold
+> Neighbor agreement
+> GNN prediction
+> Top candidates from all clusters
+> Probe set
+> LLM annotated nodes
+> Probe set
+> Each probe node 𝑣
+> LLM -labeled neighbors
+> (graph + kNN)
+> Cross -modality
+> agreement 𝑎 "
+> Aggregation by
+> (cluster 𝑘 , class 𝑐 )
+> Cluster -conditional threshold
+> (higher in unreliable regions)
+> 𝑇 !
+> -gated self -
+> training
+
+Figure 2: Illustration of CANE pipeline. (1) A representative seed set is selected, which is used to (2) estimate a transition matrix Tc. The estimated Tc then guides (3) pseudo-label expansion and (4) cluster-conditional iterative label correction , after which (5) a final GNN is trained on the refined labels to produce node predictions. 
+
+2.2 Overview 
+
+The difficulty identified above, that the LLM errs at rates which vary across graphs, points to its own remedy: if we knew where the annotator is reliable, we could trust its labels more in those regions and less elsewhere. CANE makes this knowledge con-crete. From the seed annotations alone it estimates a cluster-conditional measure of LLM reliability, 
+
+Tc, computes it once, and lets that single estimate govern how the noisy labels are spread across the graph and how they are revised. Figure 2 illustrates the five stages of this method. The proposed CANE begins by choosing which nodes to annotate. As no labels yet exist to indicate where the LLM can be trusted, it selects a budget of representative seeds by clustering the graph in feature space ( 1 ) and queries the LLM on them. A leading fraction of those seeds is annotated first as a probe , from which CANE estimates Tc ( 2 ): the one quantity carried into the stages that follow. Because the probe is drawn from seeds the method already pays for, and selection never consults reli-ability, this estimate is obtained within the query budget and without any ground-truth label. The estimate then steers the two stages that as-semble the final label set. During pseudo-label expansion ( 3 ), Tc raises the bar for accepting a model prediction in regions where the annotator is unreliable, so supervision spreads outward from the seeds without absorbing local noise. During itera-tive label correction ( 4 ), Tc makes the pipeline more reluctant to overwrite a label that already sits in a locally trustworthy region. A graph neural net-work trained on the resulting label set produces the final node predictions ( 5 ). The rest of this section details each stage of the CANE pipeline. 
+
+2.3 Representative Seed Selection and Annotation 
+
+Under a fixed query budget, the first question is which nodes should be annotated by the LLM. The choice is important because the seed set provides the only direct supervision from the annotator. It initializes the GNN, drives pseudo-label expansion, and anchors the subsequent correction loop. At the same time, it must be selected blindly from graph structure alone, before any labels are available to in-dicate where the annotator is reliable. A good seed therefore needs two properties at once: it should represent a meaningful region of the graph while being likely to receive a correct LLM label. Prior work shows these properties coincide: LLM annotation accuracy is highest for nodes near the centers of feature-space clusters, whose con-tent is most typical of their region (Chen et al., 2024b). CANE exploits this through subspace clus-3tering (Zhang et al., 2025). Nodes are embedded with a self-supervised GraphMAE2 encoder (Hou et al., 2023) and grouped into K = 2 C feature-space regions, writing kv for the cluster of node 
+
+v. Within each region, the densest, most central nodes are taken as seeds and annotated by the LLM (Figure 2, step 1 ). The same partition carries gen-uine class structure ( 63 –80% single-class purity; see Appendix F for details), so each cluster doubles as a unit for the per-cluster reliability estimate that follows. We allocate the full budget B = 50 C to these seeds. To estimate that reliability without spending extra queries, CANE annotates the first 
+
+ρ = 0 .4 fraction of the seeds ahead of the rest and designates them a probe set P ⊂ S . The matrix 
+
+Tc is estimated from P alone (§2.4) before the re-maining (1 − ρ)B seeds are annotated to complete 
+
+S. The probe reuses labels already collected by the method, so it incurs no additional cost. 
+
+2.4 Cluster-conditional Noise Estimation 
+
+Once the probe nodes are annotated, the next stage measures how reliable those labels are in each re-gion of the graph: the quantity that will later govern both expansion and correction. CANE records this reliability as a cluster-conditional transition matrix 
+
+Tc over the same K = 2 C clusters used for se-lection (Figure 2, step 2 ): Tc[k, i, j ] = P (ˆ y =
+
+j | y = i, cluster = k) ∈ [0 , 1] K×C×C . The di-agonal entry Tc[k, c, c ] is the probability that the LLM correctly labels a class-c node in cluster k,and whose cluster-average T = 1
+
+> K
+
+P 
+
+> k
+
+Tc[k] is the coarser, class-conditional matrix modeled in prior work (Sheng et al., 2025). The challenge is that this definition conditions on the true label y, which is unavailable in the label-free setting. We therefore estimate the diagonal entries using only LLM anno-tations on the probe set P. During downstream use, where the true class is also unknown, the diagonal value corresponding to the node’s assigned class is treated as the reliability score for that assignment. A natural first attempt is to gauge reliability from how concentrated the LLM labels are within a clus-ter, reading a sharply peaked label distribution as a confident and reliable annotator. But concentration conflates two unrelated situations. A cluster that genuinely spans several true classes draws scattered labels even from a perfect annotator, while a single-class cluster labeled by a noisy one scatters them too. As a result, concentration cannot distinguish annotation noise from genuine class mixing, and on the partially mixed clusters common in real graphs (Appendix F), it tends to underestimate reliability. CANE instead asks whether each LLM label is 
+
+corroborated by independent views of the same node. For a probe node v ∈ P , let N (v) gather its annotated graph neighbors together with its nearest neighbors in feature space, and define the cross-modality agreement: 
+
+av = 1
+
+|N (v)|
+
+X 
+
+> u∈N (v)
+
+1[ˆ yu = ˆ yv], (1) as the fraction of those neighbors the LLM labeled the same way as v. A label that two independent views: graph structure and feature similarity, agree on is more likely correct. We therefore average av
+
+over the probe nodes of each (cluster, class) pair to obtain the label-free reliability estimate: 
+
+R[k, c ] = mean {av : v ∈ P , k v = k, ˆyv = c},
+
+which is assigned to the diagonal entry Tc[k, c, c ] = 
+
+R[k, c ], with the remaining probability mass dis-tributed uniformly across the off-diagonal entries. When a (cluster, class) pair contains too few probe nodes, the estimate backs off to the cluster-level and then global mean agreement. Because agree-ment tracks whether a label is right rather than whether a region is single-class, the estimate stays calibrated precisely where concentration fails. For example, on P UB MED , whose clusters are only 
+
+50 –77% single-class, a concentration-based esti-mate under-reads reliability by ∼37 pp, whereas the agreement estimate recovers the true ∼88% 
+
+LLM accuracy. The estimate draws on the probe annotations and no ground-truth labels, yet cap-tures how the annotator’s errors shift from region to region rather than averaging them into a single class-level matrix. 
+
+2.5 Pseudo-label Expansion 
+
+Pseudo-label expansion is the first stage guided by Tc, addressing the limited supervision available from the B = 50 C annotated seeds. Since these seeds cover only a small portion of the graph, a GNN trained on them alone cannot adequately cap-ture the full node distribution. A common solution is self-training: iteratively enlarging the training set with the model’s own high-confidence predictions. However, this process is inherently risky. Incorrect pseudo-labels can propagate through later rounds of training and expansion, reinforcing their own errors. This problem is especially severe under a single class-level confidence threshold, which 4applies the same acceptance criterion everywhere despite the fact that a class may be reliable in some graph regions and unreliable in others. CANE first trains a GNN on the LLM-labeled seeds under early-learning regularization (Liu et al., 2020), which discourages the network from memo-rizing noisy labels in later training stages. Letting 
+
+ˆpv ∈ ∆C−1 denote the predicted class distribution for node v, the training loss is L = LELR (ˆ pv, ˆyv).An alternative would be to incorporate the noise es-timate directly into the loss through forward correc-tion (Patrini et al., 2017), as done in DMA (Sheng et al., 2025). CANE deliberately avoids this be-cause forward correction relies on a single tran-sition matrix and therefore only uses the cluster-averaged T , discarding the local structure encoded in Tc. In practice, this not only fails to improve performance but reduces mean accuracy by 1.9pp across the five benchmarks (GCN, 5 seeds), likely because a global matrix under-corrects the most difficult clusters (Appendix A). CANE instead applies Tc where it can stay cluster-conditional, at the pseudo-label admission threshold (Figure 2, step 3 ). For an unlabeled node v in cluster kv with GNN-predicted class gv,it replaces the fixed class-level threshold τgv with a region-adjusted one: 
+
+τgv (kv) = τgv + α 1 − Tc[kv, g v, g v], (2) and admits the pseudo-label only when the predic-tion clears it. Where the LLM is locally reliable for class gv, the estimated Tc[kv, g v, g v] is high and the threshold stays near its base value, so the re-gion expands freely. Where reliability is low, the threshold tightens and admits only the most confi-dent predictions. Expansion is therefore governed not by model confidence alone but by the local trustworthiness of the supervision that produced it. 
+
+2.6 Iterative Label Correction 
+
+Expansion enlarges the label pool, but neither the labels it adds nor the seed labels it retains are guar-anteed correct. A label may be inconsistent with what the trained GNN now predicts, or unsupported by the labels around it. If left uncorrected, these errors can accumulate over successive rounds of retraining and expansion. The final stage there-fore revisits the label pool, iteratively retraining the GNN and updating labels whose supporting evidence has changed until the pool stabilizes. The key question is when a disagreement be-tween the GNN and a node’s current label should trigger a correction. A uniform rule treats all dis-agreements equally, even though their meaning varies across regions of the graph. Where the LLM is reliable, the current label is probably right and the GNN is the one to doubt; where it is noisy, both the label and the GNN trained on it may be wrong, so the disagreement is weaker evidence for a change. CANE accordingly conditions each revi-sion on the local reliability Tc (Figure 2, step 4 ). Each round retrains the GNN on the current pool and compares its prediction at every labeled node with that node’s label. If the prediction agrees with the current label, the label is kept un-changed. Otherwise, CANE updates the label to the GNN prediction only when sufficient support exists among the node’s labeled neighbors. Specifi-cally, the neighbors agreeing with the GNN predic-tion must exceed the cluster-dependent threshold: 
+
+θv = θ0 + β T c[kv, ¯yv, ¯yv], where kv is the cluster of node v and ¯yv is the current label. The threshold rises with the reliability of the current label in its region, so a label the LLM annotates dependably is overwritten only under strong neighbor support, while a label in a noisy region yields more readily. As a result, each labeled node is thus either kept 
+
+or corrected in a round. The loop continues until the labels stabilize, typically requiring only two to four rounds across all benchmarks, with the first round accounting for 83 –98% of all corrections (Appendix C). A final GNN trained on the stabi-lized label pool then produces the node predictions (Figure 2, step 5 ). 
+
+3 Experiments 
+
+3.1 Setup Datasets. We evaluate CANE on five label-free TAG benchmarks: three citation networks ( C ITE -SEER , C ORA , P UB MED (Sen et al., 2008)), a Wikipedia web graph (W IKI CS (Mernyei and Cangea, 2020)), and a publication-venue graph (DBLP (Tang et al., 2008)). These datasets span an order of magnitude in node count and from 3 to 
+
+10 classes (See Appendix Table 9 for details). 
+
+GNN backbones. We evaluate two GNN back-bones: GCN (Kipf and Welling, 2017) and GAT (Veliˇ ckovi´ c et al., 2018). Unless noted other-wise, reported numbers are means over 5 random seeds, and ground-truth labels are used only for evaluation. 5Method CITE SEER CORA PUB MED WIKI CS DBLP 
+
+GAT backbone 
+
+LLM-GNN (FP) (Chen et al., 2024b) 62 .98 ±2.62 69 .89 ±0.43 80 .63 ±0.31 65 .33 ±1.63 68 .16 ±0.88 
+
+LLM-GNN (GP) (Chen et al., 2024b) 67 .05 ±0.28 67 .72 ±1.79 78 .59 ±0.46 63 .74 ±1.38 69 .79 ±1.45 
+
+LLM-GNN (RIM) (Chen et al., 2024b) 65 .40 ±0.45 67 .41 ±0.80 77 .72 ±0.87 64 .06 ±0.33 66 .27 ±1.61 
+
+DMA (Sheng et al., 2025) 64 .89 ±1.36 69 .67 ±1.79 77 .31 ±2.22 68 .73 ±1.62 65 .13 ±4.23 
+
+LOCLE (Zhang et al., 2025) 72 .16 ±0.91 75 .23 ±1.52 81 .08 ±1.20 68 .86 ±1.44 76 .36 ±0.57 
+
+CANE (ours) 75 .11 ±0.43 75 .60 ±0.52 81 .82 ±0.80 74 .91 ±1.04 77 .28 ±0.84 
+
+GCN backbone 
+
+LLM-GNN (FP) (Chen et al., 2024b) 63 .94 ±2.92 71 .49 ±0.56 81 .82 ±0.85 67 .31 ±0.99 70 .14 ±0.86 
+
+LLM-GNN (GP) (Chen et al., 2024b) 68 .91 ±0.37 71 .06 ±0.61 80 .77 ±0.23 67 .58 ±0.65 72 .95 ±0.58 
+
+LLM-GNN (RIM) (Chen et al., 2024b) 65 .31 ±0.32 70 .36 ±0.32 78 .92 ±0.23 64 .79 ±0.62 69 .24 ±0.16 
+
+DMA (Sheng et al., 2025) 63 .36 ±0.60 67 .08 ±1.66 78 .59 ±1.59 66 .42 ±1.54 67 .65 ±2.36 
+
+LOCLE (Zhang et al., 2025) 73 .62 ±0.87 79 .81 ±0.57 81 .69 ±0.85 72 .73 ±0.82 72 .89 ±2.47 
+
+CANE (ours) 75 .92 ±0.53 75 .04 ±0.48 81 .85 ±0.65 72 .70 ±2.23 75 .66 ±0.86 
+
+Table 1: Test accuracy ( %, 5-seed mean ±std ) on five graph benchmarks. Within each backbone block, bold = best and underline = second-best per column. All methods share the same gpt-3.5-turbo annotator and query budget. 
+
+Baselines. We compare against multiple pub-lished label-free state-of-the-art methods. LLM-GNN (Chen et al., 2024b) pairs active selection with confidence post-filtering. We report its three strongest variants: FP, GP, and RIM, built on FeatProp (Wu et al., 2019), GraphPart (Ma et al., 2022), and RIM (Zhang et al., 2021). DMA (Sheng et al., 2025) estimates a class-conditional confu-sion matrix from synthetic probes and applies for-ward loss correction (Patrini et al., 2017). LO-CLE (Zhang et al., 2025) iteratively refines labels with graph rewiring but no explicit noise model. All three run under a matched protocol: the same 
+
+gpt-3.5-turbo annotator, query budget, and all-node evaluation (See Appendix G for details). 
+
+3.2 Main Results 
+
+Across both backbones, CANE beats L OCLE, the strongest baseline, on eight of the ten dataset– backbone settings and outperforms the matched-budget LLM-GNN and DMA on every one (Ta-ble 1). The comparison with DMA is the most telling, since it follows the same recipe: estimating an LLM confusion matrix and forward-correcting with it, and differs only in using a global matrix rather than a cluster-conditional one. Its wide and consistent shortfall pinpoints the source of our gain: what helps is conditioning the noise model on lo-cal regions, not merely having a noise model. A global matrix under-corrects the hardest clusters (Appendix A), so forward correction layered on top of it is not enough. The size of the improvement tracks how cluster-conditional a dataset’s noise actually is. It is largest on DBLP, W IKI CS, and C ITE SEER , where the LLM’s accuracy swings sharply between clusters of the same class and the label-free estimator stays well-calibrated, so the per-cluster correction has both the most local structure to exploit and an ac-curate map of it (Appendices A and I). P UB MED 
+
+is the opposite case: its annotations are already ac-curate and roughly uniform across the graph, leav-ing a per-cluster view little to add over a global one, and so CANE neither helps nor harms. The CORA -GCN shortfall, by contrast, is structural rather than a failure of noise handling: L OCLE gains there from Dirichlet-energy graph rewiring: most effective on small, dense, homophilous ci-tation graphs, which CANE omits, and C ORA ’s small graph leaves the estimator little reliable evi-dence per cluster. The deficit is narrow and disap-pears under GAT, where attention plays the role of rewiring, so combining local reliability with struc-tural rewiring is a natural extension. 
+
+3.3 Annotator Robustness 
+
+To test whether CANE’s advantage depends on the particular LLM annotator, we swap the GPT -3.5-
+
+TURBO annotations for GPT -4 O-MINI annotations of the same selected nodes and rerun the pipeline unchanged, with selection and every hyperparam-eter held fixed. Only one thing adapts: CANE re-estimates its label-free Tc from the new anno-tations, whose error pattern is the new annotator’s own. CANE still beats L OCLE on seven of the ten cells, and its largest margins again fall on the high-heterogeneity GAT cells - the same distribution as the main results. Absolute accuracy varies with an-6notator quality, but CANE’s relative gains remain consistent: the method captures where an annotator is reliable or unreliable, rather than adapting to the quirks of any particular annotator. 
+
+Dataset LLM-GNN LOCLE CANE 
+
+GAT backbone 
+
+CITE SEER 66 .30 ±0.38 68 .31 ±1.36 74 .28 ±0.67 
+
+CORA 67 .64 ±1.99 72 .63 ±0.84 75 .61 ±0.83 
+
+PUB MED 74 .76 ±0.89 80 .08 ±0.66 79 .52 ±2.04 
+
+WIKI CS 68 .45 ±0.99 70 .97 ±1.76 75 .13 ±1.03 
+
+DBLP 74 .50 ±0.49 76 .63 ±0.05 75 .51 ±2.05 
+
+GCN backbone 
+
+CITE SEER 67 .37 ±0.68 73 .59 ±0.05 74 .87 ±0.82 
+
+CORA 68 .97 ±0.88 76 .55 ±0.65 75 .04 ±0.48 
+
+PUB MED 77 .03 ±0.84 78 .60 ±1.18 79 .14 ±1.85 
+
+WIKI CS 70 .22 ±0.61 72 .87 ±0.14 73 .52 ±0.53 
+
+DBLP 76 .00 ±0.29 75 .09 ±1.47 75 .90 ±1.87 
+
+Table 2: Annotator robustness (GPT -4 O-MINI annota-tions; test accuracy %, mean ±std ). Bold = best per row. CANE keeps its lead under a different LLM annotator. 
+
+3.4 Ablation Study 
+
+CANE’s use of Tc rests on three choices: that a noise model helps at all, that it should be cluster -conditional, and that a label-free estimate suffices. We evaluate each choice through ablations that tog-gle one component at a time across all ten settings (Figure 3). Every ablation lowers accuracy, and the effects concentrate on the high-heterogeneity GAT 
+
+cells, exactly where local noise structure exists; the GCN cells move within seed noise. 
+
+Does Tc help at all? Removing it entirely: no expansion gate and a uniform correction threshold, lowers accuracy, and almost all of that drop falls on the GAT cells. The noise model contributes a mean-ingful, though modest, portion of the gains, while the remainder comes from the denoising framework itself (See Appendix E). 
+
+Is the benefit specifically cluster-conditional? 
+
+Collapsing Tc into a single class-conditional ma-trix removes most of that benefit. The key advan-tage comes from modeling local noise rather than simply introducing a global noise matrix. 
+
+Does the label-free estimate cost accuracy against an oracle? A Tc built from ground-truth labels performs nearly identically to our estimate, leaving little oracle headroom and supporting the 
+
+label-free claim. Overall, CANE is most effective when strong cluster-conditional structure exists and degrades gracefully when it does not. 
+
+Probe budget. The probe also serves as the train-ing seed set, so it incurs no additional cost. The key −0.6 −0.4 −0.2 0.0            
+
+> Mean Acc. Δ(pp)
+> -0.19 Oracle Tc
+> -0.14 No Tcgate
+> -0.45 Global Tc
+> -0.49 No Tc
+> Full model
+
+Figure 3: Component ablation : mean accuracy change (pp) from removing each method component. 
+
+question is how much probe support the Tc requires to become reliable. Sweeping the probe fraction 
+
+ρ (Figure 4), most datasets plateau by ρ ≈ 0.4
+
+and dip only slightly by ρ = 0 .8, as too few seeds remain for the rest of the pool. Below ρ = 0 .4,the estimate breaks down on the most challeng-ing dataset, DBLP, where the four-class Tc needs the most support. We therefore choose ρ = 0 .4,which lies just beyond this transition point across all datasets. 0.1 0.2 0.4 0.6 0.8   
+
+> probe fraction ρof the budget
+> 60
+> 65
+> 70
+> 75
+> 80
+> test accuracy (%)
+> adopted  Citeseer
+> Cora
+> PubMed
+> WikiCS
+> DBLP
+
+Figure 4: Probe-budget ablation : test accuracy vs. ρ,the share of the budget spent estimating Tc (GCN). Citeseer Cora PubMed WikiCS DBLP 
+
+> 70
+> 74
+> 78
+> 82
+> test accuracy (%)  C
+> 1.5 C
+> 2C
+> 3C
+
+Figure 5: Sensitivity to the number of clusters K
+
+∈ { C, 1.5C, 2C, 3C}.
+
+Number of clusters K. CANE partitions each graph into K = 2 C clusters to condition Tc, trad-ing finer noise resolution against fewer annotations. Sweeping K ∈ { C, 1.5C, 2C, 3C} (Figure 5), ac-curacy barely moves—the five-dataset mean stays within 0.1pp. This is because each cell’s reliability is estimated from neighbor agreement across all nodes, not just the few probe labels that fall inside it. So our choice of 2C is robust. 73.5 Budget Sensitivity 
+
+We evaluate performance across annotation bud-gets ranging from one-quarter to the full per-dataset allocation (GCN, 5 seeds; Figure 6). The two meth-ods are close at full budget, but the gap widens steadily as labels grow scarce: CANE degrades gracefully, whereas L OCLE falls off quickly and, on several datasets, collapses once it can no longer label enough nodes reliably. CANE’s advantage is therefore largest in the low-budget regime. This is the regime where reducing annotation cost is most important. As in the main results, C ORA re-mains the exception, where L OCLE is more robust to reduced budgets. Consequently, the overall ad-vantage is primarily driven by the noisier datasets. Per-dataset numbers are in Appendix Table 6. 25% 50% 75% 100%       
+
+> annotation budget (% of full)
+> 65
+> 70
+> 75
+> 80
+> test accuracy (%)
+> LoCLE
+> CANE
+> Figure 6: Budget sensitivity (GCN, 5-seed mean over the five datasets): test accuracy of CANE and L OCLE from 25% to 100% of the full annotation budget.
+
+3.6 Cost and Efficiency 
+
+In label-free graph learning, the dominant cost is the LLM API, not GNN training. All pipelines use the same annotator and query budget (Appendix G), so their annotation token cost is identical (Table 3). The budget sweep of Figure 6 therefore doubles as a cost-accuracy curve, on which CANE reaches any given accuracy at a lower token cost than L OCLE, especially in low-budget settings where labels are scarce. GNN training is a minor cost by compari-son, and there too CANE is cheaper than L OCLE, whose graph rewiring and five-stage refinement dominate its runtime.                
+
+> Method Tokens/node GNN (s) Acc. (%)
+> LLM-GNN ∼6k ∼20 70 .8
+> LOCLE ∼6k ∼50 75 .4
+> CANE ∼6k ∼25 76 .6
+> Table 3: Cost vs. accuracy at matched budget. Token-s/node : LLM annotation tokens per node. GNN (s) :training wall-clock per seed on GCN, excluding annota-tion. Acc. : mean accuracy.
+
+4 Related Work 
+
+Label-free node classification on TAGs. LLM annotation is a standard low-cost substitute for hu-man labels (Gilardi et al., 2023), first used as a GNN label source by Chen et al. (2023). Sub-sequent label-free TAG pipelines, such as LLM-GNN (Chen et al., 2024b), DMA (Sheng et al., 2025), and L OCLE (Zhang et al., 2025), model LLM reliability at class granularity at best, treating it as uniform or class-conditional. CANE instead estimates a cluster-conditional matrix and threads it through pseudo-label expansion and iterative cor-rection. A parallel line uses LLMs to enhance 
+
+features rather than annotate (He et al., 2024; Zhao et al., 2023; Wang et al., 2025; Jin et al., 2024), orthogonal to and combinable with our annotation-side contribution. 
+
+Learning with noisy labels. Outside graphs (Song et al., 2022), forward correc-tion (Patrini et al., 2017) calibrates the loss with a transition matrix, early-learning regularization (Liu et al., 2020) curbs memorization, and cluster-ability (Zhu et al., 2021) recovers a transition matrix from feature proximity without anchors, which we adapt for the first label-free per-cluster estimator. Our cluster-conditional model sits between class-conditional and instance-dependent noise (Xia et al., 2020; Cheng et al., 2022; Yao et al., 2021); it is a structural special case of the instance-dependent graph noise benchmarked by Kim et al. (2025). Extended discussion, with graph active learning and LLMs-on-graphs, is in Appendix B. 
+
+5 Conclusion 
+
+We showed, and empirically validated, that LLM annotation noise on graphs is cluster-conditional rather than class-conditional, and proposed CANE, a label-free pipeline that estimates a per-cluster transition matrix and threads it through pseudo-label expansion and iterative correction. Across various benchmarks and GNN backbones, CANE beats the previous state of the art baseline methods, with gains that track the cluster-conditional struc-ture our diagnostic measures. Cluster-conditional noise modeling is a natural next step on the preci-sion ladder beyond class-conditional approaches, and combining it with orthogonal mechanisms such as graph rewiring is the clear way forward. 86 Limitations 
+
+CANE targets substantial, locally-structured LLM noise, which limits its scope in two respects. First, it does not modify graph structure, so L OCLE performs better on the small, dense C ORA -GCN setting, though not on C ORA -GAT where atten-tion provides a similar effect. Combining the two remains an orthogonal extension. CANE’s agreement estimator assumes neighbor errors are at least partially independent. But, under spatially-coherent mislabeling, where graph and feature neighbors share the same LLM mistake, it can over-read reliability, which causes a deficit like the one in C ORA -GCN. Second, it needs real feature-space cluster structure, so on weakly-clustered graphs like ogbn-arxiv (169K nodes, 40 classes), a coverage-oriented selector such as LLM-GNN is more effective, and scaling to such settings remains ongoing work. 
+
+7 Ethical Considerations 
+
+CANE replaces human labels with LLM annota-tions, so it inherits the risks that come with any LLM-generated supervision. LLM annotation er-rors are not uniform, and on graphs they concen-trate in particular regions, which means a model trained on these labels can pick up and reinforce the annotator’s biases in the places where the annotator is weakest. This is a fairness concern when those regions correspond to under-represented classes or communities. Our method reduces the problem by estimating where annotations are unreliable and trusting them less in those regions, but it does not remove the bias, and the reliability estimate is itself approximate. We therefore encourage practitioners to check label quality on their own data, partic-ularly for minority groups, before acting on the predictions. All of our experiments use public citation and web-graph benchmarks that contain no personal or sensitive information. We note, however, that the same pipeline applied to graphs of people, such as social or communication networks, could lower the cost of profiling or surveillance, and we discour-age such uses. On the resource side, the method queries a hosted LLM on a small per-class budget and trains standard, small GNNs, so its computa-tional and environmental cost is limited, and its aim is to cut annotation effort rather than to train larger models. 
+
+References 
+
+Hongyun Cai, Vincent W Zheng, and Kevin Chen-Chuan Chang. 2017. Active learning for graph em-bedding. arXiv preprint arXiv:1705.05085 .Runjin Chen, Tong Zhao, Ajay Jaiswal, Neil Shah, and Zhangyang Wang. 2024a. Llaga: Large language and graph assistant. In International Conference on Machine Learning (ICML) .Zhikai Chen, Haitao Mao, Hang Li, Wei Jin, Hongzhi Wen, Xiaochi Wei, Shuaiqiang Wang, Dawei Yin, Wenqi Fan, Hui Liu, and Jiliang Tang. 2023. Explor-ing the potential of large language models (LLMs) in learning on graphs. SIGKDD Explorations .Zhikai Chen, Haitao Mao, Hongzhi Wen, Haoyu Han, Wei Jin, Haiyang Zhang, Hui Liu, and Jiliang Tang. 2024b. Label-free node classification on graphs with large language models (LLMs). In International Con-ference on Learning Representations (ICLR) .De Cheng, Tongliang Liu, Yixiong Ning, Nannan Wang, Bo Han, Gang Niu, Xinbo Gao, and Masashi Sugiyama. 2022. Instance-dependent label-noise learning with manifold-regularized transition matrix estimation. In IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) .Eli Chien, Wei-Cheng Chang, Cho-Jui Hsieh, Hsiang-Fu Yu, Jiong Zhang, Olgica Milenkovic, and Inder-jit S. Dhillon. 2022. Node feature extraction by self-supervised multi-scale neighborhood prediction. In 
+
+International Conference on Learning Representa-tions (ICLR) .Bosheng Ding, Chengwei Qin, Linlin Liu, Yew Ken Chia, Boyang Li, Shafiq Joty, and Lidong Bing. 2023. Is gpt-3 a good data annotator? In Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (ACL) .Fabrizio Gilardi, Meysam Alizadeh, and Maël Kubli. 2023. ChatGPT outperforms crowd workers for text-annotation tasks. Proceedings of the National Academy of Sciences (PNAS) , 120(30):e2305016120. Xiaoxin He, Xavier Bresson, Thomas Laurent, Adam Perold, Yann LeCun, and Bryan Hooi. 2024. Har-nessing explanations: LLM-to-LM interpreter for en-hanced text-attributed graph representation learning. In International Conference on Learning Representa-tions (ICLR) .Zhenyu Hou, Yufei He, Yukuo Cen, Xiao Liu, Yux-iao Dong, Evgeny Kharlamov, and Jie Tang. 2023. GraphMAE2: A decoding-enhanced masked self-supervised graph learner. In Proceedings of the ACM Web Conference (WWW) .Shengding Hu, Zheng Xiong, Meng Qu, Xingdi Yuan, Marc-Alexandre Côté, Zhiyuan Liu, and Jian Tang. 2020. Graph policy network for transferable active learning on graphs. In Advances in Neural Informa-tion Processing Systems (NeurIPS) .
+
+9Bowen Jin, Gang Liu, Chi Han, Meng Jiang, Heng Ji, and Jiawei Han. 2024. Large language models on graphs: A comprehensive survey. IEEE Transactions on Knowledge and Data Engineering (TKDE) .Suyeon Kim, SeongKu Kang, Dongwoo Kim, Jungseul Ok, and Hwanjo Yu. 2025. Delving into instance-dependent label noise in graph data: A comprehen-sive study and benchmark. In Proceedings of the ACM SIGKDD Conference on Knowledge Discovery and Data Mining (KDD) .Thomas N. Kipf and Max Welling. 2017. Semi-supervised classification with graph convolutional networks. In International Conference on Learning Representations (ICLR) .Ziming Li, Xiaoming Wu, Zehong Wang, Jiazheng Li, Yijun Tian, Jinhe Bi, Yunpu Ma, Yanfang Ye, and Chuxu Zhang. 2026. Graph is a substrate across data modalities. arXiv preprint arXiv:2601.22384 .Hao Liu, Jiarui Feng, Lecheng Kong, Ningyue Liang, Dacheng Tao, Yixin Chen, and Muhan Zhang. 2024. One for all: Towards training one graph model for all classification tasks. In International Conference on Learning Representations (ICLR) .Sheng Liu, Jonathan Niles-Weed, Narges Razavian, and Carlos Fernandez-Granda. 2020. Early-learning reg-ularization prevents memorization of noisy labels. In 
+
+Advances in Neural Information Processing Systems (NeurIPS) .Jiaqi Ma, Ziqiao Ma, Joyce Chai, and Qiaozhu Mei. 2022. Partition-based active learning for graph neural networks. arXiv preprint arXiv:2201.09391 .Péter Mernyei and C˘ at˘ alina Cangea. 2020. Wiki-CS: A Wikipedia-based benchmark for graph neural net-works. arXiv preprint arXiv:2007.02901 .Giorgio Patrini, Alessandro Rozza, Aditya Krishna Menon, Richard Nock, and Lizhen Qu. 2017. Mak-ing deep neural networks robust to label noise: A loss correction approach. In IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) .Prithviraj Sen, Galileo Namata, Mustafa Bilgic, Lise Getoor, Brian Galligher, and Tina Eliassi-Rad. 2008. Collective classification in network data. AI Maga-zine , 29(3). Zeang Sheng, Weiyang Guo, Yingxia Shao, Wentao Zhang, and Bin Cui. 2025. LLMs are noisy oracles! LLM-based noise-aware graph active learning for node classification. In Proceedings of the 31st ACM SIGKDD Conference on Knowledge Discovery and Data Mining (KDD) .Hwanjun Song, Minseok Kim, Dongmin Park, Yooju Shin, and Jae-Gil Lee. 2022. Learning from noisy labels with deep neural networks: A survey. IEEE Transactions on Neural Networks and Learning Sys-tems (TNNLS) .Jiabin Tang, Yuhao Yang, Wei Wei, Lei Shi, Suqi Cheng, Dawei Yin, and Chao Huang. 2024. Graphgpt: Graph instruction tuning for large language models. In Pro-ceedings of the 47th International ACM SIGIR Con-ference on Research and Development in Information Retrieval (SIGIR) .Jie Tang, Jing Zhang, Limin Yao, Juanzi Li, Li Zhang, and Zhong Su. 2008. ArnetMiner: Extraction and mining of academic social networks. In ACM SIGKDD International Conference on Knowledge Discovery and Data Mining (KDD) .Safal Thapaliya, Zehong Wang, Jiazheng Li, Ziming Li, Yanfang Ye, and Chuxu Zhang. 2025. Semantic refinement with llms for graph representations. arXiv preprint arXiv:2512.21106 .Petar Veliˇ ckovi´ c, Guillem Cucurull, Arantxa Casanova, Adriana Romero, Pietro Liò, and Yoshua Bengio. 2018. Graph attention networks. In International Conference on Learning Representations (ICLR) .Zehong Wang, Sidney Liu, Zheyuan Zhang, Tianyi Ma, Chuxu Zhang, and Yanfang Ye. 2025. Can LLMs convert graphs to text-attributed graphs? In Proceed-ings of the Annual Conference of the North American Chapter of the Association for Computational Lin-guistics (NAACL) .Yuexin Wu, Yichong Xu, Aarti Singh, Yiming Yang, and Artur Dubrawski. 2019. Active learning for graph neural networks via node feature propagation. arXiv preprint arXiv:1910.07567 .Xiaobo Xia, Tongliang Liu, Bo Han, Nannan Wang, Mingming Gong, Haifeng Liu, Gang Niu, Dacheng Tao, and Masashi Sugiyama. 2020. Part-dependent label noise: Towards instance-dependent label noise. In Advances in Neural Information Processing Sys-tems (NeurIPS) .Hao Yan, Chaozhuo Li, Ruosong Long, Chao Yan, Jianan Zhao, Wenwen Zhuang, Jun Yin, Peiyan Zhang, Weihao Han, Hao Sun, and 1 others. 2023. A comprehensive study on text-attributed graphs: Benchmarking and rethinking. Advances in Neural Information Processing Systems , 36:17238–17264. Yu Yao, Tongliang Liu, Mingming Gong, Bo Han, Gang Niu, and Kun Zhang. 2021. Instance-dependent label-noise learning under a structural causal model. In 
+
+Advances in Neural Information Processing Systems (NeurIPS) .Ruosong Ye, Caiqi Zhang, Runhui Wang, Shuyuan Xu, and Yongfeng Zhang. 2024. Language is all a graph needs. In Findings of the Association for Computa-tional Linguistics: EACL .Chuxu Zhang, Dongjin Song, Chao Huang, Ananthram Swami, and Nitesh V Chawla. 2019. Heterogeneous graph neural network. In Proceedings of the 25th ACM SIGKDD international conference on knowl-edge discovery & data mining , pages 793–803. 
+
+10 Taiyan Zhang, Renchi Yang, Yurui Lai, Mingyu Yan, Xi-aochun Ye, and Dongrui Fan. 2025. Leveraging large language models for effective label-free node clas-sification in text-attributed graphs. In Proceedings of the 48th International ACM SIGIR Conference on Research and Development in Information Retrieval (SIGIR) .Wentao Zhang, Yexin Wang, Zhenbang You, Meng Cao, Ping Huang, Jiulong Shan, Zhi Yang, and Bin Cui. 2021. RIM: Reliable influence-based active learn-ing on graphs. In Advances in Neural Information Processing Systems (NeurIPS) .Jianan Zhao, Meng Qu, Chaozhuo Li, Hao Yan, Qian Liu, Rui Li, Xing Xie, and Jian Tang. 2023. Learning on large-scale text-attributed graphs via variational inference. In International Conference on Learning Representations (ICLR) .Zhaowei Zhu, Yiwen Song, and Yang Liu. 2021. Clus-terability as an alternative to anchor points when learning with noisy labels. In International Confer-ence on Machine Learning (ICML) .
+
+A Cluster-Conditional Noise Diagnostic: Full Setup and Extended Findings 
+
+This appendix provides the full cluster-conditional noise diagnostic that motivates CANE and whose headline is stated in the Introduction: how the clus-ters are formed, the three statistics we report, the construction of the synthetic null control, and the extended per-dataset evidence. 
+
+A.1 Clustering and per-cluster accuracy 
+
+For each dataset, we take the same LLM annota-tions that the downstream pipeline uses (§3), set 
+
+K = 2 C for C classes, and run K-means on the embeddings of a self-supervised graph encoder (GraphMAE2 (Hou et al., 2023), pretrained on the full unlabeled graph by masked-feature reconstruc-tion). The choice K = 2 C is the same one used by our method to estimate Tc (§2); the diagnostic is therefore a direct readout of the noise model the method commits to. For every cluster c and true class i we estimate Tc[c, i, i ], the probability the LLM is correct on class-i nodes that fall in clus-ter c, using all (cluster, class) cells with at least 20 ground-truth-labelled examples to avoid small-sample artefacts. 
+
+A.2 Three statistics for shape 
+
+We summarise per-cluster accuracy with three num-bers: • Tii , the global per-class LLM accuracy—the sin-gle number a class-conditional matrix would as-sign to a class. We report it as the per-class (macro) mean over classes; this differs from the class-frequency-weighted overall accuracy in Table 9 on the class-imbalanced datasets (e.g. PUB MED : 0.76 macro vs. 88% overall). • ¯∆, the within-class accuracy gap (max minus min of Tc[c, i, i ] across clusters, averaged over classes). ¯∆ is an intuitive raw range, but it in-flates when clusters carry little support; we treat it as a rough scale and rely on ¯F for significance. • ¯F , the one-way ANOVA F-statistic for per-cluster accuracy, averaged over classes. ¯F
+
+asks whether per-cluster accuracy varies across clusters by more than the within-cluster sam-pling noise would explain, so a strictly class-conditional noise model predicts ¯F ≈ 1.The combined p in Table 4 is Fisher’s combined 
+
+p-value across per-class ANOVA tests. 
+
+A.3 Diagnostic results 
+
+Table 4 reports the three statistics across the five benchmarks. The class-conditional null is rejected on every one, with ¯F climbing from 14 .8 on C ORA 
+
+to 125 on DBLP (combined p < 10 −70 ), whereas the synthetic control of §A.4 sits at ¯F = 1.1
+
+(p = 0 .19 ); the structure therefore belongs to the LLM, not to the diagnostic. Figure 7 sharpens the point: a global matrix systematically over -predicts accuracy on the hardest clusters, leaving a global correction to under-correct precisely the nodes that need it most. PUB MED is the lone near-class-conditional exception: although its ¯F = 25 .7 re-mains significant—it is by far the largest graph ( ∼
+
+20 K nodes), so even sub-percentage per-cluster dif-ferences clear the F-test—its effect size ¯∆ = 0 .14 
+
+is several times smaller than on the other bench-marks, leaving a per-cluster view little to add over a global one. This later marks where CANE does and does not help (§3). 
+
+A.4 Synthetic null control 
+
+A correct diagnostic must not invent cluster struc-ture where none exists. To check this, we con-struct a synthetic benchmark with class-conditional noise by construction : starting from a held-out TAG that we do not otherwise use in the paper, we replace each node’s true label with a draw from a hand-set per-class confusion matrix (diagonal 
+
+0.62 , off-diagonals uniform), so the noise is class-conditional by construction at the population level. We then run the diagnostic above. Because the 11 Citeseer Cora PubMed WikiCS DBLP           
+
+> −0.6
+> −0.4
+> −0.2
+> 0.0
+> 0.2
+> 0.4
+> per-cluster acc.
+> − global-T pred. ̄
+> F=26 ̄F=15 ̄F=26 ̄F=34 ̄F=125
+> reliable cluster ( > 0 )hard cluster ( < 0 )median 5--95 pct. class-cond. prediction
+
+Figure 7: Per-cell deviation of true per-cluster LLM accuracy from what a global T predicts ( Tc[k, i, i ] − T [i, i ];well-supported cells; bars 5–95 percentile, ticks medians). A class-conditional model puts every point at zero (red dashed line). The near-class-conditional P UB MED stays at zero; the other four benchmarks scatter by tens of points and skew negative—a global correction under -corrects the hard clusters.                               
+
+> Dataset Tii ¯∆¯Fcomb. p
+> CITE SEER 0.65 0.71 25.8 <10 −70
+> CORA 0.59 0.55 14.8 <10 −70
+> PUB MED 0.76 0.14 25.7 <10 −70
+> WIKI CS 0.68 0.65 34.2 <10 −70
+> DBLP 0.71 0.62 125.3 <10 −70
+
+Table 4: The class-conditional null is rejected on every benchmark ( ¯F ≫ 1, p < 10 −70 ). Tii : global per-class LLM accuracy. ¯∆: within-class max–min accuracy gap across clusters (raw scale). Synthetic class-conditional null control returns ¯F = 1 .1 (p = 0 .19 ), confirming the diagnostic itself does not manufacture cluster structure (§A.4). 
+
+noise is class-conditional, the F-test should not re-ject the null regardless of how the nodes happen to cluster; any ¯F ≫ 1 would indicate a methodolog-ical artefact rather than real noise structure. We observe ¯F = 1 .1 (p = 0 .19 ), confirming that the diagnostic does not manufacture cluster structure. 
+
+A.5 Extended findings A global matrix mispredicts per-cluster accu-racy by tens of points. On C ORA , C ITE SEER ,WIKI CS and DBLP the gap between true per-cluster accuracy and the global prediction routinely exceeds ±0.2 and reaches ±0.4. On DBLP a sin-gle true class is annotated at 21 .6% accuracy in its hardest cluster and 81 .0% in its easiest, against a global prediction of 64 .7% . The gap is also skewed :a global T systematically over-predicts accuracy on the hard clusters, so a global correction under-corrects exactly the nodes that need it most. 
+
+A global matrix is the average of structurally different matrices. Figure 8 illustrates this on DBLP: three per-cluster matrices that differ not only in their diagonal level but in which off-diagonal confusions dominate; the global T is a blurred average that fits none of them. 
+
+The magnitude varies by dataset. DBLP and WIKI CS have the strongest cluster structure ( ¯F =125 and 34 ); C ORA the weakest among the five ( ¯F = 14 .8). This variation predicts where our correction helps most (§3). 
+
+The clusterability assumption holds empirically. 
+
+The label-free estimator of Eq. 1 rests on one as-sumption: that clusters are semantically coherent, so that neighbour agreement within a cluster re-flects the reliability of its dominant true class. We verify both halves directly. The GraphMAE2 clus-ters are coherent: their size-weighted single-class purity is 63 –80% across the five benchmarks (well above the 1/C chance level), and the mode is a good proxy: the most frequent LLM label coincides with the cluster’s dominant true class in 83 –88% 
+
+of clusters on P UB MED , W IKI CS and DBLP, and in 75 –79% on C ITE SEER and C ORA (see Table 8). The shrink-to-uniform back-off for low-purity clus-ters (§2.4) is precisely what guards the minority of clusters where the proxy is unreliable. 
+
+B Extended Related Work 
+
+This appendix expands the condensed discussion of Section 4. 12 DB DM AI IR           
+
+> LLM label
+> DB
+> DM
+> AI
+> IR
+> true class
+> Global T
+> (avg over clusters)
+> DB DM AI IR
+> DB
+> DM
+> AI
+> IR
+> cluster 5
+> mean diag = 0.44
+> DB DM AI IR
+> DB
+> DM
+> AI
+> IR
+> cluster 4
+> mean diag = 0.60
+> DB DM AI IR
+> DB
+> DM
+> AI
+> IR
+> cluster 0
+> mean diag = 0.68
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> P(̂ y=j ∣ y ⋆ =i, cluster)
+
+Figure 8: Extended diagnostic. (a) Per-cell deviation across six benchmarks including ogbn-arxiv and the synthetic control (superseded by the 5-dataset version in Figure 7); (b) DBLP: the global matrix T is a blurred average of three structurally different per-cluster matrices Tc.
+
+Label-free node classification on TAGs. LLMs now annotate data at near-human quality across many NLP tasks (Gilardi et al., 2023; Ding et al., 2023), which Chen et al. (2023) first turned into low-budget supervision for GNNs. The label-free pipelines that followed differ mainly in how they treat the resulting noise: LLM-GNN assumes it is roughly uniform and relies on confidence-aware selection and post-filtering (Chen et al., 2024b); DMA estimates a class-conditional confusion ma-trix from synthetic probes and applies forward cor-rection (Sheng et al., 2025; Patrini et al., 2017); and L OCLE forgoes an explicit noise model for a five-stage iterative refinement (subspace selection, consistency filtering, re-annotation, rewiring, rank-and-correct) (Zhang et al., 2025). CANE replaces the class-level noise model these systems use, ex-plicitly or implicitly, with a cluster-conditional one and threads it through every stage. 
+
+Graph active learning. Since the budget is small relative to the graph, which nodes to label is a first-order decision. Classical selectors mix struc-tural signals (centrality, feature propagation) with model uncertainty and learned policies (Cai et al., 2017; Wu et al., 2019; Hu et al., 2020), while later work targets the noisy and label-free regimes via reliability- and influence-weighted, partition-based, and confidence-filtered selection (Zhang et al., 2021; Ma et al., 2022; Chen et al., 2024b). We keep LOCLE’s subspace-clustering selection (Zhang et al., 2025) as the representativeness backbone (§2.3); reliability is estimated locally only after 
+
+annotation and is applied downstream rather than to candidate scoring, since no labels exist before querying. 
+
+Learning with noisy labels. Outside graphs, training under label noise is well studied (Song et al., 2022): CANE reuses two standard tools, forward correction (Patrini et al., 2017) and early-learning regularisation (Liu et al., 2020), and adapts clusterability (Zhu et al., 2021)—which recovers a transition matrix from feature proximity without anchor points—to obtain the first label-free per-cluster estimator. Between class-conditional and fully instance-dependent noise (Xia et al., 2020; Cheng et al., 2022; Yao et al., 2021), our cluster-conditional model is the special case in which the instance dependence (benchmarked on graphs by Kim et al. (2025)) is organised by feature-space clusters. 
+
+LLMs on graphs: enhancers and predictors. 
+
+Beyond annotation, LLMs are coupled with graph learning either as enhancers , enriching node fea-tures for a downstream GNN through graph-aware encoders, free-text explanations, joint training, or synthesised descriptions (Chien et al., 2022; He et al., 2024; Zhao et al., 2023; Wang et al., 2025; Thapaliya et al., 2025), or as predictors , answer-ing directly from a verbalised graph via instruction tuning, token-space projection, or cross-domain pretraining (Ye et al., 2024; Tang et al., 2024; Chen et al., 2024a; Liu et al., 2024); Jin et al. (2024) sur-vey both. CANE works in the annotator regime and is orthogonal to these: a future combination could supply the embeddings it clusters on with LLM-enhanced features, or extend the cluster-conditional estimator to heterogeneous graphs with typed, mul-timodal node content (Zhang et al., 2019) and to settings where graph structure is shared across data modalities and tasks (Li et al., 2026). 13 C Iterative Correction Convergence 
+
+The Tc-gated iterative label correction of §2.6 re-trains the GNN and revises the label pool until no label changes. Table 5 reports its behaviour across all ten cells, read from the per-round correction logs of the main CANE runs (5-seed means; no extra experiment). Three properties hold uniformly. 
+
+(i) It converges quickly : every cell stops within 
+
+2.4–4.0 rounds. (ii) Corrections decay monotoni-cally : the first round accounts for 83 –98% of all label changes, the second round for a handful, and rounds three onward for almost none, there is no oscillation, and the “no label changes” stopping rule is reached fast. (iii) Correction volume tracks dataset noise : P UB MED , whose LLM labels are the cleanest ( ≈ 88% accurate), changes the fewest labels ( ≈ 12 ), whereas the noisier C ITE SEER and WIKI CS change the most ( ≈ 48 –52 ), consistent with the noise diagnostic of Appendix A.                                       
+
+> Metric Cite. Cora PubM. Wiki DBLP
+> GAT
+> Rounds 4.0 3.0 2.4 3.4 3.6 Labels corr. 41.0 29.4 12.4 37.2 36.2 % in round 1 83 95 97 85 91
+> GCN
+> Rounds 3.8 3.0 2.4 3.2 2.6 Labels corr. 47.8 28.8 12.2 52.0 33.8 % in round 1 87 94 97 95 98
+> Table 5: Convergence of Tc-ILC (5-seed means). The correction loop stops in at most four rounds on every cell, the first round accounts for 83 –98% of all correc-tions, and the number of labels corrected tracks dataset noise (fewest on the cleanest dataset, P UB MED ).
+
+D Per-Dataset Budget Sensitivity 
+
+Table 6 gives the per-dataset numbers behind the aggregate budget curve of Figure 6. The full budget is B = 50 C (50 queries per class for a C-class graph); the 25 /50 /75 /100% levels in the table set the per-class budget to 13 , 25 , 37 , and 50 queries respectively. At each level we re-select and re-annotate from scratch and run both methods with all other settings fixed, on GCN over 5 seeds. 
+
+E Ablations: Training and Clustering 
+
+Table 7 reports two ablations, each changing a 
+
+single setting of the locked CANE pipeline and re-running it for 3 seeds; all other hyperparame-ters, the annotation cache, and the budget are held at their main-experiment values. (a) ELR: we switch off the early-learning-regularization term (ELR; (Liu et al., 2020)) and change nothing else. Among the noise-robust training compo-nents it is the load-bearing one on GCN—removing it costs 0.34 pp on average, carrying the noisier text graphs (C ITE SEER −1.95 , P UB MED −1.22 ,DBLP −1.30 ); on GAT it is roughly neutral, and WIKI CS prefers no ELR on both backbones, con-sistent with its lower label noise. (b) Cluster-ing: we replace the default partition— K = 2 CK-means on the GraphMAE2 embeddings—with 
+
+K-means on raw node features (all five datasets) or spectral clustering of the same embeddings (run on the two representative graphs, sparse C ORA and dense W IKI CS), and re-estimate Tc on each new partition before re-running the pipeline. Accuracy moves by at most 0.8pp, so the method is insensi-tive to the partitioner—the cluster-conditional ef-fect is a property of the data, not of one clustering choice (cf. the null control of Appendix A.4). 
+
+F Clusterability: Quantitative Validation 
+
+The label-free Tc estimator rests on two assump-tions: that GraphMAE2 clusters are class-coherent, and that the most frequent LLM label in a clus-ter proxies its dominant true class. Table 8 vali-dates both. All three quantities are measured on the same K = 2 C GraphMAE2 partition the method uses, with ground-truth labels read only to score them (the estimator never sees them). Clusters are 63 –80% single-class pure on average, a ma-jority are predominantly one class, and the LLM mode equals the dominant true class in 75 –88% of clusters, confirming that the GraphMAE2 partition carries genuine class structure for the estimator to exploit. 
+
+G Experimental Setup Details 
+
+This appendix expands the condensed setup of §3.1. 
+
+LLM annotator. The annotator is 
+
+gpt-3.5-turbo , queried with n = 3 self-consistency and chain-of-thought prompting under the same prompt template used by L OCLE and LLM-GNN (Chen et al., 2024b). At ∼ 2,000 
+
+tokens per query, the per-query token cost is identical across all three pipelines. 
+
+G.1 Annotation Prompt 
+
+For full reproducibility we use the same zero-shot annotation prompt as L OCLE (Zhang et al., 2025) 14 Method CiteSeer Cora PubMed WikiCS DBLP 
+
+25% budget 
+
+LOCLE 69 .30 ±2.02 72 .73 ±1.41 68 .69 ±3.66 64 .01 ±2.30 62 .43 ±3.42 
+
+CANE 73 .45 ±1.31 67 .16 ±3.08 79 .59 ±1.78 71 .07 ±2.50 69 .36 ±3.79 
+
+50% budget 
+
+LOCLE 73 .78 ±0.33 75 .31 ±1.29 77 .30 ±1.17 69 .06 ±0.13 62 .59 ±4.70 
+
+CANE 74 .81 ±0.55 74 .32 ±0.27 81 .50 ±0.70 71 .26 ±1.48 74 .23 ±1.93 
+
+75% budget 
+
+LOCLE 74 .48 ±0.59 77 .17 ±0.89 80 .77 ±0.52 74 .11 ±0.38 72 .21 ±1.83 
+
+CANE 75 .82 ±0.82 74 .40 ±1.01 82 .00 ±0.39 73 .30 ±0.47 76 .17 ±1.05 
+
+100% budget 
+
+LOCLE 73 .62 ±0.87 79 .81 ±0.57 81 .69 ±0.85 72 .73 ±0.82 72 .89 ±2.47 
+
+CANE 75 .92 ±0.53 75 .04 ±0.48 81 .85 ±0.65 72 .70 ±2.23 75 .66 ±0.86 
+
+Table 6: Per-dataset budget sensitivity (test accuracy %, GCN, 5-seed mean ±std ) at 25 /50 /75 /100% of each method’s full annotation budget. Bold marks the better of the two methods in each cell. The aggregate is plotted in Figure 6. 
+
+CITE SEER CORA PUB MED WIKI CS DBLP 
+
+(a) Early-learning regularization ( ∆ = −ELR − full CANE )
+
+CANE (GAT) 75 .09 ±0.77 75 .68 ±0.47 80 .87 ±0.69 72 .84 ±2.70 75 .42 ±3.15 
+
+−ELR (GAT) 74 .80 ±0.69 75 .04 ±0.55 81 .50 ±0.83 75 .99 ±2.03 75 .09 ±1.24 
+
+∆ −0.29 −0.64 +0 .63 +3 .15 −0.33 
+
+CANE (GCN) 76 .27 ±0.30 75 .30 ±0.35 82 .36 ±0.67 73 .67 ±0.30 75 .86 ±0.64 
+
+−ELR (GCN) 74 .33 ±0.94 75 .23 ±0.94 81 .14 ±0.83 76 .49 ±2.02 74 .56 ±1.97 
+
+∆ −1.95 −0.06 −1.22 +2 .83 −1.30 
+
+(b) Clustering procedure (GCN) 
+
+GraphMAE2 ( K-means) 76 .27 ±0.30 75 .30 ±0.35 82 .36 ±0.67 73 .67 ±0.30 75 .86 ±0.64 
+
+Raw feat. ( K-means) 76 .22 ±0.59 75 .37 ±0.15 81 .79 ±0.15 74 .50 ±0.86 76 .00 ±0.44 
+
+Spectral (GraphMAE2) — 75 .65 ±0.25 — 73 .84 ±0.20 —
+
+Table 7: Ablations (test accuracy %, 3-seed mean ±std ). (a) Removing early-learning regularization ( ∆ negative =
+
+ELR helps; ∆ on means). (b) Swapping the clustering procedure (GCN; spectral on the two representative graphs). 
+
+Dataset K Purity %Maj. Mode =T
+
+CITE SEER 12 0.70 92% 75% CORA 14 0.80 86% 79% PUB MED 6 0.63 83% 83% WIKI CS 20 0.70 75% 85% DBLP 8 0.78 100% 88% 
+
+Table 8: Clusterability validation. Per-cluster mean dominant-true-class fraction (Purity); fraction of clus-ters that are majority single-class (%Maj.); fraction whose most-frequent LLM label equals the dominant true class (Mode =T). Ground truth used for measure-ment only. 
+
+and LLM-GNN (Chen et al., 2024b); CANE in-troduces no changes to the annotation prompt. The template (Figure 9) prepends a fixed task instruc-tion, lists the dataset’s category names, supplies the target node’s text (paper title +abstract for the cita-tion graphs, article text for WikiCS), and requests a single answer with a self-reported confidence in a fixed parseable format. Each node is queried 
+
+Dataset #Nodes #Edges #Cls Deg. Hom. LLM 
+
+CITE SEER 3,186 4,277 6 2.7 0.79 65 CORA 2,708 5,429 7 4.0 0.81 68 PUB MED 19 ,717 44 ,335 3 4.5 0.80 88 WIKI CS 11 ,701 215 ,863 10 36.9 0.66 67 DBLP 14 ,376 215 ,663 4 30.0 0.67 69 
+
+Table 9: Dataset statistics: number of nodes, edges, classes (#Cls), average degree (Deg.), edge homophily (Hom.), and raw GPT -3.5 LLM annotation accuracy (LLM, %). 
+
+with chain-of-thought reasoning and n = 3 self-consistency sampling, and the majority-voted an-swer is taken as the LLM label, matching L OCLE exactly. The category list is the only per-dataset component; we show the Cora instantiation in Fig-ure 9 and substitute each dataset’s own label set otherwise. 
+
+Annotation budget. Each dataset’s annotation budget matches L OCLE’s released per-dataset bud-get. Because both the annotator and the budget 15 Label-Free Annotation Prompt           
+
+> Task instruction:
+> You are a model that is especially good at classifying a paper’s category. I will first give you all the possible categories and their explanation. Please answer the following question: What is the category of this paper?
+> Categories (Cora shown; replaced per dataset by its own label set):
+> [rule_learning, neural_networks, case_based, genetic_algorithms, theory, reinforcement_learning, probabilistic_methods]
+> Target paper:
+> {title and abstract of the node }
+> Answer format:
+> Analyze the question step by step. Output your answer together with a confidence ranging from 0to 100 , as a single-element list of Python dicts, and output only the one answer you think is most likely:
+> [{"answer": <answer>, "confidence": <confidence>}]
+> Sampling: queried with chain-of-thought reasoning and n= 3 self-consistency; the majority-voted label is kept.
+
+Figure 9: Zero-shot LLM annotation prompt used to obtain node pseudo-labels. CANE reuses the L OCLE/LLM-GNN template unchanged; only the category list varies across datasets. The boxed line is the required machine-parseable answer format. 
+
+match, total token usage at matched budget is the same for CANE and the baselines. 
+
+Preprocessing. We adopt L OCLE’s preprocess-ing unchanged, including its SentenceBERT node features and graph construction, so the inputs are identical across the compared pipelines. 
+
+Hyperparameter selection. CANE’s single tun-able knob, the self-training gate strength α of Eq. 2, is selected by 3-seed cross-validation per (back-bone, dataset) on a held-out subset of the LLM annotation cache. All remaining hyperparameters are dataset-agnostic and listed in Appendix H. 
+
+H Implementation Details 
+
+Beyond the single gate strength α (Eq. 2), CANE uses one fixed configuration shared across all five datasets and both backbones, with no per-dataset or per-backbone tuning. 
+
+GNN backbone. For a controlled comparison we keep the backbone identical to our baselines (Chen et al., 2024b; Zhang et al., 2025): a two-layer, 64 -hidden-unit GCN or GAT trained for 300 epochs with Adam (learning rate 3×10 −3, weight decay 
+
+5 × 10 −4, dropout 0.7). These are the published baseline settings rather than values we tuned, so the backbone is the same for all compared methods. 
+
+Protocol. Following the LoCLE annotation pro-tocol, the budget is B = 50 C queries for a C-class graph, and the noise estimator partitions each graph into K = 2 C GraphMAE2 (Hou et al., 2023) clus-ters, a parameter-free rule tied to the class count rather than a tuned value. 
+
+Noise-robust components. The robust-training and label-denoising modules (early-learning regu-larization (Liu et al., 2020), edge dropout, GMM-based loss filtering, and the neighbour-agreement correction step) are run with the default settings from their original formulations; we adopt them un-changed. The expansion and correction loops use conservative round-number acceptance thresholds and a fixed number of iterations shared across all datasets, not selected per benchmark. The ablations in Appendix E confirm the method is insensitive to these choices, and the only dataset-specific input is the label-free Tc matrix estimated from each graph. 16 I When and Why CANE Helps: An Estimator-Coverage Analysis 
+
+To understand why CANE helps on some (dataset, backbone) cells and not others, we examine the estimated noise model itself. For each dataset we compare the deployed transition tensor Tc ∈
+
+[0 , 1] K×C×C (its row Tc[k, i, ·] is the estimated dis-tribution of LLM labels for true class i in cluster k)with the GraphMAE2 cluster assignments and the ground-truth labels; the latter are used only to eval-uate the estimate, never by the method. Table 10 relates the quality of this estimate to the per-cell gain over L OCLE. 
+
+Setup. This is a post-hoc analysis of the deployed 
+
+artifacts from the main experiment, not a new run. We use the same Tc that produces the results in Ta-ble 1: the label-free cross-modality agreement esti-mator of Eq. 1, fit once per dataset on the GPT -3.5- 
+
+> TURBO
+
+annotations of the active-selected nodes, over the K = 2 C GraphMAE2 clusters (the same partition used at training time). No ground-truth labels enter Tc; they are loaded only to measure 
+
+the quantities below, exactly as in Appendix F. We report four measurements per dataset. (i) LLM acc. : accuracy of the raw LLM annotations against ground truth (Table 9). (ii) low-support : the frac-tion of the K × C (cluster, class) cells with too little probe evidence to estimate cell-specific reli-ability, so they fall back to the cluster- and then global-mean agreement (§2.4) and carry no cell-specific signal. (iii) r: the Pearson correlation, taken across clusters with at least five nodes, be-tween the estimated self-trust 1
+
+> C
+
+P 
+
+> i
+
+Tc[k, i, i ] and the ground-truth cluster purity (dominant-true-class fraction). (iv) ∆GCN /∆GAT : the 5-seed-mean accu-racy gain over L OCLE from Table 1. The cluster-level examples cited below are read directly off the deployed Tc and the GraphMAE2 partition, with cluster sizes and class compositions measured from ground truth. 
+
+Where the estimate is informative. The gains are largest on C ITE SEER , W IKI CS, and DBLP (up to +6 .05 ), and on these datasets the estimate is both well-supported and well-calibrated: every cluster ×class cell carries direct probe evidence ( 0% 
+
+low-support), and the estimated self-trust correlates with true cluster cleanliness ( r = 0 .73 /0.45 /0.43 ,respectively). The individual cells also behave as intended. In W IKI CS, cluster 16 (388 nodes, dom-inant true class 9, only 43% pure) is assigned a                                  
+
+> Dataset LLM low-supp. r∆GCN ∆GAT
+> acc.% %CITE SEER 65 0.0 0.73 +2 .30 +2 .95
+> CORA 68 28.6 0.41 −4.77 +0 .37
+> PUB MED 88 33.3 0.70 +0 .16 +0 .74
+> WIKI CS 67 0.0 0.45 −0.03 +6 .05
+> DBLP 69 0.0 0.43 +2 .77 +0 .92
+> Table 10: Estimator coverage vs. per-cell gain.
+> Columns: raw LLM accuracy; low-support; per-cluster calibration r; and gain over L OCLE by backbone. Defi-nitions in the text.
+
+low self-trust of Tc[16 , 9, 9] = 0 .31 with the re-maining probability spread over five classes, so expansion into this region is tightened and its la-bels are revisited more often. In C ITE SEER , clus-ter 4 (206 nodes) captures a specific confusion, 
+
+Tc[4 , 0, 4] = 0 .20 (class 0 labelled as 4), which the ground-truth composition corroborates ( 109 class-
+
+0 and 56 class-4 nodes lie together). DBLP cluster 
+
+4 shows the value of conditioning on cluster and class jointly: although the cluster is mixed ( 52% 
+
+pure), the estimate keeps class-2 trust high ( 0.74 ), so the reliable labels within it are retained even where the surrounding region is noisy. 
+
+Where the estimate is too sparse (C ORA ). The single clear loss, C ORA -GCN ( −4.77 ), coincides with the sparsest estimate. C ORA is the most frag-mented of the five settings: the smallest graph is di-vided into the finest grid ( K = 14 clusters × C = 7 
+
+classes) under the smallest budget ( 50 C = 350 
+
+queries), so many cells receive little or no probe ev-idence: 28 .6% carry no cell-specific signal and re-vert to the coarse mean, and over half rest on fewer than three annotations. Cluster 11 (281 nodes) is representative, as its class-4 cell draws no probe an-notations and falls back to the cluster mean, adding nothing beyond a global estimate. With roughly a quarter of the noise model uninformative, CANE has little local structure to exploit, whereas L O-CLE’s iterative confident learning and propaga-tion are well suited to a graph this small and ho-mophilous ( h = 0 .81 ). The shortfall is specific to GCN; under GAT, whose attention discounts incon-sistent edges, the same configuration recovers to 
+
++0 .37 .
+
+Where the estimate has little to add (P UB MED ). 
+
+PUB MED sits at the opposite extreme. Its LLM labels are already 88% accurate, yet the estimate is both sparse ( 33% low-support) and conserva-tive: its informative rows carry the lowest mean 17 self-trust of any dataset ( 0.575 ), so it somewhat over-states the noise on an essentially clean graph. CANE responds cautiously, correcting only about 
+
+12 labels per run (Table 5) and applying no for-ward correction, so it changes little either way (+0 .16 / + 0 .74 ). This is the appropriate outcome when a local estimate adds little to a global one. Taken together, C ORA (too fragmented for a reli-able local estimate) and P UB MED (clean enough that a local estimate has little to add) delimit the range in which CANE operates: it improves accu-racy where the label-free estimator provides dense, well-calibrated cluster signal, and neither helps nor harms where it does not. 
+
+Robustness of the agreement signal to correlated mislabeling. Because homophilous graph neigh-bours and feature-space neighbours can share the 
+
+same LLM mistake, a mislabeled node might still attract high agreement and be scored reliable. We test this directly: on each probe we split seeds by whether the LLM label matches ground truth (measurement only) and compare mean agreement (Table 11). The signal stays discriminative on every benchmark: correctly-labeled seeds attract 
+
+14 –54 pp more neighbour agreement than misla-beled ones (C ITE SEER 79 vs. 25 , C ORA 69 vs. 43 ,PUB MED 87 vs. 67 , W IKI CS 48 vs. 21 , DBLP 55 
+
+vs. 41 ), so correlated mislabeling does not invert the estimate. Its residual effect is nonetheless real and largest where noise is spatially coherent . On CORA , whole clusters are mislabeled the same way: a cluster that is 96% true class-1 is annotated 0% 
+
+correctly, yet its members agree with their neigh-bours almost unanimously, so Tc over-reads reli-ability there. This is reflected in C ORA ’s lowest per-cluster calibration ( r = 0 .41 , Table 10) and in the C ORA -GCN deficit.                        
+
+> Dataset agree |correct agree |wrong gap
+> CITE SEER 78 .624 .7+53 .9
+> CORA 68 .642 .7+25 .9
+> PUB MED 86 .866 .7+20 .2
+> WIKI CS 47 .720 .6+27 .1
+> DBLP 54 .841 .1+13 .7
+> Table 11: Agreement signal vs. correlated mislabeling.
+> Mean cross-modality agreement ( %) on probe seeds with correct vs. wrong LLM labels (ground truth used for measurement only; GCN).
+
+18

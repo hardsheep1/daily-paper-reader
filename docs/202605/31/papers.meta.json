@@ -1,0 +1,24 @@
+{
+  "label": "2026-05-31",
+  "date": "2026-05-31",
+  "generated_at": "2026-05-31T20:40:39",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "202605/31/2605.27913v1-where-llm-annotators-fail-label-free-learning-on-graphs-with-llms",
+      "section": "quick",
+      "title_en": "Where LLM Annotators Fail: Label-Free Learning on Graphs with LLMs",
+      "authors": "Safal Thapaliya, Jiatan Huang, Chuxu Zhang",
+      "date": "2026-05-27",
+      "pdf": "https://arxiv.org/pdf/2605.27913v1",
+      "score": "7.0",
+      "evidence": "利用聚类分析大模型标注错误",
+      "tldr": "图节点分类依赖昂贵标签，LLM可低成本标注但噪声大。现有方法将噪声视为全局或类条件，忽略区域依赖性。提出CANE，估计簇条件的LLM可靠性，无需真实标签，决定伪标签信任与纠正。在多个基准上超越现有方法，尤其簇噪声强时提升显著。贡献在于揭示区域依赖性，提供更精准的伪标签筛选策略。",
+      "tags": "query:ac",
+      "abstract_en": "Node classification on graphs often requires labeled nodes, yet obtaining labels at graph scale is expensive. When node attributes contain semantic content, such as paper abstracts, web pages, or product descriptions, large language models (LLMs) can provide low-cost supervision by annotating a small subset of nodes. However, these LLM-generated labels are noisy, and existing label-free graph learning methods usually treat this noise as either global or class-conditional. We find that LLM annotation errors are not only class-dependent but also region-dependent: within the same class, reliability can vary sharply across feature-space clusters. In light of this, we propose Cluster-Aware Noise Estimation (CANE), a label-free learning framework that estimates cluster-conditional LLM reliability without ground truth labels, and uses this estimate to decide which pseudo-labels to trust, and which labels to correct. Across various graph benchmarks and GNN backbones, CANE improves over the strongest label-free baselines, with the largest gains on datasets exhibiting stronger cluster-conditional noise.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}
