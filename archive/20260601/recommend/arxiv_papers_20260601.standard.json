@@ -1,0 +1,173 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-06-01T22:08:30.428811+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 0,
+    "deep_cap": 6,
+    "deep_selected": 0,
+    "quick_candidates": 4,
+    "quick_skim_target": 11,
+    "quick_selected": 4
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2605.25188v1",
+      "source": "arxiv",
+      "title": "DarkForest: Less Talk, Higher Accuracy for Multi-Agent LLMs",
+      "abstract": "Multi-agent LLM systems improve reasoning by combining outputs from multiple agents, but interaction-heavy methods can introduce error propagation and high communication overhead. When agents exchange raw responses or reasoning traces, incorrect intermediate reasoning may be adopted and amplified, leading to confident but wrong consensus; multi-round communication also increases token consumption, latency, and inference cost. In this paper, we propose a controlled-communication coordination framework named DarkForest. DarkForest first keeps agents independent, so each agent produces an answer without seeing the others' outputs. It then parses the raw responses into structured candidate records, groups semantically equivalent candidates into clusters, and estimates a calibrated belief distribution over these clusters using agent reliability, confidence, parse quality, support-pattern reliability, and independence corrections. A coordinator receives only policy-permitted evidence from this belief state with controlled communication. Experiments on six reasoning benchmarks show that DarkForest achieves leading overall quality, improves the strongest baseline by up to 30.7\\% on benchmark metrics, and reduces token consumption by up to $6.5\\times$ compared with communication-heavy baselines.",
+      "authors": [
+        "Yi Li",
+        "Songtao Wei",
+        "Dongming Jiang",
+        "Zhichun Guo",
+        "Qiannan Li",
+        "Bingzhe Li"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-05-24T17:34:27+00:00",
+      "link": "https://arxiv.org/pdf/2605.25188v1",
+      "tags": [
+        "keyword:ac"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "grouping semantically equivalent candidates into clusters for multi-agent LLM coordination",
+      "llm_evidence_cn": "将语义等价的候选回答进行聚类以协调多智能体LLM",
+      "llm_evidence": "将语义等价的候选回答进行聚类以协调多智能体LLM",
+      "canonical_evidence": "将语义等价的候选回答进行聚类以协调多智能体LLM",
+      "llm_tldr_en": "Proposes a framework that clusters LLM agent outputs to reduce communication overhead and improve accuracy, demonstrating a clustering method applied to LLM outputs.",
+      "llm_tldr_cn": "该论文针对多智能体LLM系统中交互过多导致错误传播和高通信成本的问题，提出DarkForest框架，先让各智能体独立回答，再将回答解析为结构化候选记录并进行语义等价聚类，从而聚合共识。实验表明该方法减少通信开销并提升准确性。该方法展示了聚类在LLM输出聚合中的有效应用。",
+      "llm_tldr": "该论文针对多智能体LLM系统中交互过多导致错误传播和高通信成本的问题，提出DarkForest框架，先让各智能体独立回答，再将回答解析为结构化候选记录并进行语义等价聚类，从而聚合共识。实验表明该方法减少通信开销并提升准确性。该方法展示了聚类在LLM输出聚合中的有效应用。",
+      "llm_tags": [
+        "query:ac"
+      ],
+      "matched_query_tag": "query:ac",
+      "matched_query_text": "clustering using large language models",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2605.28066v1",
+      "source": "arxiv",
+      "title": "PromptEmbedder:: Efficient and Transferable Text Embedding via Dual-LLM Soft Prompting",
+      "abstract": "Large Language Models (LLMs) have demonstrated remarkable efficacy in text embedding, yet current adaptation methods like LoRA face significant bottlenecks in computational efficiency and cross-architecture transferability. Whenever a new backbone emerges, existing approaches require costly retraining from scratch. To address this, we propose PromptEmbedder, a novel dual-LLM framework that decouples embedding knowledge from specific backbone weights. PromptEmbedder utilizes a Prompting LLM to generate instruction-aware soft prompts for a frozen Embedding LLM via a differentiable generation process with continuous relaxation, ensuring full gradient flow during contrastive training. By localizing task-specific knowledge within the Prompting LLM, adapting to new architectures requires only retraining a lightweight linear alignment matrix. Evaluations on the MTEB benchmark show that PromptEmbedder achieves comparable performance with LoRA finetuning while reducing GPU memory by 40% and accelerating training by 3.7x. Our approach establishes a scalable, architecture-agnostic paradigm for efficient LLM-based representation learning.",
+      "authors": [
+        "Yu-Che Tsai",
+        "Kuan-Yu Chen",
+        "Yuan-Hao Chen",
+        "Yu-Han Chang",
+        "Ching-Yu Tsai",
+        "Yu-Hsiang Chuang",
+        "Shou-De Lin"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.AI"
+      ],
+      "published": "2026-05-27T07:23:55+00:00",
+      "link": "https://arxiv.org/pdf/2605.28066v1",
+      "tags": [
+        "keyword:ac",
+        "query:ac"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "text embedding for clustering using LLMs",
+      "llm_evidence_cn": "使用LLM进行聚类的文本嵌入方法",
+      "llm_evidence": "使用LLM进行聚类的文本嵌入方法",
+      "canonical_evidence": "使用LLM进行聚类的文本嵌入方法",
+      "llm_tldr_en": "PromptEmbedder decouples embedding from backbone via dual-LLM soft prompting, enabling efficient and transferable text embeddings that can directly support clustering tasks with LLMs.",
+      "llm_tldr_cn": "当前LLM文本嵌入方法存在计算效率低和跨架构迁移性差的问题。本文提出PromptEmbedder，一种双LLM框架，通过可微软提示生成将嵌入知识与骨干权重解耦。该方法支持在冻结嵌入LLM的情况下进行对比训练，所得嵌入可高效用于聚类等下游任务。实验表明，其在不同架构间具有良好迁移性，为基于LLM的聚类提供了实用的嵌入工具。",
+      "llm_tldr": "当前LLM文本嵌入方法存在计算效率低和跨架构迁移性差的问题。本文提出PromptEmbedder，一种双LLM框架，通过可微软提示生成将嵌入知识与骨干权重解耦。该方法支持在冻结嵌入LLM的情况下进行对比训练，所得嵌入可高效用于聚类等下游任务。实验表明，其在不同架构间具有良好迁移性，为基于LLM的聚类提供了实用的嵌入工具。",
+      "llm_tags": [
+        "query:ac"
+      ],
+      "matched_query_tag": "query:ac",
+      "matched_query_text": "clustering using large language models",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2605.29751v2",
+      "source": "arxiv",
+      "title": "DySem: Uncovering Dynamic Semantic Components of Large Language Models for Calculating Semantic Textual Similarity",
+      "abstract": "Calculating semantic textual similarity is a foundational task in natural language processing. Current large language models (LLMs) based methods typically rely on extracting last-layer hidden states with fixed dimensions to compute similarity for every text pairs. We argue that this paradigm is suffer from two limitations: (i) The last hidden layer encodes more general knowledge rather than just semantic knowledge, making it suboptimal for semantic similarity computation; (ii) The hidden layer dimensions of LLMs are generally very large, which introduces some redundancy and noise for representing semantics. In this work, we propose DySem, a novel training-free framework that investigates more semantic-related internal components of LLMs via multilingual consensus, and shifts away from static representation spaces in favor of dynamic, sample-specific semantic dimensions by constructing text-dependent joint semantic set and computes similarity over this shared dimensional subset. Extensive experiments across various LLMs show that our method consistently outperforms recent baselines while maintaining lower dimensions for similarity calculation. The code is released at https://github.com/szu-tera/DySem.",
+      "authors": [
+        "Kaijie Zheng",
+        "Weiqin Wang",
+        "Yile Wang",
+        "Hui Huang"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-05-28T10:47:32+00:00",
+      "link": "https://arxiv.org/pdf/2605.29751v2",
+      "tags": [
+        "keyword:ac",
+        "query:ac"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "semantic similarity computation for clustering with LLMs",
+      "llm_evidence_cn": "使用LLM进行语义相似度计算以支持聚类",
+      "llm_evidence": "使用LLM进行语义相似度计算以支持聚类",
+      "canonical_evidence": "使用LLM进行语义相似度计算以支持聚类",
+      "llm_tldr_en": "DySem uncovers dynamic semantic components from LLMs to compute semantic textual similarity more accurately, which is a core operation for clustering.",
+      "llm_tldr_cn": "现有基于LLM的语义相似度计算依赖最后一层隐藏状态，存在信息冗余和噪声。本文提出DySem，一种无训练框架，通过提取动态语义组件来更准确地表示文本语义。该方法可提供高质量的相似度度量，直接用于基于LLM的聚类任务，且无需额外训练。实验证明其在相似度基准上优于传统方法。",
+      "llm_tldr": "现有基于LLM的语义相似度计算依赖最后一层隐藏状态，存在信息冗余和噪声。本文提出DySem，一种无训练框架，通过提取动态语义组件来更准确地表示文本语义。该方法可提供高质量的相似度度量，直接用于基于LLM的聚类任务，且无需额外训练。实验证明其在相似度基准上优于传统方法。",
+      "llm_tags": [
+        "query:ac"
+      ],
+      "matched_query_tag": "query:ac",
+      "matched_query_text": "clustering using large language models",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2605.29992v1",
+      "source": "arxiv",
+      "title": "Adapting Multilingual Embedding Models to Turkish via Cross-Lingual Tokenizer Surgery and Offline Distillation",
+      "abstract": "Sentence embeddings are a foundational component for semantic search, clustering, classification, and retrieval-augmented generation. This paper presents embeddingmagibu-200m, a Turkish-focused sentence embedding model that produces 768-dimensional L2-normalized vectors and supports an 8,192-token context window, far exceeding the 512-token limit of earlier BERT-based Turkish encoders. Instead of full pretraining, an efficient three-stage adaptation pipeline is introduced: (1) construct a Turkish-optimized multilingual tokenizer with a 131,072 vocabulary by pruning redundant tokens from the teacher's vocabulary and incorporating multilingual tokens via frequency analysis on a 40-language corpus, (2) clone a teacher embedding model while preserving transformer backbone weights and initializing a compatible embedding table for the new vocabulary via mean-composition token mapping, and (3) perform offline embedding distillation from precomputed teacher vectors using a cosine similarity objective over a balanced 40-language Wikipedia corpus. The resulting student model contains approximately 200M parameters and trains in roughly four hours on a single GPU by avoiding online teacher inference during training, at a total cost of $5-$20. Empirically, Pearson/Spearman correlations of 77.55%/77.45% are obtained on STSbTR, surpassing the 300M-parameter teacher model (73.84%/72.92%). On TR-MTEB (26 tasks), a mean score of 63.9% is achieved (7th out of 26 models), providing a competitive cost-quality trade-off with 33% fewer parameters than the teacher. To facilitate reproducibility and downstream use, all artifacts are released including model weights, tokenizer files, precomputed embedding datasets, and open-source cloning and distillation tooling.",
+      "authors": [
+        "M. Ali Bayram",
+        "Banu Diri",
+        "Savaş Yıldırım"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-05-28T14:24:50+00:00",
+      "link": "https://arxiv.org/pdf/2605.29992v1",
+      "tags": [
+        "keyword:ac",
+        "query:ac"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "sentence embedding model explicitly supporting clustering, using LLM adaptation",
+      "llm_evidence_cn": "句子嵌入模型明确支持聚类，利用LLM适配",
+      "llm_evidence": "句子嵌入模型明确支持聚类，利用LLM适配",
+      "canonical_evidence": "句子嵌入模型明确支持聚类，利用LLM适配",
+      "llm_tldr_en": "This paper adapts multilingual embedding models to Turkish via tokenizer surgery and distillation, producing embeddings that directly enable clustering and other tasks.",
+      "llm_tldr_cn": "针对土耳其语句子嵌入的缺乏，本文提出一种高效的三阶段适配流程：构建优化分词器、克隆教师模型、离线蒸馏。所得模型embeddingmagibu-200m支持聚类、分类等任务，上下文窗口达8192 token，远超此前BERT模型。该工作展示了如何将通用LLM嵌入能力迁移到低资源语言聚类场景中。",
+      "llm_tldr": "针对土耳其语句子嵌入的缺乏，本文提出一种高效的三阶段适配流程：构建优化分词器、克隆教师模型、离线蒸馏。所得模型embeddingmagibu-200m支持聚类、分类等任务，上下文窗口达8192 token，远超此前BERT模型。该工作展示了如何将通用LLM嵌入能力迁移到低资源语言聚类场景中。",
+      "llm_tags": [
+        "query:ac"
+      ],
+      "matched_query_tag": "query:ac",
+      "matched_query_text": "clustering using large language models",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

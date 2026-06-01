@@ -6,24 +6,33 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-05-31
-- 运行时间：2026-05-31 20:40:34 UTC
+- 最新运行日期：2026-06-01
+- 运行时间：2026-06-01 22:10:43 UTC
 - 运行状态：成功
-- 本次总论文数：1
+- 本次总论文数：4
 - 精读区：0
-- 速读区：1
+- 速读区：4
 
 ### 今日简报（AI）
-今日推荐1篇速读论文，聚焦LLM在图上的标注失败问题与无标签学习方法。最值得关注的是《Where LLM Annotators Fail》提出的无标签图学习路径，揭示LLM在特定标注任务中的局限。建议读者进一步探索LLM与图结构结合的可靠性，并留意无标签场景下的替代方案。
-- 详情：[/202605/31/README](/202605/31/README)
+今日速读3篇论文，总分均为6.0，涵盖多智能体LLM、高效文本嵌入和语义动态成分分析。最值得关注的方向是多智能体协作（《DarkForest》）与可迁移文本嵌入（《PromptEmbedder》）。建议普通读者优先了解多智能体LLM的准确提升方法及轻量级嵌入优化思路。
+- 详情：[/202606/01/README](/202606/01/README)
 
 ### 精读区论文标签
 - 本次无精读推荐。
 
 ### 速读区论文标签
-1. [Where LLM Annotators Fail: Label-Free Learning on Graphs with LLMs](/202605/31/2605.27913v1-where-llm-annotators-fail-label-free-learning-on-graphs-with-llms)  
-   标签：评分：7.0/10、query:ac
-   evidence：利用聚类分析大模型标注错误
+1. [DarkForest: Less Talk, Higher Accuracy for Multi-Agent LLMs](/202606/01/2605.25188v1-darkforest-less-talk-higher-accuracy-for-multi-agent-llms)  
+   标签：评分：6.0/10、query:ac
+   evidence：将语义等价的候选回答进行聚类以协调多智能体LLM
+2. [PromptEmbedder:: Efficient and Transferable Text Embedding via Dual-LLM Soft Prompting](/202606/01/2605.28066v1-promptembedder-efficient-and-transferable-text-embedding-via-dual-llm-soft-prompting)  
+   标签：评分：6.0/10、query:ac
+   evidence：使用LLM进行聚类的文本嵌入方法
+3. [DySem: Uncovering Dynamic Semantic Components of Large Language Models for Calculating Semantic Textual Similarity](/202606/01/2605.29751v2-dysem-uncovering-dynamic-semantic-components-of-large-language-models-for-calculating-semantic-textual-similarity)  
+   标签：评分：6.0/10、query:ac
+   evidence：使用LLM进行语义相似度计算以支持聚类
+4. [Adapting Multilingual Embedding Models to Turkish via Cross-Lingual Tokenizer Surgery and Offline Distillation](/202606/01/2605.29992v1-adapting-multilingual-embedding-models-to-turkish-via-cross-lingual-tokenizer-surgery-and-offline-distillation)  
+   标签：评分：6.0/10、query:ac
+   evidence：句子嵌入模型明确支持聚类，利用LLM适配
 
 
 <div class="dpr-home-promo-card">
