@@ -1,0 +1,52 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-06-02T22:46:17.169122+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 1,
+    "deep_cap": 6,
+    "deep_selected": 1,
+    "quick_candidates": 0,
+    "quick_skim_target": 11,
+    "quick_selected": 0
+  },
+  "deep_dive": [
+    {
+      "id": "2606.01255v1",
+      "source": "arxiv",
+      "title": "Agentic Clustering: Controllable Text Taxonomies via Multi-Agent Refinement",
+      "abstract": "Recent text-clustering methods use large language models to propose a cluster taxonomy from a corpus and then assign each text to it. These pipelines are fundamentally programmatic: the sequence of LLM calls and the rules for stopping, merging, and splitting clusters are fixed in code in advance, so they generalise poorly across corpora of different structure and cannot easily incorporate user-supplied constraints such as a target cluster count or a clustering intent. We propose an agentic alternative in which an orchestrator LLM inspects the state of the discovery process at each step and dispatches one of a small set of specialised agents - proposer, synthesizer, auditor, investigator, and critic - adapting the pipeline to the corpus rather than executing a fixed one. On seven public text-clustering benchmarks the method achieves state-of-the-art performance, beating the strongest prior LLM baseline by up to 32% in ARI.",
+      "authors": [
+        "Simon Löwe",
+        "Emily Silcock"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-05-31T14:18:18+00:00",
+      "link": "https://arxiv.org/pdf/2606.01255v1",
+      "tags": [
+        "keyword:ac",
+        "query:ac"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Proposes agentic clustering using LLM multi-agent refinement for controllable text taxonomies",
+      "llm_evidence_cn": "提出基于LLM多智能体细化的代理式聚类，实现可控文本分类",
+      "llm_evidence": "提出基于LLM多智能体细化的代理式聚类，实现可控文本分类",
+      "canonical_evidence": "提出基于LLM多智能体细化的代理式聚类，实现可控文本分类",
+      "llm_tldr_en": "Proposes Agentic Clustering that uses an orchestrator LLM to dispatch specialized agents for iterative refinement of cluster taxonomies, enabling user control and adaptability.",
+      "llm_tldr_cn": "针对现有基于LLM的文本聚类方法因固定流程导致泛化差、缺乏用户控制的问题，本文提出代理式聚类框架。由编排器LLM根据当前状态动态调度提议者、合成器、审核者等智能体，自适应地构建聚类层级。该方法支持用户指定的聚类数量和意图，在多种语料上展现了更好的灵活性和可解释性，为LLM驱动的聚类提供了新范式。",
+      "llm_tldr": "针对现有基于LLM的文本聚类方法因固定流程导致泛化差、缺乏用户控制的问题，本文提出代理式聚类框架。由编排器LLM根据当前状态动态调度提议者、合成器、审核者等智能体，自适应地构建聚类层级。该方法支持用户指定的聚类数量和意图，在多种语料上展现了更好的灵活性和可解释性，为LLM驱动的聚类提供了新范式。",
+      "llm_tags": [
+        "query:ac"
+      ],
+      "matched_query_tag": "query:ac",
+      "matched_query_text": "clustering using large language models",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": []
+}

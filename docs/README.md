@@ -6,33 +6,26 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-06-01
-- 运行时间：2026-06-01 22:10:43 UTC
+- 最新运行日期：2026-06-02
+- 运行时间：2026-06-02 22:47:09 UTC
 - 运行状态：成功
-- 本次总论文数：4
-- 精读区：0
-- 速读区：4
+- 本次总论文数：1
+- 精读区：1
+- 速读区：0
 
 ### 今日简报（AI）
-今日速读3篇论文，总分均为6.0，涵盖多智能体LLM、高效文本嵌入和语义动态成分分析。最值得关注的方向是多智能体协作（《DarkForest》）与可迁移文本嵌入（《PromptEmbedder》）。建议普通读者优先了解多智能体LLM的准确提升方法及轻量级嵌入优化思路。
-- 详情：[/202606/01/README](/202606/01/README)
+今日精读一篇高分论文，聚焦多智能体协同实现可控文本分类。
+核心方向：利用多智能体交互细化分类规则，可灵活生成用户自定义的文本分类体系。
+建议读者尝试该框架以提升聚类任务的可解释性和可控性，尤其是需要动态调整分类边界时。
+- 详情：[/202606/02/README](/202606/02/README)
 
 ### 精读区论文标签
-- 本次无精读推荐。
+1. [Agentic Clustering: Controllable Text Taxonomies via Multi-Agent Refinement](/202606/02/2606.01255v1-agentic-clustering-controllable-text-taxonomies-via-multi-agent-refinement)  
+   标签：评分：9.0/10、query:ac
+   evidence：提出基于LLM多智能体细化的代理式聚类，实现可控文本分类
 
 ### 速读区论文标签
-1. [DarkForest: Less Talk, Higher Accuracy for Multi-Agent LLMs](/202606/01/2605.25188v1-darkforest-less-talk-higher-accuracy-for-multi-agent-llms)  
-   标签：评分：6.0/10、query:ac
-   evidence：将语义等价的候选回答进行聚类以协调多智能体LLM
-2. [PromptEmbedder:: Efficient and Transferable Text Embedding via Dual-LLM Soft Prompting](/202606/01/2605.28066v1-promptembedder-efficient-and-transferable-text-embedding-via-dual-llm-soft-prompting)  
-   标签：评分：6.0/10、query:ac
-   evidence：使用LLM进行聚类的文本嵌入方法
-3. [DySem: Uncovering Dynamic Semantic Components of Large Language Models for Calculating Semantic Textual Similarity](/202606/01/2605.29751v2-dysem-uncovering-dynamic-semantic-components-of-large-language-models-for-calculating-semantic-textual-similarity)  
-   标签：评分：6.0/10、query:ac
-   evidence：使用LLM进行语义相似度计算以支持聚类
-4. [Adapting Multilingual Embedding Models to Turkish via Cross-Lingual Tokenizer Surgery and Offline Distillation](/202606/01/2605.29992v1-adapting-multilingual-embedding-models-to-turkish-via-cross-lingual-tokenizer-surgery-and-offline-distillation)  
-   标签：评分：6.0/10、query:ac
-   evidence：句子嵌入模型明确支持聚类，利用LLM适配
+- 本次无速读推荐。
 
 
 <div class="dpr-home-promo-card">
