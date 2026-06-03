@@ -1,0 +1,53 @@
+{
+  "mode": "skims",
+  "generated_at": "2026-06-03T06:54:36.476541+00:00",
+  "stats": {
+    "mode": "skims",
+    "forced_all_quick": true,
+    "min_score": 8.0,
+    "deep_divecandidates": 1,
+    "deep_cap": null,
+    "deep_selected": 0,
+    "quick_candidates": 1,
+    "quick_skim_target": null,
+    "quick_selected": 1
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2606.01255v1",
+      "source": "arxiv",
+      "title": "Agentic Clustering: Controllable Text Taxonomies via Multi-Agent Refinement",
+      "abstract": "Recent text-clustering methods use large language models to propose a cluster taxonomy from a corpus and then assign each text to it. These pipelines are fundamentally programmatic: the sequence of LLM calls and the rules for stopping, merging, and splitting clusters are fixed in code in advance, so they generalise poorly across corpora of different structure and cannot easily incorporate user-supplied constraints such as a target cluster count or a clustering intent. We propose an agentic alternative in which an orchestrator LLM inspects the state of the discovery process at each step and dispatches one of a small set of specialised agents - proposer, synthesizer, auditor, investigator, and critic - adapting the pipeline to the corpus rather than executing a fixed one. On seven public text-clustering benchmarks the method achieves state-of-the-art performance, beating the strongest prior LLM baseline by up to 32% in ARI.",
+      "authors": [
+        "Simon Löwe",
+        "Emily Silcock"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-05-31T14:18:18+00:00",
+      "link": "https://arxiv.org/pdf/2606.01255v1",
+      "tags": [
+        "keyword:active-clust",
+        "query:active-clust"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Uses multi-agent LLM pipeline for text clustering, relevant to clustering with LLMs requirement",
+      "llm_evidence_cn": "使用多智能体大语言模型流水线进行文本聚类，符合利用大模型进行聚类的需求",
+      "llm_evidence": "使用多智能体大语言模型流水线进行文本聚类，符合利用大模型进行聚类的需求",
+      "canonical_evidence": "使用多智能体大语言模型流水线进行文本聚类，符合利用大模型进行聚类的需求",
+      "llm_tldr_en": "Proposes an agentic clustering framework using orchestrator LLM and specialized agents to adaptively refine text taxonomies, overcoming limitations of fixed programmatic pipelines.",
+      "llm_tldr_cn": "该论文针对现有基于大语言模型的文本聚类方法中，流水线固定且难以适应不同语料结构的问题，提出了一种代理式聚类框架。框架使用编排器大语言模型动态调度五个专用代理（提出者、合成者、审计者、调查者、批评者），根据聚类过程状态自适应调整流水线。实验表明该方法在多个文本语料上生成更可控、更高质量的聚类体系。展示了将大语言模型用于聚类任务的新范式。",
+      "llm_tldr": "该论文针对现有基于大语言模型的文本聚类方法中，流水线固定且难以适应不同语料结构的问题，提出了一种代理式聚类框架。框架使用编排器大语言模型动态调度五个专用代理（提出者、合成者、审计者、调查者、批评者），根据聚类过程状态自适应调整流水线。实验表明该方法在多个文本语料上生成更可控、更高质量的聚类体系。展示了将大语言模型用于聚类任务的新范式。",
+      "llm_tags": [
+        "query:ac:composite"
+      ],
+      "matched_query_tag": "query:ac:composite",
+      "matched_query_text": "Papers central to 主动学习聚类相关论文，特别是利用大模型的方法, especially work that connects or combines: d; c; active learning clustering with large language models; clustering using large language models; clustering base LLM active learning; Active learning clustering methods that leverage large language models.",
+      "matched_requirement_id": "req-composite-ac",
+      "selection_source": "fresh_fetch"
+    }
+  ]
+}
