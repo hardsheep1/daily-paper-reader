@@ -1,12 +1,12 @@
 {
   "label": "2026-05-05 ~ 2026-06-03",
   "date": "2026-05-05 ~ 2026-06-03",
-  "generated_at": "2026-06-03T06:54:54",
-  "count": 1,
+  "generated_at": "2026-06-03T09:53:17",
+  "count": 3,
   "papers": [
     {
       "paper_id": "20260505-20260603/2606.01255v1-agentic-clustering-controllable-text-taxonomies-via-multi-agent-refinement",
-      "section": "quick",
+      "section": "deep",
       "title_en": "Agentic Clustering: Controllable Text Taxonomies via Multi-Agent Refinement",
       "authors": "Simon Löwe, Emily Silcock",
       "date": "2026-05-31",
@@ -16,6 +16,36 @@
       "tldr": "传统文本聚类依赖固定LLM流程，泛化性差且难以融入用户约束。本文提出Agentic Clustering方法，通过编排器动态调度多个专用智能体，自适应调整聚类流程。在七个基准上达到最优，ARI提升达32%。该方法增强了聚类的可控性和适应性。",
       "tags": "query:ac",
       "abstract_en": "Recent text-clustering methods use large language models to propose a cluster taxonomy from a corpus and then assign each text to it. These pipelines are fundamentally programmatic: the sequence of LLM calls and the rules for stopping, merging, and splitting clusters are fixed in code in advance, so they generalise poorly across corpora of different structure and cannot easily incorporate user-supplied constraints such as a target cluster count or a clustering intent. We propose an agentic alternative in which an orchestrator LLM inspects the state of the discovery process at each step and dispatches one of a small set of specialised agents - proposer, synthesizer, auditor, investigator, and critic - adapting the pipeline to the corpus rather than executing a fixed one. On seven public text-clustering benchmarks the method achieves state-of-the-art performance, beating the strongest prior LLM baseline by up to 32% in ARI.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "20260505-20260603/2605.25814v1-adaptive-graph-refinement-and-label-propagation-with-llms-for-cost-effective-entity-resolution",
+      "section": "deep",
+      "title_en": "Adaptive Graph Refinement and Label Propagation with LLMs for Cost-Effective Entity Resolution",
+      "authors": "Hongtao Wang, Renchi Yang, Haoran Zheng, Xiangyu Ke",
+      "date": "2026-05-25",
+      "pdf": "https://arxiv.org/pdf/2605.25814v1",
+      "score": "8.0",
+      "evidence": "利用大语言模型进行图精炼和标签传播以改进实体解析聚类",
+      "tldr": "脏实体识别（ER）的传统阻塞-匹配-聚类范式存在错误传播和稀疏图问题。提出Alper统一框架，将匹配与聚类整合为迭代概率标签传播过程，动态优化图结构。自适应融合图传播的弱廉价信号和LLM的强昂贵成对查询，并通过贪心算法在查询预算下最大化边际增益。在8个基准数据集上显著优于SOTA级联管道，实现高成本效益。",
+      "tags": "query:active-clust",
+      "abstract_en": "Dirty entity resolution (ER), which identifies records referring to the same real-world entity from a single, messy dataset, is a fundamental task in data management and mining. However, the dominant blocking-matching-clustering paradigm for ER suffers from critical flaws. Its cascaded, decoupled workflow essentially produces a static, sparse graph plagued by missing edges (due to blocking failures) and noisy links (due to matching errors), causing error propagation and yielding suboptimal clusters, particularly when rigid transitivity is imposed in the clustering. We contend that matching and clustering are fundamentally synergistic, both optimizing for the construction of an ideal entity graph. Building upon this insight, we propose Alper, a unified framework that integrates these steps into an iterative probabilistic label propagation process over a global, evolving graph. Unlike disjoint blocking, Alper refines the graph structure and labels dynamically by adaptively integrating \"weak but cheap\" signals from graph propagation with \"strong but expensive\" LLM-based pairwise queries. For higher cost-effectiveness, we formulate the signal selection as a constrained optimization problem maximizing cumulative marginal gain under a query budget, solved via our greedy algorithm with provable theoretical guarantees. Our extensive experiments over eight benchmark datasets demonstrate that Alper is consistently superior to state-of-the-art cascaded pipelines.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "20260505-20260603/2605.24867v1-clustering-as-reasoning-a-k-means-interpretation-of-chain-of-thought-graph-learning",
+      "section": "quick",
+      "title_en": "Clustering as Reasoning: A $k$-Means Interpretation of Chain-of-Thought Graph Learning",
+      "authors": "Xuanting Xie, Zhaochen Guo, Bingheng Li, Xingtong Yu, Zhifei Liao, Zhao Kang, Yuan Fang",
+      "date": "2026-05-24",
+      "pdf": "https://arxiv.org/pdf/2605.24867v1",
+      "score": "6.0",
+      "evidence": "将k均值聚类与大语言模型思维链推理结合于图数据",
+      "tldr": "链式思维提示在文本属性图上提升了LLM推理能力，但现有方法架构割裂、表示固定，限制了语义-拓扑交互。本文提出KCoT框架，从数学上证明Transformer块与k-means算法的对应关系，将推理解释为迭代聚类过程。通过语义区分提示显式建模分配与更新，并引入结构对齐融合拓扑先验。标准基准上一致超越现有方法，验证了聚类作为图推理原则的有效性。",
+      "tags": "query:active-clust",
+      "abstract_en": "Chain-of-Thought (CoT) prompting has shown promise in enhancing the reasoning capabilities of large language models (LLMs) on text-attributed graphs (TAGs). This work reframes CoT-based graph learning through the principle of clustering as reasoning, offering a $k$-means interpretation of how iterative reasoning operates over graph-structured data. We observe that existing graph CoT methods rely on disjoint architectures and fixed graph representations, limiting step-by-step semantic-topological interaction and interpretability. To overcome this limitation, we propose a unified framework named KCoT that integrates CoT reasoning with graph representation learning. Our key theoretical result reveals a formal mathematical correspondence between a Transformer block and the $k$-means algorithm, allowing reasoning to be interpreted as iterative assignment and update steps. Based on this insight, we introduce a Semantic Discriminating Prompt that explicitly formulates these steps as structured CoT reasoning, together with a structure-grounded alignment strategy to fuse topological priors with evolving thought-conditioned representations. Experiments on standard benchmarks demonstrate consistent improvements over state-of-the-art methods, validating clustering as a principled mechanism for CoT-based graph learning.",
       "source": "arxiv",
       "selection_source": "fresh_fetch"
     }

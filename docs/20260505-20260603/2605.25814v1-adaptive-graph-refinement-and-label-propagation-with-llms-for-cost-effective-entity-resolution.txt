@@ -1,0 +1,1263 @@
+Title: Adaptive Graph Refinement and Label Propagation with LLMs for Cost-Effective Entity Resolution
+
+URL Source: https://arxiv.org/pdf/2605.25814v1
+
+Published Time: Tue, 26 May 2026 02:16:54 GMT
+
+Number of Pages: 16
+
+Markdown Content:
+# Adaptive Graph Refinement and Label Propagation with LLMs for Cost-Effective Entity Resolution 
+
+# Technical Report 
+
+# Hongtao Wang 
+
+Hong Kong Baptist University Hong Kong, China cshtwang@comp.hkbu.edu.hk 
+
+# Renchi Yang ∗
+
+Hong Kong Baptist University Hong Kong, China renchi@hkbu.edu.hk 
+
+# Haoran Zheng 
+
+Hong Kong Baptist University Hong Kong, China cshrzheng@comp.hkbu.edu.hk 
+
+# Xiangyu Ke 
+
+Zhejiang University Hangzhou, China xiangyu.ke@zju.edu.cn 
+
+## Abstract 
+
+Dirty entity resolution (ER), which identifies records referring to the same real-world entity from a single, messy dataset, is a fundamen-tal task in data management and mining. However, the dominant 
+
+blocking-matching-clustering paradigm for ER suffers from criti-cal flaws. Its cascaded, decoupled workflow essentially produces a static, sparse graph plagued by missing edges (due to blocking failures) and noisy links (due to matching errors), causing error propagation and yielding suboptimal clusters, particularly when rigid transitivity is imposed in the clustering. We contend that matching and clustering are fundamentally synergistic, both optimizing for the construction of an ideal en-tity graph. Building upon this insight, we propose Alper , a unified framework that integrates these steps into an iterative probabilistic label propagation process over a global, evolving graph. Unlike disjoint blocking, Alper refines the graph structure and labels dy-namically by adaptively integrating “weak but cheap” signals from graph propagation with “strong but expensive” LLM-based pair-wise queries. For higher cost-effectiveness, we formulate the signal selection as a constrained optimization problem maximizing cumu-lative marginal gain under a query budget, solved via our greedy algorithm with provable theoretical guarantees. Our extensive ex-periments over eight benchmark datasets demonstrate that Alper 
+
+is consistently superior to state-of-the-art cascaded pipelines. 
+
+ACM Reference Format: 
+
+Hongtao Wang, Renchi Yang, Haoran Zheng, and Xiangyu Ke. 2018. Adap-tive Graph Refinement and Label Propagation with LLMs for Cost-Effective Entity Resolution: Technical Report. In . ACM, New York, NY, USA, 16 pages. https://doi.org/XXXXXXX.XXXXXXX  
+
+> ∗Corresponding Author Permission to make digital or hard copies of all or part of this work for personal or classroom use is granted without fee provided that copies are not made or distributed for profit or commercial advantage and that copies bear this notice and the full citation on the first page. Copyrights for components of this work owned by others than ACM must be honored. Abstracting with credit is permitted. To copy otherwise, or republish, to post on servers or to redistribute to lists, requires prior specific permission and/or a fee. Request permissions from permissions@acm.org.
+> Conference’17, Washington, DC, USA
+> ©2018 ACM. ACM ISBN 978-1-4503-XXXX-X/18/06 https://doi.org/XXXXXXX.XXXXXXX
+
+## 1 Introduction 
+
+Entity Resolution (ER), broadly defined as identifying records refer-ring to the same real-world entity, is a cornerstone of data quality management [ 16 , 18 , 22 ]. It underpins a wide spectrum of critical downstream applications, ranging from knowledge graph construc-tion [ 13 ] and e-commerce product management [ 26 ], to CRM [ 27 ], financial fraud detection [ 42 ], and census data integration [ 59 ]. While traditional record linkage [ 10 ] (or clean-clean ER) typically focuses on linking records across two aligned and relatively clean sources, this paper targets the more challenging problem of dirty 
+
+ER [ 8] (or deduplication ), which aims to detect duplicates within a single, messy dataset containing an unknown number of entities where data quality is severely compromised by typographical errors, missing values, and inconsistent representations. This setting is inherently more complex, as it requires not only resolving pairwise ambiguities but also deducing the global cluster structure under strict transitivity constraints, making it tenaciously challenging to balance precision, recall, and cost [5, 12, 53, 58]. Existing research landscape for dirty ER generally evolves along three paradigms: learning-based methods [ 15 , 21 , 31 ], crowdsourcing-based strategies [ 12 , 50 , 53 ], and the recent Large Language Model 
+
+(LLM)-driven approaches [ 17 , 19 , 56 ]. Specifically, learning-based methods span from unsupervised probabilistic generative models like ZeroER [ 61 ] to advanced deep learning architectures, includ-ing graph neural networks (GNNs) [ 63 ] and pre-trained language models (PLMs) [ 21 , 31 ], which frame ER as a sequence pairwise clas-sification task. Despite being effective, this methodology typically demands extensive labeled data or substantial training overhead. Crowdsourcing-based strategies are designed to handle highly am-biguous cases when automated methods fail. By regarding the ER as a number of Human Intelligence Tasks (HITs), these methods pioneer the use of active learning and budget-constrained opti-mization to select the most informative pairs or sets for human verification [ 12 , 53 ], guided by a philosophy of cost-effectiveness. However, relying on human workers is intrinsically slow, costly, and difficult to scale. With the advent of LLMs, LLM-driven approaches have opened a new frontier for ER by tapping into the extensive knowledge, semantic understanding, and human-like reasoning ca-pabilities of LLMs. Narayan et al . [35] first leverage LLMs to perform binary classification on record pairs, inspiring a series of follow-up  
+
+> 1
+> arXiv:2605.25814v1 [cs.CL] 25 May 2026 Conference’17, July 2017, Washington, DC, USA Wang et al.
+
+studies [ 17 , 30 , 65 ]. Amid them, state-of-the-art approaches typi-cally leverage LLMs for precise pairwise verification [ 17 , 65 ] like 
+
+BatchER [ 17 ] or set-wise selection and clustering [ 19 , 56 ] as in 
+
+LLM-CER [19]. Despite recent advancements, the majority of existing solutions, including the recent LLM-based ones, predominantly adhere to the canonical blocking-matching-clustering (BMC) workflow [ 10 , 16 , 38 ]. This cascaded pipeline first partitions records into blocks to re-duce complexity, then identifies matches, and finally groups them into clusters. However, the decoupled nature of the BMC para-digm incurs critical deficiencies, particularly for dirty ER tasks. First, the static blocking phase creates a theoretical recall ceil-ing [ 38 ]. More precisely, blocking is typically a one-off filtering step based on surface-form similarities, and hence, true matches separated into different blocks are permanently lost. Neither ad-vanced PLMs nor powerful LLMs can recover these lost pairs in subsequent stages, strictly bounding the maximum achievable re-call [ 36 ]. Second, the decoupled workflow prevents mutual refine-ment between stages. The matching phase often performs “blind matching” without awareness of the global graph structure (e.g., 
+
+transitivity [1, 36 , 54 ]), while the clustering phase is forced to oper-ate on a static graph plagued by missing edges and conflicting links caused by upstream errors. Third, regarding cost-efficiency, existing LLM-based methods [ 17 , 19 , 56 , 65 ] lack the sophistication of crowd-sourcing strategies. They often rely on exhaustive queries or simple heuristics, failing to adaptively distinguish between “easy” cases resolvable by transitivity and “hard” tasks that truly necessitate expensive LLM reasoning, leading to wasteful budget consumption. In response to these challenges, we present Alper (A daptive L abel Propagation for Entity Resolution), a holistic framework that fundamentally redefines dirty ER as a dynamic optimization prob-lem on an evolving graph. Distinct from the rigid BMC paradigm that suffers from an inherent recall ceiling due to static blocking and blind matching, Alper unifies these disjoint stages into an iterative graph and label refinement process. It jointly optimizes graph topology and record labels, enabling the recovery of miss-ing links through transitive closure that were permanently lost in traditional pipelines. More specifically, to balance precision and budget, Alper synergizes “weak but free” signals from structural transitivity with “strong but expensive” signals from LLMs. Instead of exhaustive querying, we employ probabilistic label propagation 
+
+to utilize neighborhood consistency for inferring “easy” matches, reserving the precious budget for “hard” boundary cases. To rig-orously control costs, Alper formulates the signal selection as an 
+
+Online Knapsack Problem [6]. We introduce an uncertainty-based metric, marginal value gain (MVG), derived from label perplexity , to decide when to trigger pairwise queries to LLMs dynamically. This theoretically-grounded strategy ensures that the budget is adap-tively allocated to queries that offer the maximum information gain for global graph structure refinement. Furthermore, Alper incorpo-rates a local update mechanism where LLMs act not just as verifiers but as reasoners to select the best match from top-𝑘 candidates, effectively repairing the graph topology and mitigating error prop-agation. Our extensive experiments on eight real-world benchmark datasets demonstrate that Alper significantly outperforms state-of-the-art baselines (including BatchER and LLM-CER ) in terms of both ER performance and cost-effectiveness. The consistent superiority of Alper , particularly on complex datasets with high entity disper-sion, highlights the effectiveness of our iterative graph refinement framework and adaptive signal selection technique. 
+
+## 2 Related Work 
+
+We broadly categorize existing ER literature into learning-based, crowdsourcing-based, and LLM-driven paradigms. Due to space constraints, we defer detailed discussions on traditional rule-based methods [ 18 , 64 ], early GNN-based models [ 27 , 57 ], and specific blocking techniques [15, 40] to Appendix A. 
+
+## 2.1 Learning-based Entity Resolution 
+
+Recent advancements in learning-based ER have shifted from hand-crafted features to deep learning, particularly PLMs. Supervised methods, such as Ditto [31 ] and JointBERT [ 41 ], fine-tune PLMs to capture fine-grained semantic interactions in pairwise match-ing. To circumvent the high cost of annotation, unsupervised and self-supervised frameworks like ZeroER [ 61 ] and CollaborEM [21 ]have emerged, utilizing generative models or pseudo-labeling strate-gies to learn from data without explicit human labels. Notably, approaches like CollaborEM attempt to bridge the gap between structural and semantic signals by integrating GNNs with PLMs. However, these methods typically require extensive labeled samples or incur prohibitive training overheads, limiting their adaptability in low-resource scenarios. 
+
+## 2.2 Crowdsourcing-based Entity Resolution 
+
+Pioneered by CrowdER [ 53 ] and ZenCrowd [12 ], crowdsourcing ap-proaches fundamentally reframe ER as a budget-constrained opti-mization problem. These methods treat ER as a series of HITs, bal-ancing resolution accuracy against monetary cost. To minimize ex-pensive human annotation, varying optimization strategies are de-veloped: active learning frameworks [ 33 , 34 ] and decision-theoretic models [ 62 ] select only the most informative pairs for verifica-tion, while partial-order approaches [ 5 ] prune the search space by inferring remaining relations. Furthermore, transitivity-based inference [ 52 , 54 ] is introduced to logically deduce links and skip redundant queries. Despite these theoretical innovations, crowd-sourcing faces intrinsic scalability bottlenecks due to the high cost and latency of human labor and the need for redundant verification to mitigate non-expert worker errors. 
+
+## 2.3 LLM-based Entity Resolution 
+
+In the generative AI era, LLMs offer a scalable and knowledge-able “pseudo-crowd” [ 35 ]. Early works utilize LLMs for binary classification on record pairs [ 35 ]. To mitigate high inference costs, approaches like BatchER [17 ] introduce batch prompting to amor-tize costs across multiple comparisons. However, these methods often treat comparisons as independent local decisions, overlooking global consistency. Recent state-of-the-art methods leverage LLMs for holistic reasoning: ComEM [ 56 ] employs a “match-compare-select” interaction to resolve ambiguities, while LLM-CER [19 ] utilizes in-context clustering to partition record sets directly. Despite these advancements, predominant LLM-based methods strictly adhere to the canonical BMC workflow. They operate solely on candidate blocks generated by static blocking techniques (e.g., Sparkly [40]   
+
+> 2Adaptive Graph Refinement and Label Propagation with LLMs for Cost-Effective Entity Resolution Conference’17, July 2017, Washington, DC, USA Records
+> Pruning &
+> Refinement
+> Edge Weight
+> (Confidence)
+> Combining &
+> Transitivity
+> Resolved Matches /
+> Solid Links
+> II. Matching I. Blocking III. Clustering
+
+Figure 1: Graph interpretation of the BMC paradigm. 
+
+or LSH [ 15 ]). Consequently, they suffer from an inherent recall ceiling [ 36 , 38 ]: true matches separated during the one-off block-ing phase are permanently lost, as the downstream LLM has no opportunity to recover them. 
+
+## 3 Preliminaries 3.1 Problem Statement 
+
+Let R = {𝑟 1, 𝑟 2, . . . , 𝑟 𝑛 } be a collection of 𝑛 records, where each record is associated with a set of (textual, numerical, or categorical) attributes describing a real-world entity. We call 𝑟 𝑖 and 𝑟 𝑗 duplicates ,denoted by 𝑟 𝑖 ≡ 𝑟 𝑗 , if they refer to the same entity. For known duplicates, they obey the following transitive relations [2, 54]. 
+
+• Positive Transitivity : if 𝑟 1 ≡ 𝑟 2 and 𝑟 2 ≡ 𝑟 3, then 𝑟 1 ≡ 𝑟 3.
+
+• Negative Transitivity : if 𝑟 1 ≡ 𝑟 2, but 𝑟 2 . 𝑟 3, then 𝑟 1 . 𝑟 3.The goal of dirty entity resolution (dirty ER, a.k.a. deduplica-tion) [ 9 ] is to partition R into a set of disjoint clusters (sets of dupli-cate entity profiles) C = {C 1, C2, . . . , C| C | }, such that each cluster 
+
+C𝑘 corresponds to a unique real-world entity, i.e., ∀𝑟 𝑖 , 𝑟 𝑗 ∈ 𝐶 𝑘 𝑟 𝑖 ≡ 𝑟 𝑗 
+
+and ∀𝑟 𝑖 , 𝑟 𝑗 ∈ C 𝑘 × C ℓ with 𝑘 ≠ ℓ, 𝑟 𝑖 . 𝑟 𝑗 . Particularly, these clusters 
+
+{C 1, C2, . . . , C| C | } are said to be transitively-closed. 
+
+## 3.2 Blocking-Matching-Clustering Paradigm 
+
+The state-of-the-art ER systems, including deep learning-based and LLM-based approaches, predominantly adopt a blocking-matching-combining (BMC) paradigm to handle the quadratic complexity of the problem [ 17 , 19 , 48 ]. Given the set R of input records, the BMC workflow operates as follows: (1) Blocking: Potentially similar records in R are grouped into (usually overlapping) buckets (“blocks”) such that each block 
+
+B𝑘 ⊂ R × R and |B 𝑘 | ≪ 𝑛 2. The goal is to generate manageable subsets of candidates to limit comparisons in the next stage. (2) Matching: A sophisticated matcher Φ (e.g., a cross-encoder, crowd workers, or an LLM) classifies candidate pairs within each block B𝑘 as matches or non-matches, i.e., via pairwise comparisons/queries .(3) Clustering: The clustering (or combining) phase groups pair-wise matches into disjoint clusters by enforcing the aforemen-tioned transitive relations. 
+
+A Graph-based Interpretation. By regarding each record as a node and the positive match of two records as an edge, the ground-truth entity clusters C are essentially a list of isolated cliques [ 49 ]. The BMC paradigm can thus be interpreted from a graph perspec-tive. More concretely, as illustrated in Fig. 1, the blocking stage acts            
+
+> LSH 𝐾 NN Canopy Sparkly
+> 110 20 30
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1
+> CBMR
+> (a) Alaska (Moderate)
+> 110 20 30
+> 0.6
+> 0.7
+> 0.8
+> 0.9
+> 1.0
+> CBMR
+> (b) Movies (Hard)
+
+Figure 2: The CBMR when varying redundancy factor. 
+
+as a static filter for edge pruning. The blocking initializes a list of 
+
+empty candidate graphs (i.e., blocks). Subsequently, the matching phase refines each candidate graph separately by establishing edges for record pairs with high confidence, yielding (weighted) sparse graphs. Finally, the above refined candidate graphs are viewed as an entire graph G containing all detected pairwise matches as edges. The combining step seeks to derive connected components from 
+
+G via transitive closure [22 , 44 ], or to create clusters that maximize agreement (solid links within a cluster) [ 1, 52 ], thereby enforcing transitive constraints and resolving inconsistencies. 
+
+## 3.3 Limitations of the BMC Paradigm 
+
+In what follows, we pinpoint that the cascaded pipeline of the BMC paradigm is suboptimal, as its three stages are strictly decoupled, making the performance in the latter phase heavily rely on or be limited by the result quality of the former stages. 
+
+Static Blocking. Firstly, although the blocking stage significantly reduces the amount of candidate record pairs for comparisons or queries in the matching stage (from 𝑂 (𝑁 2) to a superlinear but subquadratic time complexity [ 38 ]), this stage builds static and fixed blocks, leading to severe recall ceiling [38 ]. That is, considerable true matches fall into distinct blocks after blocking, which are hard or even unable to recover in subsequent stages [ 36 ]. As revealed in [ 38 ], this theoretical bottleneck is caused by the fact that the blocking phase is to attain a trade-off among three conflicting metrics for efficiency, precision/cost-control, and recall. To illustrate, we empirically evaluate the ratio of cross-block matches (CBMR), i.e., the proportion of true matches whose two records exist in distinct blocks, by various blocking strategies, in-cluding LSH [ 15 ], Canopy [ 32 ], Sparkly [ 40 ], and 𝐾 NN [48 ]. Fig. 2 reports the CBMR values of these methods over real datasets Alaska 
+
+and Movies when varying the redundancy factor , i.e., the average number of blocks a record is assigned to. Particularly, the redun-dancy factor is commonly set to a constant between 10 and 20 for balancing efficiency and effectiveness in practice [ 17 , 19 , 56 ]. It can be observed that all blocking approaches still yield high CBMRs under such settings, especially on Movies .
+
+Blind Matching. The matcher is locally focused, which classifies record pairs in each static block in isolation, often regardless of transitive constraints and the global graph structures. Thus, the resulting graphs are almost always logically inconsistent, i.e., vio-lating transitivity rules [ 1 , 55 ], rendering them hard to be clustered. Although skilled workers or powerful LLMs can assist in enhanc-ing the quality of edges/matches, which is widely adopted in the  
+
+> 3Conference’17, July 2017, Washington, DC, USA Wang et al.
+
+literature [ 35 , 53 ], the required monetary and computational costs are still significant [17, 56, 58]. 
+
+Clustering on Corrupted Graphs. As analyzed above, the block-ing and matching steps actually create a static and sparse graph con-sisting of considerable missing and conflicting edges. The clustering over such graphs can easily be misled by the conflicts and missing links, particularly by following the transitivity rigidly, which is known as error propagation [55]. 
+
+## 4 Methodology 
+
+This section presents Alper , a graph-based framework that iter-atively and adaptively refines the topology and cluster labels for dirty ER under the budget constraint. We begin with the high-level idea of Alper in §4.1 and an overview of its iterative workflow in §4.2, followed by introducing our signal selection scheme in §4.3. The secondary algorithm for local graph refinement is elaborated in §4.4. Lastly, §4.5 offers a detailed analysis of Alper in terms of computational complexity and query cost. 
+
+## 4.1 High-level Idea 
+
+Our analysis in §3.3 reveals that the cascaded BMC workflow con-structs incomplete and noisy graphs for clustering due to its static blocking and blind matching. Ideally, a global graph over records that allows dynamic updates and refinements is needed, instead of simply partitioning records into disjoint fixed blocks. Further, we pinpoint that the decoupled matching and clustering phases actually optimize the same objective using complementary signals from distinct sources. To be specific, the matching refines the edges (graph topology) via pairwise queries to a matcher, whilst the clustering step infers missing connections and resolves inconsis-tencies by enforcing transitive consistency (the graph-based logic) over the detected edges. Both of them maximize the amount of true matches (positive edges) within entity clusters and the amount of true non-matches (non-edges) across entity clusters [ 1 , 52 ], which formally optimizes 
+
+max 
+
+> 𝛿
+
+∑︁ 𝑟 𝑖 ,𝑟 𝑗 ∈R 
+
+𝑤 + 
+
+> 𝑖,𝑗
+
+· 𝛿 𝑖,𝑗 + 𝜆 ∑︁    
+
+> 𝑟 𝑖 ,𝑟 𝑗 ∈R
+
+𝑤 − 
+
+> 𝑖,𝑗
+
+· ( 1 − 𝛿 𝑖,𝑗 ). (1) 
+
+𝑤 + 
+
+> 𝑖,𝑗
+
+= 1 (resp. 𝑤 − 
+
+> 𝑖,𝑗
+
+= 1) if (𝑟 𝑖 , 𝑟 𝑗 ) is (resp. not) a true match and 
+
+𝛿 𝑖,𝑗 = 1 if 𝑟 𝑖 , 𝑟 𝑗 are assigned to the same cluster (connected via an edge), and 0 otherwise. As remarked earlier in §3.2, the ideal graph is a list of cliques, each of which is an entity cluster. As such, the identification of edges/matches (graph refinement) is mathemati-cally equivalent to refining the cluster labels of the records. Notably, these processes can mutually reinforce one another. By exploiting graph topology (i.e., transitive relations), we can dras-tically reduce the number of expensive pairwise queries required by the matcher [ 2]. On the other hand, high-confidence links by the matcher enhance the graph quality and hence mitigate error propagation. This motivates an adaptive framework that unifies the matching and clustering, i.e., graph and label refinement. 
+
+Lemma 4.1. Given a graph G of records, the label propagation [ 43 ]over G is equivalent to optimize Eq. (1) with 𝜆 = 0.
+
+Inspired by the foregoing insights and Lemma 4.1, our idea is to establish the Alper framework upon the graph-based label prop-agation [ 43 ], wherein the graph structures and node labels are Graph and Label Refinement Graph and Label Initialization      
+
+> Dirty Data ℛ
+> PLM Embedding
+> ？
+> Initial KNN Graph 𝒢 Local Update with LLMs Clean Entity Clusters 𝒞
+> Budget Gain
+> Max Iteration / Label
+> Unchanged
+> Uncertainty -based MVG
+> Adaptive Signal Selection
+> Next Record /
+> Iteration
+> High Confidence
+> & Low Budget
+> Label Flip
+> High Uncertainty &
+> Sufficient Budget
+> Neighborhood Expansion &
+> Edge Upgrading
+
+Figure 3: An overview of Alper 
+
+iteratively and jointly refined or optimized with complementary signals from the LLM-based matcher and graph neighborhoods. Par-ticularly, the weighted propagation of labels via neighbors enables the use of soft transitivity to infer “easy” matches probabilistically without query cost, which not only attenuates the large errors amplified by applying rigid clustering transitivity over imperfect graphs but also reserves the budget of expensive LLM queries for “hard” cases to correct the graph and labels. Fig. 3 provides a figura-tive illustration of the idea underlying our Alper framework. 
+
+## 4.2 Framework Overview 
+
+Alper consists of two stages, where the former focuses on initial-izing the graph and node labels, while the latter iteratively and adaptively refines the graph and labels, as outlined in Algo. 1. 
+
+Graph and Label Initialization. After taking as input the record set R, total (monetary) budget 𝐵 for querying LLMs, the maximum number 𝑇 max of iterations, coefficients 𝛼 and 𝜃 , Alper starts by assigning a unique label ℓ (𝑟 𝑖 ) to each record 𝑟 𝑖 in R and generat-ing its embedding vector ®r𝑖 using a pre-trained language model (PLM) (Line 1). Next, a 𝐾 -nearest neighbor ( 𝐾 NN) graph G is ap-proximately constructed [ 48 ] over the embedding vectors {® r𝑖 }𝑛 𝑖 =1
+
+(Line 2), such that each record 𝑟 𝑖 is associated with 𝐾 neighbors 
+
+N ( 𝑟 𝑖 ). Accordingly, the weight 𝑤 (𝑟 𝑖 , 𝑟 𝑗 ) of each edge (𝑟 𝑖 , 𝑟 𝑗 ) in G
+
+is initialized as follows: 
+
+𝑤 (𝑟 𝑖 , 𝑟 𝑗 ) ← 𝛼 · cos (® r𝑖 , ®r𝑗 ), (2) i.e., the 𝛼 -scaled ( 0 < 𝛼 ≤ 1) cosine similarity of the embedding vectors of 𝑟 𝑖 and 𝑟 𝑗 (Line 3). In the meantime, the consumed budget 
+
+𝛽 is initially set to be 0 at Line 4. 
+
+Iterative Graph and Label Refinement. Afterwards, Alper pro-ceeds to an iterative process to jointly refine G and {ℓ (𝑟 𝑖 )|∀ 𝑟 𝑖 ∈ R} 
+
+based on the graph-based label propagation and pairwise queries to LLMs (Lines 5-16). More specifically, in each iteration, for each record 𝑟 𝑖 ∈ R , Alper first updates the label distribution 𝝅 𝑖 of 𝑟 𝑖 w.r.t. its candidate labels L𝑖 = {ℓ (𝑟 𝑗 )| 𝑟 𝑗 ∈ N ( 𝑟 𝑖 )} formed by its neigh-bors N ( 𝑔 𝑖 ) in G (Line 7). In mathematical terms, the probability of assigning label 𝜄 to record 𝑟 𝑖 is calculated by 
+
+𝝅 𝑖 (𝜄 ) = 1
+
+Í𝑟 𝑗 ∈N ( 𝑟 𝑖 ) 𝑤 (𝑟 𝑖 , 𝑟 𝑗 ) ·∑︁    
+
+> 𝑟 𝑗 ∈N ( 𝑟 𝑖 )
+
+𝑤 (𝑟 𝑖 , 𝑟 𝑗 ) · 1ℓ (𝑟 𝑗 )=𝜄 (3) 
+
+where 1ℓ (𝑟 𝑗 )=𝜄 is 1 if ℓ (𝑟 𝑗 ) = 𝜄 and 0 otherwise. Based on the evaluation in Algo. 2 with the label distribution 
+
+𝝅 𝑖 and available query budget, Alper then adaptively determines the use of weak and free signals (from label propagation over G) 
+
+> 4Adaptive Graph Refinement and Label Propagation with LLMs for Cost-Effective Entity Resolution Conference’17, July 2017, Washington, DC, USA
+
+Algorithm 1: The Alper framework                                                                                                                
+
+> Input: Record set R, budget 𝐵 , integer 𝑇 max , coefficients 𝛼 and 𝜃
+> Output: Entity clusters C={ C 1,C2, . . . , C|C| }.
+> /* Graph and Label Initialization */
+> 1ℓ(𝑟 𝑖 ) ← 𝑖 ;®r𝑖 ←PLM (𝑟 𝑖 ) ∀ 𝑟 𝑖 ∈ R ;
+> 2{ N ( 𝑟 𝑖 ) } 𝑛 𝑖 =1←𝐾 NN ( {® r𝑖 }𝑛 𝑖 =1);
+> 3Initialize edge weights 𝑤 (𝑟 𝑖 , 𝑟 𝑗 ) ∀ ( 𝑟 𝑖 , 𝑟 𝑗 ) ∈ G ;⊲Eq. (2)
+> 4Initial consumed budget 𝛽 ←0;
+> /* Graph and Label Refinement */
+> 5repeat
+> 6for 𝑟 𝑖 ∈ R do
+> 7Update label distribution 𝝅 𝑖 ;⊲Eq. (3)
+> 8if Algo. 2 returns true then
+> 9Invoke Algo. 3 for 𝑟 𝑖 and let 𝜔 𝑖 be the actual cost;
+> 10 𝛽 ←𝛽 +𝜔 𝑖 ;
+> 11 else
+> 12 𝜄 ∗←arg max
+> 𝜄 ∈L 𝑖
+> 𝝅 𝑖 (𝜄 );
+> 13 if 𝝅 𝑖 (𝜄 ∗)>𝜃 then ℓ(𝑟 𝑖 ) ← 𝜄 ∗; ;
+> 14 𝑡 ←𝑡 +1;
+> 15 until 𝑡 ≥𝑇 max or {ℓ(𝑟 𝑖 ) } 𝑛 𝑖 =1remain unchanged ;
+> 16 Convert {ℓ(𝑟 𝑖 ) } 𝑛 𝑖 =1into entity clusters C;
+
+or strong but expensive signals (from pairwise queries to LLMs) for the refinement of 𝑟 𝑖 ’s label ℓ (𝑟 𝑖 ) and its neighborhood N ( 𝑟 𝑖 ) in G.This design prioritizes the allocation of query budget to records at decision boundaries, while simple tasks can be cheaply done via weighted label propagation. Particularly, the subsequent operation is either one of the following two: 
+
+• Local Update with LLMs (Lines 8-10): if Algo. 2 returns a pos-itive answer, i.e., it is affordable and cost-effective to issue the pairwise queries for 𝑟 𝑖 , Alper will query the LLM, and update 
+
+𝑟 𝑖 ’s label and neighbors based on its response accordingly by invoking the LocalUpdate algorithm (Algo. 3); 
+
+• Weighted Label Propagation (Lines 11-13): if Algo. 2 returns false, implying that 𝑟 𝑖 already has a confident label or the remain-ing budget 𝐵 − 𝛽 is insufficient/depleted, Alper simply takes the most confident label 𝜄 ∗ among 𝑟 𝑖 ’s neighbors as its new label if the confidence 𝝅 𝑖 (𝜄 ∗) is beyond the threshold 𝜃 .The iterative refinement repeats for all records until convergence (i.e., the labels of all records remain invariant) or maximum itera-tions are reached. Finally, the eventual labels are then converted into a set of entity clusters at Line 16. 
+
+## 4.3 Adaptive Signal Selection 
+
+Optimization Objective. For each target record 𝑟 𝑖 at the 𝑡 -th iter-ation, the goal is to make an immediate and irrevocable decision on whether to invest a small budget 𝜔 𝑖 out of 𝐵 to call LLMs for strong signals or directly leverage cost-free graph signals for updating 𝑟 𝑖 ’s neighborhood and label. Particularly, the iterative refinement for all records can be perceived as a dynamic resource allocation, which involves a sequence of binary decision makings. This optimization process can be framed as an Online Knapsack Problem [6 ], where the knapsack capacity is the total budget 𝐵 . More precisely, the optimization objective is formulated as follows: 
+
+max 
+
+> 𝜒 𝑇 max
+
+∑︁  
+
+> 𝑡 =1
+
+∑︁ 𝑟 𝑖 ∈R 
+
+𝜒 𝑖,𝑡 · 𝑔 𝑖 s.t. 
+
+> 𝑇 max
+
+∑︁  
+
+> 𝑡 =1
+
+∑︁ 𝑟 𝑖 ∈R 
+
+𝜒 𝑖,𝑡 · 𝜔 𝑖 ≤ 𝐵, (4) 
+
+Algorithm 2: Adaptive Signal Selection                           
+
+> Input: Target record 𝑟 𝑖 , total budget 𝐵 , consumed budget 𝛽
+> 1Calculate ΔWLP
+> 𝑖 ;⊲Eq. (6)
+> 2Estimate the cost 𝜔 𝑖 of querying the LLM with 𝑟 𝑖 ;
+> 3Calculate the marginal value gain 𝑔 𝑖 ;⊲Eq. (5)
+> 4return true if Inequality (7) holds and false otherwise;
+
+where 𝜒 𝑖,𝑡 ∈ { 0, 1} is the binary decision variable, indicating an invocation of the LLM for 𝑟 𝑖 at the 𝑡 -th iteration if 𝜒 𝑖,𝑡 = 1, and 𝑔 𝑖 
+
+stands for the marginal value gain (MVG) for record 𝑟 𝑖 . In brief, the overall optimization goal is to maximize the cumulative marginal gain subject to the budget constraint 𝐵 .
+
+Uncertainty-based MVG. We define the MVG 𝑔 𝑖 as the expected reduction in uncertainty provided by the LLM over the weighted label propagation (WLP) in terms of updating 𝑟 𝑖 ’s label: 
+
+𝑔 𝑖 ← max  0, ΔLLM  
+
+> 𝑖
+
+− ΔWLP 
+
+> 𝑖
+
+ , (5) where ΔLLM  
+
+> 𝑖
+
+and ΔWLP  
+
+> 𝑖
+
+symbolize the confidence/certainty for this update using two sources of signals, respectively. When 𝑔 𝑖 = 0,the WLP without incurring LLM query cost is deemed adequate or superior in inferring 𝑟 𝑖 ’s new label, whereas 𝑔 𝑖 > 0 indicates that investing part of the budget for this positive gain might be a choice. Next, we propose to formulate ΔWLP  
+
+> 𝑖
+
+based on the label distribu-tion 𝝅 𝑖 of 𝑟 𝑖 and the label perplexity in Definition 4.2. 
+
+Definition 4.2 (Label Perplexity). Given a record 𝑟 𝑖 and its la-bel distribution 𝝅 𝑖 , the label perplexity of 𝑟 𝑖 is defined by 𝜌 (𝑟 𝑖 ) =
+
+exp  − Í𝜄 ∈ L 𝑖 𝝅 𝑖 (𝜄 ) · ln 𝝅 𝑖 (𝜄 ).Note that 𝜌 (𝑟 𝑖 ) ∈ [1, |L 𝑖 |] is formulated upon Shannon en-tropy [ 46 ], which can measure the overall certainty about 𝑟 𝑖 ’s all possible labels. Intuitively, a high 𝜌 (𝑟 𝑖 ) connotes that the predicted probabilities in 𝝅 𝑖 are evenly distributed among all possible labels, making it hard to assign a label to 𝑟 𝑖 confidently. To quantify the confidence/certainty of assigning the best label based on 𝝅 𝑖 to 𝑟 𝑖 in WLP (Lines 13-14 in Algo. 1), Alper calculates ΔWLP  
+
+> 𝑖
+
+by 
+
+ΔWLP  
+
+> 𝑖
+
+←
+
+
+
+1 − log 𝑏 𝑖 𝜌 (𝑟 𝑖 )
+
+
+
+· max  
+
+> 𝜄 ∈ L 𝑖
+
+𝝅 𝑖 (𝜄 ), (6) where 𝑏 𝑖 = max (|L 𝑖 |, 2) is used for normalization, i.e., ensuring 
+
+0 ≤ log 𝑏 𝑖 𝜌 (𝑟 𝑖 ) ≤ 1.Since ΔLLM  
+
+> 𝑖
+
+is dependent on the capacity of adopted LLMs, we set it to 0.95 by default. Practically, a preliminary estimation of ΔLLM 
+
+> 𝑖
+
+can be done with a small test set, as in [25, 30]. 
+
+Algorithm and Analysis. Algo. 2 displays the pseudo-code for solving the optimization problem in Eq. (4) . More concretely, Algo. 2 first calculates ΔWLP  
+
+> 𝑖
+
+according to Eq. (6) at Line 1, and at Line 2 estimates the cost 𝜔 𝑖 of querying the LLM for target record 𝑟 𝑖 based on the number of tokens needed and the LLM API pricing using Eq. (18) . Accordingly, the MVG of 𝑟 𝑖 is then obtained by Eq. (5) (Line 3). At last, Algo. 2 returns true to indicate the selection of LLM signals for 𝑟 𝑖 , if the following inequalities are satisfied: 
+
+𝑔 𝑖 
+
+𝜔 𝑖 
+
+≥ 𝐿 𝑒 
+
+ 𝑈 · 𝑒 𝐿 
+
+ 𝛽 𝐵 
+
+and 𝛽 + 𝜔 𝑖 ≤ 𝐵, (7) 
+
+and false otherwise (Line 4). Note that 𝑔 𝑖  
+
+> 𝜔 𝑖
+
+denotes the marginal gain per unit cost, which is assumed to lie within a known range  
+
+> 5Conference’17, July 2017, Washington, DC, USA Wang et al.
+
+Algorithm 3: Local Update with LLMs                                                                                           
+
+> Input: Target record 𝑟 𝑖
+> Output: The actual query cost 𝜔 𝑖
+> 1Pick the top-𝑚 candidate labels L∗
+> 𝑖 by 𝝅 𝑖 ;⊲Eq. (8)
+> 2S𝑖 ← ∅ ;
+> 3for 𝜄 ∈ L ∗
+> 𝑖 do
+> 4Pick 𝑟 𝑖 ’s nearest record 𝑟 𝑗 in cluster C𝜄 ;⊲Eq. (9)
+> 5S𝑖 ← S 𝑖 ∪ { 𝑟 𝑗 };
+> 6𝑟 ←LLM ( P , 𝑟 𝑖 ,S𝑖 )and compute the actual query cost 𝜔 𝑖 ;
+> 7if 𝑟 ≠none then
+> 8ℓ(𝑟 𝑖 ) ← ℓ(𝑟 );
+> 9for 𝑟 𝑗 ∈ C ℓ(𝑟 )do
+> 10 N ( 𝑟 𝑖 ) ← N ( 𝑟 𝑖 ) ∪ { 𝑟 𝑗 };N ( 𝑟 𝑗 ) ← N ( 𝑟 𝑗 ) ∪ { 𝑟 𝑖 };
+> 11 𝑤 (𝑟 𝑖 , 𝑟 𝑗 ) ← 𝜎 LLM ;
+> 12 else ∀𝑟 𝑘 ∈ S 𝑖 N ( 𝑟 𝑖 ) ← N ( 𝑟 𝑖 ) \ { 𝑟 𝑘 };N ( 𝑟 𝑘 ) ← N ( 𝑟 𝑘 ) \ { 𝑟 𝑖 };
+
+[𝐿, 𝑈 ]. The above conditions indicate that the LLM queries are al-lowed if the remaining budget is sufficient, and meanwhile, the per-cost marginal gain exceeds a particular threshold, which in-creases exponentially as the budget depletes and ensures that scarce resources are reserved for increasingly high-value LLM signals later. This deterministic strategy is inspired by [ 6], and offers a provably optimal competitive ratio as stated in the following theorem: 
+
+Theorem 4.3. Algo. 2 achieves a competitive ratio ln (𝑈 /𝐿 ) + 1
+
+for the total marginal gain. 
+
+## 4.4 Local Update with LLMs 
+
+Given a target record 𝑟 𝑖 , the module of local update with LLMs seeks to update 𝑟 𝑖 ’s label and neighborhoods based on the response from the LLM. The pseudo-code is illustrated in Algo. 3. Firstly, Algo. 3 focuses on selecting a set S𝑖 of 𝑚 (typically 3) candidate records with distinct labels for querying the LLMs at Lines 1-5. To be specific, at Line 1, we identify the top-𝑚 candidate labels from the label set L𝑖 = {ℓ (𝑟 𝑗 )| 𝑟 𝑗 ∈ N ( 𝑟 𝑖 )} of 𝑟 𝑖 ’s neighbors by 
+
+L∗ 
+
+> 𝑖
+
+← arg top-𝑚  
+
+> 𝜄 ∈ L 𝑖
+
+𝝅 𝑖 (𝑐 ). (8) Based thereon, for each of the 𝑚 candidate labels 𝜄 , we retrieve the corresponding cluster C𝜄 that currently contains all records with label 𝜄 , and find 𝑟 𝑖 ’s nearest record 𝑟 𝑗 in C𝜄 (Line 3-4): 
+
+𝑟 𝑗 ← arg max  
+
+> 𝑟 ℓ∈ C 𝜄
+
+cos (® r𝑖 , ®rℓ ) (9) Intuitively, 𝑟 𝑗 can be interpreted as a representative of cluster C𝜄 ,connoting the likelihood that 𝑟 𝑖 joins C𝜄 .Let S𝑖 be the set of 𝑚 such representative records. Algo. 3 then asks the LLM to choose a record 𝑟 from S𝑖 such that 𝑟 𝑖 and 𝑟 refers to the same entity: 𝑟 ← LLM (P , 𝑟 𝑖 , S𝑖 ), where P describes the task instruction for this multiple-choice question. Based thereon, we compute the actual cost 𝜔 𝑖 for querying the LLM at Line 6. Due to space limits, we present the detailed prompt templates in Ap-pendix D. If the response 𝑟 by the LLM is a valid record, Alper 
+
+considers (𝑟 𝑖 , 𝑟 ) as a positive match with a high confidence of 𝜎 LLM ,given the remarkable semantic understanding abilities of LLMs. In turn, we update 𝑟 𝑖 ’s label to 𝑟 ’s label at Line 8, and then proceed to refine its neighbors through symmetric neighborhood expansion 
+
+and edge upgrading . The former step expands 𝑟 𝑖 ’s neighbors by es-tablishing edges between 𝑟 𝑖 and every record 𝑟 𝑗 in Cℓ (𝑟 ) (by positive 
+
+Table 1: Dataset statistics.                                              
+
+> Dataset #Records #Entities #Matches Domain Ed
+> Census 841 503 344 Demo 1.67
+> Cora 1,295 112 17,184 Citation 11.56
+> AS 2,260 330 32,816 Geo 6.85
+> Amazon-GP 4,393 3,289 1,104 Software 1.34
+> Song 4,854 1,195 8,588 Music 4.06
+> Alaska 12,007 1,484 144,440 Product 8.09
+> Music 19,375 10,000 16,250 Music 1.94
+> Movies 50,797 27,934 22,863 Movie 1.82
+
+transitivity), i.e., all the records with label ℓ (𝑟 ) (Line 10), while the latter is to increase the weight of these links to a high value of 𝜎 LLM 
+
+as they are directly or indirectly verified by LLMs (Line 11). On the contrary, if the LLM returns an invalid 𝑟 , which signifies that 
+
+𝑟 𝑖 refers to an entity different from the records in S𝑖 , Algo. 3 will remove their edges with 𝑟 𝑖 (Line 12). 
+
+## 4.5 Complexity Analyses 
+
+We analyze the efficiency of Alper in terms of computation and monetary cost. Detailed derivations are provided in Appendix B.2. 
+
+Computational Complexity. The time complexity consists of graph initialization and iterative refinement. Initialization is dom-inated by the construction of the 𝐾 NN graph, taking 𝑂 (𝑛 log 𝑛 ).During refinement, Alper dynamically densifies the graph by neigh-borhood expansion (Algo. 3). Let 𝜓 max be the maximum size of the identified entity clusters during the refinement. The overall worst-case time complexity is thus bounded by 𝑂 (𝑛 log 𝑛 +𝑇 max · 𝑛 ·𝜓 max ).Notice that although noise might slightly inflate clusters, 𝜓 max re-mains comparable to the ground truth cluster size in practice, satis-fying the sparse truth assumption [3, 14] where 𝜓 max ≪ 𝑁 .
+
+Monetary Cost. Since Alper treats monetary cost as a hard con-straint, the optimization in Algo. 2 ensures that the cumulative cost of LLM queries strictly satisfies Í 𝜔 𝑖 ≤ 𝐵 .
+
+## 5 Experiments 
+
+This section experimentally evaluates the overall effectiveness and cost-effectiveness, the contribution of each component (e.g., adap-tive signal selection, graph refinement), and the robustness of the proposed Alper framework. The source code and datasets are pub-licly accessible at https://github.com/HKBU-LAGAS/Alper. 
+
+## 5.1 Experimental Setup 
+
+Due to space constraints, we defer the detailed experimental setup, including dataset statistics, baseline descriptions, evaluation met-rics, cost calculations, implementation details, and hyperparameter settings, to Appendix C. Furthermore, the appendix presents exten-sive supplementary evaluations, such as hyperparameter sensitivity analyses (e.g., impact of blocking size 𝐾 ), and additional compar-isons against supervised baselines. 
+
+Datasets. We conduct extensive experiments on eight diverse real-world dirty ER benchmarks [ 11 , 37 , 39 , 45 ], as detailed in Table 1. These datasets span a broad spectrum of both scale, ranging from small ( 𝑛 = 841 on Census ) to large ( 𝑛 > 50 k on Movies ), and struc-tural topology, specifically, the entity dispersion ( 𝐸 𝑑 = 𝑛 /|C| ) [ 7],  
+
+> 6Adaptive Graph Refinement and Label Propagation with LLMs for Cost-Effective Entity Resolution Conference’17, July 2017, Washington, DC, USA
+
+Table 2: Overall Performance (FP and NMI) and Cost Effec-tiveness. (best bolded and runner-up underlined)                                                                                                                                                                                                                                                                                                          
+
+> Dataset Metric
+> ZeroER
+> CollaborEM
+> BatchER
+> ComEM
+> LLM-CER
+> Alper
+> Census
+> (𝐵 =$0 .5)
+> FP ↑49.43 55.86 62.77 68.23 71.56 82.15
+> NMI ↑62.63 74.51 76.89 82.87 87.72 91.77
+> Tokens (M) ↓––0.21 0.20 0.13 0.19 Calls ↓––649 687 393 556 Cost ($) ↓––0.50 0.50 0.32 0.50
+> Cora
+> (𝐵 =$0 .5)
+> FP ↑46.07 61.22 78.46 82.52 84.51 86.34
+> NMI ↑58.85 76.91 81.12 85.28 87.16 90.02
+> Tokens (M) ↓––0.21 0.23 0.16 0.20 Calls ↓––685 803 427 765 Cost ($) ↓––0.50 0.50 0.31 0.50
+> AS
+> (𝐵 =$1 )
+> FP ↑34.95 50.32 53.36 58.12 65.21 71.71
+> NMI ↑46.28 56.63 59.05 67.43 75.73 85.78
+> Tokens (M) ↓––0.85 0.79 0.54 0.72 Calls ↓––2,439 2,063 1,162 1,978 Cost ($) ↓––1.00 1.00 0.60 1.00
+> Amazon-GP
+> (𝐵 =$1 .5)
+> FP ↑39.65 58.13 67.69 78.13 82.74 87.38
+> NMI ↑48.18 67.70 72.36 80.17 84.79 93.27
+> Tokens (M) ↓––1.63 1.51 0.77 1.22 Calls ↓––4,728 4,236 2,153 3,997 Cost ($) ↓––1.50 1.50 0.86 1.50
+> Song
+> (𝐵 =$1 )
+> FP ↑55.67 66.35 63.41 71.65 79.74 91.12
+> NMI ↑64.04 73.04 69.28 74.80 82.49 93.73
+> Tokens (M) ↓––1.73 1.51 0.78 1.36 Calls ↓––5,327 4,913 2,742 4,521 Cost ($) ↓––1.00 1.00 0.74 1.00
+> Alaska
+> (𝐵 =$3 )
+> FP ↑39.48 56.12 54.28 65.64 74.82 79.58
+> NMI ↑54.75 65.91 65.77 76.36 83.44 89.61
+> Tokens (M) ↓––2.32 2.17 1.72 2.12 Calls ↓––6,792 8,194 5,917 6,574 Cost ($) ↓––3.00 3.00 2.10 3.00
+> Music
+> (𝐵 =$2 )
+> FP ↑37.14 59.39 58.38 61.21 65.91 77.26
+> NMI ↑55.48 70.82 68.53 72.33 76.65 88.05
+> Tokens (M) ↓––1.59 1.43 1.37 1.23
+> Calls ↓––5,162 4,864 3,253 3,868 Cost ($) ↓––2.00 2.00 2.00 2.00
+> Movies
+> (𝐵 =$2 )
+> FP ↑31.31 45.82 43.76 47.34 58.63 64.68
+> NMI ↑48.75 63.44 57.27 61.38 68.71 77.11
+> Tokens (M) ↓––1.54 1.63 1.46 1.42
+> Calls ↓––4,632 4,872 4,352 4,123
+> Cost ($) ↓––2.00 2.00 2.00 2.00
+
+from low-dispersion scenarios like Amazon-GP (𝐸 𝑑 ≈ 1.34 ) to high-density clusters on Cora (𝐸 𝑑 ≈ 11 .56 ). 
+
+Baselines. We benchmark Alper against five state-of-the-art base-lines, categorized into two groups: (1) Unsupervised and self-supervised approaches , including ZeroER [61 ] and CollaborEM [ 21 ], which do not rely on extensive human-labeled data; and (2) LLM-based frame-works , namely BatchER [ 17 ], ComEM [ 56 ], and the state-of-the-art 
+
+LLM-CER [19]. 
+
+Metrics and Implementations. To comprehensively assess the quality of the entity clusters, we employ two widely recognized metrics: FP-measure (FP) and normalized mutual information (NMI). We also evaluate the monetary cost incurred by each method. All experiments are repeated three times, and we report the average values. To ensure a fair comparison, all methods use the same blocking method and parameters, and all LLM-based competitors utilize the same backbone model (e.g., GPT-5-Mini ) and operate under identical monetary budget constraints as Alper .
+
+## 5.2 Evaluation of ER Performance 
+
+Table 2 presents a comprehensive comparison of Alper against state-of-the-art baselines in terms of both clustering quality (FP-measure, NMI) and resource consumption (token usage, API calls, and monetary cost). We summarize the following key observations.        
+
+> Alper LLM-CER ComEM BatchER
+> 0.1 0.2 0.3 0.4 0.5
+
+66 .0
+
+71 .5
+
+77 .0
+
+82 .5
+
+88 .0FP      
+
+> (a) Cora
+> 0.6 1.2 1.8 2.4 3.0
+
+45 
+
+55 
+
+65 
+
+75 
+
+85 FP      
+
+> (b) Alaska
+> 0.4 0.8 1.2 1.6 2.0
+
+45 
+
+55 
+
+65 
+
+75 
+
+85 FP      
+
+> (c) Music
+> 0.4 0.8 1.2 1.6 2.0
+
+30 
+
+40 
+
+50 
+
+60 
+
+70 FP  
+
+> (d) Movies
+
+Figure 4: ER performance when varying query budget 𝐵 .
+
+First, Alper consistently achieves the highest FP and NMI scores across all eight benchmarks, significantly outperforming both self-supervised methods (e.g., CollaborEM ) and advanced LLM-based frameworks. This advantage is most prominent on datasets with high entity dispersion or complex ambiguities. For instance, on Song 
+
+and Census , Alper improves the FP-measure by substantial mar-gins of 11 .38% and 10 .59% over the strongest competitor, LLM-CER .Similarly, on the challenging Movies dataset, Alper surpasses the runner-up by 6.05% in FP and 8.40% in NMI. These results validate that Alper ’s core mechanism, synergizing transitive label propaga-tion with adaptive LLM verification, successfully recovers missing links that static blocking methods (used by baselines) discard. Second, a critical insight from Table 2 lies in the behavior of 
+
+LLM-CER . On datasets like Census , Cora , and Amazon-GP , LLM-CER 
+
+consumes less than the allocated budget (e.g., spending only $0 .32 
+
+out of $0 .50 on Census ). This underutilization is due to the num-ber of API calls for LLM-CER being strictly bounded by the initial static blocking and early merging decisions. Once these static can-didates are exhausted, it essentially “starves”, unable to utilize the remaining budget to find additional matches. In contrast, Alper 
+
+dynamically utilizes the available budget with graph structures, transforming potential unspent funds into tangible recall gains. Another important observation is that despite exploring a larger search space, Alper demonstrates remarkable cost-effectiveness. Compared to BatchER , which relies on exhaustive pairwise verifi-cation, Alper frequently requires fewer API calls to achieve higher accuracy (e.g., on Movies and Song ), proving that our uncertainty-based signal selection effectively targets high-value queries. Even when Alper incurs slightly higher costs than the “starved” LLM-CER ,the return on investment is disproportionately high. For example, on AS , a modest increase in token usage yields a massive 10 .05% 
+
+improvement in NMI. Moreover, on larger datasets such as Music 
+
+and Movies , Alper achieves the best performance while incurring comparable token costs to LLM-CER .
+
+## 5.3 Performance when Varying Query Budgets 
+
+To further investigate the scalability and robustness of Alper , we evaluate the FP-measure trends on Cora , Alaska , Music , and Movies  
+
+> 7Conference’17, July 2017, Washington, DC, USA Wang et al.
+
+Table 3: Ablation study and component analysis of Alper .                                                                                  
+
+> Variant Cora Alaska Music Movies
+> FP NMI FP NMI FP NMI FP NMI
+> Alper 86.34 90.02 79.58 89.61 77.26 88.05 64.68 77.17
+> Ablation Study
+> w/o WLP 78.69 81.67 74.67 82.35 71.49 79.68 57.72 71.39 w/o LLM 80.23 83.18 75.36 82.93 70.61 78.84 55.43 68.47
+> Signal Selection
+> Greedy 83.46 86.79 75.72 84.85 72.78 83.69 58.76 70.42 Random 81.81 84.33 71.49 80.17 70.34 78.63 54.34 67.37
+> Graph Initialization
+> LSH 85.21 89.17 78.01 88.54 76.15 87.25 63.12 76.05
+> Canopy 84.76 88.93 78.49 88.78 75.69 86.98 63.58 76.29
+> Sparkly 86.15 89.68 79.35 89.32 77.05 87.74 64.59 77.11
+> GPT-5-Mini GPT-4o-Mini
+> DeepSeek-R1 Phi-4 Llama-3.3-70B
+> 78 .6
+> 80 .6
+> 82 .6
+> 84 .6
+> 86 .6
+> FP
+> (a) Cora
+> 76 .2
+> 77 .7
+> 79 .2
+> 80 .7
+> 82 .2
+> (b) Alaska
+> 72 .0
+> 74 .0
+> 76 .0
+> 78 .0
+> 80 .0
+> (c) Music
+> 61 .4
+> 62 .9
+> 64 .4
+> 65 .9
+> 67 .4
+> (d) Movies
+
+Figure 5: Varying LLMs. 
+
+as the query budget 𝐵 increases. As illustrated in Figure 4, two distinct behaviors emerge, underscoring that Alper ’s superiority stems from dynamic structural discovery rather than simply in-creasing query volume. (1) The performance of baselines, partic-ularly BatchER and LLM-CER , tends to plateau or exhibit dimin-ishing returns even as the budget expands. For instance, on Cora ,
+
+LLM-CER saturates at an FP of ≈ 84 .5% despite a budget increase from 0.3 to 0.5. This confirms the existence of a recall ceiling . Mean-while, BatchER necessitates a significantly larger budget for pair comparisons to attain comparable performance. Simply increasing the budget fails to improve performance because these methods strictly operate within the closed set of pre-filtered candidates. (2) In sharp contrast, Alper maintains a steep upward trajectory across all datasets. On the Movies dataset (Fig. 4(d)), Alper improves FP from 50 .34% to 64 .68% as the budget increases. Crucially, this is not merely a result of “buying” more matches. Even under tight budgets (e.g., 𝐵 = 0.4 on Movies ), Alper already surpasses BatchER 
+
+and ComEM , demonstrating superior query efficiency. As the budget grows, Alper leverages its transitive label propagation to dynami-cally uncover new candidate pairs that were initially blocked, effec-tively converting the additional budget into structural repairs that static baselines are architecturally incapable of performing. 
+
+## 5.4 Ablation Study and Component Analysis 
+
+Table 3 validates the contribution of Alper ’s key components and the robustness of its strategies. First, regarding model components, removing either weighted label propagation ( w/o WLP ) or the ac-tive LLM module ( w/o LLM ) causes significant degradation. For instance, on the complex Movies dataset, the full model outper-forms both single-component variants by over 6% in FP. This con-firms that Alper succeeds by synergizing weak structural signals with strong semantic reasoning, breaking the cost-accuracy trade-off. Second, for signal selection, our adaptive strategy consistently                     
+
+> 0.20.40.60.81
+> 88 .1
+> 88 .7
+> 89 .3
+> 89 .9
+> 90 .5
+> NMI
+> (a) Cora
+> 0.20.40.60.81
+> 88 .0
+> 88 .5
+> 89 .0
+> 89 .5
+> 90 .0
+> (b) Alaska
+> 0.20.40.60.81
+> 86 .5
+> 87 .0
+> 87 .5
+> 88 .0
+> 88 .5
+> (c) Music
+> 0.20.40.60.81
+> 75 .5
+> 76 .0
+> 76 .5
+> 77 .0
+> 77 .5
+> (d) Movies
+
+Figure 6: Varying 𝛼 .                    
+
+> 0.20.40.60.81
+> 88 .5
+> 89 .0
+> 89 .5
+> 90 .0
+> 90 .5
+> NMI
+> (a) Cora
+> 0.20.40.60.81
+> 88 .0
+> 88 .5
+> 89 .0
+> 89 .5
+> 90 .0
+> (b) Alaska
+> 0.20.40.60.81
+> 86 .5
+> 87 .0
+> 87 .5
+> 88 .0
+> 88 .5
+> (c) Music
+> 0.20.40.60.81
+> 75 .5
+> 76 .0
+> 76 .5
+> 77 .0
+> 77 .5
+> (d) Movies
+
+Figure 7: Varying 𝜃 .                    
+
+> 12345
+> 88 .1
+> 88 .7
+> 89 .3
+> 89 .9
+> 90 .5
+> NMI
+> (a) Cora
+> 12345
+> 87 .6
+> 88 .2
+> 88 .8
+> 89 .4
+> 90 .0
+> (b) Alaska
+> 12345
+> 86 .5
+> 87 .0
+> 87 .5
+> 88 .0
+> 88 .5
+> (c) Music
+> 12345
+> 75 .5
+> 76 .0
+> 76 .5
+> 77 .0
+> 77 .5
+> (d) Movies
+
+Figure 8: Varying 𝑚 .
+
+outperforms Greedy and Random strategies (e.g., +5.9% FP over 
+
+Greedy on Movies ). This indicates that blindly prioritizing high-uncertainty nodes ( Greedy ) wastes budget on hard but low-value cases, whereas our value-density-based approach effectively maxi-mizes marginal gain. Third, Alper proves robust to various graph initialization schemes ( LSH , Canopy , Sparkly ). While performance remains stable on simpler datasets like Cora , our default semantic blocking ( SBERT+KNN ) provides a superior topological foundation for challenging tasks like Movies , allowing the refinement budget to focus on subtle ambiguities. Finally, evaluating Alper with diverse LLMs, including GPT-5-Mini , GPT-4o-Mini , Phi-4 , DeepSeek-R1 ,and Llama-3.3-70B , under a unified budget reveals consistent com-petitiveness (Fig. 5). A distinct trade-off is observed wherein cheap models facilitate extensive querying at the risk of error propaga-tion, whereas expensive models provide superior reasoning but rapidly deplete the budget, thereby constraining the graph refine-ment scope. 
+
+## 5.5 Parameter Analysis 
+
+We analyze the impact of three core hyperparameters: the edge weight scaling factor 𝛼 , the label propagation confidence threshold 
+
+𝜃 , and the number of candidate matches 𝑚 for LLM verification. As shown in Fig. 6, varying 𝛼 reveals that Alper performs consistently well across a broad range (e.g., 𝛼 ∈ [ 0.6, 1.0]). While performance dips slightly at lower values on Music , it remains robust on Cora and 
+
+Alaska . Fig. 7 indicates that the threshold 𝜃 for weak LP requires a balance; extremely low values may propagate noise, while values that are too high reduce effectiveness. However, the performance is generally stable around 𝜃 = 0.6, suggesting Alper is not overly sensitive to precise tuning. Finally, regarding the candidate set size 
+
+𝑚 in Fig. 8, we observe a performance gain as 𝑚 increases from 1 to 3, effectively plateauing thereafter. 
+
+> 8
+
+Adaptive Graph Refinement and Label Propagation with LLMs for Cost-Effective Entity Resolution Conference’17, July 2017, Washington, DC, USA 
+
+## 6 Conclusion 
+
+In this paper, we propose Alper , a unified framework for cost-effective ER that synergizes graph-based label propagation and LLMs. Our method iteratively refines graph topology and entity labels, featuring a theoretically grounded adaptive signal selection 
+
+mechanism modeled as an Online Knapsack Problem to maximize marginal value gain under strict budget constraints. We also demon-strate how to effectively shatter the recall ceiling of static blocking by dynamically integrating “weak but free” structural signals with “strong but expensive” LLM reasoning. Experiments on eight bench-mark datasets show that Alper consistently achieves state-of-the-art performance in both accuracy and monetary cost-effectiveness compared to strong baselines like BatchER and LLM-CER , validating our integrated, budget-aware approach. 
+
+## Acknowledgments 
+
+Renchi Yang is supported by the Guangdong and Hong Kong Uni-versities “1+1+1” Joint Research Collaboration Scheme, project No.: 2025A0505000002, the NSFC (No. 62302414), the Hong Kong RGC ECS grant (No. 22202623), and YCRG (No. C2003-23Y). Xiangyu Ke is supported by the NSFC (No. 62502434) and the Ningbo Yongjiang Talent Introduction Programme (2022A-237-G). 
+
+## References 
+
+[1] Nikhil Bansal, Avrim Blum, and Shuchi Chawla. 2004. Correlation clustering. 
+
+Machine learning 56, 1 (2004), 89–113. [2] Omar Benjelloun, Hector Garcia-Molina, David Menestrina, Qi Su, Steven Eui-jong Whang, and Jennifer Widom. 2009. Swoosh: a generic approach to entity resolution. The VLDB Journal 18, 1 (2009), 255–276. [3] Brenda Betancourt, Giacomo Zanella, Jeffrey W Miller, Hanna Wallach, Abbas Zaidi, and Rebecca C Steorts. 2016. Flexible models for microclustering with application to entity resolution. Advances in neural information processing systems 
+
+29 (2016). [4] Christoph Böhm, Gerard De Melo, Felix Naumann, and Gerhard Weikum. 2012. LINDA: distributed web-of-data-scale entity matching. In Proceedings of the 21st ACM international conference on Information and knowledge management . 2104– 2108. [5] Chengliang Chai, Guoliang Li, Jian Li, Dong Deng, and Jianhua Feng. 2016. Cost-effective crowdsourced entity resolution: A partial-order approach. In Proceedings of the 2016 International Conference on Management of Data . 969–984. [6] Deeparnab Chakrabarty, Yunhong Zhou, and Rajan Lukose. 2008. Online knap-sack problems. In Workshop on internet and network economics (WINE) . 1–9. [7] Zhaoqi Chen, Dmitri V Kalashnikov, and Sharad Mehrotra. 2005. Exploiting relationships for object consolidation. In Proceedings of the 2nd international workshop on Information quality in information systems . 47–58. [8] Peter Christen. 2011. A survey of indexing techniques for scalable record linkage and deduplication. IEEE transactions on knowledge and data engineering 24, 9 (2011), 1537–1555. [9] Peter Christen. 2012. The data matching process. In Data matching: concepts and techniques for record linkage, entity resolution, and duplicate detection . Springer, 23–35. [10] Vassilis Christophides, Vasilis Efthymiou, Themis Palpanas, George Papadakis, and Kostas Stefanidis. 2020. An overview of end-to-end entity resolution for big data. ACM Computing Surveys (CSUR) 53, 6 (2020), 1–42. [11] Valter Crescenzi, Andrea De Angelis, Donatella Firmani, Maurizio Mazzei, Paolo Merialdo, Federico Piai, and Divesh Srivastava. 2021. Alaska: A flexible benchmark for data integration tasks. arXiv preprint arXiv:2101.11259 (2021). [12] Gianluca Demartini, Djellel Eddine Difallah, and Philippe Cudré-Mauroux. 2012. Zencrowd: leveraging probabilistic reasoning and crowdsourcing techniques for large-scale entity linking. In Proceedings of the 21st international conference on World Wide Web . 469–478. [13] Xin Dong, Evgeniy Gabrilovich, Geremy Heitz, Wilko Horn, Ni Lao, Kevin Mur-phy, Thomas Strohmann, Shaohua Sun, and Wei Zhang. 2014. Knowledge vault: A web-scale approach to probabilistic knowledge fusion. In Proceedings of the 20th ACM SIGKDD international conference on Knowledge discovery and data mining .601–610. [14] Uwe Draisbach, Peter Christen, and Felix Naumann. 2019. Transforming pairwise duplicates to entity clusters for high-quality duplicate detection. Journal of Data and Information Quality (JDIQ) 12, 1 (2019), 1–30. [15] Muhammad Ebraheem, Saravanan Thirumuruganathan, Shafiq Joty, Mourad Ouzzani, and Nan Tang. 2017. DeepER–Deep Entity Resolution. arXiv preprint arXiv:1710.00597 (2017). [16] Ahmed K Elmagarmid, Panagiotis G Ipeirotis, and Vassilios S Verykios. 2006. Duplicate record detection: A survey. IEEE Transactions on knowledge and data engineering 19, 1 (2006), 1–16. [17] Meihao Fan, Xiaoyue Han, Ju Fan, Chengliang Chai, Nan Tang, Guoliang Li, and Xiaoyong Du. 2024. Cost-effective in-context learning for entity resolution: A design space exploration. In 2024 IEEE 40th International Conference on Data Engineering (ICDE) . IEEE, 3696–3709. [18] Ivan P Fellegi and Alan B Sunter. 1969. A theory for record linkage. Journal of the American statistical association 64, 328 (1969), 1183–1210. [19] Jiajie Fu, Haitong Tang, Arijit Khan, Sharad Mehrotra, Xiangyu Ke, and Yunjun Gao. 2025. In-context clustering-based entity resolution with large language models: A design space exploration. Proceedings of the ACM on Management of Data 3, 4 (2025), 1–28. [20] Sainyam Galhotra, Donatella Firmani, Barna Saha, and Divesh Srivastava. 2018. Robust entity resolution using random graphs. In Proceedings of the 2018 Interna-tional Conference on Management of Data . 3–18. [21] Congcong Ge, Pengfei Wang, Lu Chen, Xiaoze Liu, Baihua Zheng, and Yunjun Gao. 2021. CollaborEM: A self-supervised entity matching framework using multi-features collaboration. IEEE Transactions on Knowledge and Data Engineering 35, 12 (2021), 12139–12152. [22] Oktie Hassanzadeh, Fei Chiang, Hyun Chul Lee, and Renée J Miller. 2009. Frame-work for evaluating clustering algorithms in duplicate detection. Proceedings of the VLDB Endowment 2, 1 (2009), 1282–1293. [23] Mauricio A Hernández and Salvatore J Stolfo. 1995. The merge/purge problem for large databases. ACM Sigmod Record 24, 2 (1995), 127–138. [24] Jeff Howe. 2006. The rise of crowdsourcing, Wired. http://www. wired. com/wired/archive/14.06/crowds. html (2006). [25] Keke Huang, Yimin Shi, Dujian Ding, Yifei Li, Yang Fei, Laks Lakshmanan, and Xiaokui Xiao. 2025. Thriftllm: On cost-effective selection of large language models for classification queries. arXiv preprint arXiv:2501.04901 (2025). [26] Anitha Kannan, Inmar E Givoni, Rakesh Agrawal, and Ariel Fuxman. 2011. Match-ing unstructured product offers to structured product specifications. In Proceed-ings of the 17th ACM SIGKDD international conference on Knowledge discovery and data mining . 404–412. [27] Pradap Konda, Sanjib Das, Paul Suganthan G C, AnHai Doan, Adel Ardalan, Jeffrey R Ballard, Han Li, Fatemah Panahi, Haojun Zhang, Jeff Naughton, et al .2016. Magellan: toward building entity matching management systems over data science stacks. Proceedings of the VLDB Endowment 9, 13 (2016), 1581–1584. [28] Simon Lacoste-Julien, Konstantina Palla, Alex Davies, Gjergji Kasneci, Thore Graepel, and Zoubin Ghahramani. 2013. Sigma: Simple greedy matching for align-ing large knowledge bases. In Proceedings of the 19th ACM SIGKDD international conference on Knowledge discovery and data mining . 572–580. [29] Bing Li, Wei Wang, Yifang Sun, Linhan Zhang, Muhammad Asif Ali, and Yi Wang. 2020. Grapher: Token-centric entity resolution with graph convolutional neural networks. In Proceedings of the AAAI Conference on Artificial Intelligence , Vol. 34. 8172–8179. [30] Huahang Li, Longyu Feng, Shuangyin Li, Fei Hao, Chen Jason Zhang, and Yuan-feng Song. 2024. On leveraging large language models for enhancing entity resolution: a cost-efficient approach. arXiv preprint arXiv:2401.03426 (2024). [31] Yuliang Li, Jinfeng Li, Yoshihiko Suhara, AnHai Doan, and Wang-Chiew Tan. 2020. Deep entity matching with pre-trained language models. arXiv preprint arXiv:2004.00584 (2020). [32] Andrew McCallum, Kamal Nigam, and Lyle H Ungar. 2000. Efficient clustering of high-dimensional data sets with application to reference matching. In Proceedings of the sixth ACM SIGKDD international conference on Knowledge discovery and data mining . 169–178. [33] Venkata Vamsikrishna Meduri, Lucian Popa, Prithviraj Sen, and Mohamed Sarwat. 2020. A comprehensive benchmark framework for active learning methods in entity matching. In Proceedings of the 2020 ACM SIGMOD international conference on management of data . 1133–1147. [34] Barzan Mozafari, Purna Sarkar, Michael Franklin, Michael Jordan, and Samuel Madden. 2014. Scaling up crowd-sourcing to very large datasets: a case for active learning. Proceedings of the VLDB Endowment 8, 2 (2014), 125–136. [35] Avanika Narayan, Ines Chami, Laurel Orr, Simran Arora, and Christopher Ré. 2022. Can foundation models wrangle your data? arXiv preprint arXiv:2205.09911 
+
+(2022). [36] Mahdi Niknam, Behrouz Minaei-Bidgoli, and Rouhollah Dianat. 2022. The role of transitive closure in evaluating blocking methods for dirty entity resolution. 
+
+Journal of Intelligent Information Systems 58, 3 (2022), 561–590. [37] Konstantinos Nikoletos, George Papadakis, and Manolis Koubarakis. 2022. py-JedAI: a Lightsaber for Link Discovery.. In ISWC (Posters/Demos/Industry) .[38] George Papadakis, Dimitrios Skoutas, Emmanouil Thanos, and Themis Palpanas. 2020. Blocking and filtering techniques for entity resolution: A survey. ACM Computing Surveys (CSUR) 53, 2 (2020), 1–42. 9Conference’17, July 2017, Washington, DC, USA Wang et al. 
+
+[39] George Papadakis, Leonidas Tsekouras, Emmanouil Thanos, George Gian-nakopoulos, Themis Palpanas, and Manolis Koubarakis. 2018. The return of jedai: End-to-end entity resolution for structured and semi-structured data. Pro-ceedings of the VLDB Endowment, Vol. 11, No. 12 11, 12 (2018), 1950–1953. [40] Derek Paulsen, Yash Govind, and AnHai Doan. 2023. Sparkly: A simple yet surprisingly strong TF/IDF blocker for entity matching. Proceedings of the VLDB Endowment 16, 6 (2023), 1507–1519. [41] Ralph Peeters and Christian Bizer. 2021. Dual-objective fine-tuning of BERT for entity matching. Proceedings of the VLDB Endowment 14 (2021), 1913–1921. [42] Clifton Phua, Vincent Lee, Kate Smith, and Ross Gayler. 2010. A compre-hensive survey of data mining-based fraud detection research. arXiv preprint arXiv:1009.6119 (2010). [43] Usha Nandini Raghavan, Réka Albert, and Soundar Kumara. 2007. Near linear time algorithm to detect community structures in large-scale networks. Physical Review E—Statistical, Nonlinear, and Soft Matter Physics 76, 3 (2007), 036106. [44] Alieh Saeedi, Markus Nentwig, Eric Peukert, and Erhard Rahm. 2018. Scalable matching and clustering of entities with FAMER. Complex Systems Informatics and Modeling Quarterly 16 (2018), 61–83. [45] Alieh Saeedi, Eric Peukert, and Erhard Rahm. 2017. Comparative evaluation of distributed clustering schemes for multi-source entity resolution. In European Conference on Advances in Databases and Information Systems . Springer, 278–293. [46] Claude E Shannon. 1948. A mathematical theory of communication. The Bell system technical journal 27, 3 (1948), 379–423. [47] Fabian M Suchanek, Serge Abiteboul, and Pierre Senellart. 2011. Paris: Probabilis-tic alignment of relations, instances, and schema. arXiv preprint arXiv:1111.7164 
+
+(2011). [48] Saravanan Thirumuruganathan, Han Li, Nan Tang, Mourad Ouzzani, Yash Govind, Derek Paulsen, Glenn Fung, and AnHai Doan. 2021. Deep learning for blocking in entity matching: a design space exploration. Proceedings of the VLDB Endowment 
+
+14, 11 (2021), 2459–2472. [49] Samhita Vadrevu, Rakesh Nagi, JinJun Xiong, and Wen-mei Hwu. 2021. xER: An explainable model for entity resolution using an efficient solution for the clique partitioning problem. In Proceedings of the First Workshop on Trustworthy Natural Language Processing . 34–44. [50] Vasilis Verroios and Hector Garcia-Molina. 2015. Entity resolution with crowd errors. In 2015 IEEE 31st international conference on data engineering . IEEE, 219– 230. [51] Vasilis Verroios, Hector Garcia-Molina, and Yannis Papakonstantinou. 2017. Waldo: An adaptive human interface for crowd entity resolution. In Proceedings of the 2017 ACM International Conference on Management of Data . 1133–1148. [52] Norases Vesdapunt, Kedar Bellare, and Nilesh Dalvi. 2014. Crowdsourcing algo-rithms for entity resolution. Proceedings of the VLDB Endowment 7, 12 (2014), 1071–1082. [53] Jiannan Wang, Tim Kraska, Michael J Franklin, and Jianhua Feng. 2012. Crowder: Crowdsourcing entity resolution. arXiv preprint arXiv:1208.1927 (2012). [54] Jiannan Wang, Guoliang Li, Tim Kraska, Michael J Franklin, and Jianhua Feng. 2013. Leveraging transitive relations for crowdsourced joins. In Proceedings of the 2013 ACM SIGMOD International Conference on Management of Data . 229–240. [55] Sibo Wang, Xiaokui Xiao, and Chun-Hee Lee. 2015. Crowd-based deduplication: An adaptive approach. In Proceedings of the 2015 ACM SIGMOD international conference on Management of Data . 1263–1277. [56] Tianshu Wang, Xiaoyang Chen, Hongyu Lin, Xuanang Chen, Xianpei Han, Le Sun, Hao Wang, and Zhenyu Zeng. 2025. Match, compare, or select? an investigation of large language models for entity matching. In Proceedings of the 31st International Conference on Computational Linguistics . 96–109. [57] Yaoshu Wang, Jianbin Qin, and Wei Wang. 2017. Efficient approximate entity matching using jaro-winkler distance. In International conference on web infor-mation systems engineering . Springer, 231–239. [58] Steven Euijong Whang, Peter Lofgren, and Hector Garcia-Molina. 2013. Question selection for crowd entity resolution. (2013). [59] William E Winkler et al . 2006. Overview of record linkage and current research directions. Bureau of the Census 25, 4 (2006), 603–623. [60] Renzhi Wu, Alexander Bendeck, Xu Chu, and Yeye He. 2023. Ground truth inference for weakly supervised entity matching. Proceedings of the ACM on Management of Data 1, 1 (2023), 1–28. [61] Renzhi Wu, Sanya Chaba, Saurabh Sawlani, Xu Chu, and Saravanan Thirumu-ruganathan. 2020. Zeroer: Entity resolution using zero labeled examples. In 
+
+Proceedings of the 2020 ACM SIGMOD International Conference on Management of Data . 1149–1164. [62] Vijaya Krishna Yalavarthi, Xiangyu Ke, and Arijit Khan. 2017. Select your ques-tions wisely: For entity resolution with crowd errors. In Proceedings of the 2017 ACM on Conference on Information and Knowledge Management . 317–326. [63] Dezhong Yao, Yuhong Gu, Gao Cong, Hai Jin, and Xinqiao Lv. 2022. Entity resolution with hierarchical graph attention networks. In Proceedings of the 2022 International Conference on Management of Data . 429–442. [64] Li Yujian and Liu Bo. 2007. A normalized Levenshtein distance metric. IEEE transactions on pattern analysis and machine intelligence 29, 6 (2007), 1091–1095. [65] Haochen Zhang, Yuyang Dong, Chuan Xiao, and Masafumi Oyamada. 2023. Large language models as data preprocessors. arXiv preprint arXiv:2308.16361 (2023). 10 Adaptive Graph Refinement and Label Propagation with LLMs for Cost-Effective Entity Resolution Conference’17, July 2017, Washington, DC, USA 
+
+## A Additional Related Work 
+
+In this section, we provide supplementary details on traditional ER methods, the mechanics of crowdsourcing quality control, and widely used blocking techniques. 
+
+## A.1 Traditional, Early Learning-based & Graph-based ER 
+
+Early ER research was grounded in the probabilistic framework introduced by Fellegi and Sunter [18] . Subsequent traditional ap-proaches utilized classical machine learning models (e.g., SVMs, Random Forests) [ 27 ] relying on hand-crafted string similarity fea-tures such as Levenshtein [ 64 ] and Jaro-Winkler distances [ 57 ]. While computationally efficient on small datasets, these methods struggle to capture the semantic ambiguity of heterogeneous en-tities compared to modern deep learning. Prior to the widespread adoption of PLMs, GNNs were applied to capture structural depen-dencies. Models like GraphER [29 ] and HierGAT [63 ] learn structural representations to enhance matching decisions. However, largely pre-dating the PLM era, these methods typically lack deep seman-tic understanding and operate on static graphs, serving primarily as graph-enhanced matchers rather than holistic clusterers. Re-cent works also attempt to bridge matching and clustering via Expectation-Maximization [ 61 ], transitivity closures [ 60 ], or opti-mizing human oracle allocation [ 51 ]. However, they fail in modern cost-effective ER because they cannot dynamically repair discon-nected topologies or model monetary budgets for paid LLMs. 
+
+## A.2 Mechanics of Crowdsourcing-based Approaches 
+
+While Section 2.2 discusses the optimization strategies of crowd-sourcing, this section details the mechanics used to ensure quality. Crowdsourcing approaches leverage human workers as oracles to resolve ambiguities that similarity metrics cannot handle [ 24 ]. How-ever, non-expert workers are prone to errors. To address this, robust methods model worker quality using confusion matrices [ 50 , 55 ]or incorporate “control queries” (questions with known answers) to estimate worker reliability dynamically [ 20 ]. Notably, Whang et al . [58] formulated question selection as an expected accuracy maximization problem, sharing a similar theoretical spirit with the online knapsack formulation used in our work. Despite these ro-bust quality control mechanisms, the reliance on human workers introduces high latency and cost, paving the way for the LLM-driven approaches we advocate for, which offer a faster and more consistent “pseudo-crowd.” 
+
+## A.3 Distinction from Knowledge Base Alignment 
+
+Iterative propagation is also widely studied in Knowledge Base (KB) alignment (e.g., PARIS [ 47 ], SiGMA [ 28 ], and LINDA [ 4]). However, applying them to flat Dirty ER introduces two critical mismatches. First, they rely on explicit predicate relations in multi-hop graphs to anchor probabilistic updates. On flat tabular schemas lacking this ontological structure, their propagation devolves into a shallow echo chamber of homogeneous similarities, easily amplifying noise. Second, these classical methods are fundamentally budget-agnostic; they assume structural evaluation is computationally free, render-ing them unsuited for modern ER workflows governed by strict monetary LLM token constraints. 
+
+## A.4 Blocking and Filtering Techniques 
+
+Blocking is an essential preprocessing step to mitigate the qua-dratic complexity of comparing all record pairs [ 38 ]. We categorize common techniques into rule-based, statistical, and learned block-ing methods. Early approaches rely on rigid rules. Hash-based methods, such as locality-sensitive hashing (LSH ) [ 15 ], project sim-ilar records into the same buckets based on hash collisions. Sort-based methods, like the sorted neighborhood method [ 23 ], cluster records by sorting textual similarity keys and sliding a window over the sorted list. Recent works leverage representation learning to overcome lexical limitations. DeepBlocker [48 ] utilizes PLMs such as SentenceBERT to generate semantic embeddings, capturing matches missed by syntactic rules. Similarly, Sparkly [ 40 ] employs a distributed top-𝑘 blocking framework using TF/IDF. It is impor-tant to note that all static blocking methods inadvertently sever the connectivity of the entity graph. If a true match is not placed in the same block, it creates disjoint components that downstream stages cannot bridge [ 36 ], a limitation our dynamic graph refinement framework aims to resolve. 
+
+## B Theoretical Analyses B.1 Proofs 
+
+Proof of Lemma 4.1. Let G be the graph of records and C =
+
+{C 1, C2, . . . , C| C | } be the disjoint clusters of records. The Kronecker function 𝛿 is defined as 
+
+𝛿 𝑖,𝑗 =
+
+(
+
+1 if 𝑟 𝑖 , 𝑟 𝑗 ∈ C 𝑘 ,
+
+0 otherwise , (10) which can be derived from the clusters. According to [ 43 ], each step in label propagation determines the cluster label of the target node 𝑟 𝑖 in the following way: 
+
+𝑘 ∗ = arg max  
+
+> 1≤𝑘 ≤ | C |
+
+∑︁ 𝑣 𝑗 ∈ C 𝑘 ∩N ( 𝑟 𝑖 )
+
+𝛿 𝑖,𝑗 ,
+
+which is to locally maximize ∑︁    
+
+> 𝑟 𝑗 ∈ N ( 𝑟 𝑖 )
+
+𝑤 + 
+
+> 𝑖,𝑗
+
+· 𝛿 𝑖,𝑗 
+
+for node 𝑟 𝑖 . If we consider all nodes in R, it leads to an overall objective of label propagation:                  
+
+> max
+> C∑︁ 𝑟 𝑖 ∈R ∑︁ 𝑟 𝑗 ∈N ( 𝑟 𝑖 )
+> 𝑤 +
+> 𝑖,𝑗 ·𝛿 𝑖,𝑗 =max
+> C∑︁ 𝑟 𝑖 ,𝑟 𝑗 ∈R
+> 𝑤 +
+> 𝑖,𝑗 ·𝛿 𝑖,𝑗 ,
+
+which completes our proof. □
+
+Proof of Theorem 4.3. The proof relies on the analysis of the 
+
+Online Knapsack Problem under the assumption of small weights (𝜔 𝑖 ≪ 𝐵 ), as established by Chakrabarty et al. [6]. Let 𝑧 ∈ [ 0, 1] be the fraction of the budget utilized at any given step, A be the total marginal gain obtained by our algorithm, and 
+
+𝑂𝑃𝑇 be the gain of an optimal offline algorithm. Based on our algorithm’s state, we have 𝑧 = 𝛽 /𝐵 , where 𝛽 is the currently con-sumed budget and 𝐵 is the total budget. We define the value-density  
+
+> 11 Conference’17, July 2017, Washington, DC, USA Wang et al.
+
+threshold function Υ(𝑧 ) as follows: 
+
+Υ(𝑧 ) = 𝐿 𝑒 
+
+𝑈 · 𝑒 𝐿 
+
+𝑧 
+
+(11) Observing Eq. 7 in Section 4.3, our acceptance criterion 𝑔 𝑖  
+
+> 𝜔 𝑖
+
+≥ 
+
+> 𝐿 𝑒
+
+( 𝑈 ·𝑒 𝐿 ) 𝛽 𝐵 is mathematically equivalent to checking if the marginal value density satisfies 𝑔 𝑖  
+
+> 𝜔 𝑖
+
+≥ Υ(𝑧 ).According to Theorem 2.1 in [ 6], this specific threshold func-tion Υ(𝑧 ) is the solution to the differential equation derived from equating the algorithm’s performance to the optimal offline allo-cation in the worst-case scenario. Specifically, for small weights (𝜔 𝑖 ≪ 𝐵 ), the cumulative value obtained by the algorithm is ap-proximately ∫ 𝑍  
+
+> 0
+
+Υ(𝑧 )𝐵𝑑𝑧 , where 𝑍 is the final budget utilization. The competitive ratio is bounded by: 
+
+𝑂𝑃𝑇 
+
+A ≤ ln 
+
+𝑈 𝐿 
+
+
+
++ 1 (12) Furthermore, Theorem 2.2 in [ 6 ] proves that no deterministic or ran-domized online algorithm can achieve a strictly lower competitive ratio. Thus, our strategy is theoretically optimal under the assump-tion that 𝐿 and 𝑈 correctly bound the real value densities. □
+
+## B.2 Complexity Analysis 
+
+Let 𝐷 be the dimension of the embedding vectors and 𝐿 𝑠𝑒𝑞 be the max sequence length for PLM encoding. 
+
+Time Complexity. The total time consists of the initialization and the iterative refinement. 
+
+• Graph Initialization: Generating embeddings using a PLM requires 𝑂 (𝑛 · 𝐿 𝑠𝑒𝑞 ). Constructing the initial 𝐾 NN graph us-ing approximate nearest neighbor search (e.g., FAISS) requires 
+
+𝑂 (𝑛 log 𝑛 · 𝐷 ). Initialization of weights and labels takes 𝑂 (𝑛 · 𝐾 ).The total initialization is dominated by 𝑂 (𝑛 log 𝑛 · 𝐷 ).
+
+• Iterative Refinement: In each iteration 𝑡 : (1) Label Propagation :For a node 𝑟 𝑖 , LP aggregates signals from its neighbors N ( 𝑟 𝑖 ). A key observation is that |N ( 𝑟 𝑖 )| is not static. In Algo. 3, identifying a match triggers edge additions to enforce transitive consistency (clique formation). Let 𝜓 max be the maximum size of a cluster maintained by Alper . The cost of one LP pass over all nodes is bounded by Í𝑁 𝑖 =1 |N ( 𝑟 𝑖 )| ≤ 𝑂 (𝑛 · 𝜓 max ). (2) Adaptive Signal Selection: Computing the Marginal Value Gain (MVG) involves en-tropy calculations over the label distribution, taking 𝑂 (|N ( 𝑟 𝑖 )|) 
+
+per node. This is similarly bounded by 𝑂 (𝑛 · 𝜓 max ). (3) Local Up-date with LLMs: Let 𝛾 be the proportion of nodes selected for LLM querying ( 𝛾 ≪ 1 due to budget 𝐵 ). For a selected node, we retrieve 𝑚 candidates. The actual LLM API latency is 𝜏 LLM . The topological update (merging clusters) takes 𝑂 (𝜓 max ) time. The overall time complexity is: 
+
+𝑂 (𝑛 log 𝑛 · 𝐷 + 𝑇 max · 𝑛 (𝜓 max + 𝛾 · 𝜏 LLM )) . (13) Assuming the sparse truth [3, 14 ] of dirty ER and the high precision of LLMs in preventing excessive false merges, 𝜓 max can be treated as a small constant relative to 𝑛 in practice. Thus, Alper achieves near-linear scalability 𝑂 (𝑛 log 𝑛 ) in practice. 
+
+Space Complexity. The memory footprint is dominated by the graph structure. As Alper performs transitive closure, the space complexity scales with the number of edges. In the worst case, space is 𝑂 (𝑛 · 𝜓 max + 𝑛 · 𝐷 ). Given that real-world entity graphs are collections of small, disjoint cliques, memory usage remains linear w.r.t 𝑛 in standard settings. 
+
+Monetary Cost Constraint. Unlike active learning methods that may incur unbounded costs to reach convergence, Alper treats monetary cost as a hard constraint. The condition 𝛽 + 𝜔 ≤ 𝐵 en-sures the cumulative cost never exceeds the pre-defined budget 𝐵 .Furthermore, Algo. 2 ensures the budget is spent efficiently, pre-venting premature depletion on low-value queries. Consequently, the monetary cost is strictly bounded by 𝑂 (𝐵 ).
+
+## C Additional Experimental Details C.1 Datasets 
+
+We utilize eight real-world dirty entity resolution benchmarks span-ning diverse domains, including demographics, bibliographic cita-tions, geography, software, music, and e-commerce. These datasets exhibit significant variations in scale, entity dispersion, and data quality. Detailed statistics are provided in Table 1. Below, we de-scribe the specific characteristics of each dataset: (1) Cora [37 ]: A widely used homogeneous dataset containing machine learning papers. It is characterized by high entity dispersion ( 𝐸 𝑑 ≈ 11 .56 ), meaning it contains small clusters of duplicates with significant textual noise in citation fields (e.g., authors, titles, venues). (2) Census [ 37 ]: A demographic dataset sourced from the JedAI toolkit [ 39 ]. It comprises records of individuals with at-tributes such as first name, last name, and address. Despite its small size ( 𝑁 = 841 ), it presents a high density of duplicates relative to the number of unique entities. (3) Alaska [11 ]: A challenging, large-scale dataset ( 𝑁 ≈ 12 𝑘 ) con-taining camera product specifications collected from mul-tiple e-commerce platforms. Originally introduced in the SIGMOD 2020 programming contest, it requires resolving heterogeneous attributes and handling high variability in product descriptions. (4) Amazon-GP [ 39 ]: A software product dataset matching records between Amazon and Google Play. This dataset is domain-specific, requiring the resolution of software applications where slight variations in version numbers or developer names can distinguish unique entities. (5) Song [ 45 ]: A music dataset aggregating track information (e.g., artist, album, release year) from various services. It features moderate dispersion ( 𝐸 𝑑 ≈ 4.06 ) and typical data quality issues such as inconsistent abbreviations and missing values. (6) Music [45 ]: Also referred to as Music20K in related litera-ture [ 19 ], this is a larger-scale music dataset ( 𝑁 ≈ 19 𝑘 ). It in-volves resolving musical entities with a mix of textual and cat-egorical attributes, exhibiting a lower dispersion ( 𝐸 𝑑 ≈ 1.94 )compared to Song .(7) Movies [11 ]: The largest dataset in our benchmark ( 𝑁 > 50 𝑘 ), sourced from the JedAI repository [ 39 ]. It contains movie metadata (e.g., title, director, year, cast) and represents a scalability test for ER approaches due to its size and the presence of many non-duplicate entities (singletons).  
+
+> 12 Adaptive Graph Refinement and Label Propagation with LLMs for Cost-Effective Entity Resolution Conference’17, July 2017, Washington, DC, USA
+
+(8) AS (Autonomous Systems) [ 39 ]: A geographical dataset con-taining information about internet autonomous systems. It involves resolving organization names and locations, often requiring the identification of varying representations of the same geographic or corporate entity. 
+
+Data Availability: The Cora , Alaska , Song , and Music datasets are aligned with standard benchmarks used in recent LLM-based ER studies [ 19 ]. The Census , Amazon-GP , and Movies datasets are obtained from the JedAI Toolkit repository 1.
+
+## C.2 Baselines 
+
+We compare Alper against the following state-of-the-art approaches: 
+
+Unsupervised and Self-supervised Approaches: 
+
+(1) ZeroER [ 61 ]: An unsupervised, generative approach based on Gaussian Mixture Models (GMMs). It identifies duplicate entities by distinguishing the specific feature distributions of matching and non-matching pairs. (2) CollaborEM [ 21 ]: A self-supervised framework that utilizes an automatic label generation strategy to create pseudo-labels. It employs a collaborative ER training phase to inte-grate graph and sentence features, achieving performance comparable to supervised methods without human annota-tion. 
+
+LLM-based Approaches: 
+
+(1) BatchER [ 17 ]: A cost-effective method that groups multi-ple candidate pairs into a single prompt for batch verifica-tion, significantly reducing API calls compared to single-pair queries. (2) ComEM [56 ]: Moves beyond simple pairwise classification by employing a “match-compare-select” strategy. It utilizes the reasoning capabilities of LLMs to select the best match from a set of candidates, aiming to minimize transitive errors. (3) LLM-CER [19 ]: The current state-of-the-art method that per-forms in-context clustering. It directly groups records into clusters within the prompt to maintain local consistency, rather than relying solely on pairwise decisions. All experiments are conducted on a Linux machine with an NVIDIA A100 GPU (80GB RAM), AMD EPYC 7513 CPU (2.6 GHz), and 1TB RAM. 
+
+## C.3 Evaluation Protocol 
+
+FP-measure (FP). This metric evaluates clustering results based on homogeneity and stability. It is defined as the harmonic mean of 
+
+purity and inverse-purity . Let X = {𝑋 1, . . . , 𝑋 𝑛 } denote the predicted clusters and Y = {𝑌 1, . . . , 𝑌 𝑚 } represent the ground truth clusters. The total number of records is |R| = Í𝑖 |𝑋 𝑖 | = Í𝑗 |𝑌 𝑗 |. The purity 
+
+and inverse-purity are calculated as follows: 
+
+purity (X , Y) =∑︁  
+
+> 𝑋 𝑖 ∈ X
+
+|𝑋 𝑖 ||R| max   
+
+> 𝑌 𝑗 ∈ Y
+
+Overlap (𝑋 𝑖 , 𝑌 𝑗 ) (14) 
+
+inverse-purity (X , Y) =∑︁  
+
+> 𝑌 𝑗 ∈ Y
+
+|𝑌 𝑗 ||R| max   
+
+> 𝑋 𝑖 ∈ X
+
+Overlap (𝑌 𝑗 , 𝑋 𝑖 ) (15) 
+
+> 1https://github.com/scify/JedAIToolkit
+
+where Overlap (𝑋 𝑖 , 𝑌 𝑗 ) = |𝑋 𝑖 ∩ 𝑌 𝑗 |/| 𝑋 𝑖 |. The FP-measure is then derived as: FP (X , Y) = 21/purity (X , Y) + 1/inverse-purity (X , Y) (16) 
+
+Normalized Mutual Information (NMI). NMI measures the similarity between clustering results and ground truth from an entropy perspective: NMI (X , Y) = 2𝐼 (X , Y) 
+
+𝐻 (X) + 𝐻 (Y) (17) where 𝐼 (·) denotes the mutual information shared between clusters and 𝐻 (·) represents the entropy, quantifying the uncertainty of elements within clusters. 
+
+Monetary Cost . To evaluate the cost-effectiveness of Alper 
+
+against competitors, we estimate the monetary cost incurred by each method. For LLM-based approaches ( Alper , BatchER , ComEM ,and LLM-CER ), the cost is determined by the commercial pricing of the LLM APIs. We utilize GPT-5-Mini as the unified backbone. The cost is calculated based on the number of processed tokens: Cost = 𝑁 𝑖𝑛 
+
+1M × 𝑃 𝑖𝑛 + 𝑁 𝑜𝑢𝑡 
+
+1M × 𝑃 𝑜𝑢𝑡 (18) where 𝑁 𝑖𝑛 and 𝑁 𝑜𝑢𝑡 correspond to the number of input and output tokens, respectively. Based on the official pricing 2, we set 𝑃 𝑖𝑛 =
+
+$0 .25 and 𝑃 𝑜𝑢𝑡 = $2 .00 per 1 million tokens. 
+
+## C.4 Implementation Details 
+
+To ensure a fair and reproducible comparison, we use the origi-nal implementations and default hyperparameters from the public code repositories listed in Table 4, with minor adaptations to align with the experimental setting of Alper . For BatchER , the original implementation [ 17 ] relies on in-context learning with 8 labeled demonstrations per prompt. To align with the unsupervised zero-shot setting of our approach, we removed these demonstrations. However, we strictly maintained the original batch structure, pack-ing 5 pairwise verification questions (i.e., 10 records) into a single prompt to preserve its design logic. For ComEM , we employed the “select” strategy (match-compare-select) as detailed in [ 56 ], which leverages the reasoning capabilities of LLMs to identify the most appropriate match from a set of candidates. For LLM-CER , we ad-hered to the strategy and parameter configurations specified in the original paper [ 19 ], specifically utilizing the 9-record clustering prompt design. Furthermore, to strictly evaluate cost-effectiveness under resource constraints, we applied the identical budget-aware control mechanism across all LLM-based methods ( Alper , BatchER ,
+
+ComEM , and LLM-CER ), ensuring that all methods operate within the same monetary limits. 
+
+Table 4: Code repositories for baselines. 
+
+Baseline Code Repository 
+
+ZeroER https://github.com/chu-data-lab/zeroer 
+
+CollaborEM https://github.com/ZJU-DAILY/CollaborEM 
+
+BatchER https://github.com/fmh1art/BatchER 
+
+ComEM https://github.com/tshu-w/ComEM 
+
+LLM-CER https://github.com/ZJU-DAILY/LLMCER  
+
+> 2https://azure.microsoft.com/en-us/pricing/details/azure-openai 13 Conference’17, July 2017, Washington, DC, USA Wang et al.
+
+Table 5: Performance when varying blocking parameter 𝐾 .                                                                                                                                        
+
+> Setting Method Cora Alaska Music Movies
+> FP NMI FP NMI FP NMI FP NMI
+> 𝐾  = 5 BatchER 73.48 76.96 49.30 61.61 53.40 64.37 41.78 53.11
+> ComEM 78.51 82.08 61.63 73.16 57.20 69.13 43.33 58.18
+> LLM-CER 80.10 84.87 70.41 81.15 61.50 74.36 54.22 66.42
+> Alper 81.23 86.49 74.47 86.08 72.15 84.52 59.57 73.58
+> 𝐾  = 10  BatchER 77.56 79.72 53.66 64.63 57.71 67.35 46.22 56.28
+> ComEM 81.37 84.26 64.73 75.45 60.36 71.46 46.68 60.65
+> LLM-CER 82.64 86.53 73.16 82.84 64.45 76.10 57.33 68.21
+> Alper 84.95 88.41 78.30 88.01 76.02 86.48 63.64 75.73
+> 𝐾  = 15  BatchER 78.46 81.12 54.28 65.77 58.38 68.53 46.76 57.27
+> ComEM 82.52 85.28 65.64 76.36 61.21 72.33 47.34 61.38
+> LLM-CER 84.51 87.16 74.82 83.44 65.91 76.65 58.63 68.71
+> Alper 86.34 90.02 79.58 89.61 77.26 88.05 64.68 77.11
+> 𝐾  = 20  BatchER 78.86 81.95 54.56 66.44 58.68 69.23 47.00 57.86
+> ComEM 83.02 85.91 66.04 76.92 61.58 72.86 47.63 61.83
+> LLM-CER 85.28 88.03 75.50 84.27 66.51 77.42 59.16 69.40
+> Alper 86.76 90.57 79.97 90.16 77.64 88.59 64.99 77.58
+> 𝐾  = 25  BatchER 80.34 85.25 56.16 69.90 60.26 72.66 48.64 61.40
+> ComEM 84.16 86.34 67.28 77.42 62.85 73.39 48.98 62.44
+> LLM-CER 86.31 89.65 76.62 85.93 67.71 79.14 60.43 71.20
+> Alper 88.83 92.42 82.07 92.01 79.75 90.45 67.17 79.51
+
+Table 6: Impact of ΔLLM  
+
+> 𝑖
+
+on different datasets.                             
+
+> Setting Cora Alaska Music Movies
+> FP NMI FP NMI FP NMI FP NMI
+> Computed Δ86.21 89.74 78.72 90.11 76.63 88.56 63.84 76.99 Fixed ( 0.95 )86.34 90.02 79.58 89.61 77.26 88.05 64.68 77.11
+
+## C.5 Hyperparameters 
+
+Across all experimental settings, we employ GPT-5-Mini as the backbone for LLM (·) and use SBERT to generate initial record em-beddings. To ensure a unified evaluation, we fix the structural and algorithmic hyperparameters for Alper across all datasets. Specifi-cally, we set the blocking size for the initial 𝐾 NN graph construc-tion to 𝐾 = 15 and the number of candidate records for local LLM updates to 𝑚 = 5. Regarding the adaptive signal selection and prop-agation logic, the edge weight scaling factor is set to 𝛼 = 0.8, the confidence threshold for weak label propagation is 𝜃 = 0.6, the ex-pected LLM confidence is ΔLLM  
+
+> 𝑖
+
+= 0.95 , and the LLM verified weight is 𝜎 LLM = 1.0. For the online knapsack formulation, the value den-sity bounds are set to [𝐿, 𝑈 ] = [20 , 1000 ]. The only dataset-specific hyperparameter is the total monetary query budget 𝐵 , which is allocated based on the scale and complexity of the dataset: Census 
+
+($0.5), Cora ($0.5), AS ($1.0), Song ($1.0), Amazon-GP ($1.5), Music 
+
+($2.0), Movies ($2.0), and Alaska ($3.0). 
+
+## C.6 Parameter Analysis 
+
+Impact of Blocking Parameter 𝐾 . The parameter 𝐾 determines the initial sparsity of the graph, representing the trade-off between recall potential and computational complexity. Table 5 reports the performance of Alper and LLM-based baselines as 𝐾 varies from 5 to 25. As expected, increasing 𝐾 generally improves performance across all methods by introducing more potential true matches into the candidate pool. However, Alper consistently outperforms competitors across all sparsity levels. Notably, even at a low 𝐾 = 5,where the graph is sparse and disconnected, Alper achieves an FP score of 81.23% on Cora , surpassing LLM-CER (80.10%) and BatchER 
+
+(73.48%). This demonstrates Alper ’s ability to recover missing links via transitive propagation, making it less dependent on dense initial blocking than BMC pipelines. 
+
+Robustness of LLM Confidence Estimation. In Alper , ΔLLM  
+
+> 𝑖
+
+rep-resents the confidence of the LLM oracle (set to 0.95 by default). Prior works adopt costly estimation strategies: [ 25 ] estimates oracle accuracy using an 80% data split, while [ 30 ] samples a subset (e.g., 100 pairs) for calibration. To validate the fixed parameter, we follow the sampling strategy to calculate an empirical ΔLLM  
+
+> 𝑖
+
+using 100 sam-pled questions per dataset. Table 6 compares the results using the empirical estimate versus the fixed default. The performance gap is negligible (e.g., a mere 0.13% FP difference on Cora ). Crucially, previous studies [ 25 , 30 ] often treat the estimation cost as external to the query budget. In contrast, Alper treats the monetary budget as a hard constraint. By using a robust default value, Alper avoids the sunk cost of estimation, allowing the entire budget to be utilized for actual entity resolution, thereby maximizing cost-effectiveness. 
+
+Sensitivity of LLM Verification Weight. The parameter 𝜎 LLM con-trols the influence of the LLM oracle during the label propagation process. Setting it too low diminishes the active oracle’s ability to correct propagation paths, whereas setting it excessively high makes the graph brittle to potential LLM hallucinations. Table 7 demonstrates that a moderate-to-high weight ( 𝜎 LLM = 1.0) achieves the optimal balance across datasets, validating our robust design choices. 
+
+Table 7: Impact of 𝜎 LLM on different datasets.                     
+
+> 𝜎 LLM
+> Cora Alaska
+> FP NMI FP NMI
+> 0.5 84.81 88.63 78.74 89.23 1.0 86.34 90.02 79.58 89.61
+> 1.5 86.29 89.78 79.62 89.37 2.0 86.05 89.69 79.16 89.29
+
+## C.7 Comparisons with Supervised Baselines 
+
+To broaden our evaluation, we compare Alper against two widely used supervised PLM-based methods, Ditto and DeepMatcher , un-der a low-resource setting with a 1:9 data split (10% training, 90% testing). As shown in Table 8, Alper demonstrates superior perfor-mance (e.g., +20.47% FP on Movies ). While supervised methods often struggle to generalize with limited training data, Alper achieves state-of-the-art results without requiring extensive annotated ex-amples, highlighting its practicality for cold-start scenarios. 
+
+## C.8 Comparison with Legacy KB-Alignment Baselines 
+
+To investigate the performance of iterative similarity propaga-tion methods originally designed for KB alignment, we evaluate 
+
+PARIS [ 47 ] and an adapted version of LINDA [ 4] on flat Dirty ER datasets. To ensure a fair structural comparison, we test them un-der two settings: “Unconstrained” (their native global scope) and  
+
+> 14 Adaptive Graph Refinement and Label Propagation with LLMs for Cost-Effective Entity Resolution Conference’17, July 2017, Washington, DC, USA
+
+Table 8: Comparisons with supervised PLM-based methods (1:9 data split).                                    
+
+> Method Cora Alaska Music Movies
+> FP NMI FP NMI FP NMI FP NMI
+> DeepMatcher 67.19 72.56 53.91 61.75 50.69 59.81 42.17 52.79
+> Ditto 70.66 77.67 62.39 71.49 52.84 61.49 44.21 55.78
+> Alper 86.34 90.02 79.58 89.61 77.26 88.05 64.68 77.11
+
+“Constrained” (restricted to Alper ’s exact SBERT Top-15 blocking graph). As shown in Table 9, these methods suffer catastrophic per-formance degradation. Because flat tabular datasets lack explicit, multi-hop predicate relations (e.g., is-advisor-of ) required to anchor probabilistic updates, their propagation devolves into a shallow literal comparator. This structural mismatch fragments the datasets into singletons, which is directly reflected in the exceptionally low FP-measure. This confirms that legacy KB-alignment methods are structurally unsuited for flat ER tasks. 
+
+Table 9: Comparison with KB-Alignment methods.                        
+
+> Dataset Method Mode FP
+> Cora
+> PARIS Unconstrained 8.65
+> PARIS Constrained 8.65
+> LINDA Unconstrained 35.44
+> LINDA Constrained 30.93
+> Alper Constrained 86.34
+> Alaska
+> PARIS Unconstrained 12.36
+> PARIS Constrained 12.36
+> LINDA Unconstrained 43.98
+> LINDA Constrained 43.98
+> Alper Constrained 79.58
+
+## C.9 Robustness to Initial PLM Encoders 
+
+While the quality of the initial 𝐾 NN graph naturally impacts the starting point of the label propagation, Alper is designed to be highly robust to initial graph sparsity. We evaluate different PLM encoders, as shown in Table 10. Regardless of the base encoder’s initial representation quality, Alper successfully recovers missing topological links through LLM-informed propagation, consistently achieving high downstream performance. 
+
+Table 10: Performance across different PLM encoders.                
+
+> Dataset Encoder FP NMI
+> Cora
+> SBERT 86.34 90.02
+> RoBERTa-base 85.29 88.96
+> BERT-base-uncased 84.67 88.12
+> Alaska
+> SBERT 79.58 89.61
+> RoBERTa-base 76.49 85.53
+> BERT-base-uncased 74.14 82.66
+
+## C.10 Token-Cost Parity Analysis 
+
+To ensure a strictly fair evaluation of LLM overhead, we investigate whether competitors can bridge the performance gap if granted an equivalent or greater token budget. As shown in Table 11, we significantly increase the candidate pool size for LLM-CER to match or exceed Alper ’s token consumption. Despite utilizing massive token budgets, LLM-CER continues to fall short because it remains constrained by static, disjoint blocks. In contrast, Alper leverages its global graph to dynamically hunt for high-value boundary cases. 
+
+Table 11: Comparison under matched Token-Cost parity.                                 
+
+> Dataset Method Token (M) FP NMI
+> Cora LLM-CER 180.23 85.03 87.85
+> Alper 150.20 86.34 90.02
+> Alaska LLM-CER 192.09 75.39 83.96
+> Alper 152.12 79.58 89.61
+> Music LLM-CER 141.25 65.67 76.29
+> Alper 151.23 77.26 88.05
+> Movies LLM-CER 151.46 58.63 68.71
+> Alper 151.42 64.68 77.11
+
+## C.11 Theoretical Upper Bound with Ground-Truth Oracle 
+
+To assess our framework’s theoretical upper bound and isolate the specific performance degradation caused by LLM hallucinations, we replace the LLM backend with a Ground-Truth (True) Oracle. As detailed in Table 12, the True Oracle reveals the absolute limit of our graph propagation mechanism. The gap between the LLM Oracle and the True Oracle indicates that Alper successfully ex-tracts maximum value from imperfect LLMs, while leaving ample room for future backbone upgrades to further close this gap. 
+
+Table 12: Performance limits with a Ground-Truth Oracle.                
+
+> Dataset Variant FP NMI
+> Cora
+> WLP Only (No Oracle) 80.23 83.18 LLM Oracle ( Alper )86.34 90.02 True Oracle 93.11 96.13
+> Alaska
+> WLP Only (No Oracle) 75.36 82.93 LLM Oracle ( Alper )79.58 89.61 True Oracle 83.24 91.04
+
+## C.12 Empirical Efficiency and Scalability 
+
+To provide a clear picture of Alper ’s empirical efficiency, we track the end-to-end running times across various datasets. Despite the iterative nature of the label propagation and the sequential API calls, Table 13 demonstrates that the selective logic of our Online Knapsack formulation keeps the computational overhead strictly bounded, maintaining runtime parity with standard cascaded pipelines like LLM-CER .
+
+Table 13: End-to-end running times (in minutes).            
+
+> Dataset LLM-CER Alper
+> Cora 9.02 11.75
+> Alaska 91.61 105.96
+> Music 59.47 56.42
+> Movies 75.32 67.68 15 Conference’17, July 2017, Washington, DC, USA Wang et al.
+
+Entity Resolution 
+
+Instruction 
+
+You are an entity resolution expert. Determine if the following entity matches any of the candidate entities. Requirements: 1. Please respond with ONLY the number (1, 2, ...) of the matching candidate, or "NONE" if no match is found. 2. Your response should be a single number or "NONE", nothing else. 
+
+Input Prompt 
+
+Query Entity: Intermezzo in B minor, Op. 119 No. 1: Adago - Brahms: Complete Works Candidate Entities: 1. Opus 6 No. 12 in B minor (HWV 330) - I. Largo -Concerti Grossi op. 6 2. 003-Symphony 1 in C minor, op. 11: III. Menuetto & Trio, Allegro di Molto 3. Intermezzo in B minor, Op. 119 No. 1: Adagio 4. 017-Intermezzo in B minor, Op. 119 No. 1: Adagio 5. Johannes Brahms - Concerto for Violin and Orchestra in D major, Op. 77: II. Adagio 
+
+Response 
+
+3
+
+Figure 9: An example of the prompt used for LLM verification on Music .
+
+## C.13 Analysis of Error Correction 
+
+A key advantage of Alper is its ability to mitigate early-stage LLM errors. “Cheap” LLMs risk generating false positives, but our frame-work absorbs these through dense structural neighborhoods. Ta-ble 14 tracks a specific boundary case in the Movies dataset where an LLM falsely matched two distinct entities in Iteration 1. Because the propagation relies on the weighted consensus of a node’s broader neighborhood, the correct structural signals quickly overrode the single erroneous LLM edge in subsequent iterations, preventing a catastrophic cluster merge. Our broader tracking confirms that approximately 12.26% of such early-stage LLM false positives across the Movies dataset were successfully neutralized by this mechanism. 
+
+Table 14: Target label probabilities. 
+
+Iteration Label 1 Label 2 Status 
+
+1 0.45 0.26 Error 2 0.32 0.41 Recovered 3 0.13 0.68 Corrected 
+
+## D Prompt Template 
+
+We provide the detailed prompt template utilized by Alper . As shown in Figure 9, this prompt compels the LLM to act as a discrim-inative expert, comparing a target record against a set of candidates. We enforce a strict output format (integer index or “NONE”) to ensure automated parsability. This one-to-many verification facili-tates comparative reasoning to identify the best match or reject all candidates, thereby refining graph topology and mitigating error propagation.

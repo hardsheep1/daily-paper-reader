@@ -1,0 +1,134 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-06-03T09:52:16.015620+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 2,
+    "deep_cap": 6,
+    "deep_selected": 2,
+    "quick_candidates": 1,
+    "quick_skim_target": 11,
+    "quick_selected": 1
+  },
+  "deep_dive": [
+    {
+      "id": "2606.01255v1",
+      "source": "arxiv",
+      "title": "Agentic Clustering: Controllable Text Taxonomies via Multi-Agent Refinement",
+      "abstract": "Recent text-clustering methods use large language models to propose a cluster taxonomy from a corpus and then assign each text to it. These pipelines are fundamentally programmatic: the sequence of LLM calls and the rules for stopping, merging, and splitting clusters are fixed in code in advance, so they generalise poorly across corpora of different structure and cannot easily incorporate user-supplied constraints such as a target cluster count or a clustering intent. We propose an agentic alternative in which an orchestrator LLM inspects the state of the discovery process at each step and dispatches one of a small set of specialised agents - proposer, synthesizer, auditor, investigator, and critic - adapting the pipeline to the corpus rather than executing a fixed one. On seven public text-clustering benchmarks the method achieves state-of-the-art performance, beating the strongest prior LLM baseline by up to 32% in ARI.",
+      "authors": [
+        "Simon Löwe",
+        "Emily Silcock"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-05-31T14:18:18+00:00",
+      "link": "https://arxiv.org/pdf/2606.01255v1",
+      "tags": [
+        "keyword:active-clust",
+        "query:active-clust"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "LLM-based agentic clustering with multi-agent refinement for controllable text taxonomies",
+      "llm_evidence_cn": "基于大语言模型的多智能体聚类，实现可控文本分类",
+      "llm_evidence": "基于大语言模型的多智能体聚类，实现可控文本分类",
+      "canonical_evidence": "基于大语言模型的多智能体聚类，实现可控文本分类",
+      "llm_tldr_en": "Agentic Clustering uses an orchestrator LLM to dispatch specialized agents (proposer, synthesizer, etc.) for adaptive text clustering, overcoming fixed pipeline limitations.",
+      "llm_tldr_cn": "现有基于大语言模型的文本聚类方法采用固定的程序化流水线，难以推广到不同结构的数据集。本文提出代理式聚类方法，由调度器大语言模型在每个步骤检查状态并分派专门代理，从而自适应地调整聚类过程。实验表明该方法能够灵活融入用户约束，如目标聚类数和聚类意图，显著提升跨语料库的泛化能力。该工作为利用大语言模型进行主动式聚类提供了新范式。",
+      "llm_tldr": "现有基于大语言模型的文本聚类方法采用固定的程序化流水线，难以推广到不同结构的数据集。本文提出代理式聚类方法，由调度器大语言模型在每个步骤检查状态并分派专门代理，从而自适应地调整聚类过程。实验表明该方法能够灵活融入用户约束，如目标聚类数和聚类意图，显著提升跨语料库的泛化能力。该工作为利用大语言模型进行主动式聚类提供了新范式。",
+      "llm_tags": [
+        "query:ac:composite"
+      ],
+      "matched_query_tag": "query:ac:composite",
+      "matched_query_text": "Papers central to 主动学习聚类相关论文，特别是利用大模型的方法, especially work that connects or combines: d; c; active learning clustering with large language models; clustering using large language models; clustering base LLM active learning; Active learning clustering methods that leverage large language models.",
+      "matched_requirement_id": "req-composite-ac",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2605.25814v1",
+      "source": "arxiv",
+      "title": "Adaptive Graph Refinement and Label Propagation with LLMs for Cost-Effective Entity Resolution",
+      "abstract": "Dirty entity resolution (ER), which identifies records referring to the same real-world entity from a single, messy dataset, is a fundamental task in data management and mining. However, the dominant blocking-matching-clustering paradigm for ER suffers from critical flaws. Its cascaded, decoupled workflow essentially produces a static, sparse graph plagued by missing edges (due to blocking failures) and noisy links (due to matching errors), causing error propagation and yielding suboptimal clusters, particularly when rigid transitivity is imposed in the clustering. We contend that matching and clustering are fundamentally synergistic, both optimizing for the construction of an ideal entity graph. Building upon this insight, we propose Alper, a unified framework that integrates these steps into an iterative probabilistic label propagation process over a global, evolving graph. Unlike disjoint blocking, Alper refines the graph structure and labels dynamically by adaptively integrating \"weak but cheap\" signals from graph propagation with \"strong but expensive\" LLM-based pairwise queries. For higher cost-effectiveness, we formulate the signal selection as a constrained optimization problem maximizing cumulative marginal gain under a query budget, solved via our greedy algorithm with provable theoretical guarantees. Our extensive experiments over eight benchmark datasets demonstrate that Alper is consistently superior to state-of-the-art cascaded pipelines.",
+      "authors": [
+        "Hongtao Wang",
+        "Renchi Yang",
+        "Haoran Zheng",
+        "Xiangyu Ke"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.AI"
+      ],
+      "published": "2026-05-25T13:11:33+00:00",
+      "link": "https://arxiv.org/pdf/2605.25814v1",
+      "tags": [
+        "keyword:active-clust",
+        "query:active-clust"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "LLM-based graph refinement and label propagation for entity resolution clustering",
+      "llm_evidence_cn": "利用大语言模型进行图精炼和标签传播以改进实体解析聚类",
+      "llm_evidence": "利用大语言模型进行图精炼和标签传播以改进实体解析聚类",
+      "canonical_evidence": "利用大语言模型进行图精炼和标签传播以改进实体解析聚类",
+      "llm_tldr_en": "Adaptive Graph Refinement uses LLMs to iteratively improve entity graphs and propagate labels, enhancing clustering quality in dirty entity resolution.",
+      "llm_tldr_cn": "脏实体解析中传统的阻塞-匹配-聚类范式存在错误传播问题。本文提出自适应图精炼与标签传播方法，利用大语言模型动态添加边和传播标签，从而优化聚类结果。实验证明该方法显著提升了聚类准确率，并降低了人工标注成本。该工作展示了在大语言模型辅助下的半监督聚类新途径，与主动学习聚类方向紧密相关。",
+      "llm_tldr": "脏实体解析中传统的阻塞-匹配-聚类范式存在错误传播问题。本文提出自适应图精炼与标签传播方法，利用大语言模型动态添加边和传播标签，从而优化聚类结果。实验证明该方法显著提升了聚类准确率，并降低了人工标注成本。该工作展示了在大语言模型辅助下的半监督聚类新途径，与主动学习聚类方向紧密相关。",
+      "llm_tags": [
+        "query:active-clust"
+      ],
+      "matched_query_tag": "query:active-clust",
+      "matched_query_text": "recent advances in active clustering with large language models",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2605.24867v1",
+      "source": "arxiv",
+      "title": "Clustering as Reasoning: A $k$-Means Interpretation of Chain-of-Thought Graph Learning",
+      "abstract": "Chain-of-Thought (CoT) prompting has shown promise in enhancing the reasoning capabilities of large language models (LLMs) on text-attributed graphs (TAGs). This work reframes CoT-based graph learning through the principle of clustering as reasoning, offering a $k$-means interpretation of how iterative reasoning operates over graph-structured data. We observe that existing graph CoT methods rely on disjoint architectures and fixed graph representations, limiting step-by-step semantic-topological interaction and interpretability. To overcome this limitation, we propose a unified framework named KCoT that integrates CoT reasoning with graph representation learning. Our key theoretical result reveals a formal mathematical correspondence between a Transformer block and the $k$-means algorithm, allowing reasoning to be interpreted as iterative assignment and update steps. Based on this insight, we introduce a Semantic Discriminating Prompt that explicitly formulates these steps as structured CoT reasoning, together with a structure-grounded alignment strategy to fuse topological priors with evolving thought-conditioned representations. Experiments on standard benchmarks demonstrate consistent improvements over state-of-the-art methods, validating clustering as a principled mechanism for CoT-based graph learning.",
+      "authors": [
+        "Xuanting Xie",
+        "Zhaochen Guo",
+        "Bingheng Li",
+        "Xingtong Yu",
+        "Zhifei Liao",
+        "Zhao Kang",
+        "Yuan Fang"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.CL",
+        "cs.NI"
+      ],
+      "published": "2026-05-24T04:58:44+00:00",
+      "link": "https://arxiv.org/pdf/2605.24867v1",
+      "tags": [
+        "keyword:active-clust",
+        "query:active-clust"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Integrates k-means clustering with LLM chain-of-thought reasoning on graphs",
+      "llm_evidence_cn": "将k均值聚类与大语言模型思维链推理结合于图数据",
+      "llm_evidence": "将k均值聚类与大语言模型思维链推理结合于图数据",
+      "canonical_evidence": "将k均值聚类与大语言模型思维链推理结合于图数据",
+      "llm_tldr_en": "Proposes KCoT framework unifying chain-of-thought reasoning with k-means clustering for enhanced LLM reasoning on text-attributed graphs, revealing formal correspondence between clustering and reasoning.",
+      "llm_tldr_cn": "该论文提出KCoT框架，将思维链推理与k均值聚类统一起来，用于增强大语言模型在文本属性图上的推理能力。通过揭示聚类与迭代推理之间的形式化数学对应关系，该框架解决了现有图CoT方法中语义-拓扑交互不足和可解释性有限的问题。实验表明，KCoT能够有效提升图相关任务的推理性能，为聚类与大语言模型结合提供了新视角。",
+      "llm_tldr": "该论文提出KCoT框架，将思维链推理与k均值聚类统一起来，用于增强大语言模型在文本属性图上的推理能力。通过揭示聚类与迭代推理之间的形式化数学对应关系，该框架解决了现有图CoT方法中语义-拓扑交互不足和可解释性有限的问题。实验表明，KCoT能够有效提升图相关任务的推理性能，为聚类与大语言模型结合提供了新视角。",
+      "llm_tags": [
+        "query:active-clust"
+      ],
+      "matched_query_tag": "query:active-clust",
+      "matched_query_text": "recent advances in active clustering with large language models",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}
