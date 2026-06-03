@@ -1,0 +1,3792 @@
+Title: Clustering Items through Bandit Feedback Finding the Right Feature out of Many
+
+URL Source: https://openreview.net/pdf?id=99zsyZpUqp
+
+Number of Pages: 30
+
+Markdown Content:
+# Clustering Items through Bandit Feedback Finding the Right Feature out of Many 
+
+Maximilian Graf * 1 Victor Thuot * 2 Nicolas Verzelen 2
+
+## Abstract 
+
+We study the problem of clustering a set of items based on bandit feedback. Each of the n items is characterized by a feature vector, with a possibly large dimension d. The items are partitioned into two unknown groups, such that items within the same group share the same feature vector. We con-sider a sequential and adaptive setting in which, at each round, the learner selects one item and one feature, then observes a noisy evaluation of the item’s feature. The learner’s objective is to recover the correct partition of the items, while keeping the number of observations as small as possible. We provide an algorithm which relies on finding a relevant feature for the clustering task, leveraging the Sequential Halving algorithm. With probability at least 1 − δ, we obtain an accu-rate recovery of the partition and derive an upper bound on the budget required. Furthermore, we obtain an instance-dependent lower bound, which is tight in some relevant cases. 
+
+## 1. Introduction 
+
+We consider a sequential and adaptive pure exploration prob-lem, in which a learner aims to cluster a set of items, each represented by a feature vector in Rd. The items are par-titioned into two unknown groups such that items within the same group share the same feature vector. The learner sequentially selects an item and a feature, and then observes a noisy evaluation of the chosen feature of that item. Given a prescribed probability δ, the learner’s objective is to col-lect enough information to recover the partition of the items with a probability of error at most δ.          
+
+> *Equal contribution 1Institut f ¨ur Mathematik, Universit ¨at Potsdam, Potsdam, Germany 2INRAE, Mistea, Institut Agro, Univ Montpellier, Montpellier, France. Correspondence to: Maximilian Graf <graf9@uni-potsdam.de >, Victor Thuot <vic-tor.thuot@inrae.fr >.
+> Proceedings of the 42 nd International Conference on Machine Learning , Vancouver, Canada. PMLR 267, 2025. Copyright 2025 by the author(s).
+
+This problem arises in crowdsourcing platforms, where com-plex labeling tasks are decomposed into simpler sub-tasks, typically involving answering specific questions about an item – see (Ariu et al., 2024). A motivating example is im-age labeling: a platform sequentially presents an image to a user along with a simple question such as “Is this a vehicle?” or “How many wheels can you see?”. The learner leverages these answers to classify the images into categories. In this setting, the images correspond to items that must be clus-tered, while questions correspond to features. This problem is a special case of the model studied in (Ariu et al., 2024), where the authors numerically demonstrate the advantage of an adaptive sampling scheme over non-adaptive ones. However, they do not establish the theoretical validity of their adaptive procedure. From a theoretical perspective, our problem consists of clustering n items based on sequential and adaptive queries to some of their d features. Intuitively, the difficulty of the clustering task is driven by the differences between items in different groups across these d features. In particular, it depends both on the magnitude of these differences and on their sparsity–that is, the number of features on which the items differ significantly. In this work, we precisely characterize the sample complex-ity of the two-group 1 clustering task, in a fully adaptive setting. Our main contributions are as follows: • We introduce the BanditClustering procedure – Algorithm 4. On the one hand, it outputs the correct partition of the items with a prescribed probability 1−δ.On the other hand, it adapts to the unknown means of the groups in order to sample at most the informative features. In Theorem 3.1, we provide a tight, non-asymptotic upper bound on its sample complexity as a function of n, d, log(1 /δ ), and the difference between the means. • Conversely, we establish in Section 4 an information-theoretic lower bound on the budget, which entails the optimality of BanditClustering .From a high-level perspective, our algorithm operates in three steps: first, it identifies a pair of representative items        
+
+> 1In the core manuscript, we focus on K= 2 groups. We discuss how to extend our ideas to K > 2clusters in Appendix C.
+
+1Clustering Items through Bandit Feedback: Finding the Right Feature out of Many 
+
+belonging to different groups; second, it selects a feature that best discriminates between the groups; and finally, it leverages this discriminative feature to cluster all items. 
+
+Connection to good arm identification and adaptive sens-ing literature . One of the key challenges is to achieve the trade-off between the budget used for identifying a good discriminative feature, and the budget used for the clustering task. We borrow techniques from the best-arm identification literature, specifically employing the Sequential Halving algorithm (Karnin et al., 2013) as a subroutine, leveraging its strong performance in settings where multiple arms are nearly optimal (Zhao et al., 2023; Katz-Samuels & Jamieson, 2020; Chaudhuri & Kalyanakrishnan, 2019). The first iden-tification step — finding two items belonging to distinct groups — is closely related to the adaptive sensing strate-gies for signal detection, as studied in (Castro, 2014), where the problem is framed as a sequential and adaptive hypoth-esis testing task. Furthermore, our approach incorporates ideas from (Castro, 2014; Saad et al., 2023) to efficiently identify the most informative features for clustering. 
+
+Connection to dueling bandits literature . Our bandit clustering problem is an instance of a pure bandit explo-ration problem, where one can sample interaction between items and features. In that respect, it is also related to rank-ing (Saad et al., 2023) and dueling bandits in the online literature (Ailon et al., 2014; Chen et al., 2020; Heckel et al., 2019; Jamieson & Nowak, 2011; Jamieson et al., 2015; Ur-voy et al., 2013; Yue et al., 2012; Haddenhorst et al., 2021) where the goal is to recover a partition of the items based on noisy pairwise comparisons. Some of the ranking pro-cedures are based on estimating the Borda count (Heckel et al., 2019), some other procedures, such as (Saad et al., 2023), aim at adapting to the unknown form of the com-parison matrix to reduce the total budget. In essence, our approach is related, as it seeks to balance the trade-off be-tween identifying relevant entries and exploiting them for efficient comparisons. 
+
+Connection to other bandit clustering problems . Recent works (Yang et al., 2024; Thuot et al., 2025; Yavas et al., 2025) have investigated clustering in a bandit setting, where items must be clustered based on noisy evaluations of their feature vectors. However, in these settings, the entire feature vector of the chosen item is observed at each sampling step, whereas in our framework, only a single feature of a given item is observed per step. Our observation scheme enables a more efficient allocation of the budget by focusing on the most relevant features — those that best discriminate between groups. The trade-off between exploring relevant features and exploiting them for classification is at the core of our work. This allows us to cluster the items with a much lower observation budget than in (Yang et al., 2024; Thuot et al., 2025) — see the discussion section. Other authors have previously introduced adaptive clustering problems for crowdsourcing (Ho et al., 2013; Gomes et al., 2011), although their settings does not directly relate to ours. 
+
+Connection to online clustering of bandits . We point out another line of works (Gentile et al., 2014; Li et al., 2019; Liu et al., 2022; Li et al., 2025) on the so-called online clustering of bandits problem – an instance of contextual linear bandit. This problem bears some resemblance to our setting, as it involves exploring a bandit environment with an underlying clustering structure among items. Still, there are two major differences with our problem: (1) the learner has no control over which items are presented at each time step, and (2) the algorithms (such as the CLUB Algorithm and its extensions) are designed and evaluated in a cumulative regret setting. 
+
+Organization of the manuscript . The model is introduced along with notation in the following Section 2. In Sec-tion 3, we describe our procedure and analyze its sample complexity. Section 4 provides matching lower bounds on the budget that imply the optimality of our procedure. Fi-nally,we present numerical experiments in Section 5 and discuss possible extensions in Section 6. 
+
+## 2. Problem formulation and notation 
+
+Consider a set of n items, indexed by [n] = {1, . . . , n }.Each item is characterized by a feature vector of dimension 
+
+d, where the number of features d may be large. Let M ∈
+
+Rn×d be the n × d matrix such that the i-th row of M
+
+contains the feature vector of item i. We denote the feature vector of item i as Mi, · = ( Mi, 1, . . . , M i,d ). We assume that the n items are partitioned into two unknown groups, such that items within the same group share the same feature vector. The groups are assumed to be nonempty and non-overlapping. The objective is to recover these two groups. 
+
+Assumption 2.1 (Hidden partition) . There exist two distinct vectors μ0 ∈ Rd and μ1 ∈ Rd, and a non-constant label vector g ∈ { 0, 1}n such that for any item i ∈ [n],
+
+Mi, · =
+
+(
+
+μ0 if g(i) = 0 ,μ1 if g(i) = 1 .
+
+As is standard in clustering, (g, μ 0, μ 1) encodes the same matrix M as (1 − g, μ 1, μ 0). Therefore, we assume without loss of generality that g(1) = 0 in order to make the label vector g identifiable. We consider a bandit setting, in which the learner sequen-tially and adaptively observes noisy entries of the matrix 
+
+M . At each time step t, based on passed observations, the learner selects one item It ∈ [n] and one feature Jt ∈ [d].She then receives Xt, a noisy evaluation of MIt,J t . Condi-tionally on the pair (It, J t), Xt is an independent sample 2Clustering Items through Bandit Feedback: Finding the Right Feature out of Many 
+
+drawn from an unknown distribution νIt,J t with expectation 
+
+MIt,J t . The collection of distributions (νi,j )i,j is referred to as the environment. We assume that the noise in observations is 1-subGaussian. 
+
+Assumption 2.2 (1-subGaussian noise) . For any pair 
+
+(i, j ) ∈ [n] × [d], if X ∼ νi,j , then X − Mi,j is 1-subGaussian, namely 
+
+E [exp( t(X − Mi,j )] ≤ exp  t2/2 ∀t ∈ R .
+
+This subGaussian assumption is standard in the bandit litera-ture (Lattimore & Szepesv ´ari, 2020). It covers, for example, the emblematic case where observations follow Gaussian distributions with variance at most 1, as well as bounded random variables such as those following a Bernoulli distri-bution on [0 , 1] . By rescaling, the results can be extended to the case of σ-subGaussian noise. We tackle this pure exploration problem in the fixed con-fidence setting , a common framework in the bandit litera-ture (Lattimore & Szepesv ´ari, 2020). In this setting, the learner must decide not only which observations to make but also when to stop. Given a prescribed error probability δ,the learner aims to recover the correct partition of the items with probability at least 1 − δ, while minimizing the total number of observations. The learner sequentially collects observations until a stopping time T , after which it outputs an estimated label vector ˆg ∈ { 0, 1}n (satisfying ˆg(1) = 0 ). The total number of observations, given by T , is referred to as the budget of the procedure. Formally, T is a stopping time with respect to the natural filtration associated to the sequential model. For any confidence level δ, we say then that a procedure A
+
+is δ-PAC (Probably Approximately Correct) if 
+
+PA,ν (ˆ g = g) ⩾ 1 − δ , 
+
+where PA,ν denotes the probability distribution induced by the interaction between the environment ν and the algorithm 
+
+A.The performance of a δ-PAC algorithm is evaluated through its budget T , which should be as small as possible. In this paper, we derive upper bounds on T that hold with high probability—typically on an event of probability at least 
+
+1 − δ, under which the algorithm returns a correct clustering. We introduce two key quantities for analyzing the problem. The gap vector is defined as 
+
+∆ := μ1 − μ0 ∈ Rd ,
+
+which naturally captures the difficulty of the clustering task. By assumption, we have ∆̸ = 0 so that there is exactly two disjoint groups. The smaller the norm of ∆ is, the more challenging the estimation of g becomes. In particular, we analyze the complexity of the clustering task with respect to the entry of the gap vector ∆ ordered by decreasing absolute value, namely ∆(1) ≥ ∆(2) ≥ · · · ≥ ∆(d) .Most intuitions behind our method rely on the sparse set-ting, where the two groups differ in exactly s entries with a constant gap h. This corresponds to the case where the gap vector ∆ has exactly s nonzero entries equal to h > 0
+
+and d − s entries equal to 0. The smaller the sparsity level s,the more entries must be explored to detect a discriminative feature. The smaller the magnitude h, the more budget is required to distinguish between the two groups. Besides, we define θ the balancedness of the partition g, that is the proportion of arms in the smallest group 
+
+θ := 1
+
+n
+
+> n
+
+X
+
+> i=1
+
+1(g(i) = 0) ∧ 1
+
+n
+
+> n
+
+X
+
+> i=1
+
+1(g(i) = 1) .
+
+Intuitively, the smaller θ is, the more unbalanced the par-tition is, and the more difficult it is to discover two items of distinct groups. For identifiability reasons, we assumed in Assumption 2.1 that the groups are nonempty – which implies in particular that n ⩾ 2, but also that θ ∈ [1 /n ; 1 /2] .
+
+## 3. Algorithms 
+
+3.1. Introduction to our method 
+
+We introduce briefly our method, which contains two steps. First, we fix arbitrary the item r0 = 1 as a representative of the first group 2. Then, we aim to identify a second rep-resentative item r1 ∈ [n] that belongs to the other group, and a feature j ∈ [d] such that Mr1,j differs from Mr0,j 
+
+significantly, that is such that |Mr1,j − Mr0,j | is large. Our method balances the budget spent on identifying such dis-criminative feature, with the budget required for classifying all items based on this feature. Improving the budget com-pared to non-active settings requires over-sampling certain rows , which we refer to as representatives, following (Thuot et al., 2025). This step is crucial for accurately estimating some entries of the vectors μ0 and μ1 and, ultimately, for accelerating the clustering task. Importantly, if we detect an entry (r1, j ) in the matrix where the gap |Mr1,j − Mr0,j | is sufficiently large, we obtain two complementary pieces of information. This naturally leads us to organize the clustering task as a two-step procedure: 1. If we can test that |Mr1,j − Mr0,j | > 0, then item r1
+
+can serve as a representative of the second group. Algo-rithm 2 identifies such an item r1 with high probability. Once the two representatives r0 and r1 are known, we 
+
+> 2By symmetry, any randomly selected row could serve the same purpose.
+
+3Clustering Items through Bandit Feedback: Finding the Right Feature out of Many 
+
+allocate a significant portion of the budget to these items in order to identify a discriminative feature in the gap-vector ∆.2. If we identify a feature j such that |Mr1,j − Mr0,j |
+
+not only differs from zero but also exceeds a certain threshold—specified later—then feature j is deemed sufficiently discriminative, and we concentrate the clas-sification budget on this feature. We then estimate 
+
+|∆j | = |Mr0,j − Mr1,j | with samples from entries 
+
+(r0, j ) and (r1, j ), and classify the remaining items with a budget of order O
+
+ n
+
+> ∆2
+> j
+
+log( n/δ )
+
+
+
+, uniformly allocated over items in the j-th column of M . This second step is detailed in Algorithm 3. 
+
+3.2. Warm-up: adaptation of Sequential Halving 
+
+As a subroutine, we introduce CSH for 
+
+CompareSequentialHalving , which is detailed in Algorithm 1. It is a variant of the Sequential Halving (SH) algorithm, introduced in (Karnin et al., 2013), which is very similar to Bracketing Sequential Halving described in (Zhao et al., 2023, Alg. 3). Building on recent advances in the analysis of SH applied to various best arm identification problems (Zhao et al., 2023), we analyze the performance of the method in a specific problem that we introduce – we provide an explicit guarantee for CSH in Lemma D.1. The algorithm takes 4 entries r0, I, L, T . Given a fixed item 
+
+r0 ∈ [n] and a subset of items I ⊂ [n] \ r0, CSH outputs an item i ∈ I and a feature j ∈ [d] for which the absolute difference |Mi,j − Mr0,j | is as large as possible. Each time we run CSH , we allocate a budget T 3, that the algorithm can fully spend. That is, CSH operates under a fixed budget constraint. Following the literature on best arm identification with multiple good arms (Berry et al., 1997; Katz-Samuels & Jamieson, 2020; Jamieson et al., 2016; De Heide et al., 2021), we incorporate a sub-sampling mechanism. Initially, 
+
+CSH selects randomly S0, a subset of 2L entries from I × d,where L is a parameter specifying the sub-sampling size. Se-quential Halving is then applied exclusively to the selected subset, rather than to the entire matrix. The optimal choice for L balances two factors. If L is small, the algorithm concentrates more budget per entry, enabling the detection of smaller gaps. If L is large, we increase the likelihood of including in S0 a significant proportion of good entries, en-suring that the quality of the remaining entry is not limited by an unlucky draw. We employ CSH as a subroutine in both Algorithm 2 and           
+
+> 3Actually, row r0is sampled half of the time, so that each sample from νi,j is compared to a new one from νr0,j .Any more refined book-keeping of samples from row r0would at best improve the budget by 2.
+
+Algorithm 3. In Algorithm 2, we explore the entire matrix in order to detect a row r1 that differs from the first row r0 = 1 ,for this we use I = [ n] \ r0. In Algorithm 3, we focus the exploration on two rows r0 = 1 and r1 (I = {r1}), aiming at detecting a feature that best separates the two groups represented by r0 and r1.
+
+Algorithm 1 CompareSequentialHalving (CSH) 
+
+Require: r0 an item, I ⊂ [n]\r0 subset of items, L number of halving steps, T ≥ 2L+2 budget 
+
+Ensure: a couple (i, j ) ∈ I × [d] 
+
+> 1:
+
+selects S0 ← {(i1, j 1), (i2, j 2), . . . , (i2L , j 2L )} uni-formly with replacement from I × [d] 
+
+> 2:
+
+for l = 1 , . . . , L do  
+
+> 3:
+
+τl ←  T
+
+> 2L−l+2 L
+
+ 
+
+> 4:
+
+for (i, j ) ∈ Sl−1 do  
+
+> 5:
+
+draw 
+
+(
+
+X(1)  
+
+> r0,j
+
+, . . . , X (τl) 
+
+> r0,j
+
+∼i.i.d. νr0,j 
+
+X(1)  
+
+> i,j
+
+, . . . , X (τl) 
+
+> i,j
+
+∼i.i.d. νi,j  
+
+> 6:
+
+store bDi,j ← 1
+
+> τl
+
+Pτl
+
+> u=1
+
+
+
+X(u) 
+
+> i,j
+
+− X(u)
+
+> r0,j
+
+ 
+
+> 7:
+
+end for  
+
+> 8:
+
+keep in Sl indices (i, j ) ∈ Sl−1 corresponding to the 
+
+2L−l largest ˆDi,j  
+
+> 9:
+
+end for  
+
+> 10:
+
+return (i, j ) ∈ SL
+
+3.3. First step: CandidateRow 
+
+We start our procedure by solving a sub-problem which consists on detecting an item r1 which is not in the same group as the prefixed representative r0 = 1 . We perform this step in the following Algorithm 2. The guarantees of Algorithm 2 are proved in Appendix E and are gathered in Proposition E.1. In Algorithm 2, we perform multiple runs of the CHS sub-routine, iteratively increasing the budget Tk = 2 k+1 allo-cated for each run. For a given run of CSH (r0, [n], L, T k),we obtain an entry (i, j ) (Line 4). In Line 5, we use the same amount of observations 2k+1 to estimate the gap 
+
+|Mi,j − Mr0,j |. Finally, in Line 8, we perform a test based on a Hoeffding’s bound to decide whether |Mi,j − Mr0,j | >
+
+0 or not. If at some point, this test concludes, Algorithm 2 outputs r1 = i. The threshold chosen in the stopping condi-tion from Line 6 is designed to assure that with a probability larger than δ, then the selected item r1 belongs to another group as r0 = 1 .In Line 3, we chose Lmax as 
+
+Lmax := 
+
+
+
+log 2
+
+
+
+16 dn log 
+
+ 4 log(8 nd )
+
+δ
+
+ 
+
+,
+
+which corresponds to the sub-sampling budget required, according to Lemma D.1, when θ = 1 /n takes the smallest 4Clustering Items through Bandit Feedback: Finding the Right Feature out of Many 
+
+Algorithm 2 CandidateRow (CR) 
+
+Require: confidence parameter δ > 0, item r0
+
+Ensure: row index r1 ∈ [n]
+
+1: initialize r1 ← 0, k ← 1
+
+2: while r1 = 0 do 
+
+3: for 1 ≤ L ≤ Lmax such that L · 2L ≤ 2k+1 do 
+
+4: (i, j ) ←CSH ([n], L, 2k+1 )
+
+5: draw 
+
+(
+
+X(1)  
+
+> r0,j
+
+, . . . , X (2 k )
+
+> r0,j
+> i.i.d.
+
+∼ νr0,j 
+
+X(1)  
+
+> i,j
+
+, . . . , X (2 k )
+
+> i,j
+> i.i.d.
+
+∼ νi,j 
+
+6: if P2k
+
+> t=1
+
+
+
+X(t) 
+
+> i,j
+
+− X(t)
+
+> r0,j
+
+
+
+>
+
+q
+
+4 · 2k log  ( k3
+
+> 0.15 δ
+
+ then 
+
+7: r1 ← i
+
+8: end if 
+
+9: end for 
+
+10: k ← k + 1 
+
+11: end while 
+
+possible value. From Lemma D.1, we know that for ∆2(s) ≤ 128 L2, for some constant c, if the condition 
+
+Tk = 2 k+1 ⩾ cL 3max 
+
+d (log(1 /δ ) + log log( nd )) 
+
+θs ∆2(s)
+
+,
+
+holds, then, with high probability, there exists L ⩽ Lmax 
+
+such that CHS (r0, [n], L, T k) outputs a pair (i, j ) with 
+
+|Mi,j − Mr0,j | ≥ ∆(s) /2. Besides, under this budget condition, the termination condition from Line 8 will be reached w.h.p. This condition is especially true for the sparsity s ∈ [d], where the inequality above is tightest. As in (Jamieson et al., 2016; Saad et al., 2023), the ex-ponential grid Tk = 2k allows us to adapt the strat-egy, and reach a budget that scales up to log terms as 
+
+O
+
+
+
+min s∈[d] dθs ∆2(s)
+
+log(1 /δ )
+
+
+
+, even without prior knowl-edge of this quantity by the learner. Interestingly, we can relate this quantity to the l2 norm of 
+
+∆. For that, we define 
+
+s∗ ∈ argmax s∈[d]s · ∆2(s) . (1) This quantity, s∗, appears as an effective sparsity parame-ter, as observed in signal detection contexts. Actually, the following bound holds 
+
+max  
+
+> s∈[d]
+
+s · ∆2(s) ≤ ∥ ∆∥22 ≤ log(2 d) max  
+
+> s∈[d]
+
+s · ∆2(s) . (2) Finally, we prove that Algorithm 2 outputs an item r1 which belongs to the second group with a probability larger than 
+
+1 − δ, using a budget that is smaller, up to logarithmic terms, than the quantity dθ∥∆∥22
+
+log(1 /δ ). We will see in Theorem 4.1 that this bound is optimal for both θ and ∆.
+
+3.4. Second step: ClusterByCandidates 
+
+Consider the high probability event on which, after the first step of our procedure, Algorithm 2 provides an item 
+
+r1 ∈ [n] such that Mr1,·̸ = Mr0,·. Our next goal is to select a feature j such that |∆j | is large enough to allow a quick classification of each of the n items. We propose the pro-cedure Algorithm 3 which shares a similar structure with Algorithm 2. The guarantees of Algorithm 3 are proved in Appendix E, in Proposition F.1. We begin by performing several runs of CSH , with I = {r1}
+
+in order to detect large entries in the (absolute) gap vector 
+
+∆. As in Algorithm 2, we perform CSH with an increasing sequence of budget Tk = 2 k+1 , and for each budget Tk, we test all possible sub-sampling sizes L = 1 , . . . , ˜Lmax . In Line 3, we define 
+
+˜Lmax := 
+
+
+
+log 2
+
+
+
+16 d log 
+
+ 4 log(8 d)
+
+δ
+
+ 
+
+,
+
+as the maximum sub-sampling size needed to detect a signal when the sparsity level s = 1 is the smallest. In Line 4, we call CSH (r0, {r1}, L, 2k+1 ). We obtain a feature j and then estimate |∆j | = |Mr0,j − Mr1,j | in Line 6. For that, we take ⌊2k/n ⌋ samples from νr0,j 
+
+and νr1,j , and compute the sum of differences ˆD =
+
+P⌊2k /n ⌋ 
+
+> t=1
+
+(Xr1,j − Xr0,j ). We deduce a high probability lower bound | b∆|j = 1  
+
+> ⌊2k/n ⌋
+
+( ˆD − ϵ) ⩽ |∆j |, where ϵ is defined in Line 7. Based on | b∆|j , we can classify (with high probability) each item by sampling the j-th feature 
+
+O
+
+ 1 
+
+> b∆2
+
+log( n/δ )
+
+
+
+. We can then assess whether the classi-fication budget required for feature j is feasible given the budget Tk. If Tk ⩽ cn 
+
+> c|∆|2
+> j
+
+log( n/δ ), it seems that with fea-ture j, the classification budget exceeds Tk, we discard this feature and repeat CSH with larger sub-sampling size L or budget T .We now bound the budget of our procedure thanks to Lemma D.1. Assume that ∆2(s) ≤ 128 L2. If it holds for some constant c that 
+
+Tk = 2 k+1 ⩾ cL 3max 
+
+d (log(1 /δ ) + log log( d)) 
+
+s∆2(s)
+
+,
+
+then, there exists L ⩽ ˜Lmax such that CHS (r0, r 1, L, T k)
+
+outputs a feature j such that |Mr0j − Mr1j | ≥ ∆(s) /2.If we also have Tk ⩾ c n 
+
+> ∆(s)2
+
+log( n/δ ), then the algorithm stops, otherwise it would continue sampling. Overall, we prove that the total budget of the procedure, up to logarithmic factors, is no more than 
+
+min 
+
+> s∈[d]
+
+ ds + n
+
+ 1∆2(s)
+
++ 1 
+
+!
+
+log(1 /δ ) .
+
+5Clustering Items through Bandit Feedback: Finding the Right Feature out of Many 
+
+Algorithm 3 ClusterByCandidates (CBC) 
+
+Require: confidence δ > 0, representative items r0, r 1 ∈
+
+[n]
+
+Ensure: labels ˆg ∈ { 0, 1}n
+
+1: ˆg ← (0 , . . . , 0) T ∈ { 0, 1}n, k ← ⌈ log 2(n)⌉
+
+2: while True do 
+
+3: for 1 ≤ L ≤ ˜Lmax such that L · 2L ≤ 2k+1 do 
+
+4: j ← CSH (r0, r 1, L, 2k+1 )
+
+5: draw 
+
+(
+
+X(1)  
+
+> r0,j
+
+, . . . , X (⌊2k /n ⌋) 
+
+> r0,j
+
+∼i.i.d. νr0,j 
+
+X(1)  
+
+> r1,j
+
+, . . . , X (⌊2k /n ⌋) 
+
+> r1,j
+
+∼i.i.d. νr1,j 
+
+6: ˆD ← P⌊2k /n ⌋ 
+
+> t=1
+
+(Xr1,j − Xr0,j )
+
+7: ε ← p4 · ⌊ 2k/n ⌋ log( nk 3/0.15 δ)
+
+8: if ˆD ≥ 3 · ε then 
+
+9: for i ∈ [n] do 
+
+10: draw 
+
+(
+
+X(1)  
+
+> r0,j
+
+, . . . , X (⌊2k /n ⌋) 
+
+> r0,j
+
+∼i.i.d. νr0,j 
+
+X(1)  
+
+> i,j
+
+, . . . , X (⌊2k /n ⌋) 
+
+> i,j
+
+∼i.i.d. νi,j 
+
+11: ˆDi ← 
+
+> ⌊2k/n ⌋
+
+X
+
+> t=1
+
+(Xi,j − Xr0,j )
+
+12: ˆg(i) ← 1
+
+ ˆDi ≥ ε
+
+
+
+13: end for 
+
+14: output (ˆ g(1) , . . . , ˆg(d)) 
+
+15: end if 
+
+16: end for 
+
+17: end while 3.5. Main Algorithm 
+
+To obtain a complete clustering procedure that is adaptive to ∆ and θ, one simply has to combine Algorithm 2 and Algorithm 3. The overall clustering procedure is then given in Algorithm 4. 
+
+Algorithm 4 BanditClustering 
+
+Require: confidence parameter δ > 0
+
+Ensure: labels ˆg ∈ { 0, 1}n
+
+1: Fix r0 = 1 
+
+2: r1 ← CR (δ/ 2, r 0)
+
+3: ˆg ← CBC (δ/ 2, r 0, r 1)
+
+Theorem 3.1. For δ ∈ (0 , 1/2e), consider Algorithm 4 with entry δ. Define 
+
+H := dθ
+
+ 1
+
+∥∆∥2 + 1
+
+s∗
+
+
+
++ min 
+
+> s∈[d]
+
+ ds + n
+
+ 1∆2(s)
+
++ 1 
+
+!
+
+,
+
+(3) 
+
+where s∗ is the effective sparsity defined in (2) .With a probability of at least 1 − δ, Algorithm 4 returns 
+
+ˆg = g with a budget of at most 
+
+T ⩽ ˜C · log 
+
+ 1
+
+δ
+
+
+
+· H, 
+
+where there exists a numerical constant C, and an index 
+
+˜s = s∗ ∨ (⌈d/n ⌉ ∧ |{ j ∈ [d] , ∆j̸ = 0 }| ), such that ˜C is a logarithmic factor smaller than 
+
+C · (log log(1 /δ ) ∨ 1) 4
+
+· log( dn )5 log( d)(log + log(1 /∆2(˜ s)) ∨ 1) .
+
+In order to understand the motivation behind our complexity 
+
+H, we write our main theorem in the sparse setting – ∆ is 
+
+s-sparse with constant magnitude h.
+
+Corollary 3.2. For δ ∈ (0 , 1/e ) and ∆ ∈ { 0, h }d with 
+
+0 < h < 1, with a probability of at least 1 − δ, Algorithm 4 returns ˆg = g with a budget of at most 
+
+˜C · log(1 /δ ) ·
+
+ dθ∥∆∥2 + nh2
+
+
+
+,
+
+where ˜C is a logarithmic factor smaller than 
+
+C · (log log(1 /δ ) ∨ 1) 4 · log( dn )5(log + log(1 /h 2) ∨ 1) ,
+
+with a numerical constant C > 0.
+
+Compared to the lower bound in T heorem 4.1, we prove that our procedure is optimal when the gap vector is s-sparse with a constant magnitude h. For a general gap vector 
+
+∆, we have good reasons to think that understanding the optimality of this trade-off for this simple example allows us to understand (at least intuitively) the optimality for general vectors. We interpret H in (3) as a non asymptotic sampling com-plexity, which depends on the instance-specific parameters of our model θ, ∆, n, and d. The complexity H can be decomposed as two terms: 
+
+First Term: dθ∥∆∥2 log(1 /δ ), which correspond to the budget used to identify an item belonging to the second group. In the sparse setting, it scales as dθs × 1 
+
+> h2
+
+, which is necessary, as we need to explore at least dθs entries to find a non-zero entry, and we need at least 1/h 2 samples from each of these entries to decide if it is equal to 0 or not with a constant probility of error. 
+
+Second Term: min s∈[d]
+
+  ds + n 
+
+> 1∆2(s)
+
++ 1 
+
+
+
+. This term represents the best trade-off between the exploration of the gap vector ∆ and its exploitation for clustering. Indeed, the term n
+
+> ∆2(s)
+
+log(1 /δ ) is the price for clustering if we use a feature with a gap |∆(s)| whereas ds∆2(s)
+
+log(1 /δ ) corre-sponds to the price for identifying a feature with a gap at least |∆(s)|.6Clustering Items through Bandit Feedback: Finding the Right Feature out of Many 
+
+Define the effective sparsity ˜s for which the minimum holds, and define the effective magnitude as ∆(˜ s). In the sparse setting, this is exactly the sparsity level. Intuitively, we can argue that entries significantly larger than ∆(˜ s) are too rare to be detected (otherwise, ˜s would be smaller), and entries much smaller than ∆(˜ s) are too weak to be used for classifi-cation with a budget H. Our insight is that the problem is as hard as if the gap vector were ˜s-sparse with a constant mag-nitude ∆(s∗), a setting where we have matching lower and upper bounds (see Corollary 3.2 and Theorem 4.1), leading to our complexity. Finally, we mention that the remaining term d/ (θs ∗) in 
+
+H only dominates in the very specific setting where the non-zero entries of ∆ are really large so that ∥∆2∥ ≥ s∗.
+
+## 4. Lower bounds 
+
+In this section, we provide a lower bound on the budget of any δ-PAC algorithm. The bound is instance-dependent, meaning it holds for a specific problem instance defined by the matrix M . We establish this result by constructing a family of alternative environments, each obtained by slightly modifying the original matrix M . We then prove that any algorithm with a budget that is too small cannot perform well simultaneously across all these environments. For the lower bound, we consider Gaussian environments, for which Assumption 2.2 holds. We define Eper (M ) as the set of Gaussian environments constructed from M by permuting its rows and columns. Without loss of generality, we assume that μ0 = 0 and μ1 =∆. Formally, an environment ˜ν ∈ E per( M ) is defined using a permutation σ of [n] and a permutation τ of [d] as follows: 
+
+˜νi,j =
+
+ N (0 , 1) if g(σ(i)) = 0 
+
+N (∆ τj , 1) if g(σ(i)) = 1 , (4) where g ∈ { 0, 1}n denotes the unknown labels associated to matrix M . Intuitively, permuting the rows and columns of M accounts for the fact that (a) the target labels g are not available to the learner, and (b) the structure of the gap vector ∆ is also unknown. 
+
+Theorem 4.1. Fix δ ∈ (0 , 1/4) . Assume that A is δ-PAC for the clustering task, then, there exists ˜ν ∈ E per (M ) such that the (1 − δ)-quantile of the budget of algorithm A is bounded as follows 
+
+PA,˜ν T ⩾ 2( n − 2) ∆2(1) 
+
+log 
+
+ 14.8δ
+
+
+
+∨ 2dθ∥∆∥22
+
+log 16δ
+
+!
+
+⩾ δ
+
+(5) The lower bound contains two terms. The first term scales as dθ∥∆∥2 log(1 /δ ), and can be interpreted as the budget re-quired to identify one item from each group, while adapting to the unknown structure of the gap vector ∆. This term matches, up to logarithmic factors, the budget incurred in the first step of our algorithm for identifying a relevant item. In particular, it implies that the first step from Algorithm 2 is optimal. The second term scales as n
+
+> ∆2(1)
+
+log(1 /δ ), and take into ac-count the difficulty of clustering all items once a discrim-inative feature is identified. Specifically, if the most in-formative feature is provided by an oracle—i.e., a feature index j ∈ [d] such that |∆j | = ∆ (1) is maximal—then the problem reduces to performing n independent Gaussian hypothesis tests of the form H0 : X ∼ N (0 , 1) versus 
+
+H1 : X ∼ N (∆ (1) , 1) .In the case where the gap vector ∆ takes two values, this lower bound matches, up to poly-logarithmic terms, the upper bound from Corollary 3.2. In summary, when ∆ only takes two values, our budget is optimal with respect to d, n,
+
+θ and log(1 /δ ). For more general ∆, we conjecture that the trade-off in H in (3) is optimal and unavoidable. 
+
+## 5. Experiments 
+
+We support our theoretical results with numerical exper-iments on synthetic data. In the first experiment, we in-vestigate the sample complexity of our algorithm in sparse regimes. We compare its performance to a uniform sam-pling baseline, where each of the n × d entries of the matrix 
+
+M is sampled an equal number of times, and the resulting data is clustered using the K-means algorithm. In the sec-ond experiment, we evaluate the BanditClustering 
+
+algorithm under fixed sparsity while simultaneously in-creasing the parameters n and d, and we compare dif-ferent choices of the confidence parameter δ > 0. In a third experiment, we compare BanditClustering 
+
+to Adaptive Clustering (Ariu et al., 2024) and see how a growing number of features impacts both algo-rithms performances. We defer a fourth experiment to Ap-pendix B, which illustrates the influence of θ on the budget of BanditClustering . As shown in Corollary 3.2, the effect of 1/θ is comparable to that of the sparsity s discussed in the first experiment. The code we used for the simulations is available in a GitHub repository 4.
+
+Experiment 1 In this experiment, we consider a small number of items ( n = 20 ) and a large number of features (d = 1000 ). For s ∈ 1, . . . , d , define the vector ∆s =(hs, . . . , h s
+
+| {z } 
+
+> stimes
+
+, 0, . . . , 0) , where hs = 15 /√s. This choice ensures that ∆s is s-sparse and satisfies ∥∆s∥2 = 15 for any 
+
+> 4https://github.com/grafmaxi/bandit_two_ clusters
+
+7Clustering Items through Bandit Feedback: Finding the Right Feature out of Many 10 26 × 10 1 2 × 10 2 3 × 10 2 4 × 10 2
+
+> sparsity
+> 10 2
+> 10 3
+> 10 4
+> 10 5
+> average budget
+> BanditClustering
+> CBC
+> CR
+> K-means
+> (5%, 95%)-confidence interval
+> for BanditClustering
+> s
+
+Figure 1. Different budgets for Experiment 1, depending on the sparsity of ∆s.
+
+s. We construct the matrix M s with half of its rows equal to 
+
+0 and the other half equal to ∆s, and sample observations as νi,j ∼ N (M si,j , 1) . We examine the behavior of our algorithms as s varies, which causes the magnitude hs to vary accordingly. We report separately the budgets required by the two steps of our algorithm. For δ = 0 .8, we run each of the algorithms 
+
+CR (δ/ 2) , CBC (δ/ 2, i ∗) and BanditCluster (δ) a total of κ = 5000 times. We provide to CBC a representative item 
+
+i∗ in the second group as an oracle. In this setting, the ob-served error rate of BanditClustering remains close to 0.01 for all values of s. We depict the average budgets re-quired by BanditClustering (δ), considering only the runs where the first step CR returns a valid candidate row (otherwise, we emergency stop the algorithm). We also show the average budget required by CR (δ/ 2) and CBC (δ/ 2, i ∗)
+
+in Figure 1. The figure includes the (0 .05 , 0.95) quantiles across simulations. As a benchmark, we compare our algorithm to a strategy that samples uniformly all entries of M s, and then ap-plies the KMeans algorithm from the Scikit-learn library (Pedregosa et al., 2011). Given a budget T , we sample 
+
+τ = ⌊T /nd ⌋ observations X(t) 
+
+> i,j
+
+∼i.i.d. N (M si,j , 1) per en-try, and compute ¯Xi,j = 1
+
+> τ
+
+Pτt=1 X(t) 
+
+> i,j
+
+. We then cluster the items by performing the K-means algorithm with the vectors ( ¯X1j )j=1 ,...,d , . . . , ( ¯Xnj )j=1 ,...,d . For each sparsity 
+
+s, the budget T is turned by an oracle, with a grid search, so that the observed error rate after κ = 5000 runs is below 
+
+0.01 . The resulting budgets are reported in Figure 1. From Figure 1 we observe that in the sparse regime, our algorithm requires fewer observations than the uniform sam-pling approach used as baseline. Moreover, the budget required for CR appears to be mostly independent of the sparsity level s. In this setting, the overall sample com-0 1000 2000 3000 4000 5000   
+
+> number of items n
+> 0.0
+> 0.5
+> 1.0
+> 1.5
+> 2.0
+> 2.5
+> average budget
+> 1e7
+> n2
+> =0.8
+> =0.5
+> =0.2
+> =0.05
+> (5%, 95%)-confidence interval
+> for BanditClustering with = 0.05
+
+Figure 2. Different budgets for Experiment 2, depending on the dimensionality of the problem n and d = 10 · n.
+
+plexity of BanditClustering is mainly driven by the cost of the CBC step, which grows approximately linearly with s. These empirical dependencies on s align with our theoretical results, where the budget of CR in this case is, up to polylogarithmic factors, of order d/θ ∥∆∥22, which is constant in s for fixed ∥∆∥2, while CBC requires a budget of order n/ (∆ si )2 ∼ n · s.
+
+Experiment 2 In this experiment, we consider matrices of increasing size, with n ∈ 100 , 200 , 500 , 1000 , 2000 , 5000 
+
+and d = 10 · n, so that the number of features grows proportionally with the number of items. For each value of n, we define the vector ˜∆(n) ∈ Rd as ˜∆(n) =(5 , . . . , 5
+
+| {z } 
+
+> 10 times
+
+, 0, . . . , 0
+
+| {z } 
+
+> d−10 times
+
+) ∈ Rd. We construct a matrix M (n)
+
+with n/ 2 rows equal to 0 and n/ 2 rows equal to ˜∆(n),and we add Gaussian noise with unit variance. For each 
+
+δ ∈ 0.8, 0.5, 0.2, 0.05 , we run BanditClustering (δ)
+
+over κ = 5000 independent trials. In Figure 2, we report the average budget required by BanditClustering for each configuration. For δ = 0 .05 , we additionally report the 5th and 95th percentiles across the simulations. If we allocate a budget smaller than 5n2 = nd/ 2 uniformly at random across the nd entries of M , then on average, each item i will have d/ 2 unobserved features. As both n and d
+
+increase, the probability that some item i is only sampled on coordinates j such that ˜∆(n) 
+
+> j
+
+= 0 tends to one, rendering accurate clustering impossible. By contrast, Figure 2 shows that the budget required by our algorithm scales linearly with n. This matches the bounds from Corollary 3.2, which implies that when d = 10 · n and the parameters θ, s, and h
+
+are fixed, the total budget required (up to polylogarithmic factors) is of order n.
+
+Experiment 3 In this third experiment, we compare our algorithm BanditClustering with the Adaptive 
+
+8Clustering Items through Bandit Feedback: Finding the Right Feature out of Many 5 10 15 20 25 30 
+
+> Number of features
+> 0.0
+> 0.1
+> 0.2
+> 0.3
+> 0.4
+> 0.5
+> 0.6
+> Error Rate
+> Error Rates
+> Error rate for Adaptive Clustering
+> Error rate for BanditClustering
+> 0
+> 50000
+> 100000
+> 150000
+> 200000
+> 250000
+> 300000
+> 350000
+> 400000
+> 450000
+> Budget
+> Budgets
+> Average budget for BanditClustering
+> Budget used for Adaptive Clustering
+
+Figure 3. Comparison of the performance of 
+
+BanditClustering and Adaptive Clustering in Experiment 3, depending on the number of features dγ .
+
+Clustering algorithm introduced as Algorithm 2 in (Ariu et al., 2024). We fix the number of items to n = 30 and vary the number of features as dγ = 2 γ with γ = 1 , . . . , 5.We set θ = 0 .5, and for each dγ , we define sγ = dγ /2
+
+features j such that Mi,j = 0 .25 for items in the first cluster and Mi,j = 0 .75 for items in the second cluster, yielding 
+
+h = 0 .5. For the remaining features, we set Mi,j = 0 .5,independent of the item’s cluster. Observations are sampled from Bernoulli distributions: νi,j = Bern( Mi,j ). We apply 
+
+BanditClustering with δ = 0 .8 over κ = 500 runs. We then ran the Adaptive Clustering algorithm us-ing the MATLAB code provided by (Ariu et al., 2024), under the same setting and a fixed budget of T = 400 ,000 , also with κ = 500 runs. In Figure 3, we compare this fixed bud-get to the average budget used by BanditClustering ,and report the corresponding error rates as a function of dγ .As the number of features increases, we observe that the error of the fixed-budget algorithm Adaptive Clustering also increases. In contrast, the fixed-confidence algorithm BanditClustering maintains a consistently low error, and its average required budget re-mains largely unchanged. This behavior aligns with Corol-lary 3.2, as both dγ /θ ∥∆∥2 and n/h 2 are constant in our experimental setup. While our algorithm performs better in this specific scenario, it is important to note that the prob-lem addressed in (Ariu et al., 2024) is more complex than the clustering task we consider. We believe their algorithm could be adapted to our setting; however, it remains unclear whether the influence of the number of features on the error rate can be mitigated. 
+
+## 6. Discussion 
+
+Comparison to other active clustering settings and batch clustering. In this work, we consider a bandit clustering setting where the learner can adaptively sample each item-feature pair. This contrasts with (Yang et al., 2024; Thuot et al., 2025; Yavas et al., 2025) where the authors have to sample all the features for each item and cannot focus on most relevant features. Rewriting their results in our setting, the optimal budget for the latter problem is, up to poly-logarithmic terms, of the order of 
+
+nd log(1 /δ )
+
+∥∆∥2 + d3/2pn log(1 /δ )
+
+∥∆∥2 .
+
+Comparing this with our main result (Theorem 3.1), we first observe that the ability to adaptively select features allows to remove the so-called high-dimensional terms 
+
+d3/2
+
+q
+
+n log 1/2(1 /δ )/∥∆∥2 that occurs when the number of features is large - d ≥ n log(1 /δ ). Second, the adaptive queries allow to drastically decrease the budget in situation where the vector ∆ contains a few large entries so that a few feature are especially relevant to discriminate. To illus-trate this, consider e.g. a setting as in Corollary 3.2 where 
+
+∆ ∈ { 0, h }d takes s non-zero values where the partition is balanced so that θ = 1 /2. Then, our budget is of the order of 
+
+log(1 /δ )
+
+ dsh 2 + nh2
+
+
+
+,
+
+which represents a potential reduction by a factor n ∧ ds
+
+compared to (Yang et al., 2024; Thuot et al., 2025). 
+
+Extension to a larger number of groups. Throughout this work, we have assumed that the items are clustered into 
+
+K = 2 groups. However, our algorithms can be used as sub-routines to address the case where K > 2. In Appendix C, we provide an algorithm that handles this extension, along with a (non-optimal) budget that scales with K2. A key challenge in achieving optimality in this setting is determin-ing whether the algorithm should focus on all K(K − 1) /2
+
+pairwise discriminative features or on a smaller, more infor-mative subset. It is significantly more difficult to devise a strategy that adapts optimally to the relative positions of the centers of the K groups. We leave this question for future work. 
+
+Extension to heterogeneous groups. We also assumed throughout this work that all items within a group are per-fectly similar, meaning their corresponding mean vectors 
+
+μi are equal. This assumption could be relaxed by allow-ing the μi’s within a group to be close, but not necessarily identical. For instance, suppose we have prior knowledge that, for any feature j ∈ [d], the within-group variation satis-fies, max g(i)= g(i′) |Mi,j − Mi′,j | ⩽ c min g(i)̸=g(i′) |Mi,j −
+
+Mi′,j |. If c < 1/4, our algorithm remains correct since the search for a single discriminative feature is still meaningful and enables classification. However, if the within-group heterogeneity becomes comparable to or larger than the inter-group differences in some features, our method could fail, and further investigation would be required. Note also that if c = 1 /2, the problem becomes unidentifiable. 9Clustering Items through Bandit Feedback: Finding the Right Feature out of Many 
+
+## Acknowledgements 
+
+We are grateful to the anonymous reviewers for their care-ful reading and constructive feedback, which improved the clarity and the rigor of the paper. We also thank Alexan-dra Carpentier for valuable discussions and insights that contributed to the development of this work. The work of V. Thuot and N. Verzelen has been partially sup-ported by grant ANR-21-CE23-0035 (ASCAI,ANR). The work of M. Graf has been partially supported by the DFG Forschungsgruppe FOR 5381 “Mathematical Statistics in the Information Age - Statistical Efficiency and Compu-tational Tractability”, Project TP 02, and by the DFG on the French-German PRCI ANR ASCAI CA 1488/4-1 “Ak-tive und Batch-Segmentierung, Clustering und Seriation: Grundlagen der KI”. 
+
+## Impact Statement 
+
+This paper presents work whose goal is to advance the field of Machine Learning. There are many potential societal consequences of our work, none which we feel must be specifically highlighted here. 
+
+## References 
+
+Ailon, N., Karnin, Z., and Joachims, T. Reducing dueling bandits to cardinal bandits. In International Conference on Machine Learning , pp. 856–864. PMLR, 2014. Ariu, K., Ok, J., Proutiere, A., and Yun, S. Optimal cluster-ing from noisy binary feedback. Machine Learning , 113 (5):2733–2764, 2024. Berry, D. A., Chen, R. W., Zame, A., Heath, D. C., and Shepp, L. A. Bandit problems with infinitely many arms. 
+
+The Annals of Statistics , 25(5):2103–2116, 1997. Castro, R. M. Adaptive sensing performance lower bounds for sparse signal detection and support estimation. 
+
+Bernoulli , 20(4):2217–2246, 2014. Chaudhuri, A. R. and Kalyanakrishnan, S. Pac identification of many good arms in stochastic multi-armed bandits. In 
+
+International Conference on Machine Learning , pp. 991– 1000. PMLR, 2019. Chen, W., Du, Y., Huang, L., and Zhao, H. Combinatorial pure exploration for dueling bandit. In International Con-ference on Machine Learning , pp. 1531–1541. PMLR, 2020. De Heide, R., Cheshire, J., M ´enard, P., and Carpentier, A. Bandits with many optimal arms. Advances in Neural Information Processing Systems , 34:22457–22469, 2021. Gentile, C., Li, S., and Zappella, G. Online clustering of bandits. In Xing, E. P. and Jebara, T. (eds.), Proceed-ings of the 31st International Conference on Machine Learning , volume 32 of Proceedings of Machine Learn-ing Research , pp. 757–765, Bejing, China, 22–24 Jun 2014. PMLR. URL https://proceedings.mlr. press/v32/gentile14.html .Gomes, R., Welinder, P., Krause, A., and Perona, P. Crowdclustering. In Shawe-Taylor, J., Zemel, R., Bartlett, P., Pereira, F., and Weinberger, K. (eds.), Advances in Neural Information Process-ing Systems , volume 24. Curran Associates, Inc., 2011. URL https://proceedings.neurips. cc/paper_files/paper/2011/file/ c86a7ee3d8ef0b551ed58e354a836f2b-Paper. pdf .Haddenhorst, B., Bengs, V., and H ¨ullermeier, E. Identifica-tion of the generalized condorcet winner in multi-dueling bandits. Advances in Neural Information Processing Sys-tems , 34:25904–25916, 2021. Heckel, R., Shah, N. B., Ramchandran, K., and Wainwright, M. J. Active ranking from pairwise comparisons and when parametric assumptions do not help. The Annals of Statistics , 47(6):3099–3126, 2019. Ho, C.-J., Jabbari, S., and Vaughan, J. W. Adaptive task assignment for crowdsourced classification. In Inter-national conference on machine learning , pp. 534–542. PMLR, 2013. Jamieson, K., Katariya, S., Deshpande, A., and Nowak, R. Sparse dueling bandits. In Artificial Intelligence and Statistics , pp. 416–424. PMLR, 2015. Jamieson, K. G. and Nowak, R. Active ranking us-ing pairwise comparisons. In Shawe-Taylor, J., Zemel, R., Bartlett, P., Pereira, F., and Weinberger, K. (eds.), Advances in Neural Information Process-ing Systems , volume 24. Curran Associates, Inc., 2011. URL https://proceedings.neurips. cc/paper_files/paper/2011/file/ 6c14da109e294d1e8155be8aa4b1ce8e-Paper. pdf .Jamieson, K. G., Haas, D., and Recht, B. The power of adaptivity in identifying statistical alternatives. Advances in Neural Information Processing Systems , 29, 2016. Karnin, Z., Koren, T., and Somekh, O. Almost optimal exploration in multi-armed bandits. In Dasgupta, S. and McAllester, D. (eds.), Proceedings of the 30th Interna-tional Conference on Machine Learning , volume 28, pp. 1238–1246, Atlanta, Georgia, USA, 17–19 Jun 2013. PMLR. 10 Clustering Items through Bandit Feedback: Finding the Right Feature out of Many 
+
+Katz-Samuels, J. and Jamieson, K. The true sample com-plexity of identifying good arms. In Chiappa, S. and Calandra, R. (eds.), Proceedings of the Twenty Third International Conference on Artificial Intelligence and Statistics , volume 108 of Proceedings of Machine Learn-ing Research , pp. 1781–1791. PMLR, 26–28 Aug 2020. Lattimore, T. and Szepesv ´ari, C. Bandit algorithms . Cam-bridge University Press, 2020. Li, S., Chen, W., Li, S., and Leung, K.-S. Improved algo-rithm on online clustering of bandits. In Proceedings of the 28th International Joint Conference on Artificial In-telligence , IJCAI’19, pp. 2923–2929. AAAI Press, 2019. ISBN 9780999241141. Li, Z., Liu, M., Dai, X., and Lui, J. Demystifying on-line clustering of bandits: Enhanced exploration under stochastic and smoothed adversarial contexts. In ICLR 2025 . PMLR, 2025. Liu, X., Zhao, H., Yu, T., Li, S., and Lui, J. C. Federated online clustering of bandits. In Cussens, J. and Zhang, K. (eds.), Proceedings of the Thirty-Eighth Conference on Uncertainty in Artificial Intelli-gence , volume 180 of Proceedings of Machine Learn-ing Research , pp. 1221–1231. PMLR, 01–05 Aug 2022. URL https://proceedings.mlr.press/ v180/liu22a.html .Pedregosa, F., Varoquaux, G., Gramfort, A., Michel, V., Thirion, B., Grisel, O., Blondel, M., Prettenhofer, P., Weiss, R., Dubourg, V., Vanderplas, J., Passos, A., Cour-napeau, D., Brucher, M., Perrot, M., and Duchesnay, E. Scikit-learn: Machine learning in Python. Journal of Machine Learning Research , 12:2825–2830, 2011. Saad, E. M., Verzelen, N., and Carpentier, A. Active ranking of experts based on their performances in many tasks. In International Conference on Machine Learning , pp. 29490–29513. PMLR, 2023. Thuot, V., Carpentier, A., Giraud, C., and Verzelen, N. Clus-tering with bandit feedback: breaking down the computa-tion/information gap. In Kamath, G. and Loh, P.-L. (eds.), 
+
+Proceedings of The 36th International Conference on Al-gorithmic Learning Theory , volume 272 of Proceedings of Machine Learning Research , pp. 1221–1284. PMLR, 24–27 Feb 2025. URL https://proceedings. mlr.press/v272/thuot25a.html .Urvoy, T., Clerot, F., F ´eraud, R., and Naamane, S. Generic exploration and k-armed voting bandits. In International Conference on Machine Learning , pp. 91–99. PMLR, 2013. Yang, J., Zhong, Z., and Tan, V. Y. Optimal clustering with bandit feedback. Journal of Machine Learning Research ,25(186):1–54, 2024. Yavas, R. C., Huang, Y., Tan, V. Y. F., and Scarlett, J. A gen-eral framework for clustering and distribution matching with bandit feedback. IEEE Transactions on Information Theory , pp. 1–1, 2025. doi: 10.1109/TIT.2025.3528655. Yue, Y., Broder, J., Kleinberg, R., and Joachims, T. The k-armed dueling bandits problem. Journal of Computer and System Sciences , 78(5):1538–1556, 2012. Zhao, Y., Stephens, C., Szepesv ´ari, C., and Jun, K.-S. Re-visiting simple regret: Fast rates for returning a good arm. In International Conference on Machine Learning , pp. 42110–42158. PMLR, 2023. 11 Clustering Items through Bandit Feedback: Finding the Right Feature out of Many 
+
+## A. Notation 
+
+To ease the reading, we gather the main notation below • n number of items, d number of features • μ0̸ = μ1 ∈ Rd feature vectors of the two groups • Mi, · ∈ { μ0, μ 1}, i ∈ [n] feature vector of item i
+
+• M matrix with rows (Mi, ·) (with size n × d)• g ∈ { 0, 1}n true labels (fixing g(1) = 0 )• X ∼ νi,j for (i, j ) ∈ [n] × [d]: E[X] = Mi,j with X − Mi,j 1-sub-Gaussian • δ ∈ (0 , 1) prescribed probability of error • θ :=    
+
+> Pni=1 1(g(i)=0) ∧Pni=1 1(g(i)=1)
+> n
+
+balancedness • ∆ := μ1 − μ0̸ = 0 gap vector • s∗ ∈ argmax s∈[d]s · ∆2(s) effective sparcity Moreover, as we repeatedly compare the entries of M with some row r0 of our choice, we consider a fixed row r0 for the following proofs and define • Di,j := Mi,j − Mr0,j , for (i, j ) ∈ [n] × [d].
+
+## B. Experiment 4: Varying θ
+
+In this experiment we consider matrices with dimensions n = d = 1000 . The gap vector ∆′ is defined as 
+
+∆′ 
+
+> j
+
+=
+
+(
+
+1.5 if j ≤ 100 ,
+
+0 else. The following simulations are run in κ = 5000 trials: For different values θγ = 2 γ /n , γ = 0 , 1, . . . , ⌊log 2(n)⌋ − 1, we run 
+
+CR and CBC with confidence parameter δ = 0 .4 and BanditClustering with δ = 0 .8, analogously to experiment 1. The respective budgets are plotted in Figure 4. We also compare our procedure to the K-means algorithm by uniformly allocating budgets Tι = 2ι−1220 −1 (10 10 − 10 6) + 10 6, ι = 0 , . . . , 20 , by looking for each θγ for the smallest Tι such that at most 0.01 (again, approximately the error rate of BanditCLustering (0 .8) for all θγ ) respective Monte Carlo iterations returned an incorrect cluster. We also illustrate these times in Figure 4. Again, one can see that the budget of BanditClustering is mainly spent on the CBC part of the algorithm. For small values of θ, our algorithm requires less budget than an equally accurate version of the K-means algorithm. We can see that the budget of CBC is not effected by θ, while the budget of CR seems to be almost proportional to 1/θ . Since n, d and ∆′
+
+are fixed, this is in line with the results in Corollary 3.2. 
+
+## C. Extension to K > 2 clusters 
+
+In the main part of this manuscript, we focused on the case of two groups as it serves as an informative baseline for understanding the optimal trade-offs in clustering with bandit feedback. We introduce in this section an algorithm that extends our method to the general case where K > 2.Building on the the ideas of Algorithm 3, we aim to identify a set of representative items (r1, . . . , r K ) ∈ [n]K , with one item from each cluster. Given these representatives, the algorithm learns a discriminative feature for each pair of clusters, enabling perfect clustering in the general case with K > 2 groups. The algorithm is described in pseudo-code in Algorithm 5. 12 Clustering Items through Bandit Feedback: Finding the Right Feature out of Many 10 1 10 2
+
+> 1/
+> 10 1
+> 10 2
+> 10 3
+> 10 4
+> 10 5
+> 10 6
+> 10 7
+> 10 8
+> 10 9
+> average budget
+> BanditClustering
+> CBC
+> CR
+> KMeans
+> (5%, 95%)-confidence interval
+> for BanditClustering
+> 1/
+
+Figure 4. Different budgets for Experiment 4, depending on θγ .
+
+Setting with K > 2 groups. In this section, we assume that the items are partitioned into exactly K ⩾ 2 clusters, such that items within the same cluster share the same mean-vector. Specifically, there exists K centers in Rd, denoted as μ1, . . . , μ K
+
+such that, for any i ∈ [n] then Mi, · ∈ { μ1, . . . , μ K }. We further assume that all the centers μ1, . . . , μ K are pairwise distinct. For each k ∈ [K], we denote as G∗ 
+
+> k
+
+:= {i ∈ [n] ; Mi, · = μk}, and we assume that each cluster G∗ 
+
+> k
+
+is non-empty. As before, we consider sub-Gaussian noise and aim to identify the true partition G∗ = G∗
+
+> 1
+
+, . . . , G ∗ 
+
+> K
+
+in the δ-PAC setting. Note that the partition G∗ = G∗ 
+
+> 1
+
+⊔ · · · ⊔ G∗ 
+
+> K
+
+is defined only up to a permutation of the cluster labels. 
+
+Description of Algorithm 5. The algorithm uses the subroutines CR (Algorithm 2) and CBC (Algorithm 3), applied to subset of items. For any δ ∈ (0 , 1) , r ∈ [n] and G ⊂ [n], we denote as CR (δ, r ; G) the call of Algorithm 2 where the search of representatives is restricted to a given set of items G (instead of [n]). We recall that CR (δ, r, G ) is designed, to identify, if it exists, an item 
+
+s ∈ G such that Ms, ·̸ = Mr, ·.For any δ ∈ (0 , 1) , r ∈ [n], s ∈ [n] and G ⊂ [n], we write CBC (δ, r, s ; G) for the run of CBC restricted to the set of items G.As we will prove later, with high probability 1 − δ, CBC (δ, r, s ; G) will output a partition of G into two groups, such that the items with mean Mr, · and Ms, · are well-separated. When calling CBC (δ, r, s ; G), the items from the clusters of r and s
+
+within G are separated in two distinct sets, while other items might be split anywhere. The algorithm takes as input the confidence parameter δ and the number of clusters K. It is important to note that, in the 
+
+δ-PAC setting, the number of clusters K must be known in advance. Indeed, even in the simpler case where there are only two items with means μ1 and μ2, there is no finite time testing procedure that can decide between the hypotheses μ1 = μ2
+
+(i.e., K = 1 ) and μ1̸ = μ2 (i.e., K = 2 ) without any prior knowledge on the separation μ1 − μ2.First, we start with a partition G(1) = [ n], where all items are grouped together, and we fix an arbitrary item r1 ∈ G(1) as the first representative. The algorithm proceeds in K − 1 epochs, indexed by e = 1 , . . . , (K − 1) . In each epoch e, the algorithm identifies a new representative re+1 and isolates all items sharing the same mean-vector Mre+1 ,· into a new cluster. At the beginning of the e-th epoch, the algorithm has access to a partition of [n] into e groups [n] = ∪ek=1 ˆG(e) 
+
+> k
+
+together with e representatives r1, . . . , r e. If all the previous epochs were successful, then the representatives r1, . . . , r e belong to different clusters, and the intermediate cluster ˆG(e) 
+
+> k
+
+will contain all items with the same mean-vector as rk. The remaining items (i.e., those from unrepresented clusters) may be mixed in the current partition ˆG(e)1 , . . . , ˆG(e) 
+
+> e
+
+.To identify a new representative, the algorithm calls CR with the representative rk restricted to the group ˆG(e) 
+
+> k
+
+, for each 13 Clustering Items through Bandit Feedback: Finding the Right Feature out of Many 
+
+k = 1 , . . . , e , using confidence level δe. These e calls — denoted CR (δe, r k; ˆG(e) 
+
+> k
+
+) — are run in parallel. The first returned item from any successful call is selected as the new representative re + 1 .Next, for each k ∈ [e], the algorithm runs CBC (δe, r k, r e+1 ; ˆG(e) 
+
+> k
+
+) to split the group ˆG(e) 
+
+> k
+
+based on the new representative. With high probability, rk and re+1 come from different clusters. In that case, CBC will divide ˆG(e) 
+
+> k
+
+into two subgroups: 
+
+ˆG(e+1)  
+
+> k
+
+, containing all items with mean Mrk ,·, and ˆR(e+1)  
+
+> k
+
+, containing all items with mean Mre +1 ,·. We then define the new group ˆG(e+1)  
+
+> e+1
+
+:= Sek=1 ˆR(e+1)  
+
+> k
+
+, which should contain all items with mean Mre+1 ,·.At the end of the (K − 1) -th epoch, the partition [n] = ∪Kk=1 ˆG(K) 
+
+> k
+
+is the output of the algorithm. With high probability, it should be exact. 
+
+Algorithm 5 K-BanditClustering 
+
+Require: confidence parameter δ > 0, number of clusters K
+
+Ensure: Clusters ˆG1, . . . , ˆGK
+
+1: set ˆG(1) 1 ← [n]
+
+2: pick a first representative r1 uniformly at random from [n]
+
+3: for 1 ⩽ e ⩽ K − 1 do 
+
+4: set δe ← δe(K−1) 
+
+5: Run in parallel CR (δe, r k; G(e) 
+
+> k
+
+) for k ∈ [r] until one new representative re+1 is identified 
+
+6: for k ∈ [e] do 
+
+7: call CBC (rk, r e+1 , δ e; G(e) 
+
+> k
+
+) to cluster G(e) 
+
+> k
+
+into two groups ˆGe+1  
+
+> k
+
+, ˆRe+1  
+
+> k
+
+(swith rk ∈ ˆGe+1  
+
+> k
+
+)
+
+8: end for 
+
+9: gather ˆGe+1  
+
+> e+1
+
+= ∪ek=1 ˆRe+1 
+
+> k
+
+10: end for 
+
+11: return ˆG(K)1 . . . , ˆG(K) 
+
+> K
+
+partition of the items 
+
+Theorem C.1. Let ν be an environment with n items. Assume that there exists [n] = FKk=1 G∗ 
+
+> k
+
+a partition of the items into 
+
+K nonempty and disjoint groups such that all items in G∗ 
+
+> k
+
+share the same mean-vector μk. For any k ∈ [K], denote as 
+
+θk = |{ i∈[n] ; Mi, ·=μk }|  
+
+> n
+
+as the proportion of items with mean-vector μk.Define, for any 0̸ = ∆ ∈ Rd,
+
+˜H(∆) := min 
+
+> s∈[d]
+
+" ds + n
+
+ 1∆2(s)
+
++ 1 
+
+!# 
+
+.
+
+For δ ∈ (0 , 1/e ), consider Algorithm 5 with entry δ and K.With probability larger than 1 − δ, Algorithm 5 returns a partition ˆG of [n] equal to G∗ (up to labelization of the clusters), with a budget of at most 
+
+˜C log 
+
+ 1
+
+δ
+
+  X
+
+> k∈[K]
+
+max  
+
+> k′̸=k
+
+Kd θk∥μk − μk′ ∥2 + X 
+
+> k̸=k′
+
+˜H(μk − μk′ )
+
+ ,
+
+where there exists a numerical constant C, such that ˜C is a logarithmic factor smaller than 
+
+C · (log log(1 /δ ) ∨ 1) 4
+
+· log( dn )5 log( d)(log + log( d/ min   
+
+> k̸=k′
+
+∥μk − μ′
+
+> k
+
+∥2) ∨ 1) .
+
+The proof of Theorem C.1 is postponed to Appendix G . The proofs simply exploit the results obtained in the next section of this Appendix about subroutines CR and CBC .
+
+Comments on Algorithm 5 and Theorem C.1 In Algorithm 5, we extend our clustering approach to the general case with 
+
+K > 2 clusters by reducing the problem to a sequence of binary classification tasks. This allows us to reuse the subroutines 14 Clustering Items through Bandit Feedback: Finding the Right Feature out of Many 
+
+CR and CBC , originally designed for the case where there two groups, in a pipeline fashion. As shown in Theorem C.1, this reduction yields a δ-PAC algorithm for the general clustering problem. The resulting sample complexity scales as K2, since the algorithm performs one binary classification for each pair of clusters. This quadratic dependency is unavoidable in the worst case—for example, when the cluster means μ1, . . . , μ K are positioned in such a way that each pair of clusters must be treated independently. However, this approach may be suboptimal in general settings. For instance, if certain features allow simultaneous discrimination among all K clusters, then the sample complexity should not need to scale quadratically in K.In other words, while our extension to K > 2 is straightforward and functional, it remains naive in terms of adaptivity. A more refined approach would aim to capture instance-dependent complexity, leveraging the joint geometry of the cluster centers μ1, . . . , μ K to potentially reduce the overall budget. Developing such adaptive strategies remains an open and interesting direction for future work. 
+
+## D. Analysis of Algorithm 1 
+
+We analyze here the performance of CSH .
+
+Lemma D.1. Consider δ ∈ (0 , 1) , s ∈ [d] and h > 0 such that ∆(s) ≥ h. Consider I ⊂ [n] and define the relative proportion of items in the second group as α = |{ i∈I; g(i)=1 }| |I| . Consider Algorithm 1– CSH (r0, I, L, T ) –with input 
+
+r0, I, L, T such that 
+
+L =
+
+
+
+log 2
+
+
+
+16 dαs log 
+
+ 4 log(8 |I|d)
+
+δ
+
+ 
+
+, (6) 
+
+T ≥ 516 L3 · 2L
+
+h2 ∨ 2L+1 L . (7) 
+
+Then CSH (r0, I, L, T ) outputs a pair (ˆ i, ˆj) such that Mˆi, ˆj − Mr0,ˆj ≥ h/ 2 with probability ≥ 1 − δ.
+
+Remark that for I = [ n], then α ⩾ θ. If I = {r1} where g(r1)̸ = g(r0), then α = 1 .Throughout this section, we will prove Lemma D.1 with I = [ n]. The general result directly follows from the case where I
+
+contains all items. To see that, we just have to see that α is equal to the balancedness of the matrix M |I restricted to the rows in I, and we would replace n by |I|, and θ by α.Therefore, we consider Algorithm 1 with input r0, I = [ n], L =
+
+l
+
+log 2
+
+
+
+16 dθs log 
+
+ 4 log(8 nd )
+
+> δ
+
+m 
+
+and T = 516 L3·2L 
+
+> h2
+
+∨
+
+2L+1 L. For simplicity in notation, we also fix r0 = 1 for the proofs. We recall that we use for the proofs the notation Di,j := Mi,j − Mr0,j = Mi,j − M1,j for any couple (i, j ) ∈ [n] × [d] as the gap between the entries of M compared to the mean-vector of the fixed item r0 = 1 .For the following proofs, define γ := h/ 2L, and for any halving step l = l = 0 , 1, . . . , L , we define Ul as the set of remaining entries (i, j ) in Sl such that the gap |Di,j | exceeds h − lγ Ul := {(i, j ) ∈ Sl : |Di,j | ≥ h − lγ } .
+
+Lemma D.1 is a direct consequence of following statement: 
+
+Lemma D.2. With probability of at least 1 − δ, it holds 
+
+|Ul||Sl| ≥ 2−L+3 log 
+
+ 4 log(8 nd )
+
+δ
+
+
+
+∀ l = 0 , 1, . . . , L . 
+
+Proof of Lemma D.1. The first statement follows by Lemma D.2. Indeed, at the last halving step, SL contains only one pair of indices (ˆ i, ˆj). Lemma D.2 implies that UL ⊆ SL is nonempty with probability at least 1 − δ, so that (ˆ i, ˆj) ∈ UL, that is, 
+
+Dˆi, ˆj ⩾ h − Lγ = h/ 2.
+
+Proof of Lemma D.2. We will prove via induction over l, that 
+
+|Uk||Sk| ≥ 2−L+3 log 
+
+ 4 log(8 nd )
+
+δ
+
+
+
+∀ k = 0 , 1, . . . , l 
+
+15 Clustering Items through Bandit Feedback: Finding the Right Feature out of Many 
+
+holds with probability at least 
+
+1 − (l + 1) 
+
+ δ
+
+4 log(8 nd )
+
+2
+
+.
+
+The statement follows then from 
+
+(L + 1) ·
+
+ δ
+
+4 log(8 nd )
+
+2
+
+≤
+
+
+
+2 log 
+
+
+
+16 dθs log 
+
+ 4 log(8 nd )
+
+δ
+
+ 
+
++ 1 
+
+
+
+·
+
+ δ
+
+4 log(8 nd )
+
+2
+
+≤ 3 log 
+
+
+
+8 dθs 
+
+
+
+·
+
+ δ
+
+4 log(8 nd )
+
+2
+
++ 2 log log 
+
+ 4 log(8 nd )
+
+δ
+
+2!
+
+·
+
+ δ
+
+4 log(8 nd )
+
+2
+
+≤ 34
+
+δ2
+
+log(8 nd ) + δ
+
+4 log(8 nd ) ≤ δ , 
+
+where we used that ⌈log 2(x)⌉ ≤ 2 log( x) for x > 5, and the last line is obtained by 8d/θs ≤ 8nd and 2x·log log(1 /x ) ≤ √x
+
+for x ∈ (0 , 1) .
+
+The base case l = 0 The initial set S0 = {(i1, j 1), . . . , (i2L , j 2L )} is constructed by picking 2L entries uniformly at random (with replacement) from [n] × [d]), as described in Line 1 in Algorithm 1. In the context of Lemma D.2, the parameter α reduces to θ, since we consider I = [ n] for the proof, and s, h are such that |∆(s) ⩾ h. Consequently, the matrix M contains at least θn · s entries such that |Di,j | ≥ h. Then, the random variables 
+
+X(0)  
+
+> t
+
+:= 1 (|Dit,j t | ≥ h) , t = 1 , . . . , 2L
+
+are i.i.d. Bernoulli random variables with P(X(0)  
+
+> t
+
+= 1) ≥ θ sd . In particular, we have 
+
+E
+
+
+
+> 2L
+
+X
+
+> t=0
+
+X(0) 
+
+> t
+
+ = 2 Lθ sd ≥ 16 log 
+
+ 4 log(8 nd )
+
+δ
+
+
+
+.
+
+Applying the second inequality in Lemma I.1 (a standard Chernoff bound for Bernoulli distributions), we obtain: 
+
+P
+
+
+
+> 2L
+
+X
+
+> t=0
+
+X(0)  
+
+> t
+
+≤ 8 log 
+
+ 4 log(8 nd )
+
+δ
+
+ ≤ P
+
+
+
+> 2L
+
+X
+
+> t=0
+
+X(0)  
+
+> t
+
+≤ 12 μ(0) 
+
+ ≤ exp 
+
+
+
+− μ(0) 
+
+8
+
+
+
+≤
+
+ δ
+
+4 log(8 nd )
+
+2
+
+.
+
+So we have 
+
+|U0| =
+
+> 2L
+
+X
+
+> t=0
+
+X(0)  
+
+> t
+
+> 8 log 
+
+ 4 log(8 nd )
+
+δ
+
+
+
+= |S0|2−L+3 log 
+
+ 4 log(8 nd )
+
+δ
+
+
+
+with probability at least 1 −
+
+ δ
+
+> 4 log(8 nd )
+
+2
+
+.
+
+Induction step: from l to l + 1 Consider the event ξl, defined as 
+
+|Uk||Sk| ≥ 2−L+3 log 
+
+ 4 log(8 nd )
+
+δ
+
+
+
+∀ k = 0 , 1, . . . , l . 
+
+We want to show 
+
+P (ξl) ≥ 1 − (l + 1) 
+
+ δ
+
+4 log(8 nd )
+
+2
+
+⇒ P (ξl) ≥ 1 − (l + 2) 
+
+ δ
+
+4 log(8 nd )
+
+2
+
+Note that ξl+1 ⊆ ξl, so showing 
+
+P (ξl+1 | ξl) ≥ 1 −
+
+ δ
+
+4 log(8 nd )
+
+2
+
+16 Clustering Items through Bandit Feedback: Finding the Right Feature out of Many 
+
+suffices to conclude 
+
+P (ξl+1 ) = P (ξl) · P (ξl+1 | ξl) ≥ 1 − (l + 1) 
+
+ δ
+
+4 log(8 nd )
+
+2!
+
+1 −
+
+ δ
+
+4 log(8 nd )
+
+2!
+
+≥ 1 − (l + 2) 
+
+ δ
+
+4 log(8 nd )
+
+2
+
+.
+
+When we condition on the event ξl, this implies the condition 
+
+|Ul| ≥ 2−L+3 |Sl| log 
+
+ 4 log(8 nd )
+
+δ
+
+
+
+.
+
+Recall that in line 5 of Algorithm 1, we first sample 
+
+X(1) 1,j , . . . , X (τl+1 )1,j ∼i.i.d. ν1,j , X (1)  
+
+> i,j
+
+, . . . , X (τl+1 ) 
+
+> i,j
+
+∼i.i.d. νi,j 
+
+for each (i, j ) ∈ Sl and store 
+
+ˆDi,j = 1
+
+τl+1 
+
+> τl+1
+
+X
+
+> u=1
+
+X(u) 
+
+> i,j
+
+− X(u)1,j .
+
+Since we assumed that X(u) 
+
+> i,j
+
+− Mi,j ∈ SG (1) and X(u)1,j − M1,j ∈ SG (1) , this implies 
+
+> τl+1
+
+X
+
+> u=1
+
+
+
+X(u) 
+
+> i,j
+
+− X(u)1,j − Di,j 
+
+
+
+∈ SG (2 τl+1 )
+
+and we obtain 
+
+P
+
+ ˆDi,j − Di,j ≥ γ/ 2
+
+
+
+=
+
+> τl+1
+
+X
+
+> u=1
+
+
+
+X(u) 
+
+> i,j
+
+− X(u)1,j − Di,j 
+
+
+
+≥ τl+1 γ/ 2
+
+!
+
+≤ exp 
+
+
+
+− τl+1 γ2
+
+16 
+
+
+
+=: pl , (8) and likewise 
+
+P
+
+
+
+Di,j − ˆDi,j ≥ γ/ 2
+
+
+
+≤ pl ,
+
+For (i, j ) ∈ Ul, this implies that 
+
+P
+
+ ˆDi,j ≤ h − (l + 1 /2) γ
+
+
+
+≤ pl .
+
+So we can construct i.i.d. Bernoulli random variables Bi,j with 
+
+P(Bi,j = 1) = pl
+
+and ˆDi,j ≤ h − (l + 1 /2) γ ⇒ Bi,j = 1 
+
+for (i, j ) ∈ Ul. By Lemma I.1 it follows (by letting κ = 12pl − 1)
+
+P
+
+ X
+
+> (i,j )∈Ul
+
+Bi,j ≥ | Ul|/2 | | Ul| = η
+
+ ≤ exp ( κp lη − (1 + κ)pln log(1 + κ)) 
+
+≤ exp 
+
+
+
+η
+
+
+
+1/2 − pl − log(1 /p l) − log(2) 2
+
+ 
+
+≤ exp 
+
+
+
+η
+
+
+
+1/2 − exp( −τl+1 γ2/16) − τl+1 γ2/16 − log(2) 2
+
+ 
+
+≤ exp( −2l−2η) .
+
+17 Clustering Items through Bandit Feedback: Finding the Right Feature out of Many 
+
+The last inequality follows, since we assumed 
+
+T ≥ 516 · 2L · L3/h 2 ∨ 2L+1 L ≥ 128 · 2L · L/γ 2 ∨ 2L+1 L , 
+
+such that 
+
+τl+1 =
+
+ T
+
+2L−l+1 L
+
+
+
+≥
+
+
+
+32 2l+1 
+
+γ2 ∨ 2l−1
+
+
+
+≥ 16 2l+1 
+
+γ2
+
+(by ⌊x⌋ ≥ x/ 2 for x ≥ 1), from where we can conclude 
+
+1/2 − exp( −τl+1 γ2/16) − τl+1 γ2/16 − log(2) 2 ≤ − 2l−2
+
+for l ≥ 0. For 
+
+η ≥ 2−L+3 |Sl| log 
+
+ 4 log(8 nd )
+
+δ
+
+
+
+= 2 −l+2 log 
+
+ 4 log(8 nd )
+
+δ
+
+2!
+
+,
+
+this implies 
+
+P
+
+ X
+
+> (i,j )∈Ul
+
+Bi,j ≥ | Ul|/2 | | Ul| = η
+
+ ≤
+
+ δ
+
+4 log(8 nd )
+
+2
+
+and therefore 
+
+P
+
+ X
+
+> (i,j )∈Ul
+
+Bi,j ≥ | Ul|/2 | ξl
+
+ ≤
+
+ δ
+
+4 log(8 nd )
+
+2
+
+(9) Next, define 
+
+Vl := {(i, j ) ∈ Sl : |Di,j | < h − (l + 1) γ} .
+
+Note that Sl+1 \ Ul+1 ⊆ Vl. So if 
+
+|Vl| < 2−L+3 |Sl| log 
+
+ 4 log(8 nd )
+
+δ
+
+
+
+,
+
+this implies 
+
+|Ul+1 | = |Sl+1 | − | Sl+1 \ Ul+1 |≥ | Sl+1 | − | Vl|
+
+> |Sl+1 | − 2−L+3 |Sl| log 
+
+ 4 log(8 nd )
+
+δ
+
+
+
+=  1 − 2−L+2  |Sl+1 | log 
+
+ 4 log(8 nd )
+
+δ
+
+
+
+≥ 2−L+3 |Sl+1 | log 
+
+ 4 log(8 nd )
+
+δ
+
+
+
+, (10) since we have L ≥ log 2(16) = 4 . Therefore, consider the nontrivial case 
+
+|Vl| ≥ 2−L+3 |Sl| log 
+
+ 4 log(8 nd )
+
+δ
+
+
+
+,
+
+Like before, we have from (8) that 
+
+P
+
+ ˆDi,j ≥ h − (l + 1 /2) γ
+
+
+
+≤ pl
+
+for (i, j ) ∈ Vl. Note that we can again define Bernoulli random variables Ci,j with 
+
+P(Ci,j = 1) = pl
+
+18 Clustering Items through Bandit Feedback: Finding the Right Feature out of Many 
+
+and 
+
+|Di,j | ≥ h − (l + 1 /2) γ ⇒ Ci,j = 1 
+
+for all (i, j ) ∈ Vl. We can again show that conditional |Vl| = η with 
+
+η ≥ 2−L+3 |Sl| log 
+
+ 4 log(8 nd )
+
+δ
+
+
+
+,
+
+it holds X
+
+> (i,j )∈Vl
+
+Ci,j ≥ η/ 2 (11) with probability 1 −
+
+ δ
+
+> 4 log(8 nd )
+
+2
+
+.Now if ∆ is the median of the ˆDi,j , (i, j ) ∈ Sl, it is either ∆ < h − (l + 1 /2) γ or ∆ ≥ h − (l + 1 /2) γ. In the case 
+
+∆ < h − (l + 1 /2) γ, the bound (9) tells us that Ul+1 contains at least half of the indices of Ul, in other words, 
+
+|Ul+1 ||Sl+1 | ≥ |Ul|
+
+2|Sl+1 | = |Ul||Sl| ,
+
+with probability at least 1 − δ. In the case ∆ ≥ h − (l + 1 /2) γ, we either directly conclude the induction step from (10) , or we know from (11) that the number of (i, j ) ∈ Sl+1 with |Di,j | ≤ h − (l + 1) γ is less than half the number of arms in Vl,and in particular, 
+
+|Ul+1 ||Sl+1 | ≥ 1 − |Vl|
+
+2|Sl+1 | = 1 − |Vl||Sl| = |Ul||Sl| ,
+
+with probability at least 1 −
+
+ δ
+
+> 4 log(8 nd )
+
+2
+
+. Combining both cases yields the claim. 
+
+## E. Analysis of Algorithm 2 
+
+Using the results of Lemma D.1, we can now determine theoretical guarantees for Algorithm 2, CR (δ, r 0). We present the individual guarantees offered by Algorithm 2 in the following proposition. 
+
+Proposition E.1. Let δ ∈ (0 , 1/e ). Then, with probability larger than 1 − δ, Algorithm 2– CR (δ, r 0) –returns an index r1,such that it holds that Mr1,·̸ = Mr0,·, and moreover the total budget is upper bounded by 
+
+˜C · log 
+
+ 1
+
+δ
+
+
+
+· dθ
+
+ 1
+
+∥∆∥2 + 1
+
+s∗
+
+
+
+,
+
+where ˜C is a logarithmic factor smaller than 
+
+C · (log log(1 /δ ) ∨ 1) 4 · log( dn )5 log( d)(log + log(1 /∆2(s∗)) ∨ 1) ,
+
+with a numerical constant C > 0 and log +(x) := log( x ∨ 1) for x ∈ R.Proof of Proposition E.1. Consider s ∈ [d] and k ≥ 1 minimal, such that for 
+
+L =
+
+
+
+log 2
+
+
+
+16 dθs log 
+
+ 16 log(8 nd )
+
+δ
+
+ 
+
+it holds 
+
+516 L32L
+
+∆2(s)
+
+∨ 2L+1 L ≤ 2k (12) and 
+
+3714 ·
+
+log(1 /δ ) + log + log 
+
+
+
+1/∆2(s)
+
+
+
+∆2(s)
+
+∨ 2 < 2k . (13) The proof consists of three parts: 19 Clustering Items through Bandit Feedback: Finding the Right Feature out of Many 
+
+1. CSH (r0, [n], L, 2k) returns (r1, j ) with |Dr1,j | ≥ ∆(s) /2, with probability at least 1 − δ/ 2,
+
+2. for |Dr1,j | ≥ ∆(s) /2, if we sample 
+
+X(1)  
+
+> r0,j
+
+, . . . , X (2 k ) 
+
+> r0,j
+
+∼i.i.d. νr0,j and X(1)  
+
+> r1,j
+
+, . . . , X (2 k ) 
+
+> r1,j
+
+∼i.i.d. νr1,j ,
+
+it holds with probability of at least 1 − δ 
+
+> 0.3k3
+
+that 
+
+12k
+
+> 2k
+
+X
+
+> t=1
+
+X(t) 
+
+> r1,j
+
+− X(t) 
+
+> r0,j
+
+>
+
+s
+
+42k log 
+
+ k3
+
+0.15 δ
+
+
+
+,
+
+3. for any k′ ≥ 1, if Di,j ′ = 0 and we sample 
+
+X(1)  
+
+> r0,j ′
+
+, . . . , X (2 k′ 
+
+> )
+> r0,j ′
+
+∼i.i.d. νr0,j ′ and X(1)  
+
+> i,j ′
+
+, . . . , X (2 k′ 
+
+> )
+> i,j ′
+
+∼i.i.d. νi,j ′ ,
+
+it holds with probability of at least 1 − δ 
+
+> 0.3k′3
+
+that 
+
+12k′
+
+> 2k′
+
+X
+
+> t=1
+
+X(t) 
+
+> i,j ′
+
+− X(t) 
+
+> r0,j ′
+
+≤
+
+s
+
+42k′ log 
+
+ k′3
+
+0.15 δ
+
+
+
+.
+
+From point 1 and 2 one can conclude that Algorithm 2 terminates in the Lth step of the kth iteration at the latest with probability at least 1 − δ/ 2 − δ/ 0.3k3. If it has not terminated before, by point 1, we obtain in line 4 (r1, j ) with 
+
+|Dr1,j | ≥ ∆(s) /2 and by point 2, that for such (r1, j ), the algorithm terminates in line 6, returning r1.If the algorithm terminates for some k′ < k or in the kth round, but for some other L′, by line 6 this means that the algorithm returns some i such that for some j′ it holds 
+
+12k′
+
+> 2k′
+
+X
+
+> t=1
+
+X(t) 
+
+> i,j ′
+
+− X(t) 
+
+> r0,j ′
+
+>
+
+s
+
+42k′ log 
+
+ k′3
+
+0.15 δ
+
+
+
+.
+
+So point 3 implies for each iteration k′ and each L′ we iterate over, that we do not return an index i with Mi, · = Mr0,·, with probability at least 1 − δ/ 0.3k3.So by the union bound, Algorithm 2 returns r1 with Mr1,... ̸ = Mr0,... with probability at least 
+
+1 − δ/ 2 − X
+
+> k′≤k
+
+X
+
+> 1≤L≤Lmax
+> L2L≤2k′
+
+δ/ (0 .3k′3) ≥ 1 − δ/ 2 − δ · 0.3 X
+
+> k≥1
+
+1
+
+k2 ≥ 1 − δ/ 2 − 0.3 π2
+
+6 δ > 1 − δ . 
+
+So we are left with proving the three points. 
+
+Proof of 1 By Lemma D.1 and inequality (12) , calling CSH (r0, [n], L, 2k) in line 4 of Algorithm 2 yields a pair (r1, j )
+
+with |Dr1,j | ≥ | ∆(s)|/2 with probability at least 1 − δ/ 2.
+
+Proof of 2 Note that for 
+
+ˆDr1,j := 12k
+
+> 2k
+
+X
+
+> t=1
+
+X(t) 
+
+> r1,j
+
+− X(t) 
+
+> r0,j
+
+, (14) by an application of Hoeffding’s inequality we know 
+
+ˆDr1,j ∈
+
+"
+
+Dr1,j −
+
+s
+
+42k log 
+
+ k3
+
+0.15 δ
+
+
+
+, D r1,j +
+
+s
+
+42k log 
+
+ k3
+
+0.15 δ
+
+#
+
+(15) 20 Clustering Items through Bandit Feedback: Finding the Right Feature out of Many 
+
+with a probability of at least 1 − 0.3δ/k 3. Note that from inequality (13) we know by the monotonicity of log log( x)/x for 
+
+x ≥ e2 that 
+
+16 2k log 
+
+ k3
+
+0.15 δ
+
+
+
+= 16 2k
+
+
+
+log(1 /δ ) + 3 log log(2 k) + 3 log 
+
+ 1log(2) 
+
+
+
++ log(20 /3) 
+
+
+
+≤ 80 log(1 /δ ) + log log  2k
+
+2k .
+
+We want to prove the bound 
+
+16 2k log 
+
+ k3
+
+0.15 δ
+
+
+
+≤ ∆2(s)/4 . (16) Let us first consider the case ∆2(s) ≥ 1/e . We can bound 
+
+80 log(1 /δ ) + log log(2 k)2k ≤ 80 log(1 /δ ) + log(2 k)2k
+
+= 80 log(1 /δ ) + log(2 k∆2(s)) − log(∆ 2(s))2k∆2(s)
+
+∆2(s)
+
+≤ 80 2 log(1 /δ ) + log log(2 k∆2(s))2k∆2(s)
+
+.
+
+From inequality (12), we know 
+
+2k∆2(s) ≥ 3714 log(1 /δ ) ,
+
+and we can therefore use that x 7 → log( x)/x is decreasing for x ≥ e to obtain 
+
+80 log(1 /δ ) + log log(2 k)2k ≤ 80 2 log(1 /δ ) + log(3714 log(1 /δ )) 3714 log(1 /δ ) ∆2(s)
+
+≤ 80 3 + log(3714) 3714 ∆2(s) ≤ ∆2(s)/4 .
+
+Next, consider the case ∆2(s) ≤ 1/e . Then we know from inequality(13) that 
+
+2k ≥ 3714 log(1 /δ ) + log log(1 /∆2(s))∆2(s)
+
+.
+
+Because x 7 → log log( x)/x is decreasing for x ≥ e2, we can bound 
+
+80 log(1 /δ ) + log log(2 k)2k ≤ 80 log(1 /δ ) + log log 
+
+
+
+3714 log(1 /δ )+log log(1 /∆2(s))∆2(s)
+
+
+
+3714 
+
+
+
+log(1 /δ ) + log log 
+
+
+
+1/∆2(s)
+
+ ∆2(s) .
+
+For a, b ≥ e it holds log log( ab ) ≤ log(2) + log log( a) + log log( b), so we can bound 
+
+log log 3714 log(1 /δ ) + log log(1 /∆2(s))∆2(s)
+
+!
+
+≤ log(2) + log log(1 /∆2(s)) + log log 
+
+
+
+3714 
+
+
+
+log(1 /δ ) + log log 
+
+
+
+1/∆2(s)
+
+ 
+
+≤ log(2 · 3714) + 2 log log 
+
+
+
+1/∆2(s)
+
+
+
++ log(1 /δ ) .
+
+This allows us to bound 
+
+80 log(1 /δ ) + log log(2 k)2k ≤ 80 (2 + log(2 · 3714)) log(1 /δ ) + 3 log log 
+
+
+
+1/∆2(s)
+
+
+
+3714 
+
+
+
+log(1 /δ ) + log log 
+
+
+
+1/∆2(s)
+
+ ∆(s)2
+
+≤ 80(2 + log(2 · 3714)) 3714 ∆2(s) ≤ ∆2(s)/4 .
+
+21 Clustering Items through Bandit Feedback: Finding the Right Feature out of Many 
+
+For |Dr1,j | ≥ ∆(s) /2, we have with high probability according to (15) that 
+
+ˆDr1,j ≥
+
+s
+
+42k log 
+
+ k3
+
+0.15 δ
+
+
+
+.
+
+Proof of 3 Analogously to (14) and (15) we can use Hoeffding’s inequality to show that for 
+
+ˆDi,j := 12k′
+
+> 2k′
+
+X
+
+> t=1
+
+X(t) 
+
+> ij
+
+− X(t)1j
+
+it holds 
+
+ˆDi,j ≤
+
+s
+
+42k′ log 
+
+ k′3
+
+0.15 δ
+
+
+
+with probability at least 1 − δ 
+
+> 0.3k′3
+
+.
+
+Bounding the budget: First, we can bound 
+
+Lmax ≤ 2 log 
+
+
+
+16 nd log 
+
+ 16 log(8 nd )
+
+δ
+
+ 
+
+≤ 10 log 
+
+
+
+nd log 
+
+ 16 log(8 nd )
+
+δ
+
+ 
+
+≤ 10 
+
+
+
+log( nd ) + log log 
+
+ 16 log(8 nd )
+
+δ
+
+ 
+
+≤ 10  log( nd ) + log  (nd )4 + log(1 /δ ) 
+
+≤ 70 (log( nd ) + log log(1 /δ )) .
+
+At the same time, we have that 
+
+2L ≤ 32 dθs log 
+
+ 16 log(8 nd )
+
+δ
+
+
+
+≤ 32 dθs (log log( nd ) + log(64 /δ )) 
+
+≤ 192 dθs (log log( nd ) + log(1 /δ )) .
+
+So, if we define C := 156 · 70 3 · 192 and k∗ the minimal k ≥ 1 such that 
+
+2k+1 ≥ C min 
+
+> s∈[d]
+
+(log( nd ) + log log(1 /δ )) 3(log log( nd ) + log(1 /δ )) dθs ∆2(s)
+
++ d(log( nd ) + log log(1 /δ ))(log log( nd ) + log(1 /δ )) 
+
+θs + dθs 
+
+log(1 /δ ) + log + log(1 /∆2(s))∆2(s)
+
++
+
+!
+
+,
+
+we can see that by (12) and (13) Algorithm 2 terminates and returns r1 such that Mr1,... ̸ = Mr0,... with a probability of at least 1 − δ. Moreover, on this event of high probability, the algorithm terminates after at most 
+
+> k∗
+
+X
+
+> k=1
+
+X 
+
+> 1≤L≤Lmax :L·2L≤2k+1
+
+2 · 2k+1 ≤ 8Lmax 2k∗
+
+≤ C′ · Lmax min 
+
+> s∈[d]
+
+(log( nd ) + log log(1 /δ )) 3(log log( nd ) + log(1 /δ )) dθs ∆2(s)
+
++ d(log( nd ) + log log(1 /δ ))(log log( nd ) + log(1 /δ )) 
+
+θs + dθs 
+
+log(1 /δ ) + log + log(1 /∆2(s))∆2(s)
+
+!
+
+,
+
+22 Clustering Items through Bandit Feedback: Finding the Right Feature out of Many 
+
+by minimality of k∗, where C′ > 0 is some numerical constant that might change. To obtain the claimed upper bound, note that by (2) we know 1/s ∗∆2(s∗) ≤ log(2 d)/∥∆∥22 and therefore 
+
+C′Lmax min 
+
+> s∈[d]
+
+(log( nd ) + log log(1 /δ )) 3(log log( nd ) + log(1 /δ )) dθs ∆2(s)
+
++ d(log( nd ) + log log(1 /δ ))(log log( nd ) + log(1 /δ )) 
+
+θs + dθs 
+
+log(1 /δ ) + log + log(1 /∆2(s))∆2(s)
+
++
+
+!
+
+≤ C′′ (log( nd ) + log log(1 /δ )) 4(log( nd ) + log(1 /δ )(log + log(1 /∆2 
+
+> s∗
+
+) ∨ 1) dθ
+
+ 1
+
+∥∆∥2 + 1
+
+s∗
+
+
+
+,
+
+where C′′ > 0 is some numerical constant. Reassembling the logarithmic terms yields the claim. 
+
+## F. Analysis of Algorithm 3 
+
+Now, we prove the correctness and we upper bound the budget of Algorithm 3. 
+
+Proposition F.1. Let δ ∈ (0 , 1/e ), let r1 ∈ [n] such that Mr1,·̸ = Mr0,·. Then Algorithm 3– CBC (δ, r 0, r 1) –returns ˆg = g
+
+(fixing arbitrary g(r0) = 0 ), with probability at least 1 − δ, with a budget of at most 
+
+˜C · log(1 /δ ) · min 
+
+> s∈[d]
+
+" ds + n
+
+ 1∆2(s)
+
++ 1 
+
+!# 
+
+,
+
+where ˜C is a logarithmic factor smaller than 
+
+C · (log log(1 /δ ) ∨ 1) 4 · log( d)5 · log + log 
+
+
+
+1/∆2(˜ s)
+
+
+
+,
+
+with a numerical constant C > 0, and ˜s = ⌈d/n ⌉ ∧ |{ j ∈ [d] , ∆j̸ = 0 }| .
+
+The proof of Proposition F.1 does not differ much from the proof of Proposition E.1. Again, we have to bound the time where CSH returns an index pair for which the stopping condition is fulfilled with high probability. The main difference is, that we also need a guarantee for correct clustering using these indices, which also leads to a change of the stopping rule. 
+
+Proof. Consider s ∈ [d] and k ∈ N, k > log 2(n) minimal, such that for 
+
+L =
+
+
+
+log 2
+
+
+
+16 ds log 
+
+ 16 log(8 d)
+
+δ
+
+ 
+
+it holds 
+
+516 L32L
+
+∆2(s)
+
+∨ 2L+1 L ≤ 2k (17) and 
+
+34423 ·
+
+
+
+log(1 /δ ) + log + log 
+
+
+
+1/∆2(s)
+
+
+
++ log n
+
+
+
+· n
+
+∆2(s)
+
+∨ 2n ≤ 2k . (18) The proof relies on the two following facts: 1. CSH (r0, [n], L, 2k) returns (r1, j ) with |Dr1,j | ≥ ∆(s) /2, with probability at least 1 − δ/ 2,2. we have that jointly for all iterations k′ ≥ 1 and 1 ≤ L ≤ ˜Lmax with 2LL ≤ 2k+1 , for some j′ ∈ [d] (chosen each time in line 4) and all 1 < i ≤ n, when we draw 
+
+X(1)  
+
+> r0,j ′
+
+, . . . , X (⌊2k′ 
+
+> /n ⌋)
+> r0,j ′
+
+∼i.i.d. νr0,j ′ and X(1)  
+
+> i,j ′
+
+, . . . , X (⌊2k′ 
+
+> /n ⌋)
+> i,j ′
+
+∼i.i.d. νi,j ′
+
+23 Clustering Items through Bandit Feedback: Finding the Right Feature out of Many 
+
+holds 
+
+> ⌊2k′
+> /n ⌋
+
+X
+
+> t=1
+
+
+
+X(t) 
+
+> i,j ′
+
+− X(t)1,j ′ − Di,j ′
+
+
+
+≤
+
+s
+
+4 · ⌊ 2k′ /n ⌋ log 
+
+ nk ′3
+
+0.15 δ
+
+
+
+,
+
+uniformly with probability at least 1 − δ/ 2.Point 1 is a direct consequence of Lemma D.1 and (17) . Point 2 follows directly from Hoeffding’s inequality and a union bound over all k ≥ 1, L ≤ Lmax such that L2L ≤ 2k+1 and i ∈ [n]. Indeed, each inequality for itself holds with probability at least 1 − 0.3δ/nk ′3, so the intersection must hold with a probability of at least 
+
+1 − X
+
+> k′≥1
+
+X
+
+> 1≤L≤Lmax
+> L2L≤2k′+1
+> n
+
+X
+
+> i=2
+
+0.3δ/nk ′3 ≥ 1 − 0.3δ X
+
+> k′≥1
+
+1
+
+k′2 ≥ 1 − δ/ 2 .
+
+We will prove that Algorithm 3 terminates at the latest in the Lth round of the kth iteration and clusters correctly with probability at least 1 − δ, namely on the intersection of the high probability events of point 1 and 2 which we will call ξcbc .
+
+Algorithm 3 terminates at the latest in the kth iteration Assume we are on ξcbc . By point 1, we know that at round L
+
+of iteration k it holds |Dr1,j | ≥ ∆(s) /2 for j obtained in line 4. We want to prove 
+
+64 
+
+j 2k
+
+> n
+
+k log 
+
+ nk 3
+
+0.15 δ
+
+
+
+≤ ∆2(s)/4 . (19) Note that by (18), it holds 
+
+64 
+
+j 2k
+
+> n
+
+k log 
+
+ nk 3
+
+0.15 δ
+
+
+
+≤ 128 n
+
+2k
+
+ log n + 3 log log 2 k + log(20 /3) + log(1 /δ ) ≤ 640 n log(1 /δ ) + log n + log log 2 k
+
+2k .
+
+Again, consider first the case ∆2(s) ≥ 1/e . In this case, we know from (18) that 
+
+34423 (log(1 /δ ) + log n) · n ≤ 2k∆2(s) .
+
+We can use that x 7 → log( x)/x is decreasing for x ≥ e and obtain 
+
+640 n log(1 /δ ) + log n + log log(2 k)2k ≤ 640 n log(1 /δ ) + log n + log(2 k)2k
+
+= 640 n log(1 /δ ) + log n + log(2 k∆2(s)) − log(∆ 2(s))2k∆2(s)
+
+∆2(s)
+
+≤ 640 n 2 log(1 /δ ) + log n + log(2 k∆2(s))2k∆2(s)
+
+∆2(s)
+
+≤ 640 34423 · 2 log(1 /δ ) + log n + log (34423 n(log(1 /δ ) + log n)log(1 /δ ) + log n ∆2(s)
+
+≤ 640 34423 · 2 log(1 /δ ) + 2 log n + log 34423 + log(log(1 /δ ) + log n)log(1 /δ ) + log n ∆2(s)
+
+≤ 640 · (3 + log(34423)) 34423 ∆2(s) ≤ ∆2(s)/4 .
+
+This proves (19) in the case ∆2(s) ≥ 1/e .24 Clustering Items through Bandit Feedback: Finding the Right Feature out of Many 
+
+Consider ∆2(s) ≥ 1/e . Then, by (18), we know 
+
+2k ≥ 34423 n
+
+log(1 /δ ) + log n + log log 
+
+
+
+1/∆2(s)
+
+
+
+∆2(s)
+
+.
+
+We can apply that x 7 → log log( x)/x is decreasing for x ≥ e2 and obtain 
+
+640 n log(1 /δ ) + log n + log log 2 k
+
+2k ≤ 640 34423 log(1 /δ ) + log n + log log 
+
+
+
+34423 n log(1 /δ )+log n+log log (1/∆2(s))
+
+> ∆2(s)
+
+
+
+log(1 /δ ) + log n + log log 
+
+
+
+1/∆2(s)
+
+ ∆2(s) .
+
+Note, that 
+
+log log 
+
+34423 n
+
+log(1 /δ ) + log n + log log 
+
+
+
+1/∆2(s)
+
+
+
+∆2(s)
+
+
+
+≤ log(2) + log log 
+
+
+
+1/∆2(s)
+
+
+
++ log log 
+
+
+
+34423 n
+
+
+
+log(1 /δ ) + log n + log log 
+
+
+
+1/∆2(s)
+
+ 
+
+≤ log(2 · 34423) + log log 
+
+
+
+1/∆2(s)
+
+
+
++ log( n) + log 
+
+
+
+log(1 /δ ) + log n + log log 
+
+
+
+1/∆2(s)
+
+ 
+
+≤ (log(2 · 34423) + 1) log(1 /δ ) + 2 log log 
+
+
+
+1/∆2(s)
+
+
+
++ 2 log( n) ,
+
+where we used log log( a · b) ≤ log(2) + log log( a) + log log( b) for a, b ≥ e. Thus, it holds 
+
+640 n log(1 /δ ) + log n + log log(2 k)2k ≤ 640 34423 (2 + log(2 · 34423)) log(1 /δ ) + 2 log n + 2 log log 
+
+
+
+1/∆2(s)
+
+
+
+log(1 /δ ) + log n + log log(1 /∆2(s)) ∆2(s)
+
+≤ 640(2 + log(2 · 34423)) 34423 ∆2(s) ≤ ∆2(s)/4 ,
+
+which proves (19). Inequality (19) implies 
+
+|Dr1,j | ≥ ∆(s) /2 ≥ 4 ·
+
+vuut 4
+
+j 2k
+
+> n
+
+k log 
+
+ nk 3
+
+0.15 δ
+
+
+
+and by points 1 and 2 we have a guarantee that 
+
+ˆDr1,j ≥ 3 ·
+
+vuut 4
+
+j 2k
+
+> n
+
+k log 
+
+ nk 3
+
+0.15 δ
+
+
+
+.
+
+By line 8 of Algorithm 3, this is sufficient for the algorithm to terminate after the Lth round of iteration k.
+
+Algorithm 3 clusters correctly Consider the first k′ ∈ N with k′ > log 2(n) such that for the samples 
+
+X(1)  
+
+> r0,j
+
+, . . . , X (⌊2k′ 
+
+> /n ⌋)
+> r0,j
+
+∼i.i.d. νr0,j and X(1)  
+
+> r1,j
+
+, . . . , X (⌊2k′ 
+
+> /n ⌋)
+> r1,j
+
+∼i.i.d. νr1,j 
+
+we have that 
+
+1
+
+⌊2k′ /n ⌋
+
+> j
+> 2k′
+> /n
+> k
+
+X
+
+> t=1
+
+X(t) 
+
+> r1,j
+
+− X(t) 
+
+> r0,j
+
+> 3 ·
+
+vuut 4
+
+j 2k′
+
+> n
+
+k log 
+
+ nk ′3
+
+0.15 δ
+
+
+
+.
+
+25 Clustering Items through Bandit Feedback: Finding the Right Feature out of Many 
+
+Then by line 8, we know that after completing the iteration Algorithm 3 terminates. From point 2 we know that on ξcbc it holds 
+
+|Dr1,j | > 2 ·
+
+vuut 4
+
+j 2k′
+
+> n
+
+k log 
+
+ nk ′3
+
+0.15 δ
+
+
+
+.
+
+So if for each i ≥ 2 we sample again 
+
+X(1)  
+
+> r0,j
+
+, . . . , X (⌊2k′ 
+
+> /n ⌋)
+> r0,j
+
+∼i.i.d. νi,j and X(1)  
+
+> i,j
+
+, . . . , X (⌊2k′ 
+
+> /n ⌋)
+> i,j
+
+∼i.i.d. νi,j ,
+
+then for the averages holds again by point 2 that 
+
+1
+
+⌊2k′ /n ⌋
+
+> j
+> 2k′
+> /n
+> k
+
+X
+
+> t=1
+
+X(t) 
+
+> i,j
+
+− X(t) 
+
+> r0,j
+
+>
+
+vuut 4
+
+j 2k′
+
+> n
+
+k log 
+
+ nk ′3
+
+0.15 δ
+
+
+
+if and only if Di,j ̸ = 0 . So on ξcbc , the labeling in line 12 yields to a perfect clustering ˆg = g.
+
+Bounding the budget: Similar to the proof of Theorem E.1, we can bound 
+
+˜Lmax ≤ 70(log( d) + log log(1 /δ )) .
+
+and 
+
+2L ≤ 192 ds (log log d + log(1 /δ )) .
+
+So again by defining C := 156 · 70 3 · 192 and letting k∗ being minimal such that 
+
+2k+1 ≥ C min 
+
+> s∈[d]
+
+(log d + log log(1 /δ )) 3(log log d + log(1 /δ )) ds∆2(s)
+
++ (log d + log log(1 /δ ))(log log d + log(1 /δ )) ds
+
++
+
+
+
+log(1 /δ ) + log + log 
+
+
+
+1/∆2(s)
+
+
+
++ log n
+
+
+
+· n
+
+∆2(s)
+
+
+
+we know from (17) and (18) that with probability at least 1 − δ, Algorithm 3 terminates and clusters correctly, spending a budget of at most 
+
+> k∗
+
+X
+
+> k=1
+
+X  
+
+> 1≤L≤˜Lmax :L·2L≤2k+1
+
+2 · 2k+1 ≤ 8 ˜Lmax 2k∗
+
+≤ C′(log d + log log(1 /δ )) min 
+
+> s∈[d]
+
+"
+
+(log d + log log(1 /δ )) 3(log log d + log(1 /δ )) ∆2(s)
+
++ 1 
+
+!
+
+ds
+
++
+
+ log(1 /δ ) + log + log 
+
+
+
+1/∆2(s)
+
+
+
++ log n
+
+∆2(s)
+
++ 1 
+
+ n
+
+ ,
+
+where C > 0 is a numerical constant. Inserting ˜s in the right hand side and gathering the logarithmic terms like in the proof of Proposition E.1 yields the claim. 26 Clustering Items through Bandit Feedback: Finding the Right Feature out of Many 
+
+## G. Proof of Theorem C.1 on the extension to K > 2
+
+Come-back on sub-routines CR and CBC . We can reformulate Proposition E.1 in the following corollary. 
+
+Corollary G.1. Let δ ∈ (0 , 1/e ), r ∈ [n] and G ⊂ [n]. There exist an event of probability larger than 1 − δ such that 1. If Mi, · = Mr, · ∀i ∈ G, then CR (δ, r, G ) does not stop. 2. If ∃i ∈ G such that Mi, ·̸ = Mr, ·, then CR (δ, r, G ) returns an item s such that Mr, ·̸ = Ms, ·, with a budget T smaller than 
+
+˜C log 
+
+ 1
+
+δ
+
+
+
+min 
+
+> h> 0
+
+ d|G||{ (i, j ) ∈ G × [d] ; |Mr,j − Mi,j | ⩾ h}| 
+
+ 1
+
+h2 + 1 
+
+ 
+
+,
+
+with ˜C a poly-logarithmic term defined in Proposition E.1. 
+
+Proposition F.1 can be formulated as follows: 
+
+Corollary G.2. Let δ ∈ (0 , 1/e ), r ∈ [n], s ∈ [n] and G ⊂ [n]. Assume that Mr, ·̸ = Ms, ·, then there exists an event of probability larger than 1 − δ such that CBC (δ, r, s ; G) outputs a partition of G, G = R ⊔ S with a budget T such that 1. {i ∈ G ; Mi, · = Mr, ·} ⊂ R and {i ∈ G ; Mi, · = Ms, ·} ⊂ S
+
+2. the budget T is smaller than 
+
+˜C log 
+
+ 1
+
+δ
+
+
+
+min 
+
+> h
+
+ d
+
+|{ j ∈ [d] ; |Mr,j − Ms,j | ⩾ h}| + n
+
+  1
+
+h2 + 1 
+
+ 
+
+,
+
+with ˜C a poly-logarithmic term defined in Proposition F.1. 
+
+Proof of Theorem C.1. We use the notation from the pseudo-code Algorithm 5 and from Appendix C. The correction of the algorithm is a direct consequence of the following lemma, which states that, with high probability, all epochs behave as expected. The bound on the total budget given in Theorem C.1 follows directly by summing the sample complexities of all 
+
+CR and CBC calls across the K − 1 epochs. These individual complexities are provided in Corollaries G.1 and G.2. 
+
+Lemma G.3. There exists an event of probability larger than 1 − δ such that for each epoch 1 ⩽ e ⩽ K − 1,1. Epoch e terminates using a finite budget. 2. The item re+1 selected is a new representative: Mre+1 ,·̸ ∈ { Mr1,·, . . . , M re,·}
+
+3. For all k ∈ [e + 1] , {i ∈ [n]; Mi, · = Mrk ,·} ⊂ ˆG(e+1) 
+
+> k
+
+Let E denote the event that, for all epochs e = 1 , . . . , K − 1, each call to CR and CBC behaves correctly — i.e., satisfies Points 1 and 2 of Corollaries G.1 and G.2. In epoch e, the algorithm makes e calls to CR and e calls to CBC , each with a confidence level δe = δe(K−1) . By a union bound over all calls across all epochs, the probability of event E is at least 1 − δ.We prove by induction on e ∈ [K − 1] that the three points of Lemma G.3 hold on E.Initially, we have a trivial partition G(1) = [ n], and a representative r1 is arbitrarily selected. Points 1–3 trivially hold at 
+
+e = 1 .Assume that, at epoch e, (r1, . . . , r e) are representatives from e distinct clusters, and for each k ∈ [e], the set ˆG(e) 
+
+> k
+
+contains all items with mean Mrk ,·.Since e < K , there exists at least one cluster not yet represented, and therefore, there exists some i ∈ ˆG(e) 
+
+> k
+
+and some k ∈ [e]
+
+such that Mi, ·̸ = Mrk ,·. On event E, CR (δe, r k; G(e) 
+
+> k
+
+) will return an item in finite time, and Line 5 of the corresponding algorithm terminates. Denote re+1 the item returned from this call. Then, by Corollary G.1, we know that Mre+1 ,·̸ = Mrk ,·.Moreover, for k′̸ = k, G(e) 
+
+> k′
+
+contains all items with mean Mr′  
+
+> k,·
+
+so that Mre+1 ,·̸ ∈ { Mr1,· . . . , M re,·}, and Point 2 also holds for the e-th epoch. Since all calls terminate in finite time on E, Point 1 also holds. 27 Clustering Items through Bandit Feedback: Finding the Right Feature out of Many 
+
+Now, for each k ∈ [e], Mre+1 ,·̸ = Mrk ,·, so that on E, the partition of ˆGek into two groups ˆGe+1  
+
+> k
+
+⊔ ˆRe+1  
+
+> k
+
+will perfectly separate the items with mean Mrk ,· and Mre+1 ,·. By assumption, the partial cluster ˆGek already contains all items with mean 
+
+Mrk ,·, so {i ∈ [n] ; Mi, · = Mrk ,·} ⊂ ˆGek. Similarly, as ˆGe
+
+> 1
+
+, . . . , G (e) 
+
+> e
+
+is a partition of [n], any item i with mean Mre+1 ,·
+
+will be set in one of the sets ˆRe+1  
+
+> k
+
+so that {i ∈ [n] ; Mi, · = Mre+1 ,·} ⊂ ∪ ek=1 ˆRe+1  
+
+> k
+
+= ˆGe+1 
+
+> e+1
+
+. Thus, Point 3 also holds for epoch e.By induction, all three points in the lemma hold for all e ∈ [K − 1] on event E, which concludes the proof. □
+
+## H. Proof of the lower bounds 
+
+The lower bound in Theorem 4.1 consists of two terms, which we prove separately. In the proofs, we use Ti,j as the number of time a procedure selects the pair (i, j ) ∈ [n] × [d].
+
+Lemma H.1. The (1 − δ)-quantile of the budget of any δ-PAC algorithm A is bounded as follows 
+
+max    
+
+> ˜ν∈E per (M)
+
+P˜ν, A
+
+
+
+T ⩾ 2dθ∥∆∥22
+
+log 16δ
+
+
+
+⩾ δ . (20) 
+
+Proof of Lemma H.1. Fix an algorithm A, and let Eper (M ) denote the set of Gaussian environments obtained by permuting the rows and columns of M . For the purpose of the proof, we define Pσ, τ as the probability distribution induced by the interaction between algorithm A and the environment defined in (4) , where σ and τ are permutations of the rows and columns of M , respectively. We permute the rows of M to reflect the fact that the learner has no access to the label vector g. In addition, we permute the columns of M to account for the algorithm’s ignorance of the structure of the gap vector ∆, in particular, the identity of the feature with the largest gap. Without loss of generality, we assume that μ0 = 0 and μ1 = ∆ , with the group associated with mean vector ∆ being the smaller of the two. Define χ as the smallest integer such that for all permutations σ and τ of 1, . . . , n and 1, . . . , d , respectively, the following inequality holds: 
+
+Pσ,τ (T > χ ) ⩽ δ . (21) Our goal is to derive a lower bound on χ. Intuitively, we show that for small χ, there exists a permutation of M for which it is impossible to detect a nonzero entry. Introduce P0 as the probability distribution induced by A, in an environment where all items belong to a single cluster, i.e., each Xt ∼ N (0 , 1) . We will prove that under this ”null” environment, the algorithm A requires more than χ samples with probability at least 1 − 2δ.To this end, consider an environment ν(g, μ ) consisting of two clusters with means 0 and μ, and let μ → 0. Since A is 
+
+δ-PAC, there exist two distinct partitions g̸ = g′ and an event A such that 
+
+Pν(g,μ )(A, T ⩽ χ) + Pν(g′,μ )(Ac, T ⩽ χ) ⩽ 2δ . 
+
+For example, take g(1) = 0 , g(2) = 1 , and g′(1) = 0 , g′(2) = 0 , the event {ˆg(1) = ˆ g(2) } suffices. Then, conditionally on 
+
+T ⩽ χ, Pν(g,μ ) and Pν(g′,μ ) converge in total variation to P0 as μ → 0. consider an environment ν(g, μ ) consisting of two clusters with means 0 and μ, and let μ → 0.
+
+P0(T ⩽ χ) ⩽ 2δ . (22) Applying the Bretagnolle–Huber inequality (see Lattimore & Szepesv ´ari, 2020, Thm. 14.2), and combining (21) and (22) ,we obtain 12 exp ( − KL( P0, Pσ,τ )) ⩽ P0(T ⩽ χ) + Pσ,τ (T > χ ) ⩽ 3δ , 
+
+which implies 
+
+log 16δ ⩽ KL( P0, Pσ,τ ) . (23) 28 Clustering Items through Bandit Feedback: Finding the Right Feature out of Many 
+
+Next, using the decomposition of KL divergence for bandit models (see Lattimore & Szepesv ´ari, 2020, Lemma. 15.1), and the Gaussian assumption, we have 
+
+KL( P0, Pσ,τ ) = X
+
+> i,j
+
+E0[Ti,j ] KL( Pi,j  
+
+> 0
+
+, Pi,j σ,τ ) = X
+
+> i,j
+
+E0[Ti,j ]1g(σ(i))=1 
+
+∆2 
+
+> τ(j)
+
+2 . (24) Averaging both sides of (23) over all permutations σ, τ , and using Equations (23) and (24), we get 
+
+log 16δ ⩽ 1
+
+n!1
+
+d!
+
+X
+
+> σ,τ
+
+E0[Ti,j ]1g(σ(i))=1 
+
+∆2 
+
+> τ(j)
+
+2 . (25) Now, observe that each element in i ∈ { 1, . . . , n } (resp. j ∈ { 1, . . . , d }) appears exactly (n − 1)! (resp. (d − 1)! ) times in the multi-set {σ(i)}σ (resp. {τ (j)}τ ), so that 
+
+1
+
+n!1
+
+d!
+
+X
+
+> σ,τ
+
+X
+
+> i,j
+
+E0[Ti,j ]1g(σ(i))=1 
+
+∆2 
+
+> τ(j)
+
+2 = (n − 1)! 
+
+n!(d − 1)! 
+
+d!
+
+X
+
+> k,l
+
+X
+
+> i,j
+
+E0[Ti,j ]1g(k)=1 
+
+∆2
+
+> l
+
+2= 1
+
+n
+
+X
+
+> k∈[n]
+
+1g(k)=1 
+
+∥∆∥22
+
+2d E0[T ] .
+
+Since the group associated with ∆ is the smallest, 1
+
+> n
+
+P 
+
+> k∈[n]
+
+1g(k)=1 = θ. Using a modified algorithm A′ that stops at 
+
+T ∧ χ, we can bound E0[T ] ⩽ χ. Finally, it follows that: 
+
+χ ⩾ 2dθ∥∆∥22
+
+log 16δ .
+
+Since χ is the maximum over all permuted environments constructed with M of the (1 − δ)-quantile of the budget, this inequality concludes the proof of Lemma H.1. 
+
+Lemma H.2. Assume that δ < 1/2. If A is δ-PAC for the clustering problem, then for any environment ν,
+
+EA,ν [T ] ⩾ 2( n − 2) ∆2(1) 
+
+log 
+
+ 12.4δ
+
+
+
+, (26) 
+
+where |∆(1) | = max j∈[d] |∆j |.Proof of Theorem 4.1. Observe that Lemma H.2 does not directly provide a high-probability lower bound on the budget. We now show how the expectation bound given by Lemma H.2 implies a lower bound on the (1 − δ)-quantile of the budget. Let A be any δ-PAC algorithm. Assume, by contradiction, that 
+
+Pν, A T ⩾ 2( n − 2) ∆2(1) 
+
+log 
+
+ 14.8δ
+
+!
+
+< δ. 
+
+We modify A such that it stops at time 
+
+T ′ := T ∧ 2( n − 2) ∆2(1) 
+
+log 
+
+ 14.8δ
+
+
+
+.
+
+If A reaches time 2( n−2) ∆2(1) 
+
+log   14.8δ
+
+, it stops sampling and outputs an error. The resulting algorithm A′ is 2δ-PAC, with a budget satisfying 
+
+EA′,ν [T ′] ⩽ 2( n − 2) ∆2(1) 
+
+log 
+
+ 12.4δ
+
+
+
+.
+
+However, this contradicts Lemma H.2, applied to A′ with δ′ = 2 δ. Thus, we have Pν, A
+
+
+
+T ⩾ 2( n−2) ∆2(1) 
+
+log   14.8δ
+
+
+
+⩾ δ . 
+
+29 Clustering Items through Bandit Feedback: Finding the Right Feature out of Many 
+
+Proof of Lemma H.2. Let A be any δ-PAC algorithm for the clustering problem, and consider the matrix M that parametrizes the Gaussian environment ν. We fix for all environments in this proof that g(1) = 0 and g(2) = 1 . It implies intuitively that we assume that the algorithm knows one item from each group via an oracle. For the Gaussian environment ν, let i, j ∈ [n] × [d]. The observations follow a Gaussian distribution: 
+
+νi,j =
+
+(
+
+N (0 , 1) , if g(i) = 0 ,
+
+N (∆ j , 1) , if g(i) = 1 .
+
+We aim to show that with a budget smaller than cn 
+
+> ∆2(1)
+
+log(1 /δ ), a δ-PAC algorithm cannot distinguish the environment ν
+
+from another environment where one item from ν has been switched to the other group. We construct now this alternative environment. For any k ∈ { 3, . . . , n }, define gk as the vector of labels obtained from g by flipping the label of row k, and let νk denote the corresponding Gaussian environment. The lower bound follows from the information-theoretic cost of distinguishing ν
+
+from any νk.To handle multiple environments, let Pgk (resp. Pg ) denote the probability distribution induced by the interaction between algorithm A and environment νk (resp. ν). For any k ∈ { 3, . . . , n }, note that environments ν and νk differ only on row k. By decomposing the KL divergence and using the Gaussian KL formula, we have: 
+
+KL( Pg , Pgk ) = 
+
+> d
+
+X
+
+> j=1
+
+Eg [Tk,j ] ∆2
+
+> j
+
+2 ⩽
+
+> d
+
+X
+
+> j=1
+
+Eg [Tk,j ] ∆2(1) 
+
+2 , (27) where we use that |∆(1) | = max j∈[d] |∆j |, and Tk,j denotes the number of samples taken from row k and column j.Since A is δ-PAC for the clustering task, we have: 
+
+Pg (ˆ g̸ = g) ⩽ δ, Pgk (ˆ g̸ = gk) ⩽ δ . 
+
+Now, if δ ∈ (0 , 1/2) , by the monotonicity of the binary KL divergence kl , and using the data-processing inequality, we obtain: 
+
+kl( δ, 1 − δ) ⩽ kl  Pg (ˆ g = gk), Pgk (ˆ g = gk) ⩽ KL( Pg , Pgk ) . (28) Combining Equation (27) and Equation (28), and summing over k ∈ { 3, . . . , n }, we get: 
+
+(n − 2) kl( δ, 1 − δ) ⩽
+
+> n
+
+X
+
+> k=3
+> d
+
+X
+
+> j=1
+
+Eg [Tk,j ] ∆2(1) 
+
+2 ⩽ Eg [T ] ∆2(1) 
+
+2 . (29) Finally, Lemma H.2 follows by combining Equation (29) with the inequality kl( δ, 1 − δ) ⩾ log   12.4δ
+
+.
+
+## I. Technical Results 
+
+Lemma I.1 (Chernoff-Bound for Binomial random variables) . For i = 1 , . . . , n , consider X1, X 2, . . . , X n ∼i.i.d. Bern( p)
+
+with p ∈ (0 , 1) , denote μ := np and consider κ > 0. We have 
+
+P
+
+> n
+
+X
+
+> i=1
+
+Xi ≥ (1 + κ)μ
+
+!
+
+≤ eκμ 
+
+(1 + κ)(1+ κ)μ .
+
+If κ ∈ (0 , 1) , we also have 
+
+P
+
+> n
+
+X
+
+> i=1
+
+Xi ≤ (1 − κ)μ
+
+!
+
+≤ exp 
+
+
+
+− κ2μ
+
+2
+
+
+
+.
+
+30
