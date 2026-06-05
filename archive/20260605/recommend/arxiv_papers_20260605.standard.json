@@ -1,0 +1,97 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-06-05T21:47:47.240756+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 1,
+    "deep_cap": 7,
+    "deep_selected": 1,
+    "quick_candidates": 1,
+    "quick_skim_target": 12,
+    "quick_selected": 1
+  },
+  "deep_dive": [
+    {
+      "id": "2605.29765v1",
+      "source": "arxiv",
+      "title": "MMTM: Tri-Modal Topic Modeling for Long-Form Video via Similarity-Gated Fusion",
+      "abstract": "We introduce MMTM, a modular pipeline for topic discovery in long-form video that integrates speech recognition, audio and visual embeddings, and BERTopic clustering through a deterministic similarity-gated fusion. Evaluated cross-lingually on German (Tagesschau) and English (NBC) broadcast news, joint tri-modal modeling substantially improves topic quality: noise drops from 0.27 to 0.06, transition rate from 0.70 to 0.21, and normalized entropy rises from 0.84 to 0.92, indicating more coherent and temporally stable topics. Cluster validity (Calinski-Harabasz) improves by 5-12X across embedding spaces. Lexical coherence (NPMI) rises from 0.77 to 0.86 on German but is corpus-dependent and does not transfer to the shorter NBC broadcasts. We release the pipeline code and a human-validated 54-hour multimodal video topic corpus with dual-annotator visual evaluation and LLM-assisted labeling.",
+      "authors": [
+        "Ali Abusaleh",
+        "Bhuvanesh Verma",
+        "Alexander Mehler"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-05-28T11:12:30+00:00",
+      "link": "https://arxiv.org/pdf/2605.29765v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "uses BERTopic, a clustering method based on BERT large language model embeddings",
+      "llm_evidence_cn": "使用基于BERT大语言模型嵌入的BERTopic聚类方法",
+      "llm_evidence": "使用基于BERT大语言模型嵌入的BERTopic聚类方法",
+      "canonical_evidence": "使用基于BERT大语言模型嵌入的BERTopic聚类方法",
+      "llm_tldr_en": "MMTM integrates speech, audio, and visual embeddings with BERTopic clustering for long-form video topic discovery, showing improved coherence and reduced noise.",
+      "llm_tldr_cn": "本文针对长视频主题发现中的多模态融合问题，提出MMTM流水线，将语音、音频和视觉嵌入与基于BERTopic的聚类方法结合。通过相似性门控融合机制，跨语言实验表明，联合三模态建模显著降低了噪声和主题切换率，提升了聚类有效性和词汇连贯性。该工作展示了利用大语言模型嵌入进行聚类在多模态场景中的有效性。",
+      "llm_tldr": "本文针对长视频主题发现中的多模态融合问题，提出MMTM流水线，将语音、音频和视觉嵌入与基于BERTopic的聚类方法结合。通过相似性门控融合机制，跨语言实验表明，联合三模态建模显著降低了噪声和主题切换率，提升了聚类有效性和词汇连贯性。该工作展示了利用大语言模型嵌入进行聚类在多模态场景中的有效性。",
+      "llm_tags": [
+        "query:ac"
+      ],
+      "matched_query_tag": "query:ac",
+      "matched_query_text": "clustering using large language models",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2606.04647v1",
+      "source": "arxiv",
+      "title": "ALINC: Active Learning for Inductive Node Classification via Graph Sampling",
+      "abstract": "Active learning (AL) for node classification typically focuses on selecting the most informative nodes for annotation within one or a few large graphs (e.g., in social network analysis). However, in other domains, such as molecular chemistry or electronic design automation, datasets consist of thousands of independent graphs. In many of these inductive settings, annotating an individual node requires a full-graph analysis, which effectively yields the remaining node labels on-the-fly. Therefore, these scenarios require AL strategies that select entire graphs instead of single nodes, a problem which has not been tackled in the literature so far. Thus, we introduce ALINC, an AL framework for inductive node classification via graph sampling. It bridges the existing methodological gap by elevating node-level utility measures to graph-level selection criteria through various aggregation mechanisms. In an extensive benchmark including ten strategies, three aggregation methods, and four datasets, we identify CoreSet, TypiClust, and BADGE as the top-performing graph sampling strategies. Our detailed analysis further reveals that the choice of the aggregation method is pivotal, as it substantially affects model performance and annotation costs. Finally, we demonstrate the effectiveness of ALINC in two use case studies: site-of-metabolism prediction in molecules and design automation of printed circuit board schematics.",
+      "authors": [
+        "Pascal Plettenberg",
+        "Denis Huseljic",
+        "André Alcalde",
+        "Bernhard Sick",
+        "Josephine M. Thomas"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-06-03T09:15:46+00:00",
+      "link": "https://arxiv.org/pdf/2606.04647v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "proposes ALINC, an active learning framework for graph node classification with potential transfer to clustering",
+      "llm_evidence_cn": "提出ALINC，一种用于图节点分类的主动学习框架，其方法可迁移至聚类场景",
+      "llm_evidence": "提出ALINC，一种用于图节点分类的主动学习框架，其方法可迁移至聚类场景",
+      "canonical_evidence": "提出ALINC，一种用于图节点分类的主动学习框架，其方法可迁移至聚类场景",
+      "llm_tldr_en": "ALINC introduces active learning for inductive node classification via graph sampling, selecting whole graphs rather than nodes for annotation.",
+      "llm_tldr_cn": "现有主动学习节点分类局限于单张大图，无法处理多独立图场景。本文提出ALINC框架，通过图级采样策略选择信息量最大的整图进行标注，突破了逐节点选择的限制。在多个化学和电子设计自动化数据集上，ALINC显著降低了标注成本并提升了分类性能。该工作为主动学习在图聚类等任务中的迁移提供了可借鉴的范式。",
+      "llm_tldr": "现有主动学习节点分类局限于单张大图，无法处理多独立图场景。本文提出ALINC框架，通过图级采样策略选择信息量最大的整图进行标注，突破了逐节点选择的限制。在多个化学和电子设计自动化数据集上，ALINC显著降低了标注成本并提升了分类性能。该工作为主动学习在图聚类等任务中的迁移提供了可借鉴的范式。",
+      "llm_tags": [
+        "query:active-clust"
+      ],
+      "matched_query_tag": "query:active-clust",
+      "matched_query_text": "active learning clustering methods",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "label": "2026-06-05",
+  "date": "2026-06-05",
+  "generated_at": "2026-06-05T21:49:55",
+  "count": 2,
+  "papers": [
+    {
+      "paper_id": "202606/05/2605.29765v1-mmtm-tri-modal-topic-modeling-for-long-form-video-via-similarity-gated-fusion",
+      "section": "deep",
+      "title_en": "MMTM: Tri-Modal Topic Modeling for Long-Form Video via Similarity-Gated Fusion",
+      "authors": "Ali Abusaleh, Bhuvanesh Verma, Alexander Mehler",
+      "date": "2026-05-28",
+      "pdf": "https://arxiv.org/pdf/2605.29765v1",
+      "score": "8.0",
+      "evidence": "使用基于BERT大语言模型嵌入的BERTopic聚类方法",
+      "tldr": "针对长视频主题发现中单模态信息不足的问题，提出MMTM流水线，集成语音识别、音视频嵌入和BERTopic聚类，通过相似性门控融合实现三模态协同。在德英新闻广播上评估，联合建模使噪声从0.27降至0.06，转换率从0.70降至0.21，归一化熵从0.84升至0.92，簇有效性提升5-12倍。释放了54小时人工验证的多模态主题语料库及代码。",
+      "tags": "query:ac",
+      "abstract_en": "We introduce MMTM, a modular pipeline for topic discovery in long-form video that integrates speech recognition, audio and visual embeddings, and BERTopic clustering through a deterministic similarity-gated fusion. Evaluated cross-lingually on German (Tagesschau) and English (NBC) broadcast news, joint tri-modal modeling substantially improves topic quality: noise drops from 0.27 to 0.06, transition rate from 0.70 to 0.21, and normalized entropy rises from 0.84 to 0.92, indicating more coherent and temporally stable topics. Cluster validity (Calinski-Harabasz) improves by 5-12X across embedding spaces. Lexical coherence (NPMI) rises from 0.77 to 0.86 on German but is corpus-dependent and does not transfer to the shorter NBC broadcasts. We release the pipeline code and a human-validated 54-hour multimodal video topic corpus with dual-annotator visual evaluation and LLM-assisted labeling.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202606/05/2606.04647v1-alinc-active-learning-for-inductive-node-classification-via-graph-sampling",
+      "section": "quick",
+      "title_en": "ALINC: Active Learning for Inductive Node Classification via Graph Sampling",
+      "authors": "Pascal Plettenberg, Denis Huseljic, André Alcalde, Bernhard Sick, Josephine M. Thomas",
+      "date": "2026-06-03",
+      "pdf": "https://arxiv.org/pdf/2606.04647v1",
+      "score": "6.0",
+      "evidence": "提出ALINC，一种用于图节点分类的主动学习框架，其方法可迁移至聚类场景",
+      "tldr": "传统主动学习针对单一大图，但在分子化学等场景中数据集包含多个独立图，标注节点需全图分析。本文提出ALINC框架，通过聚合机制将节点级效用指标提升为图级图采样策略，填补方法空白。在四个数据集十种策略的基准中，CoreSet、TypiClust和BADGE表现最佳，且聚合方法的选择对性能和成本影响显著。在分子代谢位点预测和PCB原理图设计自动化两个用例中验证了有效性。",
+      "tags": "query:active-clust",
+      "abstract_en": "Active learning (AL) for node classification typically focuses on selecting the most informative nodes for annotation within one or a few large graphs (e.g., in social network analysis). However, in other domains, such as molecular chemistry or electronic design automation, datasets consist of thousands of independent graphs. In many of these inductive settings, annotating an individual node requires a full-graph analysis, which effectively yields the remaining node labels on-the-fly. Therefore, these scenarios require AL strategies that select entire graphs instead of single nodes, a problem which has not been tackled in the literature so far. Thus, we introduce ALINC, an AL framework for inductive node classification via graph sampling. It bridges the existing methodological gap by elevating node-level utility measures to graph-level selection criteria through various aggregation mechanisms. In an extensive benchmark including ten strategies, three aggregation methods, and four datasets, we identify CoreSet, TypiClust, and BADGE as the top-performing graph sampling strategies. Our detailed analysis further reveals that the choice of the aggregation method is pivotal, as it substantially affects model performance and annotation costs. Finally, we demonstrate the effectiveness of ALINC in two use case studies: site-of-metabolism prediction in molecules and design automation of printed circuit board schematics.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}
