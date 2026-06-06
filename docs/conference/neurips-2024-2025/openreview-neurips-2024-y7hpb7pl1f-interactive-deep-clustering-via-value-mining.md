@@ -5,15 +5,17 @@ authors: "Honglin Liu, Peng Hu, Changqing Zhang, Yunfan Li, Xi Peng"
 date: 2024-09-25
 pdf: "https://openreview.net/pdf?id=Y7HPB7pL1f"
 tags: ["query:active-clust"]
-score: 9.0
-evidence: 交互式深度聚类，利用用户反馈进行主动学习
-tldr: 针对现有深度聚类方法难以区分边界硬样本的问题，本文提出交互式深度聚类（IDC）方法，通过用户交互对难样本进行少量标注，从而以最小代价显著提升预训练聚类模型的性能。实验表明，IDC在多个数据集上以少量交互即可达到接近全监督的聚类精度，为主动学习聚类提供了高效的实用方案。
+score: 8.0
+evidence: 交互式深度聚类，通过价值挖掘利用用户查询改进聚类
+tldr: 针对现有深度聚类方法难以处理边界硬样本的问题，提出交互式深度聚类（IDC）方法，通过定量评估样本价值并引入用户交互来查询最有价值的样本，以最小交互开销提升预训练聚类模型的性能。实验表明该方法能有效突破聚类性能瓶颈。
 source: NeurIPS-2024-Accepted
 selection_source: conference_retrieval
-motivation: 现有深度聚类对边界硬样本区分困难，伪标签不可靠，需要外部交互来突破性能瓶颈。
-method: 提出交互式深度聚类（IDC），先评估样本价值，再选择最有价值的样本让用户标注，反馈用于提升聚类模型。
-result: 在多个聚类基准上，IDC以少量交互即可显著提升预训练聚类模型的性能，优于现有主动聚类方法。
-conclusion: 交互式深度聚类能高效利用人类反馈来改善聚类，是主动学习聚类领域的一种有效范式。
+figures_json: "[{\"url\": \"assets/figures/openreview/openreview-neurips-2024-y7hpb7pl1f/fig-001.webp\", \"caption\": \"\", \"page\": 0, \"index\": 1, \"width\": 1456, \"height\": 549, \"label\": \"Figure\"}, {\"url\": \"assets/figures/openreview/openreview-neurips-2024-y7hpb7pl1f/fig-002.webp\", \"caption\": \"\", \"page\": 0, \"index\": 2, \"width\": 1436, \"height\": 749, \"label\": \"Figure\"}, {\"url\": \"assets/figures/openreview/openreview-neurips-2024-y7hpb7pl1f/fig-003.webp\", \"caption\": \"\", \"page\": 0, \"index\": 3, \"width\": 1439, \"height\": 538, \"label\": \"Figure\"}, {\"url\": \"assets/figures/openreview/openreview-neurips-2024-y7hpb7pl1f/fig-004.webp\", \"caption\": \"\", \"page\": 0, \"index\": 4, \"width\": 1455, \"height\": 424, \"label\": \"Figure\"}]"
+tables_json: "[{\"url\": \"assets/tables/openreview/openreview-neurips-2024-y7hpb7pl1f/table-001.webp\", \"caption\": \"\", \"page\": 0, \"index\": 1, \"width\": 815, \"height\": 300, \"label\": \"Table\"}, {\"url\": \"assets/tables/openreview/openreview-neurips-2024-y7hpb7pl1f/table-002.webp\", \"caption\": \"\", \"page\": 0, \"index\": 2, \"width\": 1443, \"height\": 894, \"label\": \"Table\"}, {\"url\": \"assets/tables/openreview/openreview-neurips-2024-y7hpb7pl1f/table-003.webp\", \"caption\": \"\", \"page\": 0, \"index\": 3, \"width\": 1166, \"height\": 320, \"label\": \"Table\"}, {\"url\": \"assets/tables/openreview/openreview-neurips-2024-y7hpb7pl1f/table-004.webp\", \"caption\": \"\", \"page\": 0, \"index\": 4, \"width\": 1159, \"height\": 440, \"label\": \"Table\"}]"
+motivation: 现有深度聚类方法难以区分聚类边界上的硬样本，需要引入用户交互来突破性能瓶颈。
+method: 提出交互式深度聚类（IDC）方法，定量评估样本价值，优先查询最有价值的样本。
+result: 该方法能以最小交互开销显著提升预训练聚类模型的性能。
+conclusion: 交互式查询是提升聚类模型性能的有效手段，IDC是即插即用的通用方法。
 ---
 
 ## Abstract

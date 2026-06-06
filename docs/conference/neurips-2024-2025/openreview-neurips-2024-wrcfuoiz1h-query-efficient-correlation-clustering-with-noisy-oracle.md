@@ -1,21 +1,21 @@
 ---
 title: Query-Efficient Correlation Clustering with Noisy Oracle
-title_zh: 带有噪声Oracle的查询高效相关聚类
+title_zh: 利用噪声oracle的查询高效相关聚类
 authors: "Yuko Kuroki, Atsushi Miyauchi, Francesco Bonchi, Wei Chen"
 date: 2024-09-25
 pdf: "https://openreview.net/pdf?id=WRCFuoiz1h"
 tags: ["query:active-clust"]
 score: 9.0
-evidence: 通过噪声oracle进行查询高效的主动聚类
-tldr: 针对相关聚类问题，传统方法需要大量相似度查询，代价高昂。本文提出将聚类问题建模为纯探索组合多臂老虎机，在固定置信度和固定预算两种设定下，设计融合采样策略与经典近似相关聚类算法的新方法。理论保证算法在多项式时间内达到最优查询复杂度，实验验证其在多种噪声场景下的有效性。与现有方法相比，显著减少了查询次数并保持近似精度。这项工作为主动聚类中的查询策略提供了理论保障和高效算法，可推广至各类应用。
+evidence: 带噪oracle的查询高效相关聚类
+tldr: 该论文研究了带噪oracle下的查询高效相关聚类问题，将纯探索组合多臂赌博机范式与经典相关聚类近似算法相结合，在固定置信度和固定预算两种设置下给出了理论保证，是首个多项式时间算法。它为主动聚类中的查询策略提供了全新思路，对减少聚类中相似度查询次数具有重要意义。
 source: NeurIPS-2024-Accepted
 selection_source: conference_retrieval
 figures_json: "[{\"url\": \"assets/figures/openreview/openreview-neurips-2024-wrcfuoiz1h/fig-001.webp\", \"caption\": \"\", \"page\": 0, \"index\": 1, \"width\": 1419, \"height\": 294, \"label\": \"Figure\"}, {\"url\": \"assets/figures/openreview/openreview-neurips-2024-wrcfuoiz1h/fig-002.webp\", \"caption\": \"\", \"page\": 0, \"index\": 2, \"width\": 1417, \"height\": 290, \"label\": \"Figure\"}, {\"url\": \"assets/figures/openreview/openreview-neurips-2024-wrcfuoiz1h/fig-003.webp\", \"caption\": \"\", \"page\": 0, \"index\": 3, \"width\": 1416, \"height\": 293, \"label\": \"Figure\"}]"
 tables_json: "[{\"url\": \"assets/tables/openreview/openreview-neurips-2024-wrcfuoiz1h/table-001.webp\", \"caption\": \"\", \"page\": 0, \"index\": 1, \"width\": 797, \"height\": 277, \"label\": \"Table\"}, {\"url\": \"assets/tables/openreview/openreview-neurips-2024-wrcfuoiz1h/table-002.webp\", \"caption\": \"\", \"page\": 0, \"index\": 2, \"width\": 876, \"height\": 170, \"label\": \"Table\"}, {\"url\": \"assets/tables/openreview/openreview-neurips-2024-wrcfuoiz1h/table-003.webp\", \"caption\": \"\", \"page\": 0, \"index\": 3, \"width\": 1409, \"height\": 446, \"label\": \"Table\"}]"
-motivation: 现有聚类算法假设可获取全部相似度信息，但实际中相似度计算代价高且含噪声，因此需要最小化查询次数。
-method: 将聚类问题建模为纯探索组合多臂老虎机，结合采样策略与近似相关聚类算法，设计固定置信度和固定预算两种算法。
-result: 理论分析和实验表明，算法在保证近似比的同时，显著降低了查询复杂度，是首个多项式时间的主动聚类方法。
-conclusion: 本文为噪声环境下主动聚类提供了理论保障和实用算法，可推广至多种应用场景。
+motivation: 现有聚类假设相似度易得且无噪声，但实际应用代价高昂且存在噪声，亟需少查询的主动聚类方案。
+method: 将查询问题建模为纯探索组合多臂赌博机，设计结合采样策略与相关聚类近似算法的在线学习算法。
+result: 在固定置信度和固定预算设置下均给出理论保证，并证明算法是首个多项式时间实现。
+conclusion: 该工作为查询高效的主动聚类提供了理论框架和实用算法，可推广至其他需要主动查询相似度的聚类场景。
 ---
 
 ## Abstract
