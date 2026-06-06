@@ -1,6 +1,6 @@
 {
   "mode": "standard",
-  "generated_at": "2026-06-06T04:30:44.299425+00:00",
+  "generated_at": "2026-06-06T04:54:23.391115+00:00",
   "stats": {
     "mode": "standard",
     "tag_count": 1,
@@ -32,13 +32,13 @@
         "query:active-clust"
       ],
       "llm_score": 8.0,
-      "llm_evidence_en": "LLM multi-agent refinement for text clustering akin to active learning queries",
-      "llm_evidence_cn": "使用大语言模型多智能体进行聚类，类似主动学习查询策略",
-      "llm_evidence": "使用大语言模型多智能体进行聚类，类似主动学习查询策略",
-      "canonical_evidence": "使用大语言模型多智能体进行聚类，类似主动学习查询策略",
-      "llm_tldr_en": "Agentic Clustering uses LLM agents to adaptively refine text cluster taxonomies, replacing fixed pipelines with dynamic orchestration, offering controllability and interpretability akin to active clustering.",
-      "llm_tldr_cn": "现有文本聚类方法依赖固定程序流程，难以适应不同语料库结构和用户约束。本文提出了一种智能体聚类方法，通过编排大语言模型调度多个专业智能体（如提议者、合成者、审核者等）动态调整聚类流程。实验表明该方法能有效生成可控且可解释的聚类结果，为利用大模型进行主动聚类提供了新范式。",
-      "llm_tldr": "现有文本聚类方法依赖固定程序流程，难以适应不同语料库结构和用户约束。本文提出了一种智能体聚类方法，通过编排大语言模型调度多个专业智能体（如提议者、合成者、审核者等）动态调整聚类流程。实验表明该方法能有效生成可控且可解释的聚类结果，为利用大模型进行主动聚类提供了新范式。",
+      "llm_evidence_en": "Uses LLM agents for active clustering refinement",
+      "llm_evidence_cn": "使用LLM智能体进行主动聚类优化",
+      "llm_evidence": "使用LLM智能体进行主动聚类优化",
+      "canonical_evidence": "使用LLM智能体进行主动聚类优化",
+      "llm_tldr_en": "Agentic Clustering uses an orchestrator LLM and specialized agents to adaptively refine text cluster taxonomies, replacing rigid programmatic pipelines with active, corpus-aware clustering.",
+      "llm_tldr_cn": "针对现有文本聚类方法中LLM流水线固定、泛化性差的问题，本文提出Agentic Clustering，采用一个编排器LLM在每一步检查聚类状态，并分派提议者、合成者、审计者、调查者和批评者等专业智能体，动态调整聚类结构。该方法能自动适应不同语料库的结构，并允许用户设定聚类数量或意图等约束。实验表明，该方法在多种文本数据集上优于固定流水线，实现了更可控、更准确的聚类，体现了大语言模型在主动聚类中的最新进展。",
+      "llm_tldr": "针对现有文本聚类方法中LLM流水线固定、泛化性差的问题，本文提出Agentic Clustering，采用一个编排器LLM在每一步检查聚类状态，并分派提议者、合成者、审计者、调查者和批评者等专业智能体，动态调整聚类结构。该方法能自动适应不同语料库的结构，并允许用户设定聚类数量或意图等约束。实验表明，该方法在多种文本数据集上优于固定流水线，实现了更可控、更准确的聚类，体现了大语言模型在主动聚类中的最新进展。",
       "llm_tags": [
         "query:active-clust"
       ],
