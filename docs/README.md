@@ -6,26 +6,26 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-06-05
-- 运行时间：2026-06-05 21:49:49 UTC
+- 最新运行日期：2026-05-08 ~ 2026-06-06
+- 运行时间：2026-06-06 04:31:23 UTC
 - 运行状态：成功
-- 本次总论文数：2
+- 本次总论文数：1
 - 精读区：1
-- 速读区：1
+- 速读区：0
 
 ### 今日简报（AI）
-今日精读高分论文《MMTM》，探索长视频三模态主题建模新方法；速读图采样主动学习《ALINC》。最值得关注MMTM中相似门控融合机制，可有效提升跨模态语义对齐。建议尝试将MMTM的融合思路用于多模态检索或视频摘要任务。
-- 详情：[/202606/05/README](/202606/05/README)
+今日精读1篇论文，聚焦多智能体聚类文本分类方法。
+论文《Agentic Clustering》提出通过多智能体协作实现可控文本分类，评分8.0/10。
+建议关注多智能体协同在自定义文本分类任务中的实际应用。
+- 详情：[/20260508-20260606/README](/20260508-20260606/README)
 
 ### 精读区论文标签
-1. [MMTM: Tri-Modal Topic Modeling for Long-Form Video via Similarity-Gated Fusion](/202606/05/2605.29765v1-mmtm-tri-modal-topic-modeling-for-long-form-video-via-similarity-gated-fusion)  
-   标签：评分：8.0/10、query:ac
-   evidence：使用基于BERT大语言模型嵌入的BERTopic聚类方法
+1. [Agentic Clustering: Controllable Text Taxonomies via Multi-Agent Refinement](/20260508-20260606/2606.01255v1-agentic-clustering-controllable-text-taxonomies-via-multi-agent-refinement)  
+   标签：评分：8.0/10、query:active-clust
+   evidence：使用大语言模型多智能体进行聚类，类似主动学习查询策略
 
 ### 速读区论文标签
-1. [ALINC: Active Learning for Inductive Node Classification via Graph Sampling](/202606/05/2606.04647v1-alinc-active-learning-for-inductive-node-classification-via-graph-sampling)  
-   标签：评分：6.0/10、query:active-clust
-   evidence：提出ALINC，一种用于图节点分类的主动学习框架，其方法可迁移至聚类场景
+- 本次无速读推荐。
 
 
 <div class="dpr-home-promo-card">

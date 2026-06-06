@@ -1,0 +1,24 @@
+{
+  "label": "2026-05-08 ~ 2026-06-06",
+  "date": "2026-05-08 ~ 2026-06-06",
+  "generated_at": "2026-06-06T04:31:28",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "20260508-20260606/2606.01255v1-agentic-clustering-controllable-text-taxonomies-via-multi-agent-refinement",
+      "section": "deep",
+      "title_en": "Agentic Clustering: Controllable Text Taxonomies via Multi-Agent Refinement",
+      "authors": "Simon Löwe, Emily Silcock",
+      "date": "2026-05-31",
+      "pdf": "https://arxiv.org/pdf/2606.01255v1",
+      "score": "8.0",
+      "evidence": "使用大语言模型多智能体进行聚类，类似主动学习查询策略",
+      "tldr": "现有文本聚类方法依赖固定的LLM调用流程，泛化性差且无法融入用户约束。本文提出Agentic Clustering，通过编排器动态调度多个专业智能体（如提议者、审计者）自适应完成聚类。在七个基准上取得最优结果，相比最强基线ARI提升高达32%。该方法实现了可控、灵活的分类法构建，拓展了LLM在聚类任务中的应用。",
+      "tags": "query:active-clust",
+      "abstract_en": "Recent text-clustering methods use large language models to propose a cluster taxonomy from a corpus and then assign each text to it. These pipelines are fundamentally programmatic: the sequence of LLM calls and the rules for stopping, merging, and splitting clusters are fixed in code in advance, so they generalise poorly across corpora of different structure and cannot easily incorporate user-supplied constraints such as a target cluster count or a clustering intent. We propose an agentic alternative in which an orchestrator LLM inspects the state of the discovery process at each step and dispatches one of a small set of specialised agents - proposer, synthesizer, auditor, investigator, and critic - adapting the pipeline to the corpus rather than executing a fixed one. On seven public text-clustering benchmarks the method achieves state-of-the-art performance, beating the strongest prior LLM baseline by up to 32% in ARI.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}
