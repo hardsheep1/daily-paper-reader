@@ -1,0 +1,1194 @@
+Title: Semi-Supervised Hyperbolic Hierarchical Clustering with Set-Level Structural Priors
+
+URL Source: https://arxiv.org/pdf/2606.01525v1
+
+Published Time: Tue, 02 Jun 2026 01:52:32 GMT
+
+Number of Pages: 12
+
+Markdown Content:
+> IEEE JOURNAL SUBMISSION, VOL. XX, NO. XX, MONTH 2026 1
+
+# Semi-Supervised Hyperbolic Hierarchical Clustering with Set-Level Structural Priors 
+
+Junjing Zheng, Xinyu Zhang, Xiangfeng Qiu, Chengliang Song, and Weidong Jiang 
+
+Abstract —Semi-supervised hierarchical clustering aims to learn a tree structure consistent with data patterns and user-provided supervision. Supervision is usually given as leaf-level relations, such as pairwise must-link/cannot-link constraints or triplet-wise must-link-before constraints. Although useful for regulating local sample relations, such supervision does not directly indicate which samples should form coherent subtrees. Consequently, the non-leaf structure of the learned tree may deviate from the hierarchical organization preferred by ground-truth labels. To address this limitation, we propose a semi-supervised hyperbolic hierarchical clustering method with set-level structural priors. The main contribution is to introduce sets as basic modeling units for hierarchy learning. Each set denotes samples expected to cohere within a subtree and is induced from leaf-level supervision together with a learned constraint-consistent similarity structure. These sets act as soft structural priors for subtree-level supervision, allowing supervision to guide non-leaf hierarchy formation beyond local leaf-level relations. Specifically, we first learn constraint-consistent embeddings to obtain a reliable set partition, then construct constraint-induced sets and estimate inter-set similarities to form set-level structural priors. Finally, these priors are incorporated into a hyperbolic hierarchy objective for continuous tree optimization. Experiments on eleven benchmark datasets and ablation studies show that the proposed method consistently improves label consistency over representative hierarchical clustering baselines while also enhancing similarity-based tree quality. 
+
+Index Terms —Semi-supervised hierarchical clustering, hyper-bolic deep learning, Poincaré model. 
+
+I. I NTRODUCTION 
+
+Hierarchical clustering (HC) is a fundamental unsupervised learning paradigm for organizing data into multi-level nested structures, which provides richer structural interpretability than flat clustering [1], [2]. However, purely unsupervised HC may produce hierarchies that are inconsistent with domain knowledge or user expectations. Semi-supervised hierarchical clustering (SSHC) [3], [4] mitigates this limitation by integrat-ing prior knowledge into the clustering process. Specifically, such priors are expressed as sample relation constraints that guide the construction of more meaningful dendrograms. Existing SSHC methods mainly employ pairwise con-straints [5]–[7] or triplet-wise constraints [8], [9]. Pairwise must-link (ML) and cannot-link (CL) constraints [10] specify whether two samples should belong to the same or differ-ent clusters, and have been widely used in semi-supervised clustering [11], [12]. Nevertheless, pairwise constraints do not explicitly encode hierarchical preferences [13], since each 
+
+The authors are with the College of Electronic Science and Technology, National University of Defense Technology, Changsha 410073, China. Corresponding author: Xinyu Zhang (e-mail: zhangxinyu90111@163.com). 
+
+constraint only describes a relation between two samples rather than the granularity at which they should be grouped in a hierarchy. To express relative merge orders, triplet-wise must-link-before (MLB) constraints are introduced [14], [15], which specify that one sample pair should be merged before another pair. Although MLB constraints are more directly related to hierarchical clustering, they are usually harder to obtain than pairwise constraints in practical scenarios. Therefore, when the available supervision is given as sparse pairwise constraints, only a limited number of reliable MLB relations can be constructed. More importantly, both pairwise and triplet-wise constraints still operate on individual leaf nodes and thus provide leaf-level supervision, as illustrated in Fig. 1a. They can influence subtree formation only indirectly, and therefore provide limited structural guidance for learning the hierarchy. Motivated by this observation, we aim to introduce su-pervision at a higher structural level than individual leaves, referred to as subtree-level supervision. Directly imposing hard subtree constraints is impractical, because the subtree structure is unknown before hierarchical optimization and should remain adjustable during training. To this end, we use the set as a natural carrier of such supervision. In this work, a set is a group of samples induced from available prior knowledge and a learned similarity structure. It is not assumed to be a fixed cluster or a completed subtree during clustering. Instead, it serves as a soft prior indicating that its members are expected to cohere within a subtree in the learned hierarchy. In this sense, the proposed set-level structural priors provide a soft realization of subtree-level supervision. These priors offer dual regularization by encouraging internal coherence within each set and informing boundary relations between different sets during dynamic tree optimization. To operationalize the above idea, we embed the hierarchy formation process in hyperbolic space. Hyperbolic geometry is naturally suited to modeling tree-like structures [16] and provides a continuous Riemannian manifold where structural priors can be incorporated into gradient-based optimization. Prior work has demonstrated that hyperbolic hierarchical clustering can be formulated as adifferentiable objective [16], [17]. Building on these insights, we propose Semi-supervised Hyperbolic Hierarchical Cluster-ing with Set-level Structural Priors , which treats constraint-induced sets as the basic modeling units and optimizes their hierarchical relations on the Poincaré model. The core idea is shown in Fig. 1b. Concretely, the proposed method consists of three coordi-nated stages. First, a novel set-aware representation learning scheme calibrates the embedding space through a combination of unsupervised and semi-supervised losses, jointly consid-         
+
+> arXiv:2606.01525v1 [cs.LG] 1 Jun 2026 IEEE JOURNAL SUBMISSION, VOL. XX, NO. XX, MONTH 2026 2Triplet -wise Constraints Pairwise Constraints
+> Must -Link
+> Cannot -Link
+> Hierarchical Clustering Tree
+> (a) Leaf-level supervision Set -level Structural Priors
+> Set -based Hyperbolic HC
+> Hierarchical Clustering Tree
+> Subtree (b) Our subtree-level supervision Fig. 1. Differences between leaf-level supervision and the proposed subtree-level supervision.
+
+ering raw data geometry and known pairwise constraints. This stage provides a constraint-consistent similarity structure for subsequent stages. Second, the hierarchical clustering set construction stage constructs constraint-induced sets using ML-induced closures, mutual k-nearest neighbors, and shared-neighbor consistency. It further computes weak-connectivity inter-set similarities, so that the set partition and the inter-set similarities together form set-level structural priors. Third, the set-based hyperbolic hierarchy optimization stage uses these priors in a set-triplet objective by introducing intra-set hy-perbolic lowest common ancestor (LCA) representations. The sample embeddings are further optimized on the hyperbolic manifold, and the final tree is decoded from the optimized embeddings. Through these stages, sparse pairwise supervision is organized into set-level structural guidance that supports subtree formation during continuous hierarchy optimization. Our contributions are summarized as follows:  
+
+> •
+
+A constraint-consistent similarity structure is learned for set partitioning. The proposed representation learning scheme balances intrinsic data geometry with available pairwise supervision, providing a more reliable similarity structure for set partitioning.  
+
+> •
+
+Leaf-level supervision is lifted to subtree-level supervi-sion. By constructing constraint-induced sets and inter-set similarities, sparse leaf-level relations are organized into soft structural priors for subtree formation beyond local leaf-level relations.  
+
+> •
+
+Set-level structural priors are incorporated into contin-uous hyperbolic hierarchy learning. The proposed set-based objective extends point-triplet optimization to set-triplet relations, allowing structural priors to guide subtree formation and produce more label-consistent hierarchies. II. P RELIMINARIES 
+
+A. Notations 
+
+Given a dataset X = {x1, x2, . . . , xn}, we formulate hier-archical clustering as learning a rooted binary tree T with n
+
+leaves, where each leaf corresponds to one data point and each internal node corresponds to a cluster. For two leaves i and j,their lowest common ancestor (LCA) is denoted by i ∨ j. The subtree rooted at i∨j is denoted by T [i∨j], and leaves (T [i∨j]) 
+
+denotes its leaf set. For hyperbolic embeddings, zi ∨zj denotes the hyperbolic LCA of two embedded samples. We consider semi-supervised hierarchical clustering with pairwise constraints. Let li be the cluster label of xi. The ML and CL constraint sets are denoted by M and C, respectively, where each (xi, xj ) ∈ M satisfies li = lj , and each (xi, xj ) ∈C satisfies li̸ = lj . After feature representation, we construct a set collection S = {S1, S 2, . . . , S P } from the constraints and the learned similarity structure of the latent feature space. The corresponding local structure is encoded by an undirected graph G = {V, E, W}, where V = {v1, v 2, . . . , v n} contains vertices corresponding to feature points, E is the edge set, and W stores pairwise similarities. zintra  
+
+> S
+
+denotes the intra-set hyperbolic LCA representation of a set S ∈ S , which is referred to as the intra-set LCA hereafter. 
+
+B. Hyperbolic Geometry and Hyperbolic HC 1) Poincaré model: Hyperbolic geometry has constant neg-ative curvature and is well suited for representing tree-like hierarchical structures [16]. In this work, we use the Poincaré model with curvature −1, defined as 
+
+Bd = {x ∈ Rd : ∥x∥ < 1} (1) For x, y ∈ Bd, the Möbius addition is defined as [16] 
+
+x ⊕ y = (1 + 2 ⟨x, y⟩ + ∥y∥2)x + (1 − ∥ x∥2)y
+
+1 + 2 ⟨x, y⟩ + ∥x∥2∥y∥2 . (2) The hyperbolic distance between x and y is then given by 
+
+dh(x, y) = 2 artanh( ∥ − x ⊕ y∥) . (3) Denoting o as the origin, it reduces to dh
+
+> o
+
+(x) = 2 artanh( ∥x∥)
+
+when y = o. To map vectors between Euclidean tangent spaces and the Poincaré model, we use the exponential and logarithmic maps: 
+
+exp x(u) = x ⊕
+
+
+
+tanh 
+
+ λx∥u∥
+
+2
+
+ u
+
+∥u∥
+
+
+
+, (4) where u ∈ Rd and λx = 21−∥ x∥2 , and 
+
+log x(y) = 2
+
+λx
+
+arctanh( ∥ − x ⊕ y∥) −x ⊕ y
+
+∥ − x ⊕ y∥ , (5) IEEE JOURNAL SUBMISSION, VOL. XX, NO. XX, MONTH 2026 3
+
+where y ∈ Bd. In particular, when the base point is the origin, the two maps reduce to exp o(u) = tanh ( ∥u∥) u
+
+> ∥u∥
+
+and log o(y) = arctanh( ∥y∥) y 
+
+> ∥y∥
+
+.
+
+2) Klein model: The Klein model Kd is another represen-tation of hyperbolic space with the same open ball domain as the Poincaré model. Its primary advantage in this context is that geodesics are Euclidean straight lines, thereby facilitating the use of convex combinations to compute the intra-set LCA. A point x ∈ Bd can be mapped to the Klein model by 
+
+k = 2x
+
+1 + ∥x∥2 , (6) and a Klein point k ∈ Kd can be mapped back to the Poincaré model by 
+
+x = k
+
+1 + p1 − ∥ k∥2 . (7) These transformations will be used to derive the continuous intra-set LCA in Section III-D2. 
+
+3) Hyperbolic Hierarchical Clustering: Dasgupta’s cost provides a global objective for similarity-based hierarchical clustering [18]: LDasgupta (T ; w) = P 
+
+> ij
+
+wij |leaves (T [i ∨ j]) |.It favors trees in which similar data points have LCAs far-ther from the root than dissimilar points. Wang et al. [19] reformulate this objective into a triplet-based form, but the resulting optimization remains combinatorial. HypHC [16] addresses this issue by embedding leaf nodes into hyperbolic space and optimizing a continuous relaxation of the hier-archical clustering objective. Given hyperbolic embeddings 
+
+Z = {z1, z2, . . . , zn}, HypHC is defined as 
+
+LHypHC (Z; w, t ) = X
+
+> i,j,k
+
+
+
+wij + wik + wjk 
+
+− wijk (Z; w, t )
+
+
+
++ 2 X
+
+> i,j
+
+wij ,wijk (Z; w, t ) = ( wij , w ik , w jk ) · σt
+
+
+
+dh
+
+> o
+
+(zi ∨ zj )
+
+dh
+
+> o
+
+(zi ∨ zk)
+
+dh
+
+> o
+
+(zj ∨ zk)
+
+ .
+
+(8) Here, zi ∨ zj denotes the hyperbolic LCA, defined as the point on the geodesic between zi and zj that is closest to the origin [16]. The function σt(·) is the scaled softmax with temperature t > 0.
+
+C. Related Works 
+
+Most SSHC methods based on pairwise constraints follow an agglomerative or graph-based paradigm, and mainly dif-fer in how constraints are translated into merge decisions. COBRA [20] over-clusters data into super-instances and uses pairwise constraints to rule out illegal merges. CECH [21] directly modifies the similarity matrix by assigning maximum similarity to ML pairs and minimum similarity to CL pairs. Semi-Multicons [11] encodes constraints into a consensus-based objective and seeks a tree satisfying closed-pattern con-straints. SSSE [10] represents pairwise constraints as a relation graph and integrates them into structural entropy minimization, where hierarchical clustering is performed through discrete stretching and compressing operators. These methods can effectively exploit pairwise supervision, but they still mainly introduce limited local corrections to pairwise similarities or merge orders. As a result, supervision is propagated to subtree formation only indirectly. In contrast, our method first learns a more reliable similarity structure through set-aware representation learning, which balances the available supervision with the intrinsic neighborhood structure of the data. It further uses sets as the basic units for hierarchy learning, allowing leaf-level supervision to act as subtree-level guidance and produce more label-consistent hierarchies. Recently, hyperbolic geometry has been widely used for modeling hierarchical data because of its negative curvature and exponential volume growth [22]. A series of hyperbolic neural models have been developed to support representation learning on hyperbolic manifolds [23]–[27], and have been applied to clustering [17], [28], [29], image retrieval [30], and session-based recommendation [31]. For hierarchical clus-tering, HypHC [16] formulates tree learning as continuous optimization of leaf embeddings in hyperbolic space, while HypCSE [17] relaxes structural entropy by using soft as-signments over hyperbolic LCAs. These methods demonstrate the effectiveness of continuous hyperbolic optimization, but they are mainly unsupervised and optimize leaf-level hierarchy objectives. As a result, the learned hierarchies may not nec-essarily align with domain knowledge or user expectations. Our method complements this line of work by introducing sets as the carriers of supervision into hyperbolic HC, so that set-level structural priors can guide hierarchy learning at the upper levels of the tree and produce more label-consistent hierarchies. III. S EMI -SUPERVISED HYP HC 
+
+A. Framework Overview 
+
+Given a dataset X = {x1, x2, . . . , xn} with known pairwise ML and CL constraints M and C, our goal is to transform sparse leaf-level supervision into soft subtree-level guidance and use it to learn a hyperbolic hierarchy. Pairwise constraints are used as the practical supervision source because they are often easier to obtain than triplet-wise constraints. Technically, sparse leaf-level pairwise constraints are transformed into soft subtree-level supervision carried by constraint-induced sets. These sets do not define fixed subtrees in advance; instead, they provide set-level structural priors that guide subtree for-mation and merging during continuous hierarchy optimization on the Poincaré model. As shown in Fig. 2, the proposed method follows apreparation–construction–optimization pipeline. First, the set-aware representation learning stage combines unsupervised and semi-supervised losses to learn constraint-consistent hy-perbolic embeddings, yielding a constraint-consistent simi-larity structure for reliable set partition. Second, the hier-archical clustering set construction stage partitions samples into constraint-induced sets and computes inter-set similarities. This is the stage where set-level structural priors are explicitly formed from constraints and the learned similarity structure. Third, the set-based HypHC stage employs the set partition IEEE JOURNAL SUBMISSION, VOL. XX, NO. XX, MONTH 2026 4Geodesic convex hull nearest -point query                                        
+
+> Ⅰ.Set -aware Representation Learning (SARL)
+> Input data with
+> pairwise constraints
+> Encoder Decoder
+> deep
+> embeddings
+> Hyperbolic Autoencoder
+> 1) Unsupervised loss
+> Constraint -consistency
+> 2) Semi -supervised loss semi set-MLB ML CL =++
+> Ⅱ.Hierarchical Clustering Set Construction unsup recon lap =+
+> 1) Initial sets from
+> ML closures
+> 2) Set expansion with mutual
+> k-NN and shared neighbors
+> Must -Link
+> Cannot -Link
+> Mutual k-NN
+> One -edge k-NN
+> 3) Inter -set similarities
+> through weak connectivity
+> Ⅲ. Set -based Hyperbolic Hierarchical Clustering (Set -HypHC )
+> Set -level structural priors Poincaré model 1) Intra -set LCA computation 2)Set -triplet optimization
+> Candidate geodesics Geodesic convex hull The nearest point
+
+ooo
+
+> Set
+> partition
+> Inter -set
+> similarities
+> 3) Clustering tree decoding
+
+Fig. 2. Overall framework of the proposed method. 
+
+and inter-set similarities in a set-triplet objective to further op-timize leaf embeddings on the Poincaré model, where intra-set LCAs are computed from geodesic convex hulls as continuous representations of subtree roots. In this way, set-level structural priors are translated into subtree merge preferences, so that the decoded tree better aligns with available supervision. 
+
+B. Set-Aware Representation Learning 1) Constraint-consistent Hyperbolic Embeddings: This stage reduces the risk that raw-feature similarities scatter constraint-related samples or introduce noisy local proximity, providing constraint-consistent embeddings. We adopt a hyper-bolic autoencoder, implemented with a multi-layer perceptron (MLP)-based Euclidean autoencoder and a Poincaré mapping layer. Given an input sample xi, we use a Euclidean encoder 
+
+fenc parameterized by θenc to map it to 
+
+zei = fenc (xi; θenc ), (9) which is then projected onto the Poincaré model: 
+
+zhi = exp o(zei ), (10) where the constraint-related objectives are imposed. The em-bedding is further mapped back to the tangent space and fed into a decoder fdec , which is parameterized by θdec and symmetric to the encoder: 
+
+˜xi = fdec 
+
+ log o(zhi ); θdec 
+
+ . (11) This design preserves the reconstruction capability of autoen-coders while allowing supervision to shape the hyperbolic embedding space. The objective of this stage is 
+
+Lrep = Lsemi + Lunsup , (12) where Lsemi encodes supervision, and Lunsup preserves input semantics and local smoothness. 
+
+2) Semi-Supervised Terms: From the available pairwise constraints, we first extract implicit triplet-wise merge prefer-ences from ML/CL closures and formulate a novel set-aware MLB term. Explicit ML contraction and CL separation terms are further introduced as complementary pairwise regularizers, and together they define the semi-supervised loss. The standard MLB criterion specifies that a sample pair 
+
+(xi, xj ) should merge earlier than pairs involving another sample xk, i.e., dij < d ik and dij < d jk . Taking xi as the anchor, this can be written as a ranking objective: 
+
+max dik − dij ⇔ min log (1 + exp( dij − dik )) . (13) The last term can be rewritten as 
+
+log (1 + exp( dij − dik )) = − log exp( −dij )exp( −dij ) + exp( −dik ) ,
+
+(14) which corresponds to a logistic ranking form. When xj is also used as an anchor, the two MLB inequalities dij < d ik and 
+
+dij < d jk can be jointly encouraged. Based on this ranking view, we derive a set-aware MLB term from pairwise ML/CL closures. For an anchor xi, let Mi
+
+and Ci denote its ML and CL closures derived from M and 
+
+C, respectively. These closures provide preliminary supervision for representation learning and are utilized as initial sets in the set construction stage. The set-aware MLB loss is defined as 
+
+Lset-MLB = − X
+
+> i∈A
+
+log 
+
+P 
+
+> j∈M i
+
+exp( −dij )
+
+P 
+
+> j∈M i
+
+exp( −dij ) + P 
+
+> k∈C i
+
+exp( −dik ) ,
+
+(15) where A is the set of anchors with both ML and CL closures. This loss compares the anchor with an ML closure and a CL closure, rather than with two isolated samples. Therefore, it extracts relative merge preferences from pairwise constraints in a more structured and set-aware manner, without requiring explicit triplet-wise annotations. We further introduce explicit ML contraction and CL sepa-ration terms. For the ML part, let Mhard be the subset of the IEEE JOURNAL SUBMISSION, VOL. XX, NO. XX, MONTH 2026 5
+
+farthest ML pairs, with |M hard | = r1|M| and 0 < r 1 < 1.The ML loss is 
+
+LML = 1
+
+|M hard |
+
+X
+
+> (i,j )∈M hard
+
+d2 
+
+> ij
+
+. (16) For the CL part, let ACL denote anchors that participate only in CL relations, and let Chard be the subset of nearest CL samples, with |C hard | = r2|C| and 0 < r 2 < 1. The CL loss is 
+
+LCL = 1
+
+|A CL |
+
+X
+
+> i∈A CL
+
+1
+
+|C hard |
+
+X
+
+> k∈C hard
+
+11 + d2
+
+> ik
+
+, (17) which penalizes CL samples that are excessively close to the anchor. The semi-supervised loss can be given as 
+
+Lsemi = Lset-MLB + wML LML + wCL LCL , (18) where wML and wCL are balancing coefficients. Following mixed-geometry representation learning [30], the distance dij is defined by combining Euclidean and hyperbolic distances: 
+
+dij = de(zei , zej )
+
+τe
+
++ λ dh(zhi , zhj )
+
+τh
+
+, (19) where τe and τh are temperature parameters, and λ controls the contribution of the hyperbolic term. This mixed-geometric property helps preserve local feature similarity while incorpo-rating hyperbolic structural information, leading to a similarity structure that is more suitable for subsequent set construction. 
+
+3) Unsupervised Terms: In addition to Lsemi , we use two unsupervised regularizations to preserve the intrinsic data ge-ometry. The reconstruction loss keeps the learned embeddings from deviating excessively from the input semantics, while the Laplacian regularization encourages local smoothness in the embedding space and stabilizes the neighborhood structure used for set construction. Thus, we have 
+
+Lunsup = Lrec + Llap . (20) Let ˜xi denote the reconstruction of xi. The reconstruction loss is defined as 
+
+Lrec = 1
+
+n
+
+> n
+
+X
+
+> i=1
+
+∥xi − ˜xi∥22 . (21) For Laplacian regularization, we construct a similarity ma-trix on Euclidean embeddings using the radial basis function (RBF) kernel: 
+
+wij = exp − (deij )2
+
+2σ2
+
+> e
+
+!
+
+, (22) where deij = de(zei , zej ) and σe is the median of deij . Let D be the degree matrix with Dii = P 
+
+> j
+
+wij , and let L = D − W
+
+be the graph Laplacian. The Laplacian loss is 
+
+Llap = Tr  (Ze)⊤LZ eP 
+
+> i,j
+
+wij 
+
+, (23) where Ze = [ ze
+
+> 1
+
+, ze
+
+> 2
+
+, . . . , zen]⊤.Combining the supervised and unsupervised terms, the final objective of SARL is 
+
+Lrep = Lset-MLB + wML LML + wCL LCL + Lrec + Llap . (24) 
+
+C. Hierarchical Clustering Set Construction 1) Constraint-induced Set Construction: This stage con-structs an index-based set partition S = {Sp}Pp=1 from the available supervision and the learned constraint-consistent similarity structure, where each Sp = {ip, 1, i p, 2, . . . , i p,n p } ⊆ {1, . . . , n } contains sample indices. The corresponding em-beddings are accessed as {zi : i ∈ Sp}. These sets are not fixed subtrees, but soft structural units that encourage coherent subtree formation in the subsequent set-based HypHC stage. Before set construction, we define the inter-sample similar-ity using the RBF kernel and hyperbolic distance: 
+
+whij = exp − (dhij )2
+
+2σ2
+
+> h
+
+!
+
+, (25) where dhij = dh(zi, zj ), and σh is the median of dhij . Based on the learned embeddings, we construct a constraint-aware 
+
+k-nearest neighbor ( k-NN) graph G = {V, E, W}. For nodes involved in ML constraints, we first search for their k nearest neighbors after excluding ML neighbors, and then reintroduce ML edges into the graph. Meanwhile, edges between CL samples are removed if they appear in the neighborhood graph due to high similarity. This construction extends local neighborhood relations from ML closures to unconstrained samples while preventing CL-conflicting edges from providing erroneous guidance. We then construct the set partition S in three steps. First, ML closures are used as initial sets. For a node i, let N cand 
+
+> i
+
+denote its candidate neighbors in the constraint-aware k-NN graph. For a leftover sample not included in any ML set, if at least p1 nodes in N cand  
+
+> i
+
+belong to the same ML set, it is absorbed into that set. This expansion extends ML-induced local structures without merging different ML components. Second, the remaining unassigned samples are grouped according to mutual k-NN and shared-neighbor consistency. Two unassigned nodes i and j are grouped into the same new set if they are mutual neighbors, i.e., i ∈ N cand  
+
+> j
+
+and 
+
+j ∈ N cand  
+
+> i
+
+, and they share at least s common neighbors: 
+
+|N cand  
+
+> i
+
+∩ N cand  
+
+> j
+
+| ≥ s. This rule ensures that newly formed sets contain samples that are not only close to each other, but also supported by similar local neighborhoods. Finally, isolated samples are assigned through a voting mechanism. For an isolated node i, let N top  
+
+> i
+
+denote its top 
+
+p2 nearest neighbors in N cand  
+
+> i
+
+that already belong to existing sets. The node is assigned to the set with the highest vote count in N top  
+
+> i
+
+. Samples that remain unassigned after voting are treated as singleton sets. The resulting partition S is used to form set-level structural priors for subsequent set-based hierarchy optimization. The complete workflow is summarized in Algorithm 1. 
+
+2) Inter-Set Similarities: After obtaining the set partition S,we define inter-set similarities to describe boundary relations among sets. The key idea is weak connectivity over candidate boundary links. Instead of using the strongest inter-set links, which may be dominated by a few noisy or accidental neigh-bors, we estimate the inter-set similarity from the relatively weak portion of these candidate links. Thus, a high similarity IEEE JOURNAL SUBMISSION, VOL. XX, NO. XX, MONTH 2026 6
+
+Algorithm 1 Hierarchical Clustering Set Construction 
+
+Require: Learned embeddings {zi}ni=1 , ML constraints M,CL constraints C, neighbor size k, thresholds p1, s , voting size p2
+
+Ensure: Set partition S = {S1, . . . , S P } 
+
+> 1:
+
+Compute hyperbolic similarities whij by Eq. (25).  
+
+> 2:
+
+Build a constraint-aware k-NN graph G = ( V, E, W) by excluding ML neighbors during neighbor search, reinsert-ing ML edges, and removing CL-conflicting edges.  
+
+> 3:
+
+Initialize S as the connected components induced by M. 
+
+> 4:
+
+Let U ← V \ S 
+
+> Sp∈S
+
+Sp be the unassigned node set.  
+
+> 5:
+
+Expand existing ML sets: assign each i ∈ U to an existing set if at least p1 nodes in N cand  
+
+> i
+
+vote for the same set; update U . 
+
+> 6:
+
+Build GU = ( U, E U ) as an auxiliary subgraph of G, where 
+
+(i, j ) is added if i and j are mutual k-NNs and |N cand  
+
+> i
+
+∩N cand  
+
+> j
+
+| ≥ s. 
+
+> 7:
+
+Add all non-singleton connected components of GU to S,and update U . 
+
+> 8:
+
+For each remaining i ∈ U , assign it to the set receiving the largest vote from its top-p2 assigned neighbors.  
+
+> 9:
+
+Add still-unassigned nodes as singleton sets.  
+
+> 10:
+
+return S.is assigned only when the boundary connectivity between two sets remains consistently strong. For two sets SA and SB , let EAB = {(i, j ) ∈ E | i ∈
+
+SA, j ∈ SB } be the inter-set edges in the constraint-aware 
+
+k-NN graph, and let PAB = {(i, j ) | i ∈ SA, j ∈ SB }
+
+be all cross-set sample pairs. For a candidate pair set Q,let Low r3 (Q) denote the bottom r3 proportion of pairs in Q
+
+ranked by whij . The similarity between SA and SB is defined as 
+
+wAB =
+
+
+
+1
+
+| Low r3 (EAB )|
+
+X  
+
+> (i,j )∈Low r3(EAB )
+
+whij , EAB ̸ = ∅,
+
+1
+
+| Low r3 (PAB )|
+
+X  
+
+> (i,j )∈Low r3(PAB )
+
+whij , EAB = ∅.
+
+(26) When inter-set graph edges exist, the similarity is estimated from the weakest inter-set edges; otherwise, it is computed from the weakest cross-set pairs. This definition makes the inter-set similarity sensitive to boundary connectivity, thereby providing more reliable guidance for subtree merge prefer-ences. Together with the set partition S, the inter-set similar-ities {wAB } form the set-level structural priors used in the subsequent set-triplet hierarchy objective. 
+
+D. Set-Based Hyperbolic Hierarchical Clustering 1) Revisiting HypHC from a Point-Triplet Perspective: As defined in Eq. (8), HypHC [16] relaxes HC into a continuous optimization problem by using hyperbolic LCAs to approxi-mate the LCAs of a rooted binary tree. For a leaf pair (i, j ),the hyperbolic LCA zi ∨ zj serves as a continuous proxy for their common ancestor, and its depth dh
+
+> o
+
+(zi ∨ zj ) reflects the relative merge level of this pair. At the point-triplet level, HypHC compares the three LCA depths induced by (i, j, k )
+
+and encourages the pair with the highest similarity to obtain the deepest LCA, i.e., to merge earliest. In this way, leaf embeddings are optimized to match the merge order of a binary tree without direct combinatorial tree search. To incorporate supervision into this point-triplet framework, a direct strategy is to adjust the pairwise similarities according to ML/CL constraints. However, this still injects supervision through local point-pair relations. Such local correction may weaken the global coherence of hyperbolic optimization, since the hierarchy is determined by the joint geometry of all leaf embeddings rather than isolated pairwise relations. A more suitable strategy is to make sparse supervision act on the structural units that determine the hierarchy, i.e., intermediate non-leaf structures corresponding to common ancestors of leaf subsets. This motivates us to use constraint-induced sets as the modeling units for supervised hierarchy optimization. Since a non-leaf node defines a subtree and thus corresponds to a subset of leaves, each set provides a soft leaf subset that is expected to form a coherent subtree during optimization, without being fixed as a subtree in advance. We therefore extend HypHC from point-level triplets to set-level triplets. Instead of comparing the LCA depths of three sample pairs, the set-based objective compares the LCA depths associated with three sets. This allows set-level structural priors to shape intermediate hierarchical structures while preserving the continuous optimization advantage of HypHC. 
+
+2) Continuous intra-set LCAs in Hyperbolic Space: To extend HypHC from point triplets to set triplets, we need a continuous representation for each set in hyperbolic space. In the original HypHC, zi ∨ zj is defined as the point on their geodesic that is closest to the origin. For a set S with multiple samples, we define its intra-set LCA zintra  
+
+> S
+
+as the closest point to the origin within the geodesic convex hull of its member embeddings: 
+
+zintra  
+
+> S
+
+= arg min   
+
+> z∈conv B({zi}i∈S)
+
+dh
+
+> o
+
+(z), (27) where conv B(·) denotes the geodesic convex hull in the Poincaré model, and dh
+
+> o
+
+(z) = 2 artanh( ∥z∥).The intra-set LCA serves as a continuous proxy for the internal node that represents the subtree encouraged by S. The following lemma shows that this representation approximates the corresponding root of a genuine subtree with a bounded error, which allows us to directly optimize the subtrees that contain multiple leaf nodes to guide the tree structure, rather than operating solely on leaf-level pairwise relations. 
+
+Lemma III.1 (Intra-set LCA approximates tree LCA) . Let 
+
+S ⊆ { 1, . . . , n } be a finite set of sample indices and zintra 
+
+> S
+
+be its intra-set LCA as defined in Eq. (27) . Let T be a rooted binary tree whose leaf set contains the leaves corresponding to 
+
+S such that, for all i, j , dT (i, j ) ≤ d(zi, zj ) ≤ dT (i, j ) + Cn
+
+(Cn = δ · O(n) with δ > 0), and let τS = LCA T (S) be the LCA of the leaves corresponding to S in T . Then 
+
+dT (0 , τ S ) − 12 Cn ≤ dh
+
+> o
+
+(zintra  
+
+> S
+
+) ≤ dT (0 , τ S ) + Cn. (28) IEEE JOURNAL SUBMISSION, VOL. XX, NO. XX, MONTH 2026 7
+
+Proof. The proof, together with the auxiliary definitions and lemmas used in the derivation, is provided in the appendix. Directly solving Eq. (27) in the Poincaré model is inconve-nient as geodesics are nonlinear. We therefore use the Klein model, where geodesics are Euclidean straight lines and the geodesic convex hull becomes the standard Euclidean convex hull. Let 
+
+ki = 2zi
+
+1 + ∥zi∥2 (29) be the Klein representation of zi. Then Eq. (27) can be equivalently solved in the Klein model, as the following lemma shows: 
+
+Lemma III.2. Let {ki}i∈S ⊂ Kd be the Klein embeddings of a set of Poincaré points. The intra-set LCA in Eq. (27) is obtained by solving 
+
+kintra  
+
+> S
+
+= arg min   
+
+> k∈conv( {ki}i∈S)
+
+∥k∥2, (30) 
+
+and mapping the solution back to the Poincaré model as 
+
+zintra  
+
+> S
+
+= kintra 
+
+> S
+
+1 + p1 − ∥ kintra  
+
+> S
+
+∥2 . (31) 
+
+Proof. In the Klein model, the distance from the origin is 
+
+dK(o, k) = artanh( ∥k∥), which is strictly increasing with 
+
+∥k∥. Thus, minimizing the hyperbolic distance to the origin is equivalent to minimizing the Euclidean norm. Since geodesics in the Klein model are Euclidean straight lines, the geodesic convex hull is mapped to the Euclidean convex hull, which gives Eq. (30). The mapping back to the Poincaré model follows from Eq. (7). In practice, we write k = P 
+
+> i∈S
+
+αiki, where αi ≥ 0
+
+and P 
+
+> i∈S
+
+αi = 1 . The objective ∥ P 
+
+> i∈S
+
+αiki∥2 is a convex quadratic function of α, and we solve it using unrolled gradient descent with a softmax parameterization. The BB step size [32] is used to accelerate convergence. The procedure is summarized in Algorithm 2. In implementation, the optimiza-tion of α in Algorithm 2 is used as a numerical solver for computing the intra-set LCA. The obtained zintra  
+
+> S
+
+is then used by the set-level objective. Its role in gradient propagation is discussed in the next subsection. When S contains a single point, zintra  
+
+> S
+
+reduces to that point. When S contains two points, it coincides with the standard hyperbolic LCA used in HypHC. Thus, the intra-set LCA is a natural set-level extension of the pairwise LCA. 
+
+3) Set-Level Loss and Optimization: With the intra-set LCA defined above, we formulate the set-level extension of the HypHC objective. Let Z = {z1, . . . , zn} be the trainable sample embeddings on the Poincaré model. Given the set partition S and inter-set similarities {wAB } obtained from set 
+
+Algorithm 2 Intra-Set LCA via Klein Model Minimization (with BB step size) 
+
+Require: Poincaré embeddings {zi}i∈S , number of steps T
+
+Ensure: Intra-set LCA zintra  
+
+> S
+
+∈ Bd 
+
+> 1:
+
+Map each zi to Klein model: ki ← 2zi 
+
+> 1+ ∥zi∥2
+
+▷ Eq. (29)  
+
+> 2:
+
+Initialize logits u ← 0 ∈ R|S| 
+
+> 3:
+
+for t = 1 to T do  
+
+> 4:
+
+α ← softmax( u) 
+
+> 5:
+
+k ← P 
+
+> i∈S
+
+αiki 
+
+> 6:
+
+Compute gradient g = ∇u∥k∥2 
+
+> 7:
+
+Update u via gradient descent with BB step size [32]  
+
+> 8:
+
+end for  
+
+> 9:
+
+kintra  
+
+> S
+
+← P 
+
+> i∈S
+
+softmax( u)iki 
+
+> 10:
+
+Map back to Poincaré: zintra  
+
+> S
+
+← kintra 
+
+> S
+> 1+
+
+√1−∥ kintra   
+
+> S∥2
+
+▷ Eq. (31)  
+
+> 11:
+
+return zintra 
+
+> S
+
+construction, the set-level HypHC loss operates on set triplets 
+
+(A, B, C ) in direct analogy to the point-level formulation: 
+
+Lset -HypHC = X
+
+> A,B,C
+
+ wAB + wAC + wBC − wset 
+
+> ABC
+
+ + R,
+
+R = 2 X
+
+> A,B
+
+wAB ,wset  
+
+> ABC
+
+= ( wAB , w AC , w BC ) · σt
+
+
+
+dh
+
+> o
+
+(zintra  
+
+> A
+
+∨ zintra  
+
+> B
+
+)
+
+dh
+
+> o
+
+(zintra  
+
+> A
+
+∨ zintra  
+
+> C
+
+)
+
+dh
+
+> o
+
+(zintra  
+
+> B
+
+∨ zintra  
+
+> C
+
+)
+
+ ,
+
+(32) where σt is the scaled softmax with temperature t, and ∨
+
+denotes the standard hyperbolic LCA operator for point pairs. In essence, Eq. (32) uses the inter-set similarities as merge-preference weights and optimizes the sample embeddings 
+
+Z through dynamically computed intra-set LCAs. At each iteration, zintra  
+
+> S
+
+is recomputed from the current embeddings of the samples in S via Algorithm 2, and serves as a set-level summary rather than an independent learnable set embedding. The pair of sets with the highest inter-set similarity is en-couraged to merge earlier in the learned hierarchy, so that the induced subtree structure better matches the set-level structural priors. Importantly, point-level ordering is not discarded; it is refined implicitly through intra-set LCAs and the subsequent optimization of member embeddings. In practice, we do not enumerate all O(P 3) set triplets. Following HypHC [16], we first enumerate all set pairs and then randomly sample the remaining third set for each pair, yielding O(P 2) sampled set triplets per epoch. This provides a tractable stochastic approximation to Eq. (32). 
+
+a) Gradient flow and dynamic subtree optimization: Acritical aspect of this formulation is how set-level supervision affects individual samples. In Algorithm 2, the intra-set LCA is obtained by solving the simplex weights over the Klein embeddings. Specifically, after the inner optimization, the Klein representation of the intra-set LCA is constructed as 
+
+kintra  
+
+> S
+
+= X
+
+> i∈S
+
+α∗ 
+
+> i
+
+ki, (33) IEEE JOURNAL SUBMISSION, VOL. XX, NO. XX, MONTH 2026 8
+
+where α∗ 
+
+> i
+
+denotes the optimized convex weight of sample i in set S. Although the inner optimization used to obtain α∗ is treated as a detached numerical solver, the final construction above remains differentiable with respect to the member embeddings under fixed α∗. After mapping kintra  
+
+> S
+
+back to the Poincaré model, the gradient of Lset -HypHC with respect to 
+
+zintra  
+
+> S
+
+can be propagated back to every zi with i ∈ S.This design allows set-level merge preferences to align different sets and reshape the internal geometry of each set. A constraint-induced set therefore does not define a fixed subtree, but specifies the scope over which the structural prior acts. Through inter-set relations, such priors further propagate across sets and influence the global tree structure. Compared with point-level triplets, the proposed formulation provides more structured and globally coordinated supervision for subtree formation. 
+
+b) Degeneracy to Point-Level HypHC: The proposed set-level loss naturally subsumes the original point-level HypHC as a special case. When each set contains exactly one sample, we have zintra  
+
+> S
+
+= zi and wAB = wij , reducing Eq. (32) to the standard HypHC objective in Eq. (8). Thus, the proposed for-mulation retains the original point-level model while enabling subtree-level supervision when larger sets are available. 
+
+c) Tree Decoding: After optimization, the final binary tree is decoded from the optimized hyperbolic embeddings using the greedy decoding algorithm of HypHC [16]. 
+
+E. Complexity Analysis 
+
+Let n be the number of samples, d be the embedding dimension, and P be the number of constructed sets. Let q
+
+denote the number of effective constraint-related pairs used in SARL after transitive closure and hard-pair sampling. The main computational cost comes from three parts. First, SARL evaluates a dense Laplacian term based on a precom-puted pairwise similarity matrix, together with the constraint-related losses. This stage costs O(Erep (n2d + qd )) , where the one-time pairwise similarity computation and the standard MLP costs are absorbed into the leading term. Second, set con-struction requires full hyperbolic similarities and a constraint-aware k-NN graph. Lower-order operations, including ML connected components, neighborhood expansion, and shared-neighbor checking, are omitted from the leading-order sum-mary. The inter-set similarity computation uses graph edges when available and falls back to all cross-set pairs otherwise. Let Nfb denote the number of fallback pairs, with Nfb ≤ n2 in the worst case. Third, Set-HypHC recomputes intra-set LCAs for all sets at each epoch and evaluates the sampled set-triplet loss over O(P 2) triplets, giving O(Ehc (T nd + P 2d)) .Therefore, the dominant time complexity is 
+
+O Erep (n2d + qd ) + Nfb + Ehc (T nd + P 2d) . (34) The memory cost is dominated by storing full pairwise sim-ilarities or distances, requiring O(n2) memory, together with lower-order storage for embeddings, the k-NN graph, and inter-set similarities. IV. E XPERIMENTS 
+
+A. Experimental details a) Datasets: We evaluate the proposed method on eleven real-world benchmark datasets with diverse sample sizes, feature dimensions, and numbers of classes. The datasets include Yale, ORL, Wine, Breast-Cancer, Isolet1, Australian, OpticalDigits, Spambase, COIL100, USPS, and PenDigits. These datasets are collected from commonly used clustering benchmark repositories, including the Deng Cai dataset repos-itory [33] and the UCI Machine Learning Repository [34]. All datasets are standardized by subtracting the mean and dividing by the standard deviation. 
+
+b) Competitive methods: We compare the proposed method with both semi-supervised and unsupervised HC base-lines. The semi-supervised baselines include SSSE [10], Semi-Multicons [11] (SM), and COBRA [20]. The unsupervised baselines include HypHC [16] and HypCSE [17]. 
+
+c) Implementation details: For all experiments, we per-form 10 independent runs. In each run, ML and CL constraint pairs are randomly generated, with the number of each type set to 20% of the total number of samples. To provide all semi-supervised methods with consistent supervision, we apply transitive closure to the generated pairwise constraints before feeding them into any supervised method. For COBRA [20], active querying is disabled, and the same pre-generated ML and CL constraints are used as input. All experiments are conducted on a workstation equipped with a 2.20 GHz CPU, 64 GB RAM, and an NVIDIA GeForce RTX 3070 GPU. For our method, the encoder has three layers with dimen-sions din –500 –20 , where din is the input feature dimension. The embedding dimension is therefore fixed to 20 . The au-toencoder is optimized using Adam with a learning rate of 
+
+0.001 and a dropout rate of 0.2 for 500 epochs. In the mixed-geometric distance, the mixing coefficient λ is set to 2, and the temperature parameters τe and τh are set to 0.05 and 
+
+0.2, respectively, following [30]. The hard-pair sampling ratios are fixed as r1 = 0 .1 and r2 = 0 .3. The loss weights are set based on the effective class-wise sample scale. We use 
+
+wML = 0 .0001 and wCL = 10 for Yale, ORL, Wine, Breast-Cancer, and Isolet1, and wML = 0.001 and wCL = 100 
+
+for Australian, OpticalDigits, Spambase, COIL100, USPS, and PenDigits. During set construction, the neighbor size k
+
+for the k-NN graph is selected from {5, 10 , 15 , 20 } by grid search. The shared-neighbor threshold is set to s = ⌊k/ 3⌋, the expansion threshold for absorbing leftover samples into ML sets is set to p1 = ⌈k/ 2⌉ and the voting size for singleton assignment is set to p2 = 10 . The sample proportion r3 for weak-connectivity similarity is set to 0.5. In the set-based HypHC stage, the Poincaré model radius is fixed to 1 and the curvature is fixed to −1. The sample embeddings optimized in Set-HypHC are initialized by the hyperbolic embeddings learned in the first stage. The number of steps for solving the intra-set LCA is set to 10 . The model is trained using RAdam with a learning rate of 0.005 for 50 epochs. Let P be the number of constructed sets; we uniformly sample O(P 2)
+
+unordered set triplets to compute the set-level HypHC loss. IEEE JOURNAL SUBMISSION, VOL. XX, NO. XX, MONTH 2026 9                                    
+
+> TABLE I DETAILED STATISTICS OF DATASETS .
+> Datasets #Data points #Features #Classes
+> Yale 165 1,024 15 ORL 400 1,024 40 Wine 175 13 3Breast-Cancer (Breast) 683 10 2Australian 690 14 2Isolet1 1,560 617 26 OpticalDigits (Optical) 1,797 64 10 Spambase (Spam) 4,601 57 2COIL100 7,200 1,024 100 USPS 9,298 256 10 PenDigits (Pen) 10,992 16 10
+
+For the baseline methods, we use the hyperparameter set-tings provided in their released implementations. RBF-based pairwise similarities are computed from the standardized orig-inal features for all compared methods. For consistency, the Laplacian regularization term in our representation learning stage is also computed on a similarity graph constructed in the same manner. The embedding dimension of the Poincaré model in HypHC is set to 2, following its original setting [16]. 
+
+d) Evaluation metric: Following prior work on HC, we use Dendrogram Purity (DP) [35] as the primary evaluation metric. For a given hierarchical tree and ground-truth labels, DP is defined as the average purity of the subtrees rooted at the LCAs of all leaf pairs that share the same label, measuring how well ground-truth flat clusters are preserved in the learned hierarchy. We use the efficient DP implementation provided by HypCSE [17]. For methods involving iterative optimization, we report the best DP value attained during training for each run. 
+
+B. Comparison 
+
+The comparison results are reported in Table II. Our method achieves the highest DP on all datasets, showing consistent advantages over both semi-supervised and unsupervised base-lines. Existing baselines are strongly affected by how supervision is injected and how the hierarchy is initialized. Unsupervised hyperbolic methods such as HypHC [16] and HypCSE [17] learn hierarchies without using pairwise supervision. Although HypCSE enhances graph representations through graph neural encoding and graph structure learning, both methods may still produce hierarchies that deviate from the hierarchical organization reflected by the ground-truth labels. SM [11] and COBRA [20] use pairwise supervision, but their hierar-chies still depend on hard intermediate structures. Specifically, SM [11] relies on closed-pattern constraints to guide consensus clustering, while COBRA [20] first forms super-instances and then rules out illegal merges using pairwise constraints. Once inaccurate early partitions or super-instances are formed, later irreversible merging steps are difficult to correct. SSSE [10] is the strongest baseline because it explic-itly incorporates pairwise constraints into graph-based struc-tural entropy minimization. Compared with the other base-lines, SSSE [10] introduces supervision in a softer form by modifying graph-level relations through regularization terms. However, this guidance still mainly acts on pairwise rela-tions, which is a local correction and may affect uncon-strained regions unpredictably. In contrast, our method first learns a constraint-consistent embedding space, then constructs constraint-induced sets as carriers of set-level structural priors, and finally optimizes the hierarchy on a continuous hyperbolic manifold. This organizes soft supervision at the set level and makes it act coherently across the whole procedure, leading to better hierarchical clustering performance. 
+
+C. Ablation 
+
+We conduct an ablation study to evaluate the contribu-tion of SARL and Set-HypHC. To assess Set-HypHC, we compare it with the original point-level HypHC [16] under the same input representations. When SARL is used, both HypHC [16] and Set-HypHC are initialized with the same hyperbolic embeddings learned by SARL and use the same hyperbolic similarity computation. When SARL is removed, similarities are computed from standardized raw features using RBF kernels with Euclidean distances. All configurations use the same embedding dimension of 20 .All experiments are repeated 10 times with independently sampled constraints. For each run, we record the highest DP and the corresponding Dasgupta’s Cost (DC) [18] from the same tree, and report the averages over all runs. DP measures label consistency, whereas DC evaluates similarity-based tree quality; lower DC represents better tree quality. The cost is computed using the hyperbolic similarity in Eq. (25). The results are shown in Table III. First, even without SARL, Set-HypHC improves DP over point-level HypHC [16] on most datasets, showing that set-level structural priors can directly guide subtree merging by optimizing set-level triplet relations, thereby producing tree structures that better align with label preferences. Second, SARL brings a substantial gain even before HC optimization, confirming that representation learning is necessary before constructing reliable constraint-induced sets. Third, given SARL embeddings, Set-HypHC further improves DP and consistently reduces DC compared with point-level HypHC [16]. This indicates that the set-level objective improves label alignment while preserving similarity-based tree quality. 
+
+D. Discussion 1) Analysis of Learned Set-Aware Representations: We first examine whether SARL learns an embedding space suitable for set construction, using Isolet1 as a representative dataset under the same setting as in Section IV-B. Fig. 3a shows that the learned embeddings form compact and well-separated local groups. In Fig. 3b, around a representative anchor, ML neighbors are pulled close, whereas CL neighbors are pushed away, indicating that the set-aware loss encodes the desired merge preference. The constructed sets in Fig. 3c further align with local same-class groups. They serve as reliable local structural units for Set-HypHC. Fig. 4 compares the CDFs of normalized intra-class and inter-class distances before and after SARL. After represen-tation learning, the intra-class CDF rises faster at smaller IEEE JOURNAL SUBMISSION, VOL. XX, NO. XX, MONTH 2026 10 
+
+TABLE II COMPARISON OF DENDROGRAM PURITY (DP IN %) ACROSS DATASETS .
+
+Method Yale Wine ORL Breast Isolet1 Optical Australian Spam COIL100 USPS Pen 
+
+Ours 45.79 ± 3.35 97.45 ± 1.52 71.08 ± 2.85 97.55 ± 0.46 54.23 ± 2.51 90.21 ± 1.38 79.63 ± 1.61 83.62 ± 2.64 81.79 ± 0.70 81.06 ± 4.31 94.25 ± 2.24 SSSE 37.82 ± 1.97 90.86 ± 1.03 57.66 ± 1.49 96.79 ± 0.11 45.48 ± 0.50 83.88 ± 0.03 75.51 ± 2.15 57.44 ± 1.36 61.23 ± 0.72 64.68 ± 0.80 79.16 ± 2.79 SM 25.43 ± 2.48 81.54 ± 2.09 19.43 ± 1.49 92.59 ± 4.07 22.00 ± 0.69 28.15 ± 1.19 77.47 ± 1.86 73.84 ± 1.42 N/A N/A N/A COBRA 28.24 ± 2.39 80.28 ± 7.71 44.86 ± 1.60 92.32 ± 5.11 47.54 ± 2.85 54.95 ± 4.31 65.54 ± 3.74 59.90 ± 1.00 39.84 ± 0.92 41.64 ± 2.50 51.36 ± 2.57 HypHC 21.32 ± 2.62 89.69 ± 2.02 14.62 ± 0.62 93.80 ± 0.38 16.42 ± 1.25 33.50 ± 2.45 68.47 ± 1.75 56.67 ± 0.30 5.31 ± 0.31 26.75 ± 2.36 39.18 ± 2.19 HypCSE 20.87 ± 1.15 92.42 ± 0.26 31.55 ± 0.24 96.52 ± 0.53 28.47 ± 2.15 86.65 ± 0.25 74.75 ± 1.55 67.02 ± 3.31 48.50 ± 1.76 47.69 ± 1.48 80.24 ± 0.67 
+
+Note: Bold and underlined values indicate the best and second-best results, respectively. N/A indicates that the method did not terminate within 3 hours. TABLE III ABLATION STUDY RESULTS .
+
+SARL HC Method Metric Yale Isolet1 Optical Australian Spam USPS 
+
+HypHC DP (%) 25.73 23.39 47.00 58.40 56.39 26.62 Set-HypHC DP (%) 32.09 42.09 61.87 66.89 55.50 36.85 
+
+✓ – DP (%) 43.31 46.45 89.24 69.80 81.96 78.78 
+
+✓ HypHC DP (%) 44.12 47.11 89.95 71.17 82.79 79.43 
+
+✓ Set-HypHC DP (%) 45.79 54.23 90.21 79.63 83.62 81.06 
+
+Cost scale ×10 6 ×10 9 ×10 9 ×10 8 ×10 10 ×10 11 
+
+✓ – DC 1.6849 1.4421 2.279 1.1502 2.8580 3.1483 
+
+✓ HypHC DC 1.6852 1.4242 2.274 1.1394 2.8251 3.1389 
+
+✓ Set-HypHC DC 1.6801 1.4168 2.273 1.0853 2.8085 3.1380 
+
+Note: ✓ indicates embeddings from SARL; otherwise, raw normalized features are used. “–” indicates no HC optimization. Lower DC is better. 
+
+(a) Labels Anchor  
+
+> ML pair
+> CL pair
+> ML connection
+> CL connection
+
+(b) Anchor constraints (c) Constructed sets Fig. 3. Visualization of learned set-aware representations on Isolet1. (a) t-SNE colored by ground truth labels. (b) Local constraint view around an anchor sample, with ML pairs in green and CL pairs in red. (c) t-SNE colored by constructed sets. 0.0 0.2 0.4 0.6 0.8 1.0 
+
+> Normalized Distance
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> CDF
+> Intra-class
+> Inter-class
+
+(a) Original feature space 0.0 0.2 0.4 0.6 0.8 1.0  
+
+> Normalized Distance
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> CDF
+> Intra-class
+> Inter-class
+
+(b) Learned embedding space Fig. 4. CDFs of normalized intra-class and inter-class distances on Isolet1. (a) Original feature space. (b) Learned hyperbolic embedding space after SARL. 
+
+distances, while the inter-class CDF shifts toward larger dis-tances. This enlarged gap shows that SARL improves the class-consistent geometry of the embedding space, making local neighborhoods more reliable for subsequent set construction. 
+
+2) Analysis of Set-Based HypHC: We next analyze how Set-HypHC refines the hierarchy. Fig. 5 shows the evolution of DP and DC on Isolet1 and Australian, where the initial values are computed from the hyperbolic autoencoder embeddings before Set-HypHC optimization. During training, DP generally 0 10 20 30 40 50 
+
+> Epoch
+> 46
+> 48
+> 50
+> 52
+> DP (%)
+> DP
+> DC
+> 1.42
+> 1.43
+> 1.44
+> 1.45
+> 1.46
+> DC
+> 1e9
+
+(a) Isolet1 0 10 20 30 40 50  
+
+> Epoch
+> 65
+> 70
+> 75
+> 80
+> DP (%)
+> DP
+> DC
+> 1.10
+> 1.12
+> 1.14
+> 1.16
+> 1.18
+> DC
+> 1e8
+
+(b) Australian Fig. 5. Evolution of DP and DC during set-based HypHC training. The initial values are computed with the embeddings from the hyperbolic autoencoder. Epoch 43 (DP=0.8222, cost=107501012.92) 
+
+(a) Australian Epoch 46 (DP=0.9450, cost=2224485.94) (b) Wine Fig. 6. Visualization of decoded hierarchical trees after Set-HypHC optimiza-tion on Australian and Wine. The tree structures are visualized in the Poincaré model, with leaf nodes colored by ground-truth labels. 
+
+increases and DC decreases, indicating that Set-HypHC im-proves both label consistency and similarity-based tree quality. This supports the effectiveness of optimizing subtree merge preferences through intra-set LCAs. Fig. 6 visualizes the decoded trees after optimization on Australian and Wine. Samples with the same ground-truth la-bel are largely organized into coherent local branches, showing IEEE JOURNAL SUBMISSION, VOL. XX, NO. XX, MONTH 2026 11 20 30 40 50 
+
+> Constraint Ratio (%)
+> 20
+> 40
+> 60
+> 80
+> DP (%)
+> SARL+Set-HypHC
+> Set-HypHC
+
+(a) Yale 20 30 40 50  
+
+> Constraint Ratio (%)
+> 40
+> 60
+> 80
+> 100
+> DP (%)
+> SARL+Set-HypHC
+> Set-HypHC
+
+(b) ORL 20 30 40 50  
+
+> Constraint Ratio (%)
+> 40
+> 60
+> 80
+> DP (%)
+> SARL+Set-HypHC
+> Set-HypHC
+
+(c) Isolet1 20 30 40 50  
+
+> Constraint Ratio (%)
+> 40
+> 60
+> 80
+> 100
+> DP (%)
+> SARL+Set-HypHC
+> Set-HypHC
+
+(d) USPS Fig. 7. Performance of our method with different pairwise constraint amounts, which are controlled by constraint ratios from {20% , 30% , 40% , 50% }.10 −2
+
+> 10 −3
+> 10 −4
+> wML
+> 10 0
+> 10 1
+> 10 2
+> wCL
+> 20
+> 40
+> 50
+> 100
+> DP
+> 41
+> 47
+
+(a) Yale 10 −2 
+
+> 10 −3
+> 10 −4
+> wML
+> 10 0
+> 10 1
+> 10 2
+> wCL
+> 20
+> 60
+> 80
+> 100
+> DP
+> 69
+> 79
+
+(b) Australian 10 −2 
+
+> 10 −3
+> 10 −4
+> wML
+> 10 0
+> 10 1
+> 10 2
+> wCL
+> 20
+> 50
+> 65
+> 100
+> DP
+> 53
+> 60
+
+(c) Isolet1 10 −2 
+
+> 10 −3
+> 10 −4
+> wML
+> 10 0
+> 10 1
+> 10 2
+> wCL
+> 20
+> 60
+> 90
+> 100
+> DP
+> 67
+> 86
+
+(d) Spambase 5 10 15 20  
+
+> Number of neighbors k
+> 20
+> 30
+> 40
+> 50
+> DP (%)
+> SARL+Set-HypHC
+> Set-HypHC
+
+(e) Yale 5 10 15 20   
+
+> Number of neighbors k
+> 60
+> 70
+> 80
+> DP (%)
+> SARL+Set-HypHC
+> Set-HypHC
+
+(f) Australian 5 10 15 20   
+
+> Number of neighbors k
+> 30
+> 40
+> 50
+> DP (%)
+> SARL+Set-HypHC
+> Set-HypHC
+
+(g) Isolet1 Yale Isolet1 Australian Spambase  
+
+> Dataset
+> 0
+> 20
+> 40
+> 60
+> 80
+> 100
+> DP (%)
+> Temperature
+> t=0.01
+> t=0.05
+> t=0.1
+> t=0.5
+
+(h) Temperature t
+
+Fig. 8. Parameter sensitivity. (a)–(d) Balancing coefficients wML and wCL . (e)–(g) Number of neighbors k. (h) Temperature t.
+
+that the optimized hierarchy captures label-consistent subtree structures. The decoded trees also exhibit a clear multi-level organization in the Poincaré model, where different class-related subtrees are separated with balanced spatial layouts rather than being collapsed into a few crowded regions. 
+
+3) Effect of Constraint Ratio: We further study how the amount of pairwise supervision affects the proposed frame-work. As shown in Fig. 7, increasing the constraint ratio improves Set-HypHC in both settings, with and without SARL. Since the setting without SARL does not modify the original similarity structure, this improvement indicates that richer constraints provide more reliable constraint-induced sets and inter-set similarities. Table IV further reports the weighted purity and number of non-singleton sets in the case with SARL. For non-singleton sets, the weighted purity is computed as the size-weighted average of set purity, where the purity of each set is defined by the proportion of samples from its dominant class. The weighted purity generally increases as the constraint ratio grows, indicating that additional supervision improves the class consistency of the constructed sets. In contrast, the number of non-singleton sets tends to decrease or fluctuate across datasets, suggesting that the performance gain in Fig. 7 mainly comes from more reliable local structural units rather than from simply absorbing more samples into non-singleton sets. 
+
+TABLE IV WEIGHTED PURITY (%) AND NUMBER OF NON -SINGLETON SETS .
+
+CR Yale ORL Isolet1 USPS 
+
+20% 69.75% (35) 89.18% (86) 84.80% (269) 96.62% (1754) 30% 77.30% (34) 93.75% (83) 91.76% (306) 96.31% (1768) 40% 82.93% (32) 96.22% (86) 93.91% (282) 98.12% (1643) 50% 86.06% (33) 95.97% (75) 94.74% (235) 99.09% (1404) 
+
+Note: Parentheses indicate the number of non-singleton sets. Weighted purity is computed over non-singleton sets. CR denotes the constraint ratio. 
+
+E. Parameter Sensitivity 
+
+We further evaluate the sensitivity of the proposed method to the balancing coefficients, neighborhood size, and temperature coefficient. As shown in Figs. 8a–8d, the performance remains stable under most combinations of wML and wCL , indicating that the method does not rely on a narrowly tuned pair of loss weights. Figs. 8e–8g show that the variant without SARL is more sensitive to k, whereas the full pipeline remains more stable, suggesting that SARL improves the reliability of local neighborhood construction. Finally, Fig. 8h shows that DP remains competitive across different temperatures, indicating that the set-level objective is not overly sensitive to t.V. C ONCLUSION 
+
+This paper proposed a semi-supervised hyperbolic HC framework with set-level structural priors. The proposed IEEE JOURNAL SUBMISSION, VOL. XX, NO. XX, MONTH 2026 12 
+
+method bridges leaf-level pairwise supervision and subtree-level hierarchy optimization by constructing constraint-induced sets as soft carriers of structural guidance, rather than fixed clusters or predetermined subtrees. It first learns constraint-consistent hyperbolic embeddings through SARL, then constructs sets and computes inter-set similarities from pairwise constraints and the learned similarity structure, and finally optimizes set-level triplet relations through Set-HypHC on the Poincaré model. Experiments on benchmark datasets show that the proposed framework consistently outperforms representative semi-supervised and unsupervised baselines. Further analyses confirm that the proposed stages jointly improve label consistency and similarity-based tree quality by providing reliable set-level structural priors. REFERENCES [1] X. Ran, Y. Xi, Y. Lu, X. Wang, and Z. Lu, “Comprehensive survey on hierarchical clustering algorithms and the recent developments,” 
+
+Artificial Intelligence Review , vol. 56, no. 8, pp. 8219–8264, 2023. [2] Y. Ren, J. Pu, Z. Yang, J. Xu, G. Li, X. Pu, P. S. Yu, and L. He, “Deep clustering: A comprehensive survey,” IEEE Transactions on Neural Networks and Learning Systems , pp. 1–21, 2024. [Online]. Available: https://ieeexplore.ieee.org/document/10585323/ [3] G. González-Almagro, D. Peralta, E. De Poorter, J.-R. Cano, and S. García, “Semi-supervised constrained clustering: An in-depth overview, ranked taxonomy and future research directions,” Artificial Intelligence Review , vol. 58, no. 5, p. 157, Mar. 2025. [Online]. Available: https://link.springer.com/10.1007/s10462-024-11103-8 [4] J. Cai, J. Hao, H. Yang, X. Zhao, and Y. Yang, “A review on semi-supervised clustering,” Information Sciences , vol. 632, pp. 164–200, Jun. 2023. [Online]. Available: https://linkinghub.elsevier.com/retrieve/ pii/S0020025523002840 [5] S. Miyamoto and A. Terami, “Semi-supervised agglomerative hierar-chical clustering algorithms with pairwise constraints,” in Proceedings of the IEEE World Congress on Computational Intelligence (WCCI) / FUZZ-IEEE , 2010, pp. 1–6. [6] Y. Hamasuna, Y. Endo, and S. Miyamoto, “Semi-supervised agglomera-tive hierarchical clustering using clusterwise tolerance based pairwise constraints,” in Proceedings of the 7th International Conference on Modeling Decisions for Artificial Intelligence (MDAI) , ser. Lecture Notes in Computer Science, vol. 6408. Springer, 2010, pp. 152–163. [7] S. Miyamoto and A. Terami, “Constrained agglomerative hierarchical clustering algorithms with penalties,” Journal of Advanced Computa-tional Intelligence and Intelligent Informatics , vol. 15, no. 7, pp. 851– 858, 2011. [8] H. Zhao and Z. Qi, “Hierarchical agglomerative clustering with ordering constraints,” in Proceedings of the Third International Conference on Knowledge Discovery and Data Mining (WKDD) , 2010, pp. 195–199. [9] H. A. Kestler, J. M. Kraus, G. Palm, and F. Schwenker, “On the effects of constraints in semi-supervised hierarchical clustering,” in Proceedings of the IAPR International Workshop on Artificial Neural Networks in Pattern Recognition (ANNPR) , ser. Lecture Notes in Computer Science, vol. 4087. Springer, 2006, pp. 45–54. [10] G. Zeng, H. Peng, A. Li, J. Wu, C. Liu, and P. S. Yu, “Scalable semi-supervised clustering via structural entropy with different constraints,” IEEE Transactions on Knowledge and Data Engineering , vol. 37, no. 1, pp. 478–492, Jan. 2025. [Online]. Available: https://ieeexplore.ieee.org/document/10735397/ [11] T. Yang, N. Pasquier, and F. Precioso, “Semi-supervised consensus clustering based on closed patterns,” Knowledge-Based Systems , vol. 235, p. 107599, 2022. [12] K. Wagstaff, C. Cardie, S. Rogers, and S. Schrödl, “Constrained k-means clustering with background knowledge,” in Proceedings of the Eighteenth International Conference on Machine Learning (ICML) .Morgan Kaufmann, 2001, pp. 577–584. [13] K. Bade and A. Nürnberger, “Creating a cluster hierarchy under constraints of a partially known hierarchy,” in Proceedings of the 2008 SIAM International Conference on Data Mining . Society for Industrial and Applied Mathematics, Apr. 2008, pp. 13–24. [Online]. Available: https://epubs.siam.org/doi/10.1137/1.9781611972788.2 [14] ——, “Personalized hierarchical clustering,” in 2006 IEEE / WIC / ACM International Conference on Web Intelligence (WI 2006), 18-22 December 2006, Hong Kong, China . IEEE Computer Society, 2006, pp. 181–187. [15] ——, “Hierarchical constraints: Providing structural bias for hierarchical clustering,” Machine Learning , vol. 94, no. 3, pp. 371–399, 2014. [16] I. Chami, A. Gu, V. Chatziafratis, and C. Ré, “From trees to continuous embeddings and back: Hyperbolic hierarchical clustering,” in 34th Conference on Neural Information Processing Systems, NeurIPS 2020 ,2020. [17] G. Zeng, H. Peng, A. Li, L. Sun, C. Liu, S. Li, Y. Pan, and P. S. Yu, “Hyperbolic continuous structural entropy for hierarchical clustering,” Nov. 2025, arXiv:2512.00524 [cs]. [Online]. Available: http://arxiv.org/abs/2512.00524 [18] S. Dasgupta, “A cost function for similarity-based hierarchical clustering,” in Proceedings of the forty-eighth annual ACM symposium on Theory of Computing . Cambridge MA USA: ACM, Jun. 2016, pp. 118–127. [Online]. Available: https://dl.acm.org/doi/10.1145/2897518. 2897527 [19] D. Wang and Y. Wang, “An improved cost function for hierarchical cluster trees,” Journal of Computational Geometry , pp. 283–331, 2020. [20] T. Van Craenendonck, S. Dumancic, and H. Blockeel, “Cobra: A fast and simple method for active clustering with pairwise constraints,” arXiv preprint arXiv:1801.09955 , 2018. [21] W. Xiao, Y. Yang, H. Wang, T. Li, and H. Xing, “Semi-supervised hierarchical clustering ensemble and its application,” Neurocomputing ,vol. 173, pp. 1362–1376, 2016. [22] M. Nickel and D. Kiela, “Poincaré embeddings for learning hierarchical representations,” in Advances in Neural Information Processing Systems (NeurIPS) , vol. 30, 2017. [23] I. Chami, Z. Ying, C. Ré, and J. Leskovec, “Hyperbolic graph convolu-tional neural networks,” in Advances in Neural Information Processing Systems (NeurIPS) , vol. 32, 2019. [24] Q. Liu, M. Nickel, and D. Kiela, “Hyperbolic graph neural networks,” in 
+
+Advances in Neural Information Processing Systems (NeurIPS) , vol. 32, 2019. [25] E. Mathieu, C. L. Lan, C. J. Maddison, R. Tomioka, and Y. W. Teh, “Continuous hierarchical representations with poincaré variational auto-encoders,” in Advances in Neural Information Processing Systems (NeurIPS) , vol. 32, 2019. [26] L. Bai, F. Hu, C. Tang, Z. Mei, and C. Liu, “Hyperbolic multi-channel hypergraph convolutional neural network based on multilayer hypergraph,” Scientific Reports , vol. 15, no. 1, p. 24606, Jul. 2025. [27] Y. Ye, X. Chen, S. Wang, and Y. Jing, “Hyperbolic bernstein neural networks: Enhancing graph convolutions in non-euclidean spaces,” Neu-ral networks : the official journal of the International Neural Network Society , p. 107822, 2025. [28] F. Lin, B. Bai, Y. Guo, H. Chen, Y. Ren, and Z. Xu, “MHCN: A hyper-bolic neural network model for multi-view hierarchical clustering,” in 
+
+2023 IEEE/CVF International Conference on Computer Vision (ICCV) .Paris, France: IEEE, Oct. 2023, pp. 16 479–16 489. [29] R. Wang, Y. Jiang, X. Luo, X.-J. Wu, N. Sebe, and Z. Chen, “Wasserstein-aligned hyperbolic multi-view clustering,” arXiv , 2025. [30] Y. Yue, F. Lin, G. Mou, and Z. Zhang, “Understanding hyperbolic metric learning through hard negative sampling,” in 2024 IEEE/CVF Winter Conference on Applications of Computer Vision (WACV) .Waikoloa, HI, USA: IEEE, Jan. 2024, pp. 1880–1892. [Online]. Available: https://ieeexplore.ieee.org/document/10483696/ [31] T. Liu, X. Bao, J. Zhang, K. Fang, and H. Feng, “Enhancing session-based recommendation with multi-interest hyperbolic representation net-works,” IEEE Transactions on Neural Networks and Learning Systems ,pp. 1–13, 2024. [32] J. Barzilai and J. M. Borwein, “Two-point step size gradient methods,” 
+
+Ima Journal of Numerical Analysis , vol. 8, pp. 141–148, 1988. [Online]. Available: https://api.semanticscholar.org/CorpusID:123014714 [33] C. Deng, “Codes and datasets for feature learning,” http://www.cad.zju. edu.cn/home/dengcai/Data/data.html, 2024, accessed: 2026-05-12. [34] M. Kelly, R. Longjohn, and K. Nottingham, “The uci machine learning repository,” https://archive.ics.uci.edu/datasets, 2024, accessed: 2026-05-12. [35] K. A. Heller and Z. Ghahramani, “Bayesian hierarchical clustering,” in 
+
+Proceedings of the 22nd International Conference on Machine Learning (ICML) . ACM, 2005, pp. 297–304.

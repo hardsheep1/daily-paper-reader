@@ -1,0 +1,103 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-06-07T20:04:19.543917+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 1,
+    "deep_cap": 7,
+    "deep_selected": 1,
+    "quick_candidates": 1,
+    "quick_skim_target": 12,
+    "quick_selected": 1
+  },
+  "deep_dive": [
+    {
+      "id": "2606.01525v1",
+      "source": "arxiv",
+      "title": "Semi-Supervised Hyperbolic Hierarchical Clustering with Set-Level Structural Priors",
+      "abstract": "Semi-supervised hierarchical clustering aims to learn a tree structure consistent with data patterns and user-provided supervision. Supervision is usually given as leaf-level relations, such as pairwise must-link/cannot-link constraints or triplet-wise must-link-before constraints. Although useful for regulating local sample relations, such supervision does not directly indicate which samples should form coherent subtrees. Consequently, the non-leaf structure of the learned tree may deviate from the hierarchical organization preferred by ground-truth labels. To address this limitation, we propose a semi-supervised hyperbolic hierarchical clustering method with set-level structural priors. The main contribution is to introduce sets as basic modeling units for hierarchy learning. Each set denotes samples expected to cohere within a subtree and is induced from leaf-level supervision together with a learned constraint-consistent similarity structure. These sets act as soft structural priors for subtree-level supervision, allowing supervision to guide non-leaf hierarchy formation beyond local leaf-level relations. Specifically, we first learn constraint-consistent embeddings to obtain a reliable set partition, then construct constraint-induced sets and estimate inter-set similarities to form set-level structural priors. Finally, these priors are incorporated into a hyperbolic hierarchy objective for continuous tree optimization. Experiments on eleven benchmark datasets and ablation studies show that the proposed method consistently improves label consistency over representative hierarchical clustering baselines while also enhancing similarity-based tree quality.",
+      "authors": [
+        "Junjing Zheng",
+        "Xinyu Zhang",
+        "Xiangfeng Qiu",
+        "Chengliang Song",
+        "Weidong Jiang"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "stat.ML"
+      ],
+      "published": "2026-06-01T01:14:00+00:00",
+      "link": "https://arxiv.org/pdf/2606.01525v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "semi-supervised hierarchical clustering with set-level priors, aligns with semi-supervised active clustering",
+      "llm_evidence_cn": "半监督层次聚类，使用集合级先验，与半监督主动聚类相关",
+      "llm_evidence": "半监督层次聚类，使用集合级先验，与半监督主动聚类相关",
+      "canonical_evidence": "半监督层次聚类，使用集合级先验，与半监督主动聚类相关",
+      "llm_tldr_en": "Proposes a semi-supervised hyperbolic hierarchical clustering method with set-level structural priors to improve non-leaf tree structure, relevant to active learning clustering via semi-supervision.",
+      "llm_tldr_cn": "该论文针对现有半监督层次聚类中非叶子结构可能偏离真实层次结构的问题，提出了一种基于双曲几何的集合级结构先验方法。通过引入集合作为基本监督单元，该方法有效指导了层次树的构建，在多个数据集上验证了其优于传统方法的性能。这项工作为主动学习聚类中的查询策略设计提供了新思路，特别是在半监督场景下如何利用结构先验提升聚类质量。",
+      "llm_tldr": "该论文针对现有半监督层次聚类中非叶子结构可能偏离真实层次结构的问题，提出了一种基于双曲几何的集合级结构先验方法。通过引入集合作为基本监督单元，该方法有效指导了层次树的构建，在多个数据集上验证了其优于传统方法的性能。这项工作为主动学习聚类中的查询策略设计提供了新思路，特别是在半监督场景下如何利用结构先验提升聚类质量。",
+      "llm_tags": [
+        "query:active-clust"
+      ],
+      "matched_query_tag": "query:active-clust",
+      "matched_query_text": "semi-supervised clustering with active learning",
+      "matched_requirement_id": "req-10",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2606.03846v1",
+      "source": "arxiv",
+      "title": "Clustered Self-Assessment: A Simple yet Effective Method for Uncertainty Quantification in Large Language Models",
+      "abstract": "Large language models (LLMs) demonstrate remarkable performance across diverse tasks, but they often generate responses that appear plausible while being factually incorrect. This problem is compounded by the lack of explicit uncertainty estimates, which makes it difficult for users to judge the reliability of model outputs. Existing uncertainty quantification methods typically rely on indirect signals, such as entropy across sampled generations. These signals can be difficult to interpret and do not fully leverage the model's ability to assess its own uncertainty. We propose a simple yet effective self-assessment method for uncertainty quantification in LLMs. Our approach groups sampled generations into semantically distinct clusters, converts them into answer options in a structured multiple-choice question, and uses the probability assigned by the LLM to each option as a confidence estimate. Experiments across multiple models and datasets show that our method consistently outperforms baseline approaches. Notably, it achieves competitive performance with as few as two additional samples, demonstrating both its effectiveness and efficiency.",
+      "authors": [
+        "Qi Cao",
+        "Takeshi Kojima",
+        "Andrew Gambardella",
+        "Helinyi Peng",
+        "Yutaka Matsuo",
+        "Yusuke Iwasawa"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.AI",
+        "cs.LG"
+      ],
+      "published": "2026-06-02T16:25:54+00:00",
+      "link": "https://arxiv.org/pdf/2606.03846v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "clusters LLM generations using semantic similarity",
+      "llm_evidence_cn": "利用语义相似性对LLM生成进行聚类",
+      "llm_evidence": "利用语义相似性对LLM生成进行聚类",
+      "canonical_evidence": "利用语义相似性对LLM生成进行聚类",
+      "llm_tldr_en": "Proposes a self-assessment method for LLM uncertainty that groups sampled generations into semantic clusters, demonstrating improved calibration.",
+      "llm_tldr_cn": "该论文提出一种基于聚类的自我评估方法用于大语言模型不确定性量化。通过将多次采样生成的结果按语义聚类，并利用聚类结果评估模型不确定性，该方法在多个基准上展现出更好的校准性能。它展示了将聚类技术应用于LLM输出分析的有效性。",
+      "llm_tldr": "该论文提出一种基于聚类的自我评估方法用于大语言模型不确定性量化。通过将多次采样生成的结果按语义聚类，并利用聚类结果评估模型不确定性，该方法在多个基准上展现出更好的校准性能。它展示了将聚类技术应用于LLM输出分析的有效性。",
+      "llm_tags": [
+        "query:ac"
+      ],
+      "matched_query_tag": "query:ac",
+      "matched_query_text": "clustering using large language models",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "label": "2026-06-07",
+  "date": "2026-06-07",
+  "generated_at": "2026-06-07T20:06:29",
+  "count": 2,
+  "papers": [
+    {
+      "paper_id": "202606/07/2606.01525v1-semi-supervised-hyperbolic-hierarchical-clustering-with-set-level-structural-priors",
+      "section": "deep",
+      "title_en": "Semi-Supervised Hyperbolic Hierarchical Clustering with Set-Level Structural Priors",
+      "authors": "Junjing Zheng, Xinyu Zhang, Xiangfeng Qiu, Chengliang Song, Weidong Jiang",
+      "date": "2026-06-01",
+      "pdf": "https://arxiv.org/pdf/2606.01525v1",
+      "score": "8.0",
+      "evidence": "半监督层次聚类，使用集合级先验，与半监督主动聚类相关",
+      "tldr": "现有半监督层次聚类仅利用叶子级约束，无法指导非叶子层次结构。本文提出基于集合结构先验的双曲层次聚类方法，将叶子监督转化为约束诱导的集合，作为子树级软先验，并融入双曲空间进行连续树优化。在11个基准数据集上，该方法显著提升了标签一致性，同时改善了基于相似性的树质量。核心贡献是引入集合作为层次学习基本单元，使监督能有效指导全局层次结构。",
+      "tags": "query:active-clust",
+      "abstract_en": "Semi-supervised hierarchical clustering aims to learn a tree structure consistent with data patterns and user-provided supervision. Supervision is usually given as leaf-level relations, such as pairwise must-link/cannot-link constraints or triplet-wise must-link-before constraints. Although useful for regulating local sample relations, such supervision does not directly indicate which samples should form coherent subtrees. Consequently, the non-leaf structure of the learned tree may deviate from the hierarchical organization preferred by ground-truth labels. To address this limitation, we propose a semi-supervised hyperbolic hierarchical clustering method with set-level structural priors. The main contribution is to introduce sets as basic modeling units for hierarchy learning. Each set denotes samples expected to cohere within a subtree and is induced from leaf-level supervision together with a learned constraint-consistent similarity structure. These sets act as soft structural priors for subtree-level supervision, allowing supervision to guide non-leaf hierarchy formation beyond local leaf-level relations. Specifically, we first learn constraint-consistent embeddings to obtain a reliable set partition, then construct constraint-induced sets and estimate inter-set similarities to form set-level structural priors. Finally, these priors are incorporated into a hyperbolic hierarchy objective for continuous tree optimization. Experiments on eleven benchmark datasets and ablation studies show that the proposed method consistently improves label consistency over representative hierarchical clustering baselines while also enhancing similarity-based tree quality.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202606/07/2606.03846v1-clustered-self-assessment-a-simple-yet-effective-method-for-uncertainty-quantification-in-large-language-models",
+      "section": "quick",
+      "title_en": "Clustered Self-Assessment: A Simple yet Effective Method for Uncertainty Quantification in Large Language Models",
+      "authors": "Qi Cao, Takeshi Kojima, Andrew Gambardella, Helinyi Peng, Yutaka Matsuo, Yusuke Iwasawa",
+      "date": "2026-06-02",
+      "pdf": "https://arxiv.org/pdf/2606.03846v1",
+      "score": "7.0",
+      "evidence": "利用语义相似性对LLM生成进行聚类",
+      "tldr": "大型语言模型常生成看似合理但错误的内容，缺乏可靠的不确定性度量。现有方法依赖生成样本的熵等间接信号，难以解释。本文提出聚类自评估方法：将采样生成结果聚类为语义不同的选项，构建结构化多项选择题，利用LLM对各选项的赋值概率作为置信度。实验证明该方法在多个模型和数据集上优于基线，仅需少量附加样本即可达到竞争性能。",
+      "tags": "query:ac",
+      "abstract_en": "Large language models (LLMs) demonstrate remarkable performance across diverse tasks, but they often generate responses that appear plausible while being factually incorrect. This problem is compounded by the lack of explicit uncertainty estimates, which makes it difficult for users to judge the reliability of model outputs. Existing uncertainty quantification methods typically rely on indirect signals, such as entropy across sampled generations. These signals can be difficult to interpret and do not fully leverage the model's ability to assess its own uncertainty. We propose a simple yet effective self-assessment method for uncertainty quantification in LLMs. Our approach groups sampled generations into semantically distinct clusters, converts them into answer options in a structured multiple-choice question, and uses the probability assigned by the LLM to each option as a confidence estimate. Experiments across multiple models and datasets show that our method consistently outperforms baseline approaches. Notably, it achieves competitive performance with as few as two additional samples, demonstrating both its effectiveness and efficiency.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}
