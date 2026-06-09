@@ -1,0 +1,24 @@
+{
+  "label": "2026-06-09",
+  "date": "2026-06-09",
+  "generated_at": "2026-06-09T22:09:25",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "202606/09/2606.08236v1-shared-semantics-divergent-mechanisms-unsupervised-feature-discovery-by-aligning-semantics-and-mechanisms",
+      "section": "deep",
+      "title_en": "Shared Semantics, Divergent Mechanisms: Unsupervised Feature Discovery by Aligning Semantics and Mechanisms",
+      "authors": "Hyunjin Cho, Youngji Roh, Jaehyung Kim",
+      "date": "2026-06-06",
+      "pdf": "https://arxiv.org/pdf/2606.08236v1",
+      "score": "8.0",
+      "evidence": "基于大语言模型的聚类用于特征发现",
+      "tldr": "大语言模型在高风险场景部署需审计内部机制，但传统电路分析仅解释单一提示对，忽略续写分布异质性。本文提出分布级无监督特征发现，用语义嵌入和归因签名表征采样续写，优化率失真目标自动聚类。实验表明聚类揭示单视图遗漏模式，干预证实签名对应可操作机制。该方法补充电路分析与行为评估，提供可扩展的审计工具。",
+      "tags": "query:ac",
+      "abstract_en": "As large language models are increasingly deployed in high-stakes settings, there is a growing need for tools that audit not only model outputs but also the internal computations that produce them. Circuit analysis is a central approach in mechanistic interpretability, but it is typically target-conditioned, explaining a single prompt paired with a chosen completion. This target-conditioned setup can obscure heterogeneity across a model's continuation distribution. We introduce distribution-level unsupervised feature discovery, which clusters sampled continuations using both semantic content and sequence-level mechanistic attributions, without manually specifying target outputs. Our method represents each continuation with a semantic embedding and a prefix-to-continuation attribution signature, then optimizes a rate-distortion objective that trades off semantic coherence, mechanistic consistency, and cluster granularity. Across clustering and steering analyses, the discovered clusters expose continuation modes that single-view baselines miss and provide interventional evidence that cluster signatures correspond to actionable mechanistic factors. Overall, our approach complements circuit analysis and behavioral evaluation by providing a scalable audit of the mechanisms underlying a model's continuation distribution.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}
