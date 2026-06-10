@@ -1,0 +1,630 @@
+Title: Deep Active Re-Labeling: Toward Noise-Resilient Annotation Efficiency
+
+URL Source: https://arxiv.org/pdf/2606.08718v1
+
+Published Time: Tue, 09 Jun 2026 01:21:12 GMT
+
+Number of Pages: 11
+
+Markdown Content:
+# Deep Active Re-Labeling: Toward Noise-Resilient Annotation Efficiency 
+
+Md Abdullah Al Forhad, Weishi Shi 
+
+Active Machine Learning Lab Learning · Language · Vision (LLaVi) Lab Department of Computer Science and Engineering University of North Texas, Denton, TX, USA 
+
+{MdAbdullahAl.Forhad, Weishi.Shi}@unt.edu 
+
+© 2025 IEEE. Personal use of this material is permitted. Permission from IEEE must be obtained for all other uses, in any current or future media, including reprinting/republishing this material for advertising or promotional purposes, creating new collective works, for resale or redistribution to servers or lists, or reuse of any copyrighted component of this work in other works. 
+
+Abstract —While Deep Active Learning (DAL) effectively re-duces human annotation costs, its efficacy is constrained by human annotation errors. This is because the data sampled for active learning is assumed to be highly informative for training. When human annotators introduce errors into this informative data at a certain rate, the active learning performance drops significantly and, in some cases, even exhibits worse outcomes than passive learning. In this paper, we first analyze the impact of human annotation errors in the DAL setting. Then we propose a framework to address the human annotation noise problem for DAL. Informed by human learning patterns, the core idea of our proposed solution involves allocating a portion of the human annotation budget to re-annotate data that has already been labeled. Previous theoretical work suggests that when the model possesses a certain level of ability to identify potentially noisy data, even re-labeling a small fraction of the data can effectively remove noise from the active training set. To achieve this, we implement two active noise sampling strategies to detect noise under different circumstances and allocate a part of the annotation budget to re-annotate these instances. Our approach imbues active learning with a revisiting and introspective behavior. Our experiments demonstrate that, under the same annotation budget, our method is more data-efficient and yields a relatively noise-free annotation dataset in the end. 
+
+Index Terms —Active Re-Labeling, Annotation Efficiency, Deep Active Learning 
+
+I. I NTRODUCTION 
+
+Deep learning (DL) models have made it possible for com-plex tasks to achieve state-of-the-art performance in various fields. However, to be flexible in learning complex patterns, all these models use significantly more parameters than any traditional machine learning model [1] [2]. As a result, the need for massive labeled data is ubiquitous in deep learning, implying a high annotation cost. Active learning (AL) tech-niques strive to minimize such annotation costs by utilizing a limited number of specifically selected samples for learning [3]. Several researchers have integrated the concepts of AL and DL and demonstrated that achieving AL objectives is also possible in DL settings. This technique is referred to as Deep Active Learning (DAL) [4]. To reduce the annotation cost, DAL method uses various query strategies ( i.e. Entropy Sampling) to select data to be labeled by human annotators. These query strategies choose the most informative samples to be labeled, which in turn helps the model to achieve 200 400 600 800 1000 
+
+> Annotated Samples
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> Accuracy
+> Impact of Noise in DAL
+> DAL_Clean
+> DAL_Noisy
+> Random_Clean
+> Random_Noisy
+
+(a) 200 400 600 800 1000  
+
+> Annotated Samples
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> Accuracy
+> Impact of Deep Active Re-Label
+> DAL_Noisy
+> Random_Noisy
+> DAL with Random RBL
+> Random with Random RBL
+> DAL with RBL (Ours)
+
+(b) 
+
+Fig. 1: (a) Analyzing the consequences of deep active sampling with noise (DAL_Noisy) versus without noise (DAL_Clean), and passive sampling with noise (Random_Noisy) versus without noise (Random_Clean) in annotations within DAL. (b) Comparing the effects of re-labeling in deep active learn-ing with active re-labeling (DAL with RBL) and passive re-labeling (DAL with Random RBL), as well as passive learning with passive re-labeling (Random with Random RBL) processes. generalization with small data. However, there is a strong assumption that the annotator correctly annotates the queried samples. In the real world, this assumption partially holds due to human error, especially when some domain-specific knowledge ( i.e. Astrobiology and Quantum Computing) is required during the annotation process. Figure 1(a) depicts the impact of noisy annotation in the DAL setting. We can observe that a typical DAL strategy outperforms passive learning without annotation noise, as expected. However, its advantage diminishes drastically when moderate noise is present in labels. This learning strategy, traditionally considered smart, performs worse under the influence of annotation noise than passive learning, which does not use any strategies at all. This phenomenon of being outsmarted by one’s own cleverness is primarily because the DAL model has a tendency to choose the most informative samples for annotation, and these samples have a significant influence on the decision surface. If these crucial samples are incorrectly labeled, they do more harm to 
+
+> arXiv:2606.08718v1 [cs.LG] 7 Jun 2026
+
+the DAL model compared to randomly selected samples. The issue of noisy annotation in the field of DAL has been overlooked by researchers. Previous work has focused on addressing this issue from different perspectives, such as designing noise-robust model architecture, using multiple oracles, filtering out noisy label annotations, and implementing a dual-purpose learning framework [5] [6] [7] [8]. However, these approaches have limitations, including the need for budget subsidies, reliance on small hypothetical datasets, and increased complexity due to the use of two distinct models. Our paper introduces a novel approach that involves in-tegrating relabeling behavior into the DAL process. This behavior is inspired by human introspection, where the brain revisits past learning, identifies inconsistencies, and corrects previous knowledge [9] [10]. To investigate whether the effects of re-labeling annotated labels align with human learning within the DAL, we implement a randomized sample selection method, using the same noisy annotator for the re-labeling process. We assign a small portion of the annotation budget (20 percent) for re-labeling (i.e., total annotation budget remains the same). Figure 1(b) demonstrates that there is very little impact of passive re-labeling on passive learning but the performance improvement of DAL with passive re-labeling is visible. This inspires us to design the re-labeling process systematically. We aim to design a strategy that maximizes the performance of the DAL model while operating within two main constraints: detecting noisy labeled samples and selecting the most informative ones for re-labeling. In this paper, we propose a novel strategy that can help reduce noisy annotation in DAL and help the model achieve generalization with a reduced error bound. The strategy combines the learned representations of the DL model with the spatial properties of a maximum margin classifier (MMC). The proposed strategy (i.e. DAL with RBL) converges faster and achieves higher accuracy than any other strategy. Our result suggests that it can effectively address the existing deficiency in DAL with noisy annotations from a unique perspective. Our extensive experiment on real-world datasets provides strong support for our claim. Our contribution is threefold:  
+
+> •
+
+We systematically analyze the impact of noisy label annotations in the context of deep active learning. Our experimental results validate this analysis.  
+
+> •
+
+We introduce the idea of re-labeling the annotated labels with a small portion of the annotation budget in the DAL setting. Our experimental results validate the effectiveness of the proposed idea.  
+
+> •
+
+We introduce a novel strategy to select samples for re-labeling systematically. This strategy can select wrongly annotated samples with a twofold approach. We show the effectiveness of the proposed strategy with extensive experiments on real-world datasets. II. R ELATED WORK 
+
+Past research in Active Learning has predominantly con-centrated on the development of query strategies, with aprimary focus on traditional machine learning settings. For instance, [11], [12] introduced margin-based uncertainty sam-pling techniques. However, as deep learning gained promi-nence, attention shifted to adapting these strategies for deep learning environments. Notably, [13] focused on Bayesian neural networks within deep learning settings. Furthermore, several studies have explored effective approaches to train deep learning models with noisy samples across diverse domains, such as curriculum learning . A particular area of focus in-volves selecting accurate samples from noisy data through curriculum learning techniques [14] [15]. Some researchers used a meta-learning approach to deal with noisy annotations. Particularly [16] [17] utilized a meta-learning approach to assign weight to the noisy training set, to balance the impact of noisy samples during the model learning process. [18] used a meta-model called a label correction network to generate corrected labels for noisy data. The main model is then trained using these corrected labels for better learning. [19] used spatial and temporal properties of the maximum margin classifier to design a resampling strategy in the traditional AL setting. [20] introduced an adversarial query in the Deep Active Learning domain, with a primary focus on examples lying in proximity to the decision boundary. Although their pseudo-labeling does not corrupt the train set, this approach increases sensitivity in the presence of a noisy annotator. The DAL domain, particularly in the presence of noisy annotation, has received minimal attention. The primary investigation on DAL in the presence of noisy annotations is to build a noise-robust model. [8] introduced a de-noising layer in their work to build a noise-robust DAL model. A noisy-robust DAL is very challenging because DL models are prone to memorizing label noise, which in turn degrades performance [21]. Another perspective is to use multiple annotators to label the queried samples. [7] [22] proposed to use one weak and one strong annotator. Their initial model was assumed to have been trained on a very small set of noise-free data, which is a strong and unreliable assumption. [23] proposed a method that can select which data to label, allowing for labeling and relabeling, specifically designed for multiple annotators. Using multiple annotators is impractical in fields with scarce experts and increases costs. Majority voting, often relied upon, is less effective in specialized domains like Astrobiology or Quantum Computing, where experts vary in knowledge. The assumption of equal contribution among experts is unreliable, and assign-ing appropriate weights is difficult due to the limited number of experts. Moreover, most approaches addressing annotation noise with multiple annotators are costly and impractical. Our proposed strategy, however, is more practical, reduces label noise, and leads to faster convergence and higher accuracy in DAL models. III. M ETHODOLOGY 
+
+A. Problem Setup 
+
+We focus on a pool-based active learning setting. Let DT =
+
+{(xn, y n)}Nn=1 and DP = {xm}Mm=1 denote the annotated dataset pool and an unlabeled dataset pool, where N << M .Initially, a model M is trained on DT . In each DAL round, an acquisition function f (x, M) with x ∈ D P selects x∗.
+
+x∗ = arg max 
+
+> x∈D P
+
+f (x, M) (1) Afterward, the new instance-label pair {(x∗, h α(x)) } is added to DT and the model M re-trained based on the updated DT .We assume hα(.) is a noisy annotator and α denotes the degree of annotation noise. Denote α = p(hα(x)̸ = ho(x)) . Denote 
+
+ho(.) as a true annotator that can be achieved as a noise rate approach to zero, ho(x) = lim  
+
+> α→0
+
+hα(x). We also assume that the initial DT is also noisy at the same rate as α.
+
+B. Re-Labeling for Label Correction 
+
+Throughout the annotation process, different forms of in-terference may occur as a result of the annotator’s restricted viewpoint or perception, difficulties in accurately assessing the labeling function h0, or the existence of uncertainties such as random errors. In a classification problem with K classes, we assume that when annotation noise is present, all the noisy classes have an equal chance of being wrongly assigned to the data. In other words, p(y = yk|h0(x)̸ = hα(x)) = 1 
+
+> K−1
+
+.One direct solution to reduce the annotation noise is to lower the level of annotation error rate, α. Nevertheless, this approach presents challenges as it requires addressing the error behavior from the human side. Reducing human error, particularly in specialized fields like medical image labeling, can be formidable and resource-intensive when relying solely on conventional methods such as training, domain expertise, and accumulated experience. Additionally, the annotation error rate, α, is expected to be lower than uniform errors as the annotator for the DAL setting is a domain expert. This infre-quent error occurrence can be viewed as a rare event stemming from human cognitive bias. Increasing human interaction can help counter some biases [24]. DAL setting utilizes human interaction for labeling, and we aim to increase the interaction for label correction through re-labeling. When annotators label and re-label data repeatedly, they are more likely to notice inconsistencies or errors in their own judgments. This ap-proach is practical in real-world scenarios and fiscally prudent, as it eliminates the need for an additional annotator, making it suitable for both single and multi-expert settings. Among the most straightforward techniques for re-labeling is the random selection of samples from DT to reassign labels. The results depicted in Figure 1(b) show that even this most straightforward approach enhances the model’s performance compared to the absence of re-labeling. To find the candidate for resampling, we introduce a re-label acquisition function 
+
+q() : X → R + that selects samples from DT and presents them to hα(.).IV. A CTIVE RE-L ABELING STRATEGY 
+
+In this section, we first present a mathematical analysis based on the Poisson distribution to establish the theoretical foundation, then develop a systematic strategy. 0 1 2 3                 
+
+> k
+> P(X = k)
+> 0.91
+> 0.09
+> 0.01 0.00
+> XPois( =0.1)
+> (a) 0123
+> k
+> P(X = k)
+> 0.82
+> 0.16
+> 0.02 0.00
+> XPois( =0.2) (b) 0123
+> k
+> P(X = k)  0.67
+> 0.27
+> 0.05 0.01
+> XPois( =0.4) (c)
+
+Fig. 2: Relationship between re-labeling count and incorrect annotation probability. (a) With α set to 0.1, the probability of encountering an incorrect label during the third re-labeling (k=3) diminishes completely. A similar trend continues for (b) with α set to 0.2. This consistent trend persists even with a relatively higher α value of 0.4, as demonstrated in (c). 
+
+A. Mathematical Analysis. 
+
+Randomly double-checking labeled instances can reduce the noise rate in the training dataset, but a more princi-pled inspection strategy is more effective. Suppose we create a re-label acquisition function q∗ that selectively identifies potentially mislabeled samples, where q∗ is allowed to re-select the same sample multiple times. If a given instance is re-labeled k times, a natural question arises: What is the probability that the instance remains incorrectly annotated after these repeated inspections? We model this using the probability mass function of the Poisson distribution, P (X =
+
+k) = e−ααk 
+
+> k!
+
+, where e denotes Euler’s constant, α is the noise rate of the annotator, and P (X = k) represents the likelihood of observing k incorrect annotations for a single sample. The Poisson distribution is a principled choice here because annotation errors, especially by domain experts, are typically rare and independent events—conditions under which Poisson processes are commonly employed in fields such as biology, communication theory, and reliability engineering. The analytical advantage of this framework is that it provides a clean, closed-form characterization of how the probability of persistent mislabeling decays as the number of re-labeling attempts increases. As illustrated in Figure 2, the probability of a sample being incorrectly labeled decreases sharply with every re-labeling, and when k > 2, the probability already falls below the initial error rate α. This trend persists even at higher values of α, showing that repeated re-labeling guaran-tees a reduction in the effective noise rate. While real-world annotator errors may also include non-uniform or correlated biases, the Poisson model should be viewed as a theoretically tractable first-order approximation that captures the essential mechanism of error reduction through repeated inspection. In practice, our empirical results (see Sec. V-G) confirm that the qualitative behavior predicted by this model holds even under more complex noise scenarios, thereby validating its use as a theoretical foundation for our framework. This leads to another crucial question: Should we rely on the same annotator multiple times, or should we distribute re-labeling across multiple annotators? To answer this, consider Labeled 
+
+> Pool
+> DNN
+> Annotated
+> Sample Batch
+> Noisy Annotator
+> Acquisition Function
+> Deep MMC
+> Selected
+> Samples
+> Features
+> Decision Value
+> Inconsistency
+> Weighted Score
+> Unlabeled
+> Pool
+
+Fig. 3: Our proposed framework for deep active re-labeling in DAL setting. a multi-annotator setting with N experts, each characterized by a noise rate αi. Let p(αi) denote the probability of selecting annotator i, where PNi=1 p(αi) = 1 . In practice, annotators with higher accuracy are more costly, so p(αi) typically decreases as αi decreases. The expected noise rate of the system can then be expressed as α = PNi=1 p(αi) · αi.
+
+Now, consider the special case where a single annotator with noise rate α is decomposed into two hypothetical annotators, 
+
+α1 and α2, with selection probabilities p(α1) and p(α2),respectively, such that p(α1) + p(α2) = 1 . In this setting, 
+
+α = p(α1)·α1 +p(α2)·α2, which is mathematically equivalent to repeatedly querying the same annotator with noise rate α.This observation provides a useful justification: re-labeling by the same expert can be treated as a probabilistic equivalent of querying a pool of multiple annotators . Importantly, this equivalence makes our strategy practical in budget-constrained environments, where recruiting multiple experts is infeasible. Instead of requiring access to several annotators with varying expertise levels, one can obtain similar error-reduction benefits by strategically re-using the same annotator through a well-designed re-label acquisition function q∗.Of course, constructing an accurate and stable q∗ is non-trivial. Its behavior resembles a complex, high-dimensional black-box function, since annotation errors are influenced by annotator bias, data difficulty, and noise correlations. To address this, we propose leveraging deep learning structures to guide the design of q∗, enabling systematic identification of noisy labels rather than relying on random re-labeling or impractical multi-annotator assumptions. 
+
+B. Systematic Strategy Design 
+
+The thorough analysis and reliable mathematical assurances have inspired us to develop a systematic approach to re-labeling in DAL in the presence of a noisy annotator. To design such a strategy as stated above we can detect noisy samples based on the probability of being most likely to least likely noisy samples. To detect noisy labels there has been extensive research in the research community. On many occasions, Maximum margin classifiers (MMC) have been proven very successful in detecting label noise [25], [26]. The previous work was based on the properties of MMC [19]. The work yielded theoretical results with MMC, which accomplished guaranteed error reduction but was solely applicable in tradi-tional machine learning settings. This limitation arises from the classifiers’ constraints when faced with an expanding number of feature spaces. To leverage the effectiveness of MMC within the DAL setting, we utilize the learned feature representations of samples from the DAL model and transfer them to MMC. By doing so, we extend the capabilities of the DAL model to the traditional MMC. The entire proposed framework is depicted in Figure 3. Here we can see the traditional DAL process with additional steps that involve our novel approach to introduce the re-labeling process. 
+
+1) Connecting MMC and DNN: We aim to detect noisy labels from the deep neural network (DNN) while utilizing the geometric properties of the MMC. To establish a connection between DNN and MMC, we first provide a brief overview of the relationship between neural networks and Gaussian processes (GP) [27] [28] [29] [30] [31]. Let’s assume we have a fully connected neural network with L hidden layers with width Nl. For a single-hidden layer neural network the ith component of the network output, z1 
+
+> i
+
+, is computed as:              
+
+> z1
+> i(x) = b1
+> i+
+> N1X
+> j=1
+> W1
+> ij x1
+> j(x),x1
+> j(x) = ϕb0
+> j+
+> din X
+> k=1
+> W0
+> jk xk
+> !
+> ,
+> (2)
+
+Here, ϕ denotes non-linear activation and din is the input dimension ( x ∈ Rdin ). The weight W 1 
+
+> ij
+
+and the bias b1 
+
+> i
+
+of the neural network are i.i.d. parameters. Due to the i.i.d. assumption, the post-activation values (denoted x1 
+
+> j
+
+and x1 
+
+> j′
+
+) for different neurons j and j′ are independent. The Central Limit Theorem states that the sum of a large number of independent random variables converges to a Gaussian distribution. So the pre-activation values z1 
+
+> i
+
+(x) of neurons in the first layer, when summed over all inputs, converge a Gaussian distribution as the width of the layer N1 approach to infinity. Because the pre-activations approach a Gaussian distribution, finite collections of these pre-activations for different inputs jointly form a multivariate Gaussian distribution. More precisely, the activation as a function defined in the continuous input domain should follow a Gaussian process (GP). Denote GP (μ, K )
+
+a Gaussian process with mean function μ(.) and covariance function K(., . ). So, the preactivation values ( z1 
+
+> i
+
+) of neurons in the first layer follow a Gaussian process ( GP (μ1, K 1)). Note that, these properties are invariant to neuron index i
+
+perturbation and the parameters possess a zero mean, it follows that mean μ1(x) = E z1 
+
+> i
+
+(x) = 0 and covariance: 
+
+K1 (x, x ′) ≡ E z1 
+
+> i
+
+(x)z1 
+
+> i
+
+(x′) (3) The argument holds as we increase the number of layers l and for each layer Nl → ∞ . Then we will have a joint multivariate Gaussian distribution, zli ∼ GP (0 , K l) where the covariance is: 
+
+Kl (x, x ′) ≡ E zli(x)zli (x′) (4) When we provide a GP with a covariance function, it enables us to effectively use an infinite number of features. The Radial Basis Function (RBF) is an example of such a kernel, as it possesses an infinite number of features. This implies that we can use the neural network as a feature extractor and plug its outputs into a GP for classification tasks. Specifically, the outputs of the neural network zli can serve as the input features for the Gaussian process. 
+
+zli(x) ∼ GP (0 , KlRBF (x, x ′)) (5) Similarly, MMCs leverage the kernel trick to compute the inner product of input vectors in a higher-dimensional space without explicitly transforming them into that space. Both MMCs and GPs employ kernel functions to capture the similarity between data points. Remarkably, the RBF kernel, commonly used in Support Vector Machine (SVM), which is a type of MMC, is equivalent to the covariance function of a GP with specific parameters. This suggests that if the features learned by a DNN can be used in GP, then the features can also potentially be employed to model a sparse kernel machine (i.e. MMC). 
+
+2) Model Formulation.: We proceed with the training of the DAL model denoted as Mθ1 . This involves optimizing the model parameters θ1 through the minimization of a chosen loss function, typically the cross-entropy loss, employing an optimization strategy, such as Stochastic Gradient Descent (SGD). The detailed structure of the model is discussed in the experiment section. Subsequently, we perform an additional training phase for MMC, denoted as Mθ2 , built upon the refined parameters θ1. This involves minimizing the MMC’s designated maximum-margin loss function, often the hinge  
+
+> (a) (b)
+
+Fig. 4: Different types of noisy annotations. (a) A noisy annotated sample with the lowest distance from the current decision surface. (b) A Noisy annotated sample is on the wrong side of the margin and has a different label than its neighboring samples. loss. Consequently, the formulation can be expressed as fol-lows: 
+
+g(x) = Mθ2 (Mθ1 (x)) = θ2T ϕ(x) (6) Where θ2T ϕ(x) is a MMC and θ2 can be learned using 
+
+arg min 
+
+> θ2
+
+X[1 − yng(xn)] + λ|| θ2|| 2 (7) Where the first part of the equation (7) denotes hinge loss. As the MMC utilizes the learned feature space of DAL, we refer to it as the deep MMC. When the deep MMC makes an incorrect prediction or doesn’t have enough separation between different classes, the hinge loss function imposes a penalty. The size of the margin determines the degree of penalty - larger margins result in lower hinge loss. So this deep MMC attempts to find a decision boundary that maximizes the margin. When there is label noise, correctly labeled samples are likely to have a larger margin, while incorrectly labeled samples tend to be closer to the boundary. Figure 4(a) depicts this type of noise. We can measure the perpendicular distance from the decision surface to detect this type of noise. This gap can be measured using the decision function of deep MMC, we define: 
+
+qDEC (x) = |θT 
+
+> 2
+
+ϕ(x)| ∝ |yθ T 
+
+> 2
+
+ϕ(x)||| θ2|| (8) Where DEC stands for decision and the last part of the equation (8) denotes the perpendicular distance from the decision surface [32]. We’ve leveraged the fact that for a binary problem, y ∈ {− 1, 1}, and the norm of θ2 remains constant for all input values x when the learning process of deep MMC fully converges. To extend this to a multiclass problem we have utilized with One-vs-the-rest (OvR) multiclass strategy. The function qDEC (x) is useful for identifying margin noise, but other types of noise may exist outside of the margin. To identify this type of noise, we check if the labels of neighboring samples differ from the label of the specific sample. Figure 4(b) depicts this type of noise which assesses label disagreement for input x using variable y. We define 
+
+qIN C (x) to calculate the score error associated with predicting the output y for a given input x, with respect to the MMC’s decision boundary |θT 
+
+> 2
+
+ϕ(x)| and θ2 by utilizing the kernel function k(xi, xj ) = ϕ(xi)T ϕ(xj ). We propose: 
+
+qIN C (x) = X
+
+> (xi)∈D T
+
+|| k(x, xi)y − θT 
+
+> 2
+
+ϕ(x)|| (9) Where INC stands for inconsistent. This qIN C (x) function will help detect inconsistent samples within the training set. A large score means the sample is more inconsistent than others. To combine both qDEC (x) and qIN C (x) function we use combined weighted score. We first normalize the scores be-fore computing their linear combination. The decision value, although it varies between tasks, is appropriately scaled and reflects the re-labeling importance from the decision perspec-tive. We introduce a dynamic weighting scheme because of the special training process of MMC. The MMC algorithm aims to find the hyperplane that maximizes the margin, and this involves continuously adjusting the margin until it reaches the maximum. During the initial stages of training, the margin tends to fluctuate more as the algorithm strives to identify the most suitable hyperplane. However, as the training ad-vances, the margin becomes more stable as the algorithm converges on a solution. So during the initial DAL process, the label correction of margin noise will further speed up the model convergence. We propose to include a weighted factor, 
+
+τ ∈ (0 , 1) . This factor starts from zero and updates during the DAL process. Initially, τ will favor qDEC (x) and penalize 
+
+qIN C (x). With each round of DAL, τ will gradually shift its weight towards qIN C (x).
+
+qRBL (x) = (1 − τ )qDEC (x) + τ [qIN C (x)] (−1) (10) Where RBL stands for re-label. This (10) now concentrates on different types of noise across different rounds of the DAL process. It first identifies wrongly annotated samples on the margin, then gradually shifts its focus to identifying other inconsistent label noise samples. The relabeling function (10) depends on θ2. However, this dependency can be removed by using the dual representation of the relabeling function. In par-ticular, substituting θ2 with the optimal dual solution leads to a relabeling function independent of θ2. We have successfully captured all the spatial details in the reproducing kernel Hilbert space by combining feature and label relationships. This is rep-resented by |kT (x)( a ⊙ y)| and |k(x) ⊙ g − y1N |, respectively. Where k(x) = [ k(x1, x), ..., k (xN , x)] T , y = ( y1, ..., y N )T ,
+
+h = [h(x1), ..., h (xN )] T , and a = (a1, ..., a N )T represent Lagrange multipliers, where an > 0 indicates that xn is a margin maximizer. So we can now optimize the following: 
+
+qRBL (x) = (1 − τ )|kT (x)( a ⊙ y)| + τ || k(x) ⊙ h − y1N || (−1) 
+
+(11) The samples with the lowest qRBL score will be selected by the model to be re-labeled by the hα(.) within its annotation budget. However, during our experiment, we noticed that the function qRBL of a clean data instance remains consistently TABLE I: Detailed settings for different datasets. Frequency denotes the re-labeling frequency within the total annotation budget.                          
+
+> Dataset Classes Train Test Initial Freq. MNIST 10 60000 10000 100 2
+> FashionMNIST 10 60000 10000 500 4
+> CIFAR10 10 50000 10000 1000 4
+> PathMNIST 989996 7180 1000 4
+
+high and stable during the learning process. On the other hand, instances with low qRBL scores usually indicate true noisy data, which will have consistently low scores over multiple learning iterations. This is because the DAL model trained on a few annotated data samples with noise is more likely to have high variance in their predictions for specific samples than a model trained on clean data. This is because noisy annotation makes it difficult for the model to learn the underlying patterns in the data. The increased variance is undesirable and also transfers to our proposed score. To minimize the impact of high variance, we aim to ensure that scores of recently selected samples decrease rapidly. We integrate an exponential moving average into our approach, with a decay factor γ that decreases as the DAL learning process progresses. 
+
+[qRBL (x)] (r) = (1 − γ)[ qRBL (x)] (r) + γ[qRBL (x)] (r−1) (12) Where [qRBL (x)] (r) denotes the score evacuated in the rth 
+
+round of DAL process. V. E XPERIMENTS 
+
+A. Datasets and Setup 
+
+We evaluated the effectiveness of our approach on four real-world classification datasets: MNIST [33], FashionM-NIST [34] , CIFAR-10 [35], and MedMNIST [36]. Specifi-cally, we utilized the PathMNIST dataset, which is a subset of MedMNIST2D within the MedMNIST collection. Table I shows more details about dataset splits. For all four datasets, we divided the original training set into an initial training set and a pool set. Initial samples were randomly selected for training, while the remaining samples formed the pool set for use with the active learning (AL) strategy. We assumed that the initial training set contains noisy labels, which we introduced according to a specified noise ratio. We set the noise rate α to 30% in our main results and additionally to 10% and 50% in the ablation studies. To train our model, we used cross-entropy loss and SGD optimization. The learning rate is set to 0.01, momentum to 0.5, and dropout rate to 10%. For the re-label strategy, we used τ = 0 .2, and with the advancement of DAL rounds, we incrementally increased it to 0.7. The decay factor γ is set to 0.2, and the upper limit for re-labeling the same sample multiple times is set to 3. To introduce label noise to the datasets we used the label flip method. We randomly assigned labels from one of the other classes of the dataset. To maintain consistency, we made sure that the new noisy label doesn’t match the original class label. Additionally, introducing label noise might imbalance 0 5 10 15 20 25 
+
+Rounds      
+
+> 20
+> 30
+> 40
+> 50
+> 60
+> 70
+> 80
+> 90
+> Accuracy (%)
+> Ours
+> No RBL
+> DFAL
+> ActiveLab
+> Random (a) 0510 15 20 25
+
+Rounds       
+
+> 30
+> 40
+> 50
+> 60
+> 70
+> Accuracy (%)
+> Ours
+> No RBL
+> DFAL
+> ActiveLab
+> Random (b) 0510 15 20 25
+
+Rounds      
+
+> 30
+> 32
+> 34
+> 36
+> 38
+> 40
+> 42
+> Accuracy (%)
+> Ours
+> No RBL
+> DFAL
+> ActiveLab
+> Random (c) 010 20 30 40
+
+Rounds  
+
+> 60
+> 62
+> 64
+> 66
+> 68
+> Accuracy (%)
+> Ours
+> No RBL
+> DFAL
+> ActiveLab
+> Random (d)
+
+Fig. 5: Results of the re-labeling strategy applied to (a) MNIST, (b) FashionMNIST, (c) CIFAR-10, and (d) MedMNIST. the dataset, but the guaranteed reduction of label noise, as described in Figure 2, prevents such a situation. All experiments are performed on workstations with an AMD Ryzen Threadripper PRO 5955WX 16-Core Processor, 2 NVIDIA RTX 6000 GPUs, and 128 GB of RAM. 
+
+B. DAL Acquisition function. 
+
+The DAL system uses the acquisition function f (.) to determine the next query location. We used uncertainty sam-pling ( i.e. smallest margin) with dropout estimation as our acquisition function: [13] 
+
+f (y = c|x, DT ) = 
+
+Z
+
+f (y = c|x, θ 1)f (θ1|D T )dθ 1
+
+≈ f (y = c|x, θ 1)¯ q∗ 
+
+> θ
+
+(θ1)dθ 1
+
+≈ 1
+
+T
+
+> T
+
+X
+
+> t=1
+
+f (y = c|x, bθ1t)
+
+(13) with bθ1t ∼ ¯q∗ 
+
+> θ
+
+(θ1), where ¯qθ (θ1) denotes dropout distribution. We set the dropout rate as 10 in our experiments. 
+
+C. Baseline Methods 
+
+For comparison, we selected random selection as a base-line to evaluate our proposed strategy. In addition to ran-dom selection, we employed the DeepFool Active Learning (DFAL) strategy, which identifies samples with the smallest margins estimated through adversarial attacks [20]. While developing a novel approach to handling noise in the DAL setting, we found DFAL to be effective in our case, as it leverages a margin-based approach to select valuable samples applicable to various CNN architectures. We also compared our method with ActiveLab [23], an active learning query strategy designed to select samples for labeling or re-labeling. Although not specifically intended for re-labeling, we applied ActiveLab in this context using a single annotator to ensure a fair comparison. To maintain consistency, we used the same DAL acquisition function—uncertainty sampling (i.e., smallest margin) with dropout estimation [13]—across all baselines. Additionally, we included a no-relabeling (No RBL) baseline, which has more annotated samples than other methods since the entire budget is allocated to annotating new samples. To ensure fair comparison, all baselines use the same backbone. 
+
+D. Main Results 
+
+We report accuracy as the performance measure in line charts for each DAL round, which is conventional in this setting. Figure 5(a)–(d) shows that our strategy consistently outperforms baseline methods across all real-world datasets, each presenting unique challenges. For MNIST, the simplest dataset, our strategy outperforms others from the early stages of the DAL process, with performance steadily improving until convergence. In FashionMNIST, which introduces greater visual diversity, the improvement is more gradual but still surpasses other methods over time. CIFAR-10’s complexity, due to color images and diverse objects, initially challenges our strategy, but after a few DAL rounds, it outperforms the baselines and maintains momentum, unlike the others. A similar trend is observed in MedMNIST, where all methods show comparable performance initially, but as DAL rounds increase, our strategy leverages historical performance through an exponential moving average, effectively addresses margin noise, and dynamically adjusts sample weights, resulting in a clear performance gap. The clear performance gap between our approach and the “No RBL" baseline emphasizes the critical role of re-labeling in mitigating label noise and enhancing model accuracy. Additionally, although the random strategy performs reasonably well in the early stages, particularly in MedMNIST, it fails to maintain momentum over time, underscoring the importance of strategic sample selection for re-labeling in deep active learning settings. 
+
+E. Evaluation with Different Performance Measures 
+
+We evaluate our re-labeling strategy using hit rate and 
+
+label correction (LC) rate , which quantify the proportion of correctly identified and corrected noisy samples, respectively. As Table II shows, in the early stage of DAL, our method iden-tifies fewer noisy samples than random selection yet achieves higher accuracy. This reflects its ability to prioritize correcting the most detrimental noise while tolerating outliers, so that even with a lower hit rate, label corrections are more effective. 20 40 60 80 100 
+
+> Iterations
+> 0.15
+> 0.20
+> 0.25
+> 0.30
+> 0.35
+> 0.40
+> 0.45
+> 0.50
+> Accuracy
+
+CIFAR10 
+
+> [0.5, 0.4]
+> [0.8, 0.1]
+> [0.7, 0.2]
+
+(a) 20 40 60 80 100 
+
+> Iterations
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> Accuracy
+
+MNIST  
+
+> [0.5, 0.4]
+> [0.8, 0.1]
+> [0.7, 0.2]
+
+(b) 20 40 60 80 100 
+
+> Iterations
+> 0.15
+> 0.20
+> 0.25
+> 0.30
+> 0.35
+> 0.40
+> 0.45
+> Accuracy
+
+CIFAR10  
+
+> = 0.2
+> = 0
+> = 0.4
+
+(c) 20 40 60 80 100 
+
+> Iterations
+> 0.2
+> 0.3
+> 0.4
+> 0.5
+> 0.6
+> 0.7
+> 0.8
+> 0.9
+> 1.0
+> Accuracy
+
+MNIST 
+
+> = 0.2
+> = 0
+> = 0.4
+
+(d) 0 10 20 30 40 50 
+
+> Iterations
+> 0.0
+> 0.1
+> 0.2
+> 0.3
+> 0.4
+> 0.5
+> 0.6
+> 0.7
+> 0.8
+> 0.9
+> 1.0
+> Accuracy
+
+= 0.1  
+
+> DAL with RBL (Ours)
+> DFAL
+> ActiveLab
+
+(e) 0 10 20 30 40 50 
+
+> Iterations
+> 0.0
+> 0.1
+> 0.2
+> 0.3
+> 0.4
+> 0.5
+> 0.6
+> 0.7
+> 0.8
+> 0.9
+> 1.0
+> Accuracy
+
+= 0.5  
+
+> DAL with RBL (Ours)
+> DFAL
+> ActiveLab
+
+(f) 
+
+Fig. 6: (a-d): Impact of hyperparameters. The impact of hyperparameter τ on CIFAR10 (a) and MNIST (b) datasets. Impact of the hyperparameter γ on CIFAR10 (c) and MNIST (d) datasets. (e-f): Comparison between the performance on a lower noise rate (α = 0 .1) and higher noise rate (α = 0 .5) of different baselines on MNIST dataset. All figures display variance information from three runs. TABLE II: Performance comparison of DAL with re-labeling and random re-labeling at different learning stages with a fixed noise rate ( α = 0 .30 ) for all datasets. The hit rate and label correction (LC) rate take into account all noisy data samples present up to a specific round of DAL. 
+
+DAL-RBL Random Dataset Hit Rate LC Rate Accuracy Hit Rate LC Rate Accuracy 
+
+Initial Later Initial Later Initial Later Initial Later Initial Later Initial Later 
+
+MNIST 0.25 0.43 0.25 0.39 0.82 0.95 0.57 0.16 0.14 0.11 0.80 0.88 
+
+Fashion MNIST 0.14 0.23 0.14 0.20 0.62 0.74 0.64 0.15 0.16 0.10 0.58 0.69 
+
+CIFAR10 0.17 0.21 0.19 0.17 0.37 0.47 0.58 0.17 0.15 0.12 0.33 0.43 
+
+These findings highlight the efficacy of our targeted re-labeling approach, demonstrating that strategic noise correction can substantially enhance model performance, particularly in the initial stages of DAL. Table III presents additional baseline comparisons on the MNIST dataset. The results are consistent with the obser-vations in Table II. Although DFAL and ActiveLab show relatively strong initial performance, their effectiveness de-creases over time, likely due to the absence of an ordered sample-selection strategy. In contrast, our method continues to improve throughout the learning process and ultimately sur-passes all baselines in the later stage, demonstrating superior robustness and long-term effectiveness in DAL settings. 
+
+F. Analysis and Ablation Studies 1) Impact of hyperparameters.: We conducted an ablation study on the newly introduced hyperparameters. The hyper-parameter τ balances the qDEC (x) and qIN C (x) functions. As both qDEC (x) and qIN C (x) are normalized, the range of τ is within [0,1]. We experimented with the range of 
+
+[0 .1, 0.8] , [0 .2, 0.7] and [0 .5, 0.6] . Our results show that τ is robust in the range of [0 .1, 0.8] and [0 .2, 0.7] , and the lowest accuracy was achieved in the range of [0 .5, 0.6] . This finding aligns with the analysis in Section V-D. The experimental results on two datasets are displayed in Figure 6(a-b). We also introduced another hyperparameter, γ, which is the expo-nential moving average. The hyperparameter γ aims to reduce TABLE III: Performance Comparison with additional base-lines using MNIST dataset. 
+
+Strategy Hit Rate LC Rate Accuracy 
+
+Initial Later Initial Later Initial Later 
+
+Random 0.57 0.16 0.14 0.11 0.80 0.88 
+
+DFAL 0.24 0.20 0.24 0.15 0.80 0.89 
+
+ActiveLab 0.25 0.22 0.25 0.28 0.78 0.91 
+
+Ours 0.25 0.43 0.25 0.39 0.82 0.95 
+
+learning variance by minimizing the score of recently selected samples. Figure 6(c-d) displays the performance comparison for different γ values on two datasets. We experimented with three different values of γ and found that a higher value of 
+
+γ leads to lower performance, consistent with our design of equation 12. Overall figure Figure 6(a-d) demonstrates the robustness of our strategy, indicating minimal sensitivity to hyperparameters. 
+
+2) Impact of different noise rates.: We compared the per-formance of our method and other baselines at two different noise rates ( α). We observed that at a lower annotator noise rate ( α = 0 .1), our method outperformed the other baselines, although the difference was minimal (see Figure 6(e)). This is because with a low noise rate, there is limited opportunity for improvement, and the combination of the DAL model and query strategy helps to narrow the gap. As a result, all three re-label baselines perform similarly. The performance gap and gain are clearly visible for a higher noise rate ( α = 0 .5). Our method consistently outperformed the other two baselines and yielded a stable active learning curve (see Figure 6(f)). The overall Figure 6(e-f) demonstrates the impact of noise in DAL and the effectiveness of our method in mitigating the impact at lower and higher label noise rates. 
+
+3) Impact of DEC and INC: We analyzed our strategy by comparing the performance of the two main components, DEC and INC, at different stages of DAL. Figure 7 illustrates the comparison results on two real-world datasets. In Figure 7(a)-(b), we observed that during the initial rounds of DAL, INC outperformed DEC. This can be attributed to the fact that the deep classifier was still in the early stages of learning and adjusting the margin to achieve better separation of classes. In contrast, INC focused on selecting samples that were further from the decision boundary and inconsistent. Although this approach performed well in the early stages, it did not contribute to better separation of the margin in the long run. Ultimately, DEC proved to be more effective than INC as the margin became more stable after a few DAL rounds. Our proposed strategy incorporates the benefits of both DEC and INC, leading to overall better performance and faster model convergence. Our sample selection order for re-labeling is further validated by this result. 
+
+G. Robustness to Non-Uniform Annotation Noise 
+
+We further evaluate our method under a more challenging and realistic noise setting, where annotators are prone to confuse visually similar classes. For example, the digit “7” is frequently mislabeled as “1” due to their structural similarity. TABLE IV: Performance Comparison Across Rounds on Pair-Flip Label Noise.                                        
+
+> Method Round 1 Round 15 Round 25 Round 35 Round 50 No Relabeling 16.78 36.49 47.87 68.45 70.14
+> Random 16.78 44.22 58.36 77.33 74.21
+> DFAL 16.78 39.41 62.79 83.42 80.90
+> ActiveLab 16.78 33.90 72.77 83.86 83.67
+> Ours 16.78 47.92 68.17 81.89 84.86 1000 2000 3000 4000 5000
+> Annotated Samples
+> 0.1
+> 0.2
+> 0.3
+> 0.4
+> 0.5
+> 0.6
+> 0.7
+> 0.8
+> 0.9
+> 1.0
+> Accuracy
+> MNIST
+> DEC
+> INC
+> DAL with RBL
+> (a) 1000 2000 3000 4000 5000
+> Annotated Samples
+> 0.1
+> 0.2
+> 0.3
+> 0.4
+> 0.5
+> 0.6
+> 0.7
+> 0.8
+> Accuracy
+> Fashion MNIST
+> DEC
+> INC
+> DAL with RBL (b)
+
+Fig. 7: Comparison between the performance of two different components of our strategy ( i.e. DEC, INC) and the combined proposed strategy ( i.e. DAL with RBL). To simulate this, we adopt a class-dependent pair-flip scheme: 
+
+0 → 8, 1 → 7, 2 → 3, 3 → 2, 4 → 9, 5 → 6, 6 → 5, 7 → 1,
+
+8 → 0, 9 → 4. This setup introduces structured, non-uniform errors that more closely mimic real human annotation behavior compared to purely random label noise. Table IV compares different strategies under this setting on MNIST. The “No Relabeling” baseline allocates the full budget to new samples, leading to gradual improvement but leaving mislabeled points uncorrected. Methods such as DFAL and ActiveLab, which explicitly target re-labeling, show gains but plateau due to their single-objective design that limits sus-tained noise correction. In contrast, our approach dynamically balances exploration (new samples) with exploitation (targeted re-labeling), yielding consistent improvements across training stages. Specifically, it corrects early-stage decision-boundary noise and continues to mitigate inconsistent label noise in later stages. These results demonstrate that our method is not only robust to uniform random noise but also effective under structured, class-dependent noise, a setting that better reflects real-world annotation challenges. By addressing both boundary-critical errors and broader inconsistencies, our framework achieves more stable performance compared to the baselines. VI. D ISCUSSIONS AND LIMITATIONS 
+
+Our relabeling strategy is systematically designed for a restricted setting with a limited annotation budget. It aims to detect and select the most informative samples with noisy labels while sticking to budget constraints. In such a scenario, both the majority voting and student-teacher methods impose additional burdens on the budget. Moreover, the majority voting approach heavily relies on expert weighting, typically assigning equal weight to each expert. However, in real-world settings, maintaining an annotation budget is crucial for DAL, and accurately weighing experts according to their expertise for a downstream task can be challenging. Although our strategy is designed to utilize a single annotator, it can also accommodate multiple annotators for majority voting, offering additional advantages for our approach. VII. C ONCLUSION 
+
+We proposed a framework for deep active learning, which includes a unique strategy called deep active re-labeling. Be-fore developing the framework, we conducted both theoretical and numerical analyses to ensure its effectiveness. Our analysis showed that our approach can reduce errors at a guaranteed rate. To achieve this, we combined MMC and deep learning models in our re-labeling process. We have incorporated an exponential moving average into the strategy to reduce its susceptibility to high levels of noise variance. By focusing on selecting the most informative and wrongly annotated samples, our approach outperformed all other baseline methods. We also conducted extensive experiments and studies on our framework, which supported our analysis. Our approach is practical for real-world applications as it utilizes the same Oracle annotator for re-labeling purposes. Moving forward, we plan to investigate more sophisticated deep learning model structures, such as attention mechanisms in transformers, within our framework. REFERENCES [1] V. Sanh, L. Debut, J. Chaumond, and T. Wolf, “Distilbert, a distilled version of bert: smaller, faster, cheaper and lighter,” arXiv preprint arXiv:1910.01108 , 2019. [2] K. He, X. Zhang, S. Ren, and J. Sun, “Deep residual learning for image recognition,” in Proceedings of the IEEE conference on computer vision and pattern recognition , 2016, pp. 770–778. [3] B. Settles, “Active learning literature survey,” 2009. [Online]. Available: https://burrsettles.com/pub/settles.activelearning.pdf [4] P. Ren, Y. Xiao, X. Chang, P.-Y. Huang, Z. Li, B. B. Gupta, X. Chen, and X. Wang, “A survey of deep active learning,” ACM computing surveys (CSUR) , vol. 54, no. 9, pp. 1–40, 2021. [5] K. Amin, G. DeSalvo, and A. Rostamizadeh, “Learning with labeling induced abstentions,” in Advances in Neural Information Processing Systems , M. Ranzato, A. Beygelzimer, Y. Dauphin, P. Liang, and J. W. Vaughan, Eds., vol. 34. Curran Associates, Inc., 2021, pp. 12 576– 12 586. [6] T.-K. Huang, L. Li, A. Vartanian, S. Amershi, and J. Zhu, “Active learning with oracle epiphany,” in Advances in Neural Information Processing Systems , D. Lee, M. Sugiyama, U. Luxburg, I. Guyon, and R. Garnett, Eds., vol. 29. Curran Associates, Inc., 2016. [7] T. Younesian, D. Epema, and L. Y. Chen, “Active learning for noisy data streams using weak and strong labelers,” arXiv preprint arXiv:2010.14149 , 2020. [8] G. Gupta, A. K. Sahu, and W.-Y. Lin, “Noisy batch active learning with deterministic annealing,” arXiv preprint arXiv:1909.12473 , 2019. [9] J. D. Karpicke and P. J. Grimaldi, “Retrieval-based learning: A per-spective for enhancing meaningful learning,” Educational Psychology Review , vol. 24, no. 3, pp. 401–418, 2012. [10] A. Clark, “Whatever next? predictive brains, situated agents, and the future of cognitive science,” Behavioral and brain sciences , vol. 36, no. 3, pp. 181–204, 2013. [11] A. J. Joshi, F. Porikli, and N. Papanikolopoulos, “Multi-class active learning for image classification,” in 2009 IEEE Conference on Com-puter Vision and Pattern Recognition , 2009, pp. 2372–2379. [12] S. Tong, “Active learning: theory and applications,” 2001. [Online]. Available: https://api.semanticscholar.org/CorpusID:62018951 [13] Y. Gal, R. Islam, and Z. Ghahramani, “Deep bayesian active learning with image data,” in International conference on machine learning .PMLR, 2017, pp. 1183–1192. [14] L. Jiang, Z. Zhou, T. Leung, L.-J. Li, and L. Fei-Fei, “Mentornet: Learning data-driven curriculum for very deep neural networks on corrupted labels,” in International conference on machine learning .PMLR, 2018, pp. 2304–2313. [15] B. Han, Q. Yao, X. Yu, G. Niu, M. Xu, W. Hu, I. Tsang, and M. Sugiyama, “Co-teaching: Robust training of deep neural networks with extremely noisy labels,” Advances in neural information processing systems , vol. 31, 2018. [16] M. Ren, W. Zeng, B. Yang, and R. Urtasun, “Learning to reweight examples for robust deep learning,” in International conference on machine learning . PMLR, 2018, pp. 4334–4343. [17] J. Shu, Q. Xie, L. Yi, Q. Zhao, S. Zhou, Z. Xu, and D. Meng, “Meta-weight-net: Learning an explicit mapping for sample weighting,” 
+
+Advances in neural information processing systems , vol. 32, 2019. [18] G. Zheng, A. H. Awadallah, and S. Dumais, “Meta label correction for noisy label learning,” in Proceedings of the AAAI Conference on Artificial Intelligence , vol. 35, no. 12, 2021, pp. 11 053–11 061. [19] D. Yu, W. Shi, and Q. Yu, “Stars: Spatial-temporal active re-sampling for label-efficient learning from noisy annotations,” 
+
+Proceedings of the AAAI Conference on Artificial Intelligence ,vol. 37, no. 9, pp. 10 980–10 988, Jun. 2023. [Online]. Available: https://ojs.aaai.org/index.php/AAAI/article/view/26301 [20] M. Ducoffe and F. Precioso, “Adversarial active learning for deep networks: a margin based approach,” arXiv preprint arXiv:1802.09841 ,2018. [21] D. Arpit, S. Jastrz˛ ebski, N. Ballas, D. Krueger, E. Bengio, M. S. Kanwal, T. Maharaj, A. Fischer, A. Courville, Y. Bengio et al. , “A closer look at memorization in deep networks,” in International conference on machine learning . PMLR, 2017, pp. 233–242. [22] T. Younesian, Z. Zhao, A. Ghiassi, R. Birke, and L. Y. Chen, “Qactor: Active learning on noisy labels,” in Asian Conference on Machine Learning , 2021. [Online]. Available: https://api.semanticscholar.org/CorpusID:245355788 [23] H. W. Goh and J. Mueller, “Activelab: Active learning with re-labeling by multiple annotators,” arXiv preprint arXiv:2301.11856 , 2023. [24] T. Kliegr, Štˇ epán Bahník, and J. Fürnkranz, “A review of possible effects of cognitive biases on interpretation of rule-based machine learning models,” Artificial Intelli-gence , vol. 295, p. 103458, 2021. [Online]. Available: https://www.sciencedirect.com/science/article/pii/S0004370221000096 [25] B. Biggio, B. Nelson, and P. Laskov, “Support vector machines under adversarial label noise,” in Asian conference on machine learning .PMLR, 2011, pp. 97–112. [26] S. Fefilatyev, M. Shreve, K. Kramer, L. Hall, D. Goldgof, R. Kasturi, K. Daly, A. Remsen, and H. Bunke, “Label-noise reduction with support vector machines,” in Proceedings of the 21st International Conference on Pattern Recognition (ICPR2012) , 2012, pp. 3504–3508. [27] R. M. Neal, “Bayesian learning for neural networks,” 1995. [Online]. Available: https://api.semanticscholar.org/CorpusID:60809283 [28] ——, “Priors for infinite networks,” in Bayesian Learning for Neural Networks . New York, NY: Springer New York, 1996, pp. 29–53. [29] C. K. I. Williams, “Computing with infinite networks,” in Proceedings of the 9th International Conference on Neural Information Processing Systems , ser. NIPS’96. Cambridge, MA, USA: MIT Press, 1996, p. 295–301. [30] J. Lee, Y. Bahri, R. Novak, S. S. Schoenholz, J. Pennington, and J. Sohl-Dickstein, “Deep neural networks as gaussian processes,” 2018. [31] M. E. Khan, A. Immer, E. Abedi, and M. Korzepa, “Approximate inference turns deep networks into gaussian processes,” 2020. [32] C. M. Bishop and N. M. Nasrabadi, Pattern recognition and machine learning . Springer, 2006, vol. 4, no. 4. [33] Y. LeCun, C. Cortes, and C. Burges, “Mnist handwritten digit database,” 
+
+ATT Labs [Online]. Available: http://yann.lecun.com/exdb/mnist , vol. 2, 2010. [34] H. Xiao, K. Rasul, and R. Vollgraf, “Fashion-mnist: anovel image dataset for benchmarking machine learning algorithms,” CoRR , vol. abs/1708.07747, 2017. [Online]. Available: http://arxiv.org/abs/1708.07747 [35] A. Krizhevsky, “Learning multiple layers of features from tiny images,” Tech. Rep., 2009. [36] J. Yang, R. Shi, and B. Ni, “Medmnist classification decathlon: A lightweight automl benchmark for medical image analysis,” in IEEE 18th International Symposium on Biomedical Imaging (ISBI) , 2021, pp. 191–195.

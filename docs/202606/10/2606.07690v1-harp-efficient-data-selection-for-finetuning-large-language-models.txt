@@ -1,0 +1,2108 @@
+Title: HARP: Efficient Data Selection for Finetuning Large Language Models
+
+URL Source: https://arxiv.org/pdf/2606.07690v1
+
+Published Time: Tue, 09 Jun 2026 00:06:30 GMT
+
+Number of Pages: 21
+
+Markdown Content:
+# HARP: Efficient Data Selection for Finetuning Large Language Models 
+
+Ning Wang 1* Zhengxin Zhang 1* Maosen Tang 1
+
+Yitang Gao 2 Claire Cardie 1 Sainyam Galhotra 11Cornell University 2The Hong Kong University of Science and Technology 
+
+{nw366, zz865}@cornell.edu 
+
+Abstract 
+
+Finetuning data selection requires balancing two competing goals: selecting examples that improve the downstream objective, and doing so without repeatedly finetuning models. Train-free selectors are scalable but rely on prox-ies such as embedding similarity or cluster-ing, which may not match the target objective. Train-based selectors better reflect downstream utility through gradient signals, subset evalua-tion, or Shapley attribution, but require many costly train–evaluate iterations. We propose 
+
+Hierarchical Active Region Pruning ( HARP ), an efficient train-based selector that preserves downstream alignment while reducing selec-tion cost. HARP organizes the training pool into a node–leaf hierarchy, evaluates only rep-resentative leaves, and infers unmeasured utili-ties with empirical Bayes posteriors. It then se-lects data using two complementary envelopes: 
+
+HARP-C , which conservatively controls redun-dancy, and HARP-E , which additively rewards complementary regions. We theoretically show that, under local smoothness and bounded es-timation error, HARP controls selection error while reducing train–evaluate cost. We further validate that HARP variants achieve the best result and outperform the strongest baseline by up to +8 .9 points, while using roughly 7×
+
+fewer training examples. 
+
+1 Introduction 
+
+Finetuning (Zhang et al., 2024; Chung et al., 2024; Longpre et al., 2023; Wang et al., 2023; Dettmers et al., 2023; Hu et al., 2022) has become an ef-fective approach for specializing foundation large language models (LLMs) to follow task specifica-tions, improve downstream performance, and adapt to domain-specific needs. Recent studies (Zhou et al., 2023b) show that a relatively small subset of high-quality data can match or even surpass the performance achieved using the full dataset. This 
+
+> *Equal contribution; author order determined by coin flip.
+
+suggests that current finetuning datasets are often noisy and inefficient, containing redundancy, near-duplicate instances, low-signal examples, and dis-tributional mismatches with the target evaluation setting. Nevertheless, building high-quality finetun-ing datasets requires extensive expert labor, making it impractical at scale. Recent works are primarily based on train-free data selection and train-heavy evaluation-based data selection. Train-free selec-tion methods (Deng et al., 2025; Ge et al., 2024; Liu et al., 2024; Yang et al., 2025b; Zhou et al., 2023c; Xie et al., 2023), which typically uses heuristics or representations (e.g., embeddings, clustering, di-versity/coverage objectives, or quality proxies) to choose subsets without repeatedly finetuning can-didate subsets. These methods are cheap and can be applied before training. However, their prox-ies can be misaligned with the actual downstream objective For example, some methods construct a proxy subset by ranking training examples by embedding similarity to the test set. However, when the downstream objective is task accuracy, high embedding similarity fails to guarantee high marginal utility for improving the downstream ob-jective. Train-based data evaluation, which explic-itly estimates the contribution of training examples (or groups of examples) to a downstream objec-tive via influence/gradient-based approximations (Xia et al., 2024; Wang et al., 2025), or Shapley-style marginal contribution estimates (He et al., 2024). While objective-faithful, these approaches require substantial computational cost, driven by the proxy dataset size per cycle and the total num-ber of train–evaluate iterations. This motivates a middle ground: a selector that retains the down-stream alignment of train-based evaluation, but avoids exhaustively evaluating many candidates. In this paper, we propose Hierarchical Active Region 
+
+Pruning, HARP , an efficient training-based data selection framework for LLM finetuning. HARP organizes the training set into a node–leaf hierar-1
+
+> arXiv:2606.07690v1 [cs.LG] 5 Jun 2026
+
+chy, where each leaf contains a group of exam-ples, and each node contains a group of related leaves. Instead of evaluating every leaf, HARP estimates the downstream utility of a small set of representative leaves and infers the utility of un-measured leaves through empirical Bayes posteri-ors. Building on these estimates, we introduce two complementary selection envelopes: HARP-C and 
+
+HARP-E . HARP-C uses a Conservative coverage envelope to avoid over-counting utility under redun-dancy, while HARP-E uses an Expansive additive envelope to credit multiple complementary leaves within the same domain. We theoretically show that, under local smoothness and bounded estima-tion error, HARP provides stable utility estimates and controls selection error while substantially re-ducing the train-evaluate iterations. We evaluate HARP across 3 base models, 3 fine-tuning datasets, 6 baselines and evaluating on 4
+
+reasoning benchmarks. HARP variants achieve the best result in 28 settings ( 78% ) and outperform the strongest baseline, SHED-QOCS, by up to +8 .9
+
+points on average, while using roughly 7× fewer training examples than the 10 k-budget baselines and 56 × than full fintuning. The two envelopes show complementary strengths: HARP-C is more effective on noisy or heterogeneous data, while HARP-E performs best on clean, on-task data. 
+
+2 Related Work 
+
+Train-free data selection methods for finetun-ing. In contrast, train-free methods select sub-sets using inexpensive proxy signals that avoid re-peatedly finetuning candidate subsets. A common strategy is geometry-driven selection , where meth-ods use embeddings together with clustering, sub-modular objectives, or diversity sampling to retain representative and non-redundant examples (e.g., (Ge et al., 2024; Liu et al., 2024; Bukharin et al., 2024)). Another strategy uses quality proxies —such as heuristic filters, lightweight model-based scoring, or proxy difficulty/utility estimates—to re-move noisy or low-value examples before training; recent LLM-specific instances include self-guided difficulty-based selection, one-shot utility scoring, instruction mining, automatic quality/complexity scoring, and weak-to-strong filtering (e.g., (Li et al., 2024b,c; Cao et al., 2023; Liu et al., 2023; Li et al., 2024a; Yang et al., 2025b)). Related work also uses influence-style or representational proxies to esti-mate usefulness from features or gradients without full retraining (e.g., (Deng et al., 2025)), while adja-cent automated data curation methods synthesize or refine finetuning data using similarly cheap signals rather than explicit subset selection (e.g., (Chen et al., 2023)). These methods scale well to large finetuning corpora, but their proxy objectives can be misaligned with the downstream metric and gen-erally fail to capture interaction effects that emerge only under actual training dynamics. 
+
+Train-based (objective-aligned) data selection methods for finetuning. A complementary line of work studies objective-aligned data selection, where the value of a training example (or group) is defined by its estimated effect on downstream performance after finetuning. Early LLM-specific train-based approaches explore several forms of model-in-the-loop selection, including transferred Shapley-value-based data valuation (Schoch et al., 2023), iterative self-evolving subset refinement (Wu et al., 2023), and active task selection based on prompt sensitivity (Kung et al., 2023). He et al. (2024) further moves closer to the true “fine-tune then evaluate” objective by using a Shapley-style refinement framework for instruction finetuning, but this comes with substantial computational over-head. To reduce the cost of repeated finetuning, Xia et al. (2024) proposes an influence-based approx-imation that builds a reusable gradient datastore and selects data using optimizer-aware gradient similarity to a small target set, enabling targeted ca-pability induction with only a small fraction of the data. More recently, Wang et al. (2025) (NICE) ex-tends this direction to non-differentiable evaluation metrics via policy-gradient-style influence estima-tion, bringing data selection closer to the true task objective when loss-based proxies are misaligned. 
+
+Finetuning of large language models. Supervised finetuning (SFT) adapts pretrained LLMs to fol-low natural-language instructions using instruction– response data, and has become a standard post-training stage for improving instruction following and generalization. Prior work shows that both scale and mixture design matter: large instruction collections and carefully balanced task mixtures can substantially improve transfer, while parameter-efficient methods reduce the cost of adaptation (Zhang et al., 2024; Chung et al., 2024; Longpre et al., 2023; Hu et al., 2022; Dettmers et al., 2023; Zhang et al., 2023; Xu et al., 2023). At the data-construction layer, synthetic pipelines bootstrap supervision from seed tasks, teacher models, or reverse/task-grounded generation, spanning Self-2Instruct and Alpaca-style recipes as well as later variants such as Stanford Alpaca, GPT-4-based in-struction generation, LongForm, and AlpaGasus (Wang et al., 2023; Taori et al., 2023a,b; Peng et al., 2023; Köksal et al., 2024; Chen et al., 2024). Adja-cent post-training work further studies preference-based optimization and scaled feedback data, while domain-specific tuning pipelines reinforce that su-pervision design and data composition are often as important as raw scale (Dubois et al., 2023; Rafailov et al., 2023; Cui et al., 2023; Yue et al., 2023; Yu et al., 2023; Luo et al., 2023). Con-versely, LIMA shows that a small but carefully curated set can still be highly effective, underscor-ing SFT’s sensitivity to redundancy and example quality (Zhou et al., 2023a). 
+
+3 Method 
+
+3.1 Problem Setup and Overview 
+
+Let D = {xi}Ni=1 denote the training dataset and let E denote an evaluation set. Our goal is to se-lect a subset of training examples with total size at most B that maximizes downstream performance. Let U (A) denote the task-averaged downstream utility (e.g., accuracy) after fine-tuning on A ⊆ D .The ideal objective is max A⊆D , |A|≤ B U (A). How-ever, this ideal objective is not directly tractable in practice. Evaluating a candidate subset requires a train–evaluate iteration, and the number of budget-feasible subsets grows combinatorially with the size of the training data. HARP makes this prob-lem tractable by reducing both costs. First, it con-structs a compact proxy evaluation set eE ⊆ E that preserves domain coverage, so that candidate sub-sets can be compared without repeatedly evaluating on the full validation set. Second, it organizes the training data into a hierarchy and selects leaves rather than individual examples, reducing the num-ber of candidate units that must be measured. Once the hierarchy below defines leaves {L g}Gg=1 , each selected leaf set S ⊆ [G] corresponds to A(S) = S 
+
+> g∈S
+
+Lg, with cost c(S) = P 
+
+> g∈S
+
+|L g|, and we write U (S) = U (A(S)) . HARP optimizes the leaf-restricted target max S⊆[G], c (S)≤B U (S), which is a restriction of the example-level objective above. This leaf-level representation lets us score the leaf-restricted budgeted objective with a first-order util-ity approximation: HARP estimates the contribu-tion of each leaf and then aggregates these main effects to score candidate selections. We intro-duce two complementary domain-wise envelopes. 
+
+HARP-C uses a conservative coverage envelope, crediting only the strongest positive leaf in each domain while accumulating all estimated harms; this limits over-counting when several leaves cap-ture the same domain. HARP-E uses an expan-sive additive envelope, summing positive contribu-tions across leaves so that multiple complementary leaves can receive credit within the same domain. 
+
+3.2 Domain-Aware Proxy Evaluation Set 
+
+We construct the proxy evaluation set used for re-ducing the evaluation cost in each train-evaluate iteration. The proxy set eE ⊆ E is designed to preserve two properties of the full evaluation set: coverage across evaluation domains and diversity within each domain. We first partition the evalua-tion set into raw domains, E = SDraw  
+
+> d=1
+
+Eraw  
+
+> d
+
+, where a raw domain may correspond to an explicit bench-mark task, a labeled category, or an embedding-derived cluster when labels are unavailable. We apply a raw-domain size floor kdom and merge un-dersized raw domains into their nearest eligible domain by embedding-centroid distance; if no raw domain initially satisfies the floor, the largest raw domain is treated as eligible, then relabel the re-sulting domains as E = SDd=1 Ed, where D is the number of evaluation domains used by HARP. We then sample proxy examples from each retained do-main. Let ρ be the target proxy sampling fraction and Kproxy be the minimum desired total proxy size. We set ρeff = min {1, max( ρ, K proxy /|E| )},so that the proxy set remains sufficiently large when 
+
+ρ is small. For each domain d, we select kd =min( |E d|, max(1 , ⌈ρeff |E d|⌉ )) examples and define 
+
+eEd ⊆ E d with | eEd| = kd. This choice avoids over-sampling any domain while ensuring that every re-tained domain contributes to the proxy set. Within each domain, if kd = |E d|, we take all examples in 
+
+Ed; otherwise, we apply k-means with kd clusters over evaluation embeddings and select the example closest to each cluster centroid, spreading the proxy set across distinct regions of the domain. The final proxy evaluation set is eE = SDd=1 eEd. For boot-strap resampling, we separately group proxy do-mains that contain fewer than kboot examples into larger bootstrap buckets using the same centroid-distance criterion. After the proxy set is fixed, we measure the base model’s utility on each proxy do-main as v0(d) = | eEd|−1 P   
+
+> ej∈eEd
+
+m(ˆ yj , y j ), where 
+
+m(ˆ yj , y j ) is the evaluation metric for prediction 
+
+ˆyj and gold answer yj . These domain-level base 3...          
+
+> Calc.
+> 2. Approximate unsmapled leaves via EB
+> shrinkage .
+> ,
+> Training set
+> Emedding
+> Node Leaf
+> ...
+> Train Eval
+> 1. Select representative leaves, finetune the
+> model on them, and evaluate on the eval set.
+> Update
+> Main-Effect Utility Estimation First Order Selection
+> Selected data
+> Hierarchy Construction
+> Evaluation set Domain Partition Proxy
+> Sampling
+> HARP-C
+> max
+> +
+> −
+> max positive; accumulate harms
+> HARP-E sum
+> +
+> −
+> additive signed gains
+> 2.Budgeted Selection
+> 1.Surrogate Scoring
+> ...
+> HARP-E : Greedily add leaves
+> by marginal gain under the budget
+> HARP-C : Choose the best
+> feasible prefix
+> Finetune
+
+Figure 1: An overview of HARP. 
+
+utilities serve as the reference point for the leaf-level main effects estimated in the next section. Appendix C.2 bounds the coverage-based stability of this proxy evaluation procedure. 
+
+3.3 Hierarchical Node–Leaf Construction 
+
+We further reduce the number of train–evaluate iterations by treating leaves as the atomic selec-tion units instead of individual examples. Let 
+
+ˆzi ∈ Rp denote the normalized embedding of train-ing example xi. HARP builds a two-level hier-archy over the training pool: node groups pro-vide coarse local regions for sharing utility esti-mates, and leaves {L g}Gg=1 define the atomic units used for selection. For any subset Q ⊆ D and a specified target number MQ of child groups, we use a coverage-oriented anchor partitioning pro-cedure. The first anchor is chosen as the exam-ple closest to the centroid of Q. Subsequent an-chors are selected by the farthest-first rule ar =arg max xi∈Q min a∈Ar−1 (1 − ˆz⊤ 
+
+> i
+
+ˆza), where Ar−1
+
+is the set of previously selected anchors. Each ex-ample in Q is then assigned to its closest anchor by cosine similarity. This procedure is first used to form node groups and then applied within each node to produce leaves, recursively splitting groups that exceed the maximum leaf size Cmax and merg-ing leaves with fewer than Cmin examples into the nearest valid sibling by centroid similarity. The resulting leaves cover diverse regions of the train-ing pool while keeping each selection unit large enough for stable utility estimation. As an imme-diate upper bound, replacing individual examples with leaves reduces exhaustive utility estimation from N individual-example queries to at most G
+
+leaf-level queries, with G ≤ N/C min whenever the final leaves satisfy the minimum-size constraint. Appendix C.3 formalizes this iteration-reduction bound. 
+
+3.4 Main-Effect Estimation 
+
+We then estimate the utility of each leaf. Let p(g)
+
+denote the parent node of leaf g, and let Pp denote the leaves under node p. Each leaf is represented by its mean embedding ¯zg = |L g|−1 P 
+
+> xi∈L g
+
+ˆzi.For domain d, define the centered main effect 
+
+ϕg(d) = ud(Lg) − v0(d), where ud(Lg) is the proxy-domain utility after fine-tuning on Lg, and 
+
+v0(d) is the base-model domain utility. Since eval-uating all G leaves is expensive, we measure only representative leaves Rp ⊆ P p with |R p| ≥ 1 for every nonempty node p in each node, selected by size stratification and farthest-first sampling over 
+
+¯zg. For each measured representative r, we observe 
+
+yr(d) = ud(Lr) − v0(d), the noisy measured main effect. For an unmeasured leaf g, we first form a local estimate eyg(d) from measured representatives in the same node: eyg(d) = P 
+
+> r∈R p(g)
+
+αg,r yr(d).Here αg,r is the similarity weight assigned from representative r to leaf g, defined by 
+
+αg,r = κ(¯ zg, ¯zr)/ P 
+
+> r′∈R p(g)
+
+κ(¯ zg, ¯zr′ ), where 
+
+κ(¯ zg, ¯zr) = exp(((¯ zg/∥¯zg∥2)⊤(¯ zr/∥¯zr∥2)) /λ ) is a cosine-similarity kernel computed from normal-ized leaf mean embeddings and λ > 0 con-trols locality. The interpolation step gives a lo-cal representative-based estimate of ϕg(d), with its approximation error controlled separately by the representative interpolation bound. We then apply empirical-Bayes shrinkage: bϕg(d) = ρg(d)eyg(d) + (1 − ρg(d)) μ0(d). Here bϕg(d) is the final esti-mated main effect, μ0(d) is the global measured-effect mean, and ρg(d) = τ 2(d)/(τ 2(d) + 
+
+σ2
+
+> p(g)
+
+(d)/n eff (g)) is the shrinkage weight. The terms τ 2(d) and σ2
+
+> p(g)
+
+(d) are the across-node and within-node variances, respectively, and neff (g) = 1/ P 
+
+> r∈R p(g)
+
+α2 
+
+> g,r
+
+is the effective number of rep-resentatives supporting leaf g. For directly mea-sured leaves, we set bϕg(d) = yg(d). This yields the domain-wise main-effect matrix bΦ = 
+
+4[ bϕg(d)] g∈[G],d ∈[D]. We keep active domains 
+
+Adom = {d : max g | bϕg(d)| > ϵ dom }. If Adom =
+
+∅, we set Adom = [ D]. We then normalize their weights wd, write bd = v0(d), and fix Adom , wd,and bd before defining both true and estimated sur-rogate objectives. This keeps domains with either estimated gains or estimated harms active, which is necessary because the conservative objective below accumulates negative effects rather than ignoring them. We justify the interpolation error, shrinkage estimator, and train–evaluate iteration reduction in Appendices C.4, C.5, and C.6. 
+
+3.5 HARP-C: Conservative Coverage Envelope 
+
+An additive first-order objective can over-count leaves: if multiple leaves improve the same domain, summing their positive effects may predict unrealis-tically large gains even when domain performance saturates. We therefore use a conservative first-order envelope. For each leaf g and active domain 
+
+d, write bϕ+ 
+
+> g
+
+(d) = max( bϕg(d), 0) and bϕ− 
+
+> g
+
+(d) = max( − bϕg(d), 0) . Given a selected leaf set S, we predict the conservative domain utility as byC 
+
+> d
+
+(S) = clip [0 ,1] (bd +max g∈S bϕ+ 
+
+> g
+
+(d)−P 
+
+> g∈S
+
+bϕ− 
+
+> g
+
+(d)) , with the convention max g∈∅ bϕ+ 
+
+> g
+
+(d) = 0 , and define 
+
+bUC(S) = P 
+
+> d∈A dom
+
+wd byC 
+
+> d
+
+(S). This envelope cred-its only the strongest positive leaf in each domain while accumulating all estimated harms. It there-fore favors leaves whose gains remain useful un-der a conservative view of within-domain redun-dancy. HARP-C ranks leaves greedily by marginal gain under bUC. Let cg = |L g| be the cost of leaf g. Starting from S0 = ∅, at step k we de-fine the feasible candidate set Fk = {g /∈ Sk :
+
+c(Sk) + cg ≤ B}. If Fk = ∅, the greedy con-struction stops. Otherwise, we choose gk+1 =arg max g∈F k
+
+h bUC(Sk ∪ { g}) − bUC(Sk)
+
+i
+
+, and set 
+
+Sk+1 = Sk ∪ { gk+1 }, producing a ranked se-quence of feasible leaf prefixes. The final HARP-C selection is the best feasible prefix, bSC =
+
+Sk⋆ , k⋆ = arg max k: c(Sk )≤B bUC(Sk), where 
+
+c(Sk) = P 
+
+> g∈Sk
+
+cg. The budget value B is set in the experimental protocol. 
+
+Theorem 1 (First-order stability of HARP-C) . Let 
+
+UC be the conservative coverage first-order utility defined with the true main effects ϕg(d), and let 
+
+bUC be its estimated version defined with bϕg(d).Let S⋆ ∈ arg max c(S)≤B U (S), and let bSC be the set returned by HARP-C. Suppose that, for every feasible set S, |U (S)−UC(S)| ≤ ϵC and | bUC(S)−
+
+UC(S)| ≤ δC. If the greedy procedure returns an ϵopt -approximate maximizer of bUC under the budget, then U (S⋆) − U ( bSC) ≤ 2ϵC + 2 δC + ϵopt .Moreover, if every feasible set contains at most K
+
+leaves, the active-domain set is fixed, the active-domain weights sum to one, bd and wd are fixed, and | bϕg(d) − ϕg(d)| ≤ η for all g, d , then δC ≤
+
+(K + 1) η.
+
+Theorem 1 follows from the shared first-order stability template in Theorem 3 and the HARP-C sensitivity bound in Lemma 6. The result shows that HARP-C is stable when the conservative cover-age envelope is a good surrogate for the true subset utility, the estimated main effects are accurate, and the greedy optimization gap is small. 
+
+3.6 HARP-E: Expansive Additive Envelope 
+
+HARP-C is conservative because each domain can receive positive credit from single selected leaf. This protects against redundant gains, but it can under-credit genuinely complementary leaves. For example, different leaves may improve the same domain, in which case taking only the maximum positive effect discards the useful additional sig-nal. HARP-E addresses this case with an expan-sive additive envelope that sums positive contri-butions while still accumulating estimated harms. For each leaf g and active domain d, the predicted expansive domain utility for a selected leaf set S
+
+is byE 
+
+> d
+
+(S) = clip [0 ,1] (bd + P 
+
+> g∈S
+
+bϕg(d)) , which is equivalent to summing positive effects and sub-tracting estimated harms. The aggregated objec-tive is bUE(S) = P 
+
+> d∈A dom
+
+wd byE 
+
+> d
+
+(S).HARP-E uses the same feasible set, greedy update, and best-prefix rule as HARP-C, replacing bUC with bUE. The two envelopes are complementary: HARP-C limits over-counting under redundancy, while HARP-E can recover multiple positive contributions when the same domain leaves provide complementary information. 
+
+Theorem 2 (First-order stability of HARP-E) . Let 
+
+UE be the expansive additive first-order utility de-fined with the true main effects ϕg(d), and let bUE
+
+be its estimated version defined with bϕg(d). Let 
+
+S⋆ ∈ arg max c(S)≤B U (S), and let bSE be the set returned by HARP-E. Suppose that, for ev-ery feasible set S, |U (S) − UE(S)| ≤ ϵE and 
+
+| bUE(S) − UE(S)| ≤ δE. If the greedy proce-dure returns an ϵopt -approximate maximizer of 
+
+bUE under the budget, then U (S⋆) − U ( bSE) ≤
+
+52ϵE + 2 δE + ϵopt . Moreover, if every feasible set contains at most K leaves, the active-domain set is fixed, the active-domain weights sum to one, bd
+
+and wd are fixed, and | bϕg(d) − ϕg(d)| ≤ η for all 
+
+g, d , then δE ≤ Kη .
+
+Theorem 2 follows from the same shared stabil-ity template as HARP-C, using the HARP-E sensi-tivity bound in Lemma 6. Since HARP-E is addi-tive in the signed main effects, bϕ+ 
+
+> g
+
+(d) − bϕ− 
+
+> g
+
+(d) = 
+
+bϕg(d), its sensitivity to main-effect estimation er-ror is bounded by Kη under the assumptions of the theorem. 
+
+3.7 Computational Complexity 
+
+HARP’s dominant cost is main effect estimation, which trains representative leaves at cost R·(N/L )·
+
+TL(L), where TL(x) is the finetuning cost on x
+
+examples. Proxy-set construction and final costs 
+
+TL(Kproxy ) and TL(|S|) with |S| ≪ N . Full de-tails and baseline comparisons are in Appendix E. 
+
+4 Experimental Setup 
+
+Models. We evaluate three pre-trained base models: LLAMA -3.1-8B-B ASE (Grattafiori et al., 2024), QWEN 3-4B-B ASE and Q WEN 3-8B-B ASE (Yang et al., 2025a). All three are fine-tuned with LoRA; LoRA configuration, optimizer, and batch settings shared across HARP, and the baselines are in Ap-pendix Table 3. 
+
+Training datasets. Three SFT sources spanning data quality and skill mix: S ELF -I NSTRUCT (Wang et al., 2023) (SI; ∼82k examples, noisy auto-generated), W IZARD LM/E VOL -I NSTRUCT -70 K (Luo et al., 2023) (Wiz; 70k, clean), and TULU -3-SFT-MIXTURE (Lambert et al., 2024) (Tulu; 100k subset, mixed domains). 
+
+Evaluation datasets. Four reasoning benchmarks: MMLU (Hendrycks et al., 2020) (57 subjects, 
+
+14 ,042 examples), ARC-C HALLENGE (Clark et al., 2018) ( 1,172 ), GSM8K (Cobbe et al., 2021) (1,319 ), and MATH-500 (Hendrycks et al., 2021) (500 ). MMLU and ARC use letter-level accuracy; GSM8K and MATH use answer-string match. All scoring is performed via batched vLLM generation with greedy decoding. 
+
+Baselines. 1) Random (Rand): uniform random selection of 10k examples. 2) DSIR (Xie et al., 2023): importance sampling on n-gram features. 3) DQ (Zhou et al., 2023c): data-quality scoring with submodular bin selection. 4) Full Finetuning (Full FT): LoRA finetuning on the entire training dataset. 5) SHED-QWCS (SHED-W) and SHED-QOCS (SHED-O) (He et al., 2024): two clustering-based Shapley variants. 
+
+Hyperparameters and reproducibility. Details in Appendix Table 3 and Table 4. 
+
+5 Experimental Results 
+
+In this paper, we first report main results in § 5.1, and then discuss the data efficiency in § 5.2, and finally show the ablation studies in § 5.3. 
+
+5.1 Main Results 
+
+Table 1 reports 3-seed accuracy across 3 models ×
+
+3 training sets × 4 evaluation sets = 36 settings. Overall, the HARP variants obtain the best result in 28 out of 36 cells ( 78% ). Averaged over all settings, HARP-C and HARP-E reach 61 .4 and 
+
+60 .4, respectively, substantially outperforming the strongest non-HARP baseline, SHED-O ( 52 .5), by +8 .9 and +7 .9 points, and F ULL FT ( 45 .7) by 
+
++15 .7 and +14 .7 points. The gains are especially large on the noisier or more heterogeneous training datasets. On SI, HARP-C achieves a mean accuracy of 58 .0, com-pared with 36 .0 for SHED-O and at most 24 .3 for the remaining baselines. On Tulu, where many examples are off-task for the target evaluations, HARP-C again performs best, reaching 66 .0 ver-sus 60 .7 for the next-best method. HARP-E is the second-best method on both training sets (SI 53 .3,Tulu 64 .9), still well ahead of every non-HARP baseline. For example, on Q WEN 3-8B/SI/GSM8K, HARP-C reaches 75 .5 versus 12 .5 for SHED-O. The two HARP envelopes differ most clearly on the cleaner and more on-task W IZ training dataset. Here, HARP-E obtains the best mean accuracy (63 .0), outperforming F ULL -FT ( 61 .2) and SHED-O ( 60 .9), while HARP-C is less competitive be-cause its conservative envelope selects substantially less data. For example, on Q WEN 3-8B/Wiz/ARC, HARP-E reaches 87 .0 versus 85 .6 for SHED-W. 
+
+In general, HARP-C provides the strongest con-servative pruning behavior, while HARP-E bet-ter preserves useful coverage when the training datasets are already clean and relevant. 5.2 Data Efficiency 
+
+Figure 4 plots each method as a single point on the (samples, accuracy) plane. HARP-C sits in the upper-left corner: it uses on average ∼ 7× fewer training examples than the 10 k-budget baselines 6Table 1: Main results. Bold = per-row best, underline = per-row second-best. 
+
+Baselines HARP variants Model Train Eval Rand DSIR DQ Full FT SHED-W SHED-O HARP-C HARP-E 
+
+LLAMA -8B SI MMLU 13 .8±20 .2 2.2±2.9 8.3±12 .6 13 .6∗±1.2 0.3±0.5 45 .5±23 .6 61 .3±2.7 61 .4±2.0
+
+ARC 18 .6±29 .8 0.9±1.0 9.0±10 .5 11 .2±10 .0 1.4±2.3 26 .1±40 .0 74 .0±0.8 74 .0±2.2
+
+GSM8K 7.2±0.5 10 .2±1.4 9.3±2.2 6.5±1.2 10 .8±1.4 9.4±1.1 15 .8±1.1 17 .7±1.6
+
+MATH 4.3±1.0 4.0±1.1 3.8±1.2 2.8±0.3 2.2±1.5 2.7±0.6 6.7±0.6 6.6±1.7
+
+Wiz MMLU 62 .4±0.0 61 .8±0.3 62 .5±0.1 59 .8±0.8 63 .0±0.3 62 .9±0.8 63 .8±0.6 63 .7±0.5
+
+ARC 74 .7±0.1 72 .6±1.6 74 .4±1.6 70 .6±1.6 75 .2±0.2 74 .4±1.1 74 .8±1.6 75 .2±1.4
+
+GSM8K 50 .6±1.4 49 .0±1.2 48 .5±2.5 50 .5±1.7 48 .1±6.6 51 .4±2.6 49 .1±4.2 51 .8±4.1
+
+MATH 8.6±1.1 11 .0±1.3 10 .7±3.0 10 .3±0.8 10 .9±0.8 11 .0±0.7 12 .5±0.5 10 .4±1.1
+
+Tulu MMLU 61 .8±1.2 61 .5±0.5 62 .4±0.7 59 .6±0.9 60 .5±2.6 62 .5±1.2 60 .0±3.6 61 .2±2.5
+
+ARC 73 .6±1.3 73 .9±0.5 72 .7±1.9 71 .6±1.2 73 .0±2.6 73 .9±0.9 75 .9±1.1 74 .7±1.4
+
+GSM8K 23 .1±21 .7 42 .6±6.8 29 .3±3.5 45 .9±12 .9 24 .4±14 .1 38 .8±24 .6 60 .4±0.5 64 .8±1.1
+
+MATH 14 .1±1.6 13 .7±0.8 15 .1±0.1 12 .2±0.7 14 .2±2.3 15 .8±1.4 17 .2±0.2 10 .5±4.6
+
+QWEN 3-4B SI MMLU 31 .4±11 .9 14 .1±8.7 30 .2±17 .7 25 .8±11 .9 31 .9±6.2 64 .1±4.3 67 .9±1.0 50 .1±7.0
+
+ARC 49 .8±18 .5 35 .2±3.5 29 .9±25 .1 41 .3±22 .2 48 .4±42 .0 81 .9±4.4 85 .7±1.1 85 .2±1.4
+
+GSM8K 17 .7±5.2 11 .8±2.5 18 .2±5.4 9.3±1.3 20 .2±9.3 32 .6±18 .4 78 .2±2.6 77 .6±3.7
+
+MATH 10 .9±0.4 10 .7±1.4 12 .7±2.2 9.3±0.1 13 .2±3.7 13 .6±1.3 36 .2±2.9 31 .8±4.3
+
+Wiz MMLU 54 .1±1.1 47 .6±4.4 53 .0±11 .3 65 .8±2.1 51 .9±5.0 54 .6±3.9 53 .4±3.1 54 .0±7.2
+
+ARC 60 .9±3.9 57 .8±11 .1 61 .2±19 .3 83 .1±1.4 64 .8±4.6 54 .6±10 .2 59 .8±7.3 77 .0±1.1
+
+GSM8K 86 .3±0.9 84 .7±1.1 85 .3±0.6 78 .1±4.5 87 .1±0.9 87 .7±1.0 78 .4±8.1 87 .3±0.6
+
+MATH 42 .5±1.6 41 .3±1.3 43 .3±1.2 41 .7±1.8 45 .1±2.7 43 .7±1.4 43 .4±1.1 44 .6±2.0
+
+Tulu MMLU 71 .0±0.8 65 .4±2.4 71 .5±0.7 69 .8±0.5 66 .9±5.6 64 .6±5.3 66 .9±8.0 71 .9±0.8
+
+ARC 86 .0±1.2 73 .5±9.2 86 .4±0.4 85 .3±0.4 82 .5±3.6 85 .5±1.6 83 .2±3.3 81 .0±3.5
+
+GSM8K 82 .3±1.4 76 .5±2.3 75 .7±4.0 76 .3±1.9 76 .4±2.2 83 .0±2.1 86 .1±1.6 83 .2±1.4
+
+MATH 45 .3±0.4 42 .3±1.3 44 .5±0.8 41 .1±1.4 44 .1±2.4 44 .8±2.6 45 .5±2.9 44 .7±2.5
+
+QWEN 3-8B SI MMLU 49 .2±12 .4 28 .8±17 .2 29 .1±4.6 21 .4±9.6 33 .2±29 .5 64 .0±9.6 71 .4±1.1 69 .5±1.9
+
+ARC 67 .2±13 .7 28 .6±15 .1 39 .5±16 .7 33 .7±10 .8 35 .8±27 .0 69 .3±18 .3 89 .6±0.8 89 .1±0.4
+
+GSM8K 11 .5±2.6 10 .5±2.0 12 .3±2.7 5.5±0.3 11 .9±0.9 12 .5±2.5 75 .5±5.0 50 .9±1.0
+
+MATH 10 .0±1.2 7.8±0.5 11 .6±1.9 7.7±0.5 4.7±4.0 10 .6±2.5 33 .7±3.2 25 .1±0.3
+
+Wiz MMLU 71 .3±0.2 69 .4±2.3 68 .2±3.3 65 .6∗±11 .9 71 .5±2.0 71 .5±2.6 72 .1±0.3 72 .6±2.7
+
+ARC 84 .0±2.4 82 .5±1.4 74 .2±14 .2 79 .9∗±11 .8 85 .6±1.4 85 .5±3.1 83 .5±0.9 87 .0±1.3
+
+GSM8K 84 .7±3.1 84 .5±1.2 86 .5±0.8 85 .3∗±0.4 64 .6±38 .2 87 .2±1.2 87 .8±1.9 86 .5±4.7
+
+MATH 45 .7±2.3 44 .2±0.9 46 .3±1.7 43 .5∗±2.9 46 .3±1.1 46 .7±1.6 46 .2±1.4 45 .5±2.3
+
+Tulu MMLU 73 .7±2.1 69 .6±0.8 72 .2±2.5 71 .5±1.2 74 .9±0.6 72 .6±2.5 74 .7±1.8 73 .9±2.8
+
+ARC 88 .7±2.4 86 .3±2.3 85 .5±4.4 85 .8±3.0 87 .0±3.7 87 .5±3.8 90 .7±0.2 90 .8±0.3
+
+GSM8K 61 .6±16 .9 71 .6±2.6 50 .2±16 .6 56 .0±18 .3 48 .3±13 .6 46 .6±18 .9 82 .6±3.8 75 .7±7.0
+
+MATH 47 .7±4.3 46 .3±1.2 51 .8±0.7 47 .7±3.4 47 .6±3.4 49 .7±0.7 48 .4±1.0 46 .3±1.0
+
+Mean (36 settings) 48.5 44.3 45.7 45.7 45.2 52.5 61 .4 60.4 
+
+(Random, DSIR, DQ, SHED-W, SHED-O) and 
+
+∼ 56 × fewer than F ULL FT, while delivering +8 .9
+
+to +17 .1 accuracy points over the strongest non-HARP baseline. HARP-E sits between the two, using 2–5× more data than HARP-C but still fewer samples than every selection baseline. 
+
+5.3 Ablation Studies 
+
+In this section, we study the two main ablation factors, the effectiveness of leaf size L, and repre-sentatives per node R (others in appendix F). We conduct the experiments using Q WEN 3-4B-B ASE 
+
+on W IZARD LM training dataset for three times. 
+
+Leaf size L (Figure 2) controls the maximum number of training examples assigned to each leaf. Smaller leaves provide finer-grained selec-tions but create more leaves to estimate, while larger leaves produce coarse selections, but can pro-vide a more stable estimate. We therefore sweep 7256 512 1024 2048 4096                 
+
+> L(leaf size)
+> 0
+> 20
+> 40
+> 60
+> 80
+> Accuracy (%)
+> ARC
+> 256 512 1024 2048 4096
+> L(leaf size)
+> 0
+> 20
+> 40
+> 60
+> 80
+> GSM8K
+> 256 512 1024 2048 4096
+> L(leaf size)
+> 0
+> 20
+> 40
+> 60
+> MMLU
+> 256 512 1024 2048 4096
+> L(leaf size)
+> 0
+> 10
+> 20
+> 30
+> 40
+> 50
+> MATH
+> HARP-C
+> HARP-E
+> default
+
+Figure 2: Experiments on leaf size L.1 3 5 8 10                 
+
+> R(reps per node)
+> 0
+> 20
+> 40
+> 60
+> 80
+> Accuracy (%)
+> ARC
+> 135810
+> R(reps per node)
+> 0
+> 20
+> 40
+> 60
+> 80
+> GSM8K
+> 135810
+> R(reps per node)
+> 0
+> 20
+> 40
+> 60
+> MMLU
+> 135810
+> R(reps per node)
+> 0
+> 10
+> 20
+> 30
+> 40
+> 50
+> MATH
+> HARP-C
+> HARP-E
+> default
+
+Figure 3: Experiments on representatives per node R.1K 3K 10K 100K 
+
+> Number of selected training samples (log scale)
+> 40
+> 45
+> 50
+> 55
+> 60
+> 65
+> Mean accuracy (%)
+> Random
+> DSIR
+> DQ
+> SHED-W
+> SHED-O
+> Full FT
+> HARP-C
+> HARP-E
+> better
+> Data efficiency: accuracy vs. samples used
+
+Figure 4: Experiments on data efficiency. 
+
+L ∈ { 256 , 512 , 2048 , 4096 } around the default 
+
+L=1024 to evaluate sensitivity to this partition granularity. On GSM8K and MATH, both HARP-C and HARP-E remain within roughly 2 points of the default across the sweep. On ARC and MMLU, larger leaves modestly improve HARP-C; for example, ARC increases from 54 .0 at L=256 
+
+to 69 .0 at L=4096 . The default value L=1024 
+
+lies within the stable region, providing a practical balance between the selection granularity and the train-evaluate cost. 
+
+Representatives per node R (Figure 3). R de-notes the number of representative leaves sampled within each node for main-effect estimation (Sec-tion 3.4). Increasing R reduces estimation noise by observing more leaves per node, but also increases the train-evaluate cost. We sweep R ∈ { 1, 5, 8, 10 }
+
+around the default R=3 . ARC is the only set-ting with a strong dependence on the number of representatives: HARP-E improves by roughly 
+
+29 points from R=1 to R=10 . On most tasks, however, the small differences between R=10 and smaller representative budgets indicate that the em-pirical Bayes estimates provide a reliable approx-imation without exhaustively training every leaf. Increasing R also substantially increases FLOPs, as shown in the Appendix. In general, the default 
+
+R=3 provides estimates that are sufficient. 
+
+6 Limitations 
+
+HARP requires an evaluation set whose distribu-tion reflects the downstream task. Second, our ex-periments cover only four reasoning benchmarks, coding and other open-ended generation tasks are left to future work. 
+
+7 Conclusion 
+
+We propse HARP, a hierarchical data selec-tion method with two complementary envelopes: HARP-C for conservative pruning and HARP-E for broader on-task coverage. Across 36 (model, training set, evaluation set) cells, HARP takes the per-row best on 28 cells ( 78% ) and uses ∼ 7×
+
+fewer training examples than the 10 k-budget base-lines. HARP-C excels on the noisy SI and hetero-geneous Tulu sets and HARP-E on the clean W IZ 
+
+set, confirming that the two envelopes are comple-mentary across data-quality regimes. 8References 
+
+Alexander Bukharin, Shiyang Li, Zhengyang Wang, Jingfeng Yang, Bing Yin, Xian Li, Chao Zhang, Tuo Zhao, and Haoming Jiang. 2024. Data diversity mat-ters for robust instruction tuning. In Findings of the Association for Computational Linguistics: EMNLP 2024 , pages 3411–3425. Yihan Cao, Yanbin Kang, Chi Wang, and Lichao Sun. 2023. Instruction mining: Instruction data selection for tuning large language models. arXiv preprint arXiv:2307.06290 .Lichang Chen, Shiyang Li, Jun Yan, Hai Wang, Kalpa Gunaratna, Vikas Yadav, Zheng Tang, Vijay Srini-vasan, Tianyi Zhou, Heng Huang, and 1 others. 2024. Alpagasus: Training a better alpaca with fewer data. In International Conference on Learning Representa-tions , volume 2024, pages 34767–34797. Yongrui Chen, Haiyun Jiang, Xinting Huang, Shuming Shi, and Guilin Qi. 2023. Tegit: Generating high-quality instruction-tuning data with text-grounded task design. arXiv preprint arXiv:2309.05447 .Hyung Won Chung, Le Hou, Shayne Longpre, Barret Zoph, Yi Tay, William Fedus, Yunxuan Li, Xuezhi Wang, Mostafa Dehghani, Siddhartha Brahma, and 1 others. 2024. Scaling instruction-finetuned lan-guage models. Journal of Machine Learning Re-search , 25(70):1–53. Peter Clark, Isaac Cowhey, Oren Etzioni, Tushar Khot, Ashish Sabharwal, Carissa Schoenick, and Oyvind Tafjord. 2018. Think you have solved question an-swering? try arc, the ai2 reasoning challenge. arXiv preprint arXiv:1803.05457 .Karl Cobbe, Vineet Kosaraju, Mohammad Bavarian, Mark Chen, Heewoo Jun, Lukasz Kaiser, Matthias Plappert, Jerry Tworek, Jacob Hilton, Reiichiro Nakano, and 1 others. 2021. Training verifiers to solve math word problems. arXiv preprint arXiv:2110.14168 .Ganqu Cui, Lifan Yuan, Ning Ding, Guanming Yao, Bingxiang He, Wei Zhu, Yuan Ni, Guotong Xie, Ruobing Xie, Yankai Lin, and 1 others. 2023. Ultra-feedback: Boosting language models with scaled ai feedback. arXiv preprint arXiv:2310.01377 .Jiale Deng, Yanyan Shen, Ziyuan Pei, Youmin Chen, and Linpeng Huang. 2025. Influence guided context selection for effective retrieval-augmented generation. In The Thirty-ninth Annual Conference on Neural Information Processing Systems .Tim Dettmers, Artidoro Pagnoni, Ari Holtzman, and Luke Zettlemoyer. 2023. Qlora: Efficient finetuning of quantized llms. Advances in neural information processing systems , 36:10088–10115. Yann Dubois, Chen Xuechen Li, Rohan Taori, Tianyi Zhang, Ishaan Gulrajani, Jimmy Ba, Carlos Guestrin, Percy S Liang, and Tatsunori B Hashimoto. 2023. Alpacafarm: A simulation framework for methods that learn from human feedback. Advances in Neural Information Processing Systems , 36:30039–30069. Yuan Ge, Yilun Liu, Chi Hu, Weibin Meng, Shimin Tao, Xiaofeng Zhao, Mahong Xia, Zhang Li, Boxing Chen, Hao Yang, Bei Li, Tong Xiao, and JingBo Zhu. 2024. Clustering and ranking: Diversity-preserved instruction selection through expert-aligned quality estimation. In Proceedings of the 2024 Conference on Empirical Methods in Natural Language Process-ing , pages 464–478, Miami, Florida, USA. Associa-tion for Computational Linguistics. Aaron Grattafiori, Abhimanyu Dubey, Abhinav Jauhri, Abhinav Pandey, Abhishek Kadian, Ahmad Al-Dahle, Aiesha Letman, Akhil Mathur, Alan Schelten, Alex Vaughan, and 1 others. 2024. The llama 3 herd of models. arXiv preprint arXiv:2407.21783 .Yexiao He, Ziyao Wang, Zheyu Shen, Guoheng Sun, Yucong Dai, Yongkai Wu, Hongyi Wang, and Ang Li. 2024. Shed: shapley-based automated dataset re-finement for instruction fine-tuning. In Proceedings of the 38th International Conference on Neural In-formation Processing Systems , NIPS ’24, Red Hook, NY, USA. Curran Associates Inc. Dan Hendrycks, Collin Burns, Steven Basart, Andy Zou, Mantas Mazeika, Dawn Song, and Jacob Steinhardt. 2020. Measuring massive multitask language under-standing. arXiv preprint arXiv:2009.03300 .Dan Hendrycks, Collin Burns, Saurav Kadavath, Akul Arora, Steven Basart, Eric Tang, Dawn Xiaodong Song, and Jacob Steinhardt. 2021. Measuring math-ematical problem solving with the math dataset. 
+
+ArXiv , abs/2103.03874. Edward J Hu, Yelong Shen, Phillip Wallis, Zeyuan Allen-Zhu, Yuanzhi Li, Shean Wang, Liang Wang, Weizhu Chen, and 1 others. 2022. Lora: Low-rank adaptation of large language models. Iclr , 1(2):3. Abdullatif Köksal, Timo Schick, Anna Korhonen, and Hinrich Schütze. 2024. Longform: Effective instruc-tion tuning with reverse instructions. In Findings of the Association for Computational Linguistics: EMNLP 2024 , pages 7056–7078. Po-Nien Kung, Fan Yin, Di Wu, Kai-Wei Chang, and Nanyun Peng. 2023. Active instruction tuning: Improving cross-task generalization by training on prompt sensitive tasks. In Proceedings of the 2023 Conference on Empirical Methods in Natural Lan-guage Processing , pages 1813–1829. Nathan Lambert, Jacob Morrison, Valentina Pyatkin, Shengyi Huang, Hamish Ivison, Faeze Brahman, Lester James V Miranda, Alisa Liu, Nouha Dziri, Shane Lyu, and 1 others. 2024. Tulu 3: Pushing fron-tiers in open language model post-training. arXiv preprint arXiv:2411.15124 .Ming Li, Yong Zhang, Shwai He, Zhitao Li, Hongyu Zhao, Jianzong Wang, Ning Cheng, and Tianyi Zhou. 
+
+92024a. Superfiltering: Weak-to-strong data filtering for fast instruction-tuning. In Proceedings of the 62nd Annual Meeting of the Association for Compu-tational Linguistics (Volume 1: Long Papers) , pages 14255–14273. Ming Li, Yong Zhang, Zhitao Li, Jiuhai Chen, Lichang Chen, Ning Cheng, Jianzong Wang, Tianyi Zhou, and Jing Xiao. 2024b. From quantity to quality: Boost-ing llm performance with self-guided data selection for instruction tuning. In Proceedings of the 2024 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies (Volume 1: Long Papers) ,pages 7602–7635. Yunshui Li, Binyuan Hui, Xiaobo Xia, Jiaxi Yang, Min Yang, Lei Zhang, Shuzheng Si, Ling-Hao Chen, Jun-hao Liu, Tongliang Liu, and 1 others. 2024c. One-shot learning as instruction data prospector for large language models. In Proceedings of the 62nd Annual Meeting of the Association for Computational Lin-guistics (Volume 1: Long Papers) , pages 4586–4601. Wei Liu, Weihao Zeng, Keqing He, Yong Jiang, and Junxian He. 2023. What makes good data for alignment? a comprehensive study of automatic data selection in instruction tuning. arXiv preprint arXiv:2312.15685 .Zifan Liu, Amin Karbasi, and Theodoros Rekatsinas. 2024. Tsds: data selection for task-specific model finetuning. In Proceedings of the 38th International Conference on Neural Information Processing Sys-tems , NIPS ’24, Red Hook, NY, USA. Curran Asso-ciates Inc. Shayne Longpre, Le Hou, Tu Vu, Albert Webson, Hyung Won Chung, Yi Tay, Denny Zhou, Quoc V Le, Barret Zoph, Jason Wei, and 1 others. 2023. The flan collection: Designing data and methods for effective instruction tuning. In International conference on machine learning , pages 22631–22648. PMLR. Haipeng Luo, Qingfeng Sun, Can Xu, Pu Zhao, Jian-guang Lou, Chongyang Tao, Xiubo Geng, Qingwei Lin, Shifeng Chen, and Dongmei Zhang. 2023. Wiz-ardmath: Empowering mathematical reasoning for large language models via reinforced evol-instruct. 
+
+arXiv preprint arXiv:2308.09583 .Baolin Peng, Chunyuan Li, Pengcheng He, Michel Gal-ley, and Jianfeng Gao. 2023. Instruction tuning with gpt-4. arXiv preprint arXiv:2304.03277 .Rafael Rafailov, Archit Sharma, Eric Mitchell, Christo-pher D Manning, Stefano Ermon, and Chelsea Finn. 2023. Direct preference optimization: Your language model is secretly a reward model. Advances in neural information processing systems , 36:53728–53741. Stephanie Schoch, Ritwick Mishra, and Yangfeng Ji. 2023. Data selection for fine-tuning large language models using transferred shapley values. In Proceed-ings of the 61st Annual Meeting of the Association for Computational Linguistics (Volume 4: Student Research Workshop) , pages 266–275. Rohan Taori, Ishaan Gulrajani, Tianyi Zhang, Yann Dubois, Xuechen Li, Carlos Guestrin, Percy Liang, and Tatsunori B. Hashimoto. 2023a. Stan-ford alpaca: An instruction-following llama model. https://github.com/tatsu-lab/ stanford_alpaca .Rohan Taori, Ishaan Gulrajani, Tianyi Zhang, Yann Dubois, Xuechen Li, Carlos Guestrin, Percy Liang, and Tatsunori B Hashimoto. 2023b. Stanford alpaca: An instruction-following llama model. Jingtan Wang, Xiaoqiang Lin, Rui Qiao, Pang Wei Koh, Chuan-Sheng Foo, and Bryan Kian Hsiang Low. 2025. NICE data selection for instruction tuning in LLMs with non-differentiable evaluation metric. In 
+
+Forty-second International Conference on Machine Learning .Yizhong Wang, Yeganeh Kordi, Swaroop Mishra, Alisa Liu, Noah A. Smith, Daniel Khashabi, and Hannaneh Hajishirzi. 2023. Self-instruct: Aligning language models with self-generated instructions. In Proceed-ings of the 61st Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers) ,pages 13484–13508, Toronto, Canada. Association for Computational Linguistics. Shengguang Wu, Keming Lu, Benfeng Xu, Junyang Lin, Qi Su, and Chang Zhou. 2023. Self-evolved diverse data sampling for efficient instruction tuning. arXiv preprint arXiv:2311.08182 .Mengzhou Xia, Sadhika Malladi, Suchin Gururangan, Sanjeev Arora, and Danqi Chen. 2024. Less: select-ing influential data for targeted instruction tuning. In 
+
+Proceedings of the 41st International Conference on Machine Learning , ICML’24. JMLR.org. Sang Michael Xie, Shibani Santurkar, Tengyu Ma, and Percy S Liang. 2023. Data selection for language models via importance resampling. Advances in Neural Information Processing Systems , 36:34201– 34227. Canwen Xu, Daya Guo, Nan Duan, and Julian McAuley. 2023. Baize: An open-source chat model with parameter-efficient tuning on self-chat data. In Pro-ceedings of the 2023 conference on empirical meth-ods in natural language processing , pages 6268– 6278. An Yang, Anfeng Li, Baosong Yang, Beichen Zhang, Binyuan Hui, Bo Zheng, Bowen Yu, Chang Gao, Chengen Huang, Chenxu Lv, and 1 others. 2025a. Qwen3 technical report. arXiv preprint arXiv:2505.09388 .Yuming Yang, Yang Nan, Junjie Ye, Shihan Dou, Xiao Wang, Shuo Li, Huijie Lv, Tao Gui, Qi Zhang, and Xuanjing Huang. 2025b. Measuring data diversity for instruction tuning: A systematic analysis and a reliable metric. In Proceedings of the 63rd An-nual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers) , pages 18530– 18549, Vienna, Austria. Association for Computa-tional Linguistics. 
+
+10 Longhui Yu, Weisen Jiang, Han Shi, Jincheng Yu, Zhengying Liu, Yu Zhang, James T Kwok, Zhen-guo Li, Adrian Weller, and Weiyang Liu. 2023. Metamath: Bootstrap your own mathematical ques-tions for large language models. arXiv preprint arXiv:2309.12284 .Xiang Yue, Xingwei Qu, Ge Zhang, Yao Fu, Wen-hao Huang, Huan Sun, Yu Su, and Wenhu Chen. 2023. Mammoth: Building math generalist models through hybrid instruction tuning. arXiv preprint arXiv:2309.05653 .Renrui Zhang, Jiaming Han, Chris Liu, Peng Gao, Ao-jun Zhou, Xiangfei Hu, Shilin Yan, Pan Lu, Hong-sheng Li, and Yu Qiao. 2023. Llama-adapter: Effi-cient fine-tuning of language models with zero-init attention. arXiv preprint arXiv:2303.16199 .Zhengxin Zhang, Dan Zhao, Xupeng Miao, Gabriele Oliaro, Zhihao Zhang, Qing Li, Yong Jiang, and Zhihao Jia. 2024. Quantized side tuning: Fast and memory-efficient tuning of quantized large language models. In Proceedings of the 62nd Annual Meet-ing of the Association for Computational Linguistics (Volume 1: Long Papers) , pages 1–17. Chunting Zhou, Pengfei Liu, Puxin Xu, Srini Iyer, Jiao Sun, Yuning Mao, Xuezhe Ma, Avia Efrat, Ping Yu, Lili Yu, Susan Zhang, Gargi Ghosh, Mike Lewis, Luke Zettlemoyer, and Omer Levy. 2023a. Lima: less is more for alignment. In Proceedings of the 37th International Conference on Neural Information Processing Systems , NIPS ’23, Red Hook, NY, USA. Curran Associates Inc. Chunting Zhou, Pengfei Liu, Puxin Xu, Srinivasan Iyer, Jiao Sun, Yuning Mao, Xuezhe Ma, Avia Efrat, Ping Yu, Lili Yu, and 1 others. 2023b. Lima: Less is more for alignment. Advances in Neural Information Processing Systems , 36:55006–55021. Daquan Zhou, Kai Wang, Jianyang Gu, Xiangyu Peng, Dongze Lian, Yifan Zhang, Yang You, and Jiashi Feng. 2023c. Dataset quantization. In Proceedings of the IEEE/CVF International Conference on Com-puter Vision , pages 17205–17216. 
+
+A Artifact Use Consistent With Intended Use 
+
+We use pretrained models, finetuning datasets, eval-uation benchmarks, and baseline implementations described in Section 4 only for research purposes. Our use is limited to controlled data-selection, fine-tuning, and benchmark evaluation experiments, consistent with the intended research use of these artifacts. Artifacts produced by this work, includ-ing selected subsets, proxy evaluation sets, hier-archy partitions, utility estimates, and code, are intended for research on efficient finetuning data selection, and any derived artifacts should be used or redistributed only when permitted by the licenses and access terms of the original datasets, models, and benchmarks. 
+
+B AI Assistants In Research Or Writing 
+
+We used AI assistants during the preparation of this work for limited coding and writing support. In particular, we use Claude Code for parts of the im-plementation, including code drafting, debugging, and refactoring. We also used GPT/OpenAI tools to improve the clarity, grammar, and presentation of the manuscript. All research ideas, method de-sign, experimental decisions, result analysis, and final manuscript content were reviewed and verified by the authors. The authors take full responsibility for the correctness, originality, and integrity of the submitted work. 
+
+C Proof 
+
+C.1 Universal Notation Table 
+
+Table 2 summarizes the notation used in the method and appendix. The same symbols are used through-out unless a local proof explicitly introduces a tem-porary dummy variable. 11 Table 2: Universal notation table for HARP. 
+
+Symbol Meaning 
+
+Data, evaluation, and proxy construction 
+
+D = {xi}Ni=1 Candidate training dataset; xi is one training example and N is the number of candidates. 
+
+E, Ed, D Full evaluation set and its domain-d subset, and the number of evaluation domains. The index d ∈ [D] ranges over evaluation domains. 
+
+eE, eEd Proxy evaluation set and its domain-d subset. 
+
+nd, kd, kdom , Kproxy , ρ,
+
+ρeff , kboot 
+
+Full domain size, proxy domain size, raw-domain size floor, minimum desired total proxy size, and proxy sampling ratio, effective capped proxy sampling ratio, and bootstrap bucket size threshold. 
+
+z(e), ˆzi, ¯zg Evaluation-example embedding, normalized training-example embed-ding, and mean embedding of leaf g.
+
+A(S), c(S), cg Training subset induced by selected leaves, total selected leaf cost, and individual leaf cost: A(S) = S 
+
+> g∈S
+
+Lg, c(S) = P 
+
+> g∈S
+
+|L g|, and 
+
+cg = |L g|.
+
+B, K Training-data budget and an upper bound on the number of leaves in any feasible set. 
+
+Cmin , Cmax Minimum and maximum leaf-size constraints. 
+
+U (S), ud(S), v0(d), bd Task-averaged utility, domain utility, base-model domain utility, and shorthand bd = v0(d).
+
+Lg, G, p(g), Pp Leaf group, number of leaves, parent node of leaf g, and leaves under parent p.
+
+Rp, rp, R Representative leaves in parent p, their count, and total representative count. 
+
+ϕg(d), yr(d), eyg(d), bϕg(d) True main effect, measured representative effect, interpolated estimate, and final estimated main effect. 
+
+αg,r , neff (g), ∆g,p Interpolation weight, effective representative count, and weighted repre-sentative distance. 
+
+μ0(d), τ 2(d), σ2 
+
+> p
+
+(d), ρg(d) Global measured-effect mean, across-node variance, within-node vari-ance, and empirical-Bayes shrinkage weight. 
+
+Adom , wd, ϵdom Active domains, active-domain weights, and active-domain threshold. 
+
+Fk Feasible candidate set used by greedy selection at step k: Fk = {g / ∈
+
+Sk : c(Sk) + cg ≤ B}.
+
+yC 
+
+> d
+
+(S), byC 
+
+> d
+
+(S) True and estimated clipped conservative domain utilities. 
+
+UC(S), bUC(S) True and estimated conservative first-order utilities. 
+
+yE 
+
+> d
+
+(S), byE 
+
+> d
+
+(S) True and estimated clipped expansive additive domain utilities. 
+
+UE(S), bUE(S) True and estimated expansive additive first-order utilities. 
+
+qC 
+
+> d
+
+(S), qE 
+
+> d
+
+(S) Raw unclipped conservative and expansive domain envelopes. 
+
+ϵC, δC, ϵE, δE, ϵopt First-order surrogate errors, estimation errors, and optimization gap for HARP-C and HARP-E. 12 C.2 Stability of Domain-Aware Proxy Evaluation 
+
+This lemma analyzes the fixed proxy evaluation set constructed in Section 3.2. It shows that the gap between full-domain utility and proxy-domain utility is controlled by two quantities in-duced by the proxy geometry: how well proxy examples cover the full domain, and how bal-anced their represented regions are. The cor-rected proxy sampling rate in the method satisfies 
+
+ρeff = min {1, max( ρ, K proxy /|E| )}, so each re-tained domain has 0 < k d ≤ |E d|.
+
+Lemma 1 (Coverage stability of domain-aware proxy evaluation) . Fix an evaluation domain d af-ter the domain construction step, with full evalua-tion set Ed = {ei}nd 
+
+> i=1
+
+and proxy set eEd = {eej }kd
+
+> j=1
+
+.Let z(e) ∈ Rp denote the embedding of evaluation example e. For a selected leaf set S, let A(S) = S 
+
+> g∈S
+
+Lg, and let fS be the model fine-tuned on 
+
+A(S), and define the normalized per-example eval-uation value as sS (e) = m(fS (e), y e) ∈ [0 , 1] ,where m is the evaluation metric. Define the full-domain and proxy-domain utilities as 
+
+ud(S; Ed) = 1
+
+nd
+
+X
+
+> e∈E d
+
+sS (e),ud(S; eEd) = 1
+
+kd
+
+X 
+
+> ee∈eEd
+
+sS (ee).
+
+For each proxy example eej , define its Voronoi cell over the full domain as 
+
+Cj =
+
+n
+
+e ∈ E d : j = arg min 
+
+> ℓ∈[kd]
+
+∥z(e) − z(eeℓ)∥2
+
+o
+
+,
+
+with arbitrary tie-breaking, and let ωj = |Cj |/n d
+
+be the fraction of full-domain examples represented by proxy point eej . Define the within-cell score oscillation for S as 
+
+εd(S) = max  
+
+> j∈[kd]
+
+max 
+
+> e∈Cj
+
+sS (e) − sS (eej ) .
+
+Then, for any selected leaf set S,
+
+ud(S; Ed) − ud(S; eEd) ≤ εd(S)+ 12 ω − 1
+
+kd
+
+1 1
+
+.
+
+Moreover, if sS is Ld-Lipschitz over evaluation embeddings and 
+
+rd = max 
+
+> e∈E d
+
+min  
+
+> ee∈eEd
+
+∥z(e) − z(ee)∥2
+
+is the proxy covering radius, then εd(S) ≤ Ldrd,and therefore 
+
+ud(S; Ed) − ud(S; eEd) ≤ Ldrd+ 12 ω − 1
+
+kd
+
+1 1
+
+.
+
+Proof. Fix an evaluation domain d and a selected leaf set S. For each full evaluation example ei ∈Ed, let 
+
+π(i) = arg min 
+
+> j∈[kd]
+
+∥z(ei) − z(eej )∥2
+
+be the index of its nearest proxy example. By con-struction, ei ∈ Cπ(i). Using the definition of εd(S),we have 
+
+sS (ei) − sS (eeπ(i)) ≤ εd(S).
+
+Averaging over all examples in Ed gives 
+
+1
+
+ndndX
+
+> i=1
+
+sS (ei) − 1
+
+ndndX
+
+> i=1
+
+sS (eeπ(i)) ≤ εd(S).
+
+The first term is ud(S; Ed). The second term can be regrouped by proxy Voronoi cells: 
+
+1
+
+ndndX
+
+> i=1
+
+sS (eeπ(i)) = 
+
+> kd
+
+X
+
+> j=1
+
+|Cj |
+
+nd
+
+sS (eej )=
+
+> kd
+
+X
+
+> j=1
+
+ωj sS (eej ).
+
+Thus, 
+
+ud(S; Ed) −
+
+> kd
+
+X
+
+> j=1
+
+ωj sS (eej ) ≤ εd(S).
+
+It remains to compare the cell-weighted proxy av-erage with the unweighted proxy average: 
+
+ud(S; eEd) = 1
+
+kdkdX
+
+> j=1
+
+sS (eej ).
+
+By the triangle inequality, 
+
+ud(S; Ed) − ud(S; eEd)
+
+≤ εd(S) + 
+
+> kd
+
+X
+
+> j=1
+
+
+
+ωj − 1
+
+kd
+
+
+
+sS (eej ) .
+
+Let aj = ωj − 1 
+
+> kd
+
+. Since both ω and 1 
+
+> kd
+
+1 are prob-ability vectors, Pkd 
+
+> j=1
+
+aj = 0 . Because sS (eej ) ∈
+
+13 [0 , 1] ,
+
+> kd
+
+X
+
+> j=1
+
+aj sS (eej ) ≤ X 
+
+> j:aj>0
+
+aj
+
+= 12
+
+> kd
+
+X
+
+> j=1
+
+|aj |
+
+= 12 ω − 1
+
+kd
+
+1 1
+
+.
+
+Combining the within-cell oscillation term and the cell-imbalance term gives 
+
+ud(S; Ed) − ud(S; eEd) ≤ εd(S)+ 12 ω − 1
+
+kd
+
+1 1
+
+.
+
+If sS is Ld-Lipschitz over embeddings, then for every e ∈ Cj ,
+
+sS (e) − sS (eej ) ≤ Ld∥z(e) − z(eej )∥2 ≤ Ldrd.
+
+Therefore εd(S) ≤ Ldrd, which yields the covering-radius version of the bound. This com-pletes the proof. 
+
+Interpretation. The first term captures local rep-resentativeness: proxy examples are reliable when nearby full-domain examples have similar evalua-tion values. The second term captures the cost of us-ing an unweighted proxy average: it is small when the proxy cells represent similar fractions of the full domain. If one instead used the cell-weighted proxy utility Pkd 
+
+> j=1
+
+ωj sS (eej ), the imbalance term would disappear, leaving only the within-cell oscil-lation term. 
+
+C.3 Iteration-Reduction Bound for Leaf-Level Estimation 
+
+The following lemma isolates the reduction ob-tained by moving from individual examples to leaf groups. It bounds the number of the utility queries that would be required if every final leaf were mea-sured once; the representative-leaf estimation step in Section 3.4 further reduces this cost in practice. The upper leaf-size parameter Cmax controls recur-sive splitting, while the lower bound Cmin controls the counting argument below. 
+
+Lemma 2 (Leaf grouping reduces the utility-query count) . Let {L g}Gg=1 be the final leaf groups con-structed by HARP. Suppose that the leaves form a partition of the candidate pool D, where |D| = N ,and that each final leaf satisfies the minimum-size constraint |L g| ≥ Cmin . Then 
+
+G ≤ NCmin 
+
+.
+
+Therefore, exhaustive utility evaluation at the leaf level requires at most N/C min train–evaluate iter-ations, compared with N iterations for exhaustive individual-example singleton estimation. Proof. Because the final leaf groups form a parti-tion of D, each training example belongs to exactly one leaf group, and therefore 
+
+N =
+
+> G
+
+X
+
+> g=1
+
+|L g|.
+
+By the minimum-size constraint, |L g| ≥ Cmin for every g. Hence 
+
+N =
+
+> G
+
+X
+
+> g=1
+
+|L g| ≥ 
+
+> G
+
+X
+
+> g=1
+
+Cmin = GC min .
+
+Rearranging gives G ≤ N/C min . Thus, replacing individual examples with leaf groups reduces the number of possible singleton utility measurements from N to at most N/C min before applying any additional representative-leaf subsampling. 
+
+C.4 Representative Interpolation Error 
+
+For the interpolation weights used in Section 3.4, assume Rp̸ = ∅ for every nonempty parent node 
+
+p. Define 
+
+ν(¯ z) = 
+
+(
+
+¯z/ ∥¯z∥2, ∥¯z∥2 > 0,
+
+0, ∥¯z∥2 = 0 ,
+
+and, for λ > 0,
+
+κ(¯ zg, ¯zr) = exp 
+
+ ν(¯ zg)⊤ν(¯ zr)
+
+λ
+
+
+
+.
+
+Then 
+
+αg,r = κ(¯ zg, ¯zr)
+
+P 
+
+> r′∈R p(g)
+
+κ(¯ zg, ¯zr′ )
+
+is well-defined, nonnegative, and satisfies P 
+
+> r∈R p(g)
+
+αg,r = 1 .
+
+Lemma 3 (Representative interpolation under local smoothness) . Fix an nonempty parent node p, an evaluation domain d, and a leaf g ∈ P p, with Rp̸ =
+
+∅. Suppose the true domainwise main effect is 
+
+14 locally smooth over leaf embeddings inside parent 
+
+p: for any leaves g, h ∈ P p,
+
+|ϕg(d) − ϕh(d)| ≤ Lp,d ∥¯zg − ¯zh∥2.
+
+For each measured representative r ∈ R p, suppose 
+
+yr(d) = ϕr(d) + εr(d),
+
+E[εr(d)] = 0 ,
+
+Var( εr(d)) ≤ σ2 
+
+> p
+
+(d),
+
+and suppose the noises are independent across rep-resentatives. For an unmeasured leaf g, define the local representative interpolation estimate by 
+
+eyg(d) = X
+
+> r∈R p
+
+αg,r yr(d),
+
+X
+
+> r∈R p
+
+αg,r = 1 ,αg,r ≥ 0.
+
+Let 
+
+∆g,p = X
+
+> r∈R p
+
+αg,r ∥¯zg − ¯zr∥2,neff (g) = 1
+
+P 
+
+> r∈R p
+
+α2
+
+> g,r
+
+.
+
+Then the interpolation bias and variance satisfy 
+
+|E[eyg(d)] − ϕg(d)| ≤ Lp,d ∆g,p ,
+
+and 
+
+Var( eyg(d)) ≤ σ2 
+
+> p
+
+(d)
+
+neff (g) .
+
+Consequently, 
+
+E (eyg(d) − ϕg(d)) 2 ≤ L2
+
+> p,d
+
+∆2 
+
+> g,p
+
++ σ2 
+
+> p
+
+(d)
+
+neff (g) .
+
+For a directly measured representative leaf, HARP sets bϕg(d) = yg(d) instead of using interpolation; equivalently, one may take αg,g = 1 , which makes 
+
+∆g,p = 0 .Proof. Using the definition of eyg(d) and the zero-mean noise assumption, 
+
+E[eyg(d)] = X
+
+> r∈R p
+
+αg,r ϕr(d).
+
+Since the weights are nonnegative and sum to one, 
+
+|E[eyg(d)] − ϕg(d)|
+
+= X
+
+> r∈R p
+
+αg,r (ϕr(d) − ϕg(d)) 
+
+≤ X
+
+> r∈R p
+
+αg,r |ϕr(d) − ϕg(d)|.
+
+By local smoothness, 
+
+|ϕr(d) − ϕg(d)| ≤ Lp,d ∥¯zg − ¯zr∥2.
+
+Combining the two inequalities gives 
+
+|E[eyg(d)] − ϕg(d)|≤ Lp,d 
+
+X
+
+> r∈R p
+
+αg,r ∥¯zg − ¯zr∥2
+
+= Lp,d ∆g,p .
+
+For the variance, independence gives 
+
+Var( eyg(d)) = Var 
+
+ X
+
+> r∈R p
+
+αg,r εr(d)
+
+
+
+= X
+
+> r∈R p
+
+α2
+
+> g,r
+
+Var( εr(d)) .
+
+Since Var( εr(d)) ≤ σ2 
+
+> p
+
+(d),
+
+Var( eyg(d)) ≤ σ2 
+
+> p
+
+(d) X
+
+> r∈R p
+
+α2
+
+> g,r
+
+= σ2 
+
+> p
+
+(d)
+
+neff (g) .
+
+Finally, the mean-squared interpolation error de-composes into squared bias plus variance: 
+
+E (eyg(d) − ϕg(d)) 2
+
+= ( E[eyg(d)] − ϕg(d)) 2 + Var( eyg(d)) .
+
+Substituting the bias and variance bounds proves the stated MSE bound. The directly measured case follows by setting all interpolation mass on g,which eliminates the smoothness-bias term. 
+
+C.5 Empirical-Bayes Shrinkage Proposition 1 (Normal-normal shrinkage and risk reduction) . Fix an unmeasured leaf g and domain d.Suppose the local representative estimate satisfies 
+
+eyg(d) | θg(d) ∼ N (θg(d), V g(d)) ,
+
+where θg(d) = E[eyg(d)] denotes the local inter-polation target rather than necessarily the true main effect ϕg(d). By Lemma 3, this target sat-isfies |θg(d) − ϕg(d)| ≤ Lp(g),d ∆g,p (g). where 
+
+Vg(d) = σ2
+
+> p(g)
+
+(d)/n eff (g) and Vg(d) > 0, and suppose the latent local interpolation target has prior 
+
+θg(d) ∼ N (μ0(d), τ 2(d)) τ 2(d) > 0.
+
+15 Then the posterior mean is 
+
+bϕg(d) = ρg(d)eyg(d) + (1 − ρg(d)) μ0(d),ρg(d) = τ 2(d)
+
+τ 2(d) + Vg(d) .
+
+Moreover, under squared error loss, this posterior mean is the Bayes estimator, and its integrated mean-squared error is 
+
+E
+
+h
+
+( bϕg(d) − θg(d)) 2i
+
+= τ 2(d)Vg(d)
+
+τ 2(d) + Vg(d) ≤ Vg(d)= E (eyg(d) − θg(d)) 2 .
+
+Consequently, when the later theory uses bϕg(d)
+
+as an estimator of the true main effect ϕg(d), the error bound must include both shrinkage risk and interpolation bias: 
+
+E
+
+h
+
+( bϕg(d) − ϕg(d)) 2i
+
+≤ 2 τ 2(d)Vg(d)
+
+τ 2(d) + Vg(d) + 2 L2
+
+> p(g),d
+
+∆2
+
+> g,p (g)
+
+.
+
+For directly measured leaves, HARP sets 
+
+bϕg(d) = yg(d); this shrinkage proposition applies to unmeasured leaves estimated by interpolation. Proof. For readability, suppress g, d and write ey, θ,
+
+μ0, τ 2, and V . The likelihood and prior are 
+
+ey | θ ∼ N (θ, V ), θ ∼ N (μ0, τ 2).
+
+By conjugacy of the normal-normal model, the posterior precision is 
+
+1
+
+τ 2 + 1
+
+V ,
+
+so the posterior variance is 
+
+ 1
+
+τ 2 + 1
+
+V
+
+−1
+
+= τ 2Vτ 2 + V .
+
+The posterior mean is  
+
+> 1
+> V
+
+ey + 1  
+
+> τ2
+
+μ01 
+
+> V
+
++ 1 
+
+> τ2
+
+= τ 2
+
+τ 2 + V ey + Vτ 2 + V μ0.
+
+Thus ρ = τ 2/(τ 2 + V ), giving the estimator in the proposition. Under squared error loss, the posterior mean minimizes posterior expected squared error, so it is the Bayes estimator. Its integrated Bayes risk equals the expected posterior variance: 
+
+E
+
+h
+
+( bϕ − θ)2i
+
+= τ 2Vτ 2 + V .
+
+The unshrunk estimator ey has integrated mean-squared error 
+
+E (ey − θ)2 = E[ε2] = V. 
+
+Since τ 2/(τ 2 + V ) ≤ 1,
+
+τ 2Vτ 2 + V ≤ V. 
+
+Therefore the shrinkage estimator has no larger integrated squared error than the unshrunk local estimate. Finally, the true-effect bound follows from (a + b)2 ≤ 2a2 + 2 b2. Since bϕ − ϕ = ( bϕ −
+
+θ) + ( θ − ϕ) and |θ − ϕ| ≤ Lp(g),d ∆g,p (g),
+
+E
+
+h
+
+( bϕ − ϕ)2i
+
+≤ 2E
+
+h
+
+( bϕ − θ)2i
+
++ 2( θ − ϕ)2
+
+≤ 2 τ 2Vτ 2 + V + 2 L2
+
+> p(g),d
+
+∆2
+
+> g,p (g)
+
+.
+
+This proves the additional true main-effect error bound stated in the proposition. 
+
+Proposition 2 (MSE-to-uniform main-effect error event) . Suppose that for every leaf-domain pair 
+
+(g, d ) there is a finite bound Mg,d such that 
+
+E
+
+h
+
+( bϕg(d) − ϕg(d)) 2i
+
+≤ Mg,d .
+
+For an unmeasured leaf, Proposition 1 gives one admissible choice 
+
+Mg,d = 2 τ 2(d)Vg(d)
+
+τ 2(d) + Vg(d) + 2 L2
+
+> p(g),d
+
+∆2
+
+> g,p (g)
+
+.
+
+For a directly measured leaf with bϕg(d) = yg(d) = 
+
+ϕg(d) + εg(d), one may take any valid second-moment bound on εg(d), for example Mg,d ≥
+
+E[εg(d)2]. Let 
+
+MΣ =
+
+> G
+
+X
+
+> g=1
+> D
+
+X
+
+> d=1
+
+Mg,d .
+
+Then, for any failure probability α ∈ (0 , 1) , with 
+
+ηα =
+
+r MΣ
+
+α ,
+
+16 we have 
+
+Pr 
+
+
+
+max  
+
+> g∈[G], d ∈[D]
+
+| bϕg(d) − ϕg(d)| ≤ ηα
+
+
+
+≥ 1 − α. 
+
+Consequently, the deterministic condition | bϕg(d) −
+
+ϕg(d)| ≤ η used in the envelope sensitivity lemma can be read as conditioning on this uniform event, with η = ηα.Proof. Let 
+
+Z =
+
+> G
+
+X
+
+> g=1
+> D
+
+X
+
+> d=1
+
+( bϕg(d) − ϕg(d)) 2.
+
+By the assumed pairwise MSE bounds, E[Z] ≤
+
+MΣ. If 
+
+max  
+
+> g,d
+
+| bϕg(d) − ϕg(d)| > η α,
+
+then Z > η 2
+
+> α
+
+. Therefore, by Markov’s inequality, 
+
+Pr 
+
+
+
+max  
+
+> g,d
+
+| bϕg(d) − ϕg(d)| > η α
+
+
+
+≤ Pr( Z > η 2
+
+> α
+
+) ≤ E[Z]
+
+η2
+
+> α
+
+≤ MΣ
+
+MΣ/α = α. 
+
+Taking complements proves the claim. 
+
+C.6 Train–Evaluate iteration Reduction from Representative Main-Effect Estimation Lemma 4 (Representative main-effect estimation reduces train–evaluate iterations) . Let {L g}Gg=1 be the leaf groups and let the parent partition be 
+
+{P p}Pp=1 . Suppose HARP measures rp = |R p|
+
+representative leaves inside each nonempty parent 
+
+p, with 1 ≤ rp ≤ |P p| and Rp ⊆ P p, and then es-timates all unmeasured leaves using interpolation and empirical-Bayes shrinkage. Let 
+
+R =
+
+> P
+
+X
+
+> p=1
+
+rp.
+
+Then domainwise main-effect estimation requires 
+
+R train–evaluate iterations instead of G iterations required by exhaustive singleton leaf evaluation. Thus HARP saves G − R singleton train–evaluate iterations and reduces the singleton measurement count by a factor of G/R . If rp ≤ r for every parent, then R ≤ P r .Proof. Exhaustive singleton leaf evaluation mea-sures ud(Lg) for every leaf g ∈ [G]. Since one fine-tuning run on Lg produces the vector of do-main utilities {ud(Lg)}Dd=1 , exhaustive singleton estimation requires exactly G train–evaluate itera-tions. HARP instead directly measures only the repre-sentative leaves. In parent p, it measures rp = |R p|
+
+representatives. Therefore the total number of mea-sured singleton leaves is 
+
+R =
+
+> P
+
+X
+
+> p=1
+
+rp.
+
+Interpolation and empirical-Bayes shrinkage then compute estimates for the remaining G − R leaves without additional fine-tuning runs. Hence the num-ber of train–evaluate iterations is R, saving G − R
+
+iterations compared with exhaustive singleton leaf evaluation. The reduction factor is G/R . Finally, if rp ≤ r for all p, then 
+
+R =
+
+> P
+
+X
+
+> p=1
+
+rp ≤
+
+> P
+
+X
+
+> p=1
+
+r = P r. 
+
+This completes the proof. 
+
+C.7 Theory for First-Order Envelope Selection 
+
+We prove a shared stability template for both HARP-C and HARP-E. The two variants differ only in how estimation error propagates through the envelope: HARP-C uses a maximum over posi-tive effects and therefore has sensitivity (K + 1) η,while HARP-E is additive in signed main effects and has sensitivity Kη .The deterministic estimation condition used in Lemma 6 is either an explicit assumption or a high-probability event supplied by Proposition 2. For each active domain d, define ϕ+ 
+
+> g
+
+(d) =max( ϕg(d), 0) and ϕ− 
+
+> g
+
+(d) = max( −ϕg(d), 0) .The raw HARP-C and HARP-E envelopes are 
+
+qC 
+
+> d
+
+(S) = bd + max  
+
+> g∈S
+
+ϕ+ 
+
+> g
+
+(d) − X
+
+> g∈S
+
+ϕ− 
+
+> g
+
+(d),
+
+with the convention max g∈∅ ϕ+ 
+
+> g
+
+(d) = 0 , and 
+
+qE 
+
+> d
+
+(S) = bd + X
+
+> g∈S
+
+ϕ+ 
+
+> g
+
+(d) − X
+
+> g∈S
+
+ϕ− 
+
+> g
+
+(d).
+
+Equivalently, since ϕ+ 
+
+> g
+
+(d) − ϕ− 
+
+> g
+
+(d) = ϕg(d),17 qE 
+
+> d
+
+(S) = bd + X
+
+> g∈S
+
+ϕg(d).
+
+For X ∈ { C, E}, define the clipped domain util-ity yXd (S) = clip [0 ,1] (qXd (S)) and the aggregate first-order utility 
+
+UX (S) = X
+
+> d∈A dom
+
+wdyXd (S).
+
+The estimated utility bUX (S) is defined analogously by replacing ϕg(d) with bϕg(d). In particular, 
+
+bqE 
+
+> d
+
+(S) = bd + X
+
+> g∈S
+
+bϕg(d).
+
+Lemma 5 (Envelope clipping stability) . Fix X ∈{C, E}. For each active domain d, suppose the true domain utility ud(S) ∈ [0 , 1] satisfies 
+
+ud(S) − qXd (S) ≤ ξXd (S)
+
+for every feasible set S. Let UA(S) =P 
+
+> d∈A dom
+
+wdud(S), using the same active-domain set and weights as UX . Then 
+
+ud(S) − yXd (S) ≤ ξXd (S),
+
+and therefore, for nonnegative active-domain weights, 
+
+|UA(S) − UX (S)| ≤ X
+
+> d∈A dom
+
+wdξXd (S).
+
+If the paper-level utility U (S) is evaluated on the full downstream suite rather than only the active domains, then the difference between U (S) and 
+
+UA(S), together with proxy-evaluation error, is absorbed into the approximation term ϵX in Theo-rem 3. Proof. Fix d, S, and X ∈ { C, E}. Since ud(S) ∈
+
+[0 , 1] , we have ud(S) = clip [0 ,1] (ud(S)) . The clip-ping map is 1-Lipschitz, so 
+
+ud(S) − yXd (S)
+
+= clip [0 ,1] (ud(S)) − clip [0 ,1] (qXd (S)) 
+
+≤ ud(S) − qXd (S) ≤ ξXd (S).
+
+Multiplying by wd, summing over active domains, and applying the triangle inequality gives 
+
+|UA(S) − UX (S)| ≤ X
+
+> d∈A dom
+
+wdξXd (S).
+
+Theorem 3 (Shared first-order stability template) .
+
+Fix X ∈ { C, E}. Let UX be the first-order utility defined with the true main effects ϕg(d), and let 
+
+bUX be its estimated version defined with bϕg(d). Let 
+
+S⋆ ∈ arg max c(S)≤B U (S), where the maximum is taken over feasible leaf sets, and let bSX be the set returned by the corresponding HARP variant. Suppose that, for every feasible set S,
+
+|U (S) − UX (S)| ≤ ϵX
+
+and 
+
+| bUX (S) − UX (S)| ≤ δX .
+
+If the greedy procedure returns an ϵopt -approximate maximizer of bUX under the budget, where ϵopt denotes its optimization gap, then 
+
+U (S⋆) − U ( bSX ) ≤ 2ϵX + 2 δX + ϵopt .
+
+Proof. By the approximation assumption, 
+
+U (S⋆) ≤ UX (S⋆) + ϵX .
+
+By the estimation assumption, 
+
+UX (S⋆) ≤ bUX (S⋆) + δX .
+
+Since bSX is an ϵopt -approximate maximizer of bUX ,
+
+bUX (S⋆) ≤ bUX ( bSX ) + ϵopt .
+
+Applying the estimation and approximation as-sumptions again, 
+
+bUX ( bSX ) ≤ UX ( bSX ) + δX
+
+≤ U ( bSX ) + δX + ϵX .
+
+Combining the four inequalities gives 
+
+U (S⋆) − U ( bSX ) ≤ 2ϵX + 2 δX + ϵopt .
+
+Lemma 6 (Envelope sensitivity to main-effect esti-mation error) . Suppose every feasible set contains at most K leaves, the active-domain set Adom is fixed, the active-domain weights are nonnegative and weights sum to one, bd and wd are fixed, and 
+
+| bϕg(d) − ϕg(d)| ≤ η for all g, d . Then 
+
+δC ≤ (K + 1) η and δE ≤ Kη. 
+
+18 Proof. Since x 7 → max( x, 0) and x 7 →
+
+max( −x, 0) are both 1-Lipschitz, the assumption 
+
+| bϕg(d) − ϕg(d)| ≤ η implies 
+
+| bϕ+ 
+
+> g
+
+(d) − ϕ+ 
+
+> g
+
+(d)| ≤ η
+
+and 
+
+| bϕ− 
+
+> g
+
+(d) − ϕ− 
+
+> g
+
+(d)| ≤ η. 
+
+First consider HARP-C. For any feasible set S with 
+
+|S| ≤ K,
+
+max 
+
+> g∈S
+
+bϕ+ 
+
+> g
+
+(d) − max  
+
+> g∈S
+
+ϕ+ 
+
+> g
+
+(d) ≤ η, 
+
+where the empty-set convention gives zero on both sides when S = ∅. For the negative part, 
+
+X
+
+> g∈S
+
+bϕ− 
+
+> g
+
+(d) − X
+
+> g∈S
+
+ϕ− 
+
+> g
+
+(d) ≤ Kη. 
+
+Thus the raw HARP-C domain-envelope error is at most (K + 1) η. Since clipping to [0 , 1] is 1-Lipschitz, the clipped domain-utility error is also at most (K + 1) η. Summing over active domains with nonnegative weights that sum to one gives 
+
+| bUC(S) − UC(S)| ≤ (K + 1) η. 
+
+Hence δC ≤ (K + 1) η.Now consider HARP-E. Because 
+
+ϕ+ 
+
+> g
+
+(d)−ϕ− 
+
+> g
+
+(d) = ϕg(d) and bϕ+ 
+
+> g
+
+(d)− bϕ− 
+
+> g
+
+(d) = bϕg(d),
+
+we have 
+
+qE 
+
+> d
+
+(S) = bd+X
+
+> g∈S
+
+ϕg(d), bqE 
+
+> d
+
+(S) = bd+X
+
+> g∈S
+
+bϕg(d).
+
+Therefore, for any feasible set S with |S| ≤ K,
+
+bqE 
+
+> d
+
+(S) − qE 
+
+> d
+
+(S) = X
+
+> g∈S
+
+ bϕg(d) − ϕg(d)
+
+
+
+≤ X
+
+> g∈S
+
+| bϕg(d) − ϕg(d)|≤ Kη. 
+
+Again, clipping to [0 , 1] is 1-Lipschitz, so the clipped HARP-E domain-utility error is at most 
+
+Kη . Summing over active domains with nonnega-tive weights that sum to one gives 
+
+| bUE(S) − UE(S)| ≤ Kη. 
+
+Thus δE ≤ Kη .
+
+Table 3: Shared hyperparameters used by HARP and all baselines.                                  
+
+> Hyperparameter Value
+> LoRA fine-tuning (Stage 2)
+> LoRA rank r16
+> LoRA α32
+> LoRA dropout 0.05
+> LoRA target modules all linear projections Optimizer AdamW Learning rate 2×10 −4
+> Effective batch size 16
+> Epochs 3
+> Prefilter: sequence-length cap per training pool
+> Self-Instruct (SI) 512
+> WizardLM-Evol-70k (Wiz) 1,024
+> Tulu-3-SFT-mixture (Tulu) 1,024
+> Per-(model, seq-len) micro batch / grad-accum
+> QWEN 3-4B-B ASE ,≤1024 16 /1
+> QWEN 3-4B-B ASE ,2048 8/2
+> LLAMA -3.1-8B-B ASE / Q WEN 3-8B-BASE ,512 8/2
+> LLAMA -3.1-8B-B ASE / Q WEN 3-8B-BASE ,1024 4/4
+> LLAMA -3.1-8B-B ASE / Q WEN 3-8B-BASE ,2048 2/8
+> Evaluation (Stage 3, vLLM)
+> Decoding greedy (temp 0)Max new tokens, MMLU/ARC 128
+> Max new tokens, GSM8K/MATH 512
+> GPU memory utilization 0.95
+> Repetition
+> Random seeds per cell {42 ,1,2}
+
+Combining Theorem 3 with Lemma 6 gives the stability statements for HARP-C and HARP-E in the main text. The shared theorem explains why both variants have the same high-level stability form. The sensitivity lemma shows that HARP-C incurs one positive-side maximum error and up to K negative-side errors, giving (K + 1) η. HARP-E, although written with positive and negative parts, is additive in the signed main effects and therefore incurs only K signed-effect errors, giving Kη .
+
+D Experimental Hyperparameters 
+
+We split the hyperparameters into two tables. Ta-ble 3 lists the settings that are shared by HARP and all baselines — LoRA configuration, opti-mizer, sequence-length prefilter (per training pool), and evaluation decoding. Table 4 lists the HARP-specific hyperparameters ( ρ, M , L, Cmin , R, B,and the proxy evluation set sampling strategy and embedding model); those are the parameters ab-lated in Section 5.3. 19 Table 4: HARP-specific hyperparameters.                       
+
+> Hyperparameter Value
+> Proxy eval set (Sec. 3.2)
+> Sampling rule (in-domain) k-means++ Proxy fraction ρ0.10
+> Minimum proxy size Kproxy 100
+> Bootstrap-bucket floor kboot 20
+> Embedding model MiniLM-L6
+> Hierarchy (Sec. 3.3)
+> Max leaf size Cmax 1024
+> Min leaf size Cmin 256
+> Main-effect estimation (Sec. 3.4)
+> Reps per parent |R p|3
+> EB prior variance τ2(d)0.01
+> SE floor 10 −3
+> Envelope selection (Secs. 3.5–3.6)
+> Training budget B(best-prefix cap) 10 ,000
+
+E Computational Complexity 
+
+Table 5 summarizes the per-cell selection and final-training costs of HARP and the baselines. Let N
+
+denote the full training set size and B=10 ,000 the selection budget used by all budgeted baselines. Let TL(x) denote the finetuning cost on x exam-ples, which is linear in x for a fixed number of epochs. The selection-time variables are: F for the n-gram feature dimension in DSIR; Kc and ¯c for the number and average size of clusters in DQ and SHED; Kproxy for the proxy evaluation set size; 
+
+L for the leaf size cap; R for the number of rep-resentative leaves per parent used in main-effect estimation; T∇ for the cost of computing gradient features for one example in LESS; and TPG for the cost of one policy-gradient influence estimate in NICE. The HARP-selected subset size |S| is vari-able: across the 24 SI and Wiz cells in Table 1, HARP-C selects ∼ 1,500 examples on average, while HARP-E selects ∼ 4,400 .We include LESS (Xia et al., 2024) and NICE (Wang et al., 2025) for completeness. LESS builds a low-dimensional gradient datastore by run-ning a forward–backward pass on each training example, then selects examples by similarity to a few-shot target set. NICE extends influence es-timation to non-differentiable evaluation metrics through policy-gradient-style estimates, requiring repeated metric evaluation for candidate examples. Both methods scale linearly in N with a large per-example constant: LESS costs O(N · T∇), while NICE costs O(N · TPG ). We therefore list them for context but do not run them in the main 36-cell study. Although HARP trains small models during se-lection, its total finetuning work can fall below the 10 k-budget training-free baselines when the se-lected subset is small. Random, DSIR, and DQ each require TL(B) ≈ 30 ,000 example-epochs of final finetuning ( 10 ,000 examples for 3 epochs). On L LAMA -3.1-8B/Wiz/MMLU seed 1, HARP trains 39 of 97 leaves, each with roughly 700 exam-ples for one epoch, costing about 27 ,200 example-epochs. The final finetuning uses |S|=718 exam-ples for 3 epochs, adding 2,154 example-epochs. The total is therefore ≈ 29 ,400 example-epochs, below the 30 ,000 example-epochs used by the training-free baselines, while HARP-C still ob-tains the best result in the corresponding row of Table 1 ( 63 .8 vs. DSIR 61 .8, DQ 62 .5, and Ran-dom 62 .4). The train-based baselines pay selection costs tied to the full training dataset. SHED runs one finetuning pass per cluster ( O(Kc · TL(¯ c)) ), with 
+
+Kc often in the hundreds. LESS and NICE re-quire per-example gradient computation or policy-gradient influence estimation. HARP instead trains only R · (N/L ) representative leaves, with default 
+
+R=3 corresponding to roughly 40% leaf coverage, and each leaf contains at most 1,024 examples for one epoch. It then finetunes the final model on |S| ≪ B. By amortizing utility estimation across the hierarchy, HARP avoids both SHED’s per-cluster finetuning loop and the per-example gra-dient or metric evaluation required by LESS and NICE. 
+
+F Additional Ablation Studies 
+
+Due to space, we report two additional ablations in the appendix: (1) proxy evaluation set size M
+
+(Figure 5 left two panels), (2) Proxy evaluation set sampling strategy (Figure 5 right two panels), and (3) per-component compute across the L, R, and 
+
+M sweeps (Figure 6). All runs use Q WEN 3-4B-BASE on W IZARD LM with three random seeds, matching the main paper ablation setup. 
+
+Minimum proxy evaluation set size M (Figure 5, left two panels). M denotes the minimum number of examples used to construct the proxy evalua-tion set (Section 3.2). In realistic settings, the full evaluation set is often unavailable, private, or too large to use during data selection. We therefore use a compact proxy evaluation set, with M =100 
+
+20 100 200 300 400 500               
+
+> M(min eval reps)
+> 0
+> 20
+> 40
+> 60
+> 80
+> Accuracy (%)
+> ARC: Msweep
+> 100 200 300 400 500
+> M(min eval reps)
+> 0
+> 20
+> 40
+> 60
+> 80
+> GSM8K: Msweep
+> Diverse Strat Uniform
+> 0
+> 20
+> 40
+> 60
+> 80
+> ARC: Stage 1a strategy
+> Diverse Strat Uniform
+> 0
+> 20
+> 40
+> 60
+> 80
+> GSM8K: Stage 1a strategy
+> HARP-C
+> HARP-E
+> default
+
+Figure 5: Left two: experiments on the minimum proxy size M . Right two: experiments on proxy evaluation set sampling strategy. 256 512 1024 2048 4096                       
+
+> L(leaf size)
+> 0
+> 5000
+> 10000
+> 15000
+> Total FLOPs (PetaFLOPs)
+> 15,660 15,602 15,750 15,586 15,616
+> Lsweep
+> 135810
+> R(reps per parent)
+> 0
+> 10000
+> 20000
+> 30000
+> 40000
+> 50000
+> 60000
+> 5,225
+> 15,750
+> 25,950
+> 41,443
+> 51,718
+> Rsweep
+> 100 200 300 400 500
+> M(proxy subset size)
+> 0
+> 5000
+> 10000
+> 15000
+> 15,750 15,917 16,084 16,251 16,418
+> Msweep
+
+Figure 6: Pipeline FLOPs across the L, R, and M ablations. Table 5: Per-cell computational complexity of HARP and the baselines. TL(x) is the finetuning cost on x
+
+examples; N is the full training pool size; B=10 ,000 
+
+is the baseline selection budget; F , Kc, ¯c, Kproxy , L,
+
+R, T∇, TPG , and |S| are defined above. HARP-C and HARP-E share the same selection pipeline and differ only in the envelope used to choose the final subset, so their selection costs are identical. Rows marked † are not run in our main experiments due to selection-time cost. 
+
+Method Selection cost Final training 
+
+Random O(B) sampling TL(B)
+
+DSIR O(N F ) feature pass TL(B)
+
+DQ O(N K c) submodular TL(B)
+
+Full-FT — TL(N )
+
+SHED-W/O O(Kc · TL(¯ c)) TL(B)
+
+LESS † O(N · T∇) gradient datastore TL(B)
+
+NICE † O(N · TPG ) policy-grad. inf. TL(B)
+
+HARP-C/E TL(Kproxy ) + R · (N/L ) · TL(L) TL(|S|)
+
+as the default for both HARP and SHED to en-sure a fair comparison rather than as a tuned hy-perparameter. To test whether HARP is sensitive to a larger and more fine-grained proxy, we sweep 
+
+M ∈ { 200 , 300 , 400 , 500 } on ARC and GSM8K. Across the sweep, both HARP-C and HARP-E remain close to the default setting on each bench-mark. We therefore report these curves as sensitiv-ity checks rather than as a tuning prescription. 
+
+Proxy sampling strategy (Figure 5, right two panels). We fix M =100 and compare three strate-gies for constructing the proxy evaluation set: di-verse k-means++ sampling over embedding vec-tors (the default), stratified random sampling within each evaluation subject, and uniform random sam-pling over the full evaluation set. On multi-domain ARC, diverse k-means++ produces the most stable HARP-E performance across seeds ( 77 .0 ± 1.1), whereas the two random policies fall in the 58 –62 
+
+range and exhibit 5–15 × larger cross-seed stan-dard deviation. On single-domain GSM8K, the three strategies are nearly equivalent, as expected, since stratification provides little benefit when the evaluation set has only one bucket. 
+
+Pipeline FLOPs across L, R, and M (Figure 6). 
+
+Main-effect estimation, which requires per-leaf bootstrap LoRA training, dominates total hardware-independent FLOPs by 100 –2000 × across all three sweeps. The L sweep keeps total FLOPs essen-tially constant ( ∼ 15 .6 exa-FLOPs), because the leaf product Nleaves · ¯C = |D| is invariant in L. The 
+
+R sweep scales linearly, with 5.2, 25 .9, 41 .4, 51 .7
+
+exa-FLOPs for R ∈ { 1, 5, 8, 10 }, respectively. The 
+
+M sweep is essentially flat ( 15 .7–16 .4 exa-FLOPs), since the cost of evaluating representative leaves on a larger proxy set is small relative to the cost of training those leaves. 21

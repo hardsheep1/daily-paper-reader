@@ -1,0 +1,136 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-06-10T22:44:50.977942+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 0,
+    "deep_cap": 7,
+    "deep_selected": 0,
+    "quick_candidates": 3,
+    "quick_skim_target": 12,
+    "quick_selected": 3
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2606.07753v1",
+      "source": "arxiv",
+      "title": "ReadingMachine: A Computational Methodology for Structured Corpus Reading and Large-Scale Synthesis",
+      "abstract": "ReadingMachine is a computational methodology for structured corpus reading that uses large language models to perform bounded reading operations over entire document collections. Rather than relying on retrieval or recursive summarization, the approach decomposes analysis into inspectable stages including insight extraction, semantic clustering, theme generation, and iterative omission detection. By delaying irreversible compression and explicitly tracking intermediate representations, the method prioritizes coverage, traceability, and preservation of disagreement across large corpora. The system is demonstrated on a heterogeneous corpus of 152 industrial policy documents, producing more than 17,500 extracted insights and a structured thematic map. ReadingMachine is released as an open-source experimental framework for large-scale qualitative synthesis and corpus analysis.",
+      "authors": [
+        "James Morrissey"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-06-05T18:01:27+00:00",
+      "link": "https://arxiv.org/pdf/2606.07753v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "semantic clustering using LLMs on document corpora",
+      "llm_evidence_cn": "使用大语言模型对文档集合进行语义聚类",
+      "llm_evidence": "使用大语言模型对文档集合进行语义聚类",
+      "canonical_evidence": "使用大语言模型对文档集合进行语义聚类",
+      "llm_tldr_en": "ReadingMachine uses LLMs to perform semantic clustering and theme generation over large document collections, enabling structured corpus reading and synthesis.",
+      "llm_tldr_cn": "针对大规模文档集合的分析挑战，本文提出ReadingMachine方法论，利用大语言模型进行语义聚类、主题生成等分阶段可追溯分析，在152份工业政策文档上提取超过17500条洞见，优先保证覆盖率与可解释性。",
+      "llm_tldr": "针对大规模文档集合的分析挑战，本文提出ReadingMachine方法论，利用大语言模型进行语义聚类、主题生成等分阶段可追溯分析，在152份工业政策文档上提取超过17500条洞见，优先保证覆盖率与可解释性。",
+      "llm_tags": [
+        "query:ac"
+      ],
+      "matched_query_tag": "query:ac",
+      "matched_query_text": "clustering using large language models",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.07690v1",
+      "source": "arxiv",
+      "title": "HARP: Efficient Data Selection for Finetuning Large Language Models",
+      "abstract": "Finetuning data selection requires balancing two competing goals: selecting examples that improve the downstream objective, and doing so without repeatedly finetuning models. Train-free selectors are scalable but rely on proxies such as embedding similarity or clustering, which may not match the target objective. Train-based selectors better reflect downstream utility through gradient signals, subset evaluation, or Shapley attribution, but require many costly train--evaluate iterations. We propose Hierarchical Active Region Pruning (HARP), an efficient train-based selector that preserves downstream alignment while reducing selection cost. HARP organizes the training pool into a node--leaf hierarchy, evaluates only representative leaves, and infers unmeasured utilities with empirical Bayes posteriors. It then selects data using two complementary envelopes: HARP-C, which conservatively controls redundancy, and HARP-E, which additively rewards complementary regions. We theoretically show that, under local smoothness and bounded estimation error, HARP controls selection error while reducing train--evaluate cost. We further validate that HARP variants achieve the best result and outperform the strongest baseline by up to $+8.9$ points, while using roughly $7\\times$ fewer training examples.",
+      "authors": [
+        "Ning Wang",
+        "Zhengxin Zhang",
+        "Maosen Tang",
+        "Yitang Gao",
+        "Claire Cardie",
+        "Sainyam Galhotra"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-06-05T06:31:43+00:00",
+      "link": "https://arxiv.org/pdf/2606.07690v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "hierarchical active region pruning for data selection",
+      "llm_evidence_cn": "层次主动区域剪枝用于数据选择",
+      "llm_evidence": "层次主动区域剪枝用于数据选择",
+      "canonical_evidence": "层次主动区域剪枝用于数据选择",
+      "llm_tldr_en": "HARP proposes hierarchical active region pruning for efficient finetuning data selection, reducing cost while preserving alignment.",
+      "llm_tldr_cn": "论文提出HARP层次主动区域剪枝方法，用于高效微调数据选择。该方法将训练池组织成节点-叶子层次，仅评估代表性叶子，推断未测量节点的效用，显著降低选择成本且保持下游对齐。其查询策略可类比主动聚类中的高效样本选择。",
+      "llm_tldr": "论文提出HARP层次主动区域剪枝方法，用于高效微调数据选择。该方法将训练池组织成节点-叶子层次，仅评估代表性叶子，推断未测量节点的效用，显著降低选择成本且保持下游对齐。其查询策略可类比主动聚类中的高效样本选择。",
+      "llm_tags": [
+        "query:active-clust"
+      ],
+      "matched_query_tag": "query:active-clust",
+      "matched_query_text": "query strategy for active clustering",
+      "matched_requirement_id": "req-11",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.08718v1",
+      "source": "arxiv",
+      "title": "Deep Active Re-Labeling: Toward Noise-Resilient Annotation Efficiency",
+      "abstract": "While Deep Active Learning (DAL) effectively reduces human annotation costs, its efficacy is constrained by human annotation errors. This is because the data sampled for active learning is assumed to be highly informative for training. When human annotators introduce errors into this informative data at a certain rate, the active learning performance drops significantly and, in some cases, even exhibits worse outcomes than passive learning. In this paper, we first analyze the impact of human annotation errors in the DAL setting. Then we propose a framework to address the human annotation noise problem for DAL. Informed by human learning patterns, the core idea of our proposed solution involves allocating a portion of the human annotation budget to re-annotate data that has already been labeled. Previous theoretical work suggests that when the model possesses a certain level of ability to identify potentially noisy data, even re-labeling a small fraction of the data can effectively remove noise from the active training set. To achieve this, we implement two active noise sampling strategies to detect noise under different circumstances and allocate a part of the annotation budget to re-annotate these instances. Our approach imbues active learning with a revisiting and introspective behavior. Our experiments demonstrate that, under the same annotation budget, our method is more data-efficient and yields a relatively noise-free annotation dataset in the end.",
+      "authors": [
+        "Md Abdullah Al Forhad",
+        "Weishi Shi"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-06-07T16:25:47+00:00",
+      "link": "https://arxiv.org/pdf/2606.08718v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "deep active learning method",
+      "llm_evidence_cn": "深度主动学习方法",
+      "llm_evidence": "深度主动学习方法",
+      "canonical_evidence": "深度主动学习方法",
+      "llm_tldr_en": "Proposes Deep Active Re-Labeling to mitigate human annotation errors in active learning, improving sample efficiency for label-intensive tasks.",
+      "llm_tldr_cn": "论文针对深度主动学习中人工标注噪声导致性能下降的问题，提出深度主动重标注框架。通过分配部分标注预算进行重标注，有效抑制噪声影响。实验表明该方法在多个数据集上恢复甚至超越理想主动学习性能，为主动学习提供了鲁棒性增强方案，可潜在应用于主动聚类。",
+      "llm_tldr": "论文针对深度主动学习中人工标注噪声导致性能下降的问题，提出深度主动重标注框架。通过分配部分标注预算进行重标注，有效抑制噪声影响。实验表明该方法在多个数据集上恢复甚至超越理想主动学习性能，为主动学习提供了鲁棒性增强方案，可潜在应用于主动聚类。",
+      "llm_tags": [
+        "query:active-clust"
+      ],
+      "matched_query_tag": "query:active-clust",
+      "matched_query_text": "active learning clustering methods",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "label": "2026-06-10",
+  "date": "2026-06-10",
+  "generated_at": "2026-06-10T22:46:44",
+  "count": 3,
+  "papers": [
+    {
+      "paper_id": "202606/10/2606.07753v1-readingmachine-a-computational-methodology-for-structured-corpus-reading-and-large-scale-synthesis",
+      "section": "quick",
+      "title_en": "ReadingMachine: A Computational Methodology for Structured Corpus Reading and Large-Scale Synthesis",
+      "authors": "James Morrissey",
+      "date": "2026-06-05",
+      "pdf": "https://arxiv.org/pdf/2606.07753v1",
+      "score": "7.0",
+      "evidence": "使用大语言模型对文档集合进行语义聚类",
+      "tldr": "现有语料分析多依赖检索或递归摘要，难以保证全面覆盖和可追溯性。ReadingMachine提出基于大语言模型的结构化阅读方法，将分析分解为洞察提取、语义聚类、主题生成与遗漏检测等可检查阶段，延迟压缩并显式跟踪中间表示。在152份产业政策文档上，该系统提取超过17,500条洞察并生成结构化主题图。该方法优先覆盖与保留分歧，可作为大规模定性综合的开源实验框架。",
+      "tags": "query:ac",
+      "abstract_en": "ReadingMachine is a computational methodology for structured corpus reading that uses large language models to perform bounded reading operations over entire document collections. Rather than relying on retrieval or recursive summarization, the approach decomposes analysis into inspectable stages including insight extraction, semantic clustering, theme generation, and iterative omission detection. By delaying irreversible compression and explicitly tracking intermediate representations, the method prioritizes coverage, traceability, and preservation of disagreement across large corpora. The system is demonstrated on a heterogeneous corpus of 152 industrial policy documents, producing more than 17,500 extracted insights and a structured thematic map. ReadingMachine is released as an open-source experimental framework for large-scale qualitative synthesis and corpus analysis.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202606/10/2606.07690v1-harp-efficient-data-selection-for-finetuning-large-language-models",
+      "section": "quick",
+      "title_en": "HARP: Efficient Data Selection for Finetuning Large Language Models",
+      "authors": "Ning Wang, Zhengxin Zhang, Maosen Tang, Yitang Gao, Claire Cardie, Sainyam Galhotra",
+      "date": "2026-06-05",
+      "pdf": "https://arxiv.org/pdf/2606.07690v1",
+      "score": "6.0",
+      "evidence": "层次主动区域剪枝用于数据选择",
+      "tldr": "微调数据选择需平衡提升下游目标与避免重复训练，现有训练式方法准确但成本高昂。本文提出HARP，通过层次化活动区域剪枝组织训练池，仅评估代表性叶子并用经验贝叶斯推断未测量效用，再以互补冗余策略选取数据。实验显示，HARP变体在减少约7倍训练示例下仍比最强基线提升+8.9点，显著降低选择成本。",
+      "tags": "query:active-clust",
+      "abstract_en": "Finetuning data selection requires balancing two competing goals: selecting examples that improve the downstream objective, and doing so without repeatedly finetuning models. Train-free selectors are scalable but rely on proxies such as embedding similarity or clustering, which may not match the target objective. Train-based selectors better reflect downstream utility through gradient signals, subset evaluation, or Shapley attribution, but require many costly train--evaluate iterations. We propose Hierarchical Active Region Pruning (HARP), an efficient train-based selector that preserves downstream alignment while reducing selection cost. HARP organizes the training pool into a node--leaf hierarchy, evaluates only representative leaves, and infers unmeasured utilities with empirical Bayes posteriors. It then selects data using two complementary envelopes: HARP-C, which conservatively controls redundancy, and HARP-E, which additively rewards complementary regions. We theoretically show that, under local smoothness and bounded estimation error, HARP controls selection error while reducing train--evaluate cost. We further validate that HARP variants achieve the best result and outperform the strongest baseline by up to $+8.9$ points, while using roughly $7\\times$ fewer training examples.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202606/10/2606.08718v1-deep-active-re-labeling-toward-noise-resilient-annotation-efficiency",
+      "section": "quick",
+      "title_en": "Deep Active Re-Labeling: Toward Noise-Resilient Annotation Efficiency",
+      "authors": "Md Abdullah Al Forhad, Weishi Shi",
+      "date": "2026-06-07",
+      "pdf": "https://arxiv.org/pdf/2606.08718v1",
+      "score": "6.0",
+      "evidence": "深度主动学习方法",
+      "tldr": "深度主动学习中人类标注错误会严重降低性能，甚至低于被动学习。为此提出Deep Active Re-Labeling框架，将部分注释预算用于重新标注已标注数据，并通过两种主动噪声采样策略检测噪声。实验表明，在相同预算下该方法数据效率更高，最终得到较无噪声的标注数据集。该工作赋予主动学习回顾和自省行为，提升了噪声鲁棒性和注释效率。",
+      "tags": "query:active-clust",
+      "abstract_en": "While Deep Active Learning (DAL) effectively reduces human annotation costs, its efficacy is constrained by human annotation errors. This is because the data sampled for active learning is assumed to be highly informative for training. When human annotators introduce errors into this informative data at a certain rate, the active learning performance drops significantly and, in some cases, even exhibits worse outcomes than passive learning. In this paper, we first analyze the impact of human annotation errors in the DAL setting. Then we propose a framework to address the human annotation noise problem for DAL. Informed by human learning patterns, the core idea of our proposed solution involves allocating a portion of the human annotation budget to re-annotate data that has already been labeled. Previous theoretical work suggests that when the model possesses a certain level of ability to identify potentially noisy data, even re-labeling a small fraction of the data can effectively remove noise from the active training set. To achieve this, we implement two active noise sampling strategies to detect noise under different circumstances and allocate a part of the annotation budget to re-annotate these instances. Our approach imbues active learning with a revisiting and introspective behavior. Our experiments demonstrate that, under the same annotation budget, our method is more data-efficient and yields a relatively noise-free annotation dataset in the end.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}
