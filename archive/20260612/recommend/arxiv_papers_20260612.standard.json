@@ -1,0 +1,60 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-06-12T21:30:17.468565+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 0,
+    "deep_cap": 7,
+    "deep_selected": 0,
+    "quick_candidates": 1,
+    "quick_skim_target": 12,
+    "quick_selected": 1
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2606.07954v1",
+      "source": "arxiv",
+      "title": "Minibatch Selection via Partition Matroid Constrained Gradient Matching",
+      "abstract": "Training large language models (LLMs) on heterogeneous data requires selecting minibatches that balance convergence speed with coverage across domains. Existing methods either select samples independently within each domain or rely on computationally expensive proxy models to learn continuous domain weights. We propose PartitionSel, a cross-domain minibatch selection approach that maximizes a validation-guided gradient-matching utility under per-domain budgets encoded as a partition-matroid constraint. By coupling the per-domain budgets through a single utility, PartitionSel is designed to reduce redundancy in selections across domains. The proposed objective is weakly submodular and admits an orthogonal matching pursuit algorithm with provable approximation guarantees. Empirically, we evaluate PartitionSel for minibatch selection during the fine-tuning of Qwen2.5 and Llama-3 on MetaMathQA and Mol-Instructions. PartitionSel achieves robust gains over per-domain and domain-agnostic baselines on both benchmarks. It also reduces the number of conflicting gradient pairs within each batch, indicating that the cross-domain coupling translates into more compatible training updates.",
+      "authors": [
+        "Prayas Agrawal",
+        "Prateek Chanda",
+        "Ishita Khatri",
+        "Ganesh Ramakrishnan",
+        "Bamdev Mishra",
+        "Pratik Jawanpuria"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-06-06T03:16:19+00:00",
+      "link": "https://arxiv.org/pdf/2606.07954v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "minibatch selection with partition matroid for LLM training, transferable to active clustering query strategies",
+      "llm_evidence_cn": "使用分区拟阵的小批量选择用于大模型训练，可迁移至主动聚类查询策略",
+      "llm_evidence": "使用分区拟阵的小批量选择用于大模型训练，可迁移至主动聚类查询策略",
+      "canonical_evidence": "使用分区拟阵的小批量选择用于大模型训练，可迁移至主动聚类查询策略",
+      "llm_tldr_en": "Proposes PartitionSel, a cross-domain minibatch selection method for LLMs that maximizes gradient-matching utility under per-domain budgets, providing a transferable active selection approach potentially useful for active learning clustering.",
+      "llm_tldr_cn": "该论文提出PartitionSel，一种面向大模型训练的分区拟阵约束小批量选择方法，通过最大化梯度匹配效用实现跨域样本选择。该方法可迁移至主动学习聚类中的查询策略设计，为结合大模型的主动聚类提供思路。实验证明其收敛性和近似保证。虽非直接聚类，但方法论具有桥梁价值。",
+      "llm_tldr": "该论文提出PartitionSel，一种面向大模型训练的分区拟阵约束小批量选择方法，通过最大化梯度匹配效用实现跨域样本选择。该方法可迁移至主动学习聚类中的查询策略设计，为结合大模型的主动聚类提供思路。实验证明其收敛性和近似保证。虽非直接聚类，但方法论具有桥梁价值。",
+      "llm_tags": [
+        "query:ac:composite"
+      ],
+      "matched_query_tag": "query:ac:composite",
+      "matched_query_text": "Papers central to 主动学习聚类相关论文，特别是利用大模型的方法, especially work that connects or combines: d; c; active learning clustering with large language models; clustering using large language models; clustering base LLM active learning; Active learning clustering methods that leverage large language models.",
+      "matched_requirement_id": "req-composite-ac",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

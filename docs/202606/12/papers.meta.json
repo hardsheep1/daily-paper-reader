@@ -1,0 +1,24 @@
+{
+  "label": "2026-06-12",
+  "date": "2026-06-12",
+  "generated_at": "2026-06-12T21:31:34",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "202606/12/2606.07954v1-minibatch-selection-via-partition-matroid-constrained-gradient-matching",
+      "section": "quick",
+      "title_en": "Minibatch Selection via Partition Matroid Constrained Gradient Matching",
+      "authors": "Prayas Agrawal, Prateek Chanda, Ishita Khatri, Ganesh Ramakrishnan, Bamdev Mishra, Pratik Jawanpuria",
+      "date": "2026-06-06",
+      "pdf": "https://arxiv.org/pdf/2606.07954v1",
+      "score": "6.0",
+      "evidence": "使用分区拟阵的小批量选择用于大模型训练，可迁移至主动聚类查询策略",
+      "tldr": "训练大语言模型时，异构数据上的小批量选择需要兼顾收敛速度与领域覆盖。现有方法各自独立采样或依赖昂贵代理模型。本文提出PartitionSel，通过分区拟阵约束下的梯度匹配效用，跨域选择小批量，减少冗余。在Qwen2.5和Llama-3微调任务中，PartitionSel取得稳定增益并降低梯度冲突，证明了跨域耦合的有效性。",
+      "tags": "query:ac",
+      "abstract_en": "Training large language models (LLMs) on heterogeneous data requires selecting minibatches that balance convergence speed with coverage across domains. Existing methods either select samples independently within each domain or rely on computationally expensive proxy models to learn continuous domain weights. We propose PartitionSel, a cross-domain minibatch selection approach that maximizes a validation-guided gradient-matching utility under per-domain budgets encoded as a partition-matroid constraint. By coupling the per-domain budgets through a single utility, PartitionSel is designed to reduce redundancy in selections across domains. The proposed objective is weakly submodular and admits an orthogonal matching pursuit algorithm with provable approximation guarantees. Empirically, we evaluate PartitionSel for minibatch selection during the fine-tuning of Qwen2.5 and Llama-3 on MetaMathQA and Mol-Instructions. PartitionSel achieves robust gains over per-domain and domain-agnostic baselines on both benchmarks. It also reduces the number of conflicting gradient pairs within each batch, indicating that the cross-domain coupling translates into more compatible training updates.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}
