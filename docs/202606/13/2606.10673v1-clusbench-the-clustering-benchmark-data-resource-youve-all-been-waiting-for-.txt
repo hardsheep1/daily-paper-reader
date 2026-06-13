@@ -1,0 +1,300 @@
+Title: ClusBench: The Clustering Benchmark Data Resource You've All Been Waiting For (?)
+
+URL Source: https://arxiv.org/pdf/2606.10673v1
+
+Published Time: Wed, 10 Jun 2026 00:52:10 GMT
+
+Number of Pages: 25
+
+Markdown Content:
+# ClusBench: The Clustering Benchmark Data Resource You’ve All Been Waiting For (?) 
+
+David Hofmeyr School of Mathematical Sciences, Lancaster University 
+
+## Abstract 
+
+Although some very common test beds exist for assessing the performance of clustering methods, large scale benchmarking is typically limited to relatively sim-plistic simulation set-ups. Here we describe the production and curation of close to 3000 synthetic data sets, derived from more than 200 publicly available data sets; the majority of which arose from real-world applications. By fitting a flexi-ble non-parametric distribution to each base data set we are able to retain much of the nuance in real-world data which is difficult to reproduce in standard sim-ulations, while also producing data sets whose sizes are sometimes substantially greater than the data sets from which they are derived. The synthetic data sets, plus an accompanying R package, are available for download from https: //github.com/DavidHofmeyr/ClusBench .
+
+Keywords: Cluster evaluation; comparison study; repository; resampling; synthetic data generation 
+
+# 1 Introduction 
+
+Assessing the quality of a clustering solution is made difficult by the unsupervised na-ture of the clustering task. Specifically, when faced with a clustering task in practice, there is no “ground truth” against which the discovered clusters can be compared, and thus validated. When extensive domain knowledge is available to the practi-cioner (either personally or through consultation), the reasonableness of a solution may be qualitatively assessed by investigating, e.g. the specific cluster allocations or the differentiating characteristics of different clusters through their summary statis-tics. However, the development of clustering methodology is typically not conducted under the assumption that such knowledge will be available, and moreover qualitative 1
+
+> arXiv:2606.10673v1 [stat.OT] 9 Jun 2026
+
+assessments do not lend themselves well to comparative evaluations across different clustering methods as general purpose tools. 
+
+Internal validation metrics attempt to quantify the quality of a clustering solution by how it aligns with our commonsense interpretations of how clusters should be defined, with an overarching theme among these (and indeed many clustering models and algorithms themselves) being that observations which are more similar to one another should typically be clustered together while dissimilar points should typically be in different clusters. Even if we are able to commit to a precise meaning of similarity vs dissimilarity, almost inevitably such a metric will not be able to adequately validate all manner of cluster “types” (spherical, elongated, curved, inter-twined, etc.) which might exist, either separately or jointly in the same data set(s). As such they will end up favouring certain clustering models’ solutions over others, purely because the objective of the clustering method aligns better with the definition of the validation metric and not necessarily because of an intrinsic superiority. Simulation studies, in which synthetic data are generated from (typically mixtures of parametric) probability distributions, provide a useful framework for assessing clus-tering performance. Sampling from a mixture model may be seen as a two-step pro-cedure in which first a mixture component (“label”), Y , is sampled from a discrete distribution π with cardinality equal to the number of components, and subsequently an observation, X, is sampled from the associated component distribution. These labels may then be used as a “ground truth” partition against which any clustering of the sampled observations can be compared, and numerous external validation metrics 
+
+have been developed to quantitatively assess the alignment between a clustering solu-tion and the ground truth. However, the usefulness of simulation studies like these is limited by the difficulty of simulating data which are “realistic”, in that they capture the intricacies of the sorts of data potentially seen in practice. As a popular alternative, it is very common to rely on data from real applica-tions for which a ground truth partition is available, i.e. data sets more commonly used for evaluating classification methods. There are obvious limitations with such 2an approach, for instance the fact that the “class distributions” may not align with how we interpret clusters; either individually being split among multiple clusters of points or being distributed so that all clusters of points comprise observations from multiple classes, or a combination of these. Nonetheless it is arguably reasonable to assert that one clustering method is more useful than another as a general purpose tool if it is typically capable of producing solutions which align better with ground truth partitions, when these are available. Despite this view being fairly universally adopted, and comparative studies in much of the literature relying on these classification data sets, there is a dearth of large scale studies in which a very large variety of data sets is included. Frequently only a handful of data sets is included in any single study, and very few such studies explore more than a few tens of data sets. There is, as a result, an inevitable risk of biased comparisons due to “cherry picking” (often inadvertently), or developing clustering methods incrementally through experimentation with a particular collection of data sets, leading to tuning strategies which appear universal but are actually “overfitting” to the particular collection of data sets being explored; and not generalising well out-side these. In an effort to provide a large and diverse set of clustering benchmarks, this paper de-scribes the production and curation of close to 3000 synthetic data sets which are avail-able for download from https://github.com/DavidHofmeyr/ClusBench . We also describe the functionality of the R package ClusBench , also available from https:// github.com/DavidHofmeyr/ClusBench , which offers functionality to download and load these data directly into the R environment, as well as the ability to interface with the methods used to produce them. These data have been derived from a collection of more than 200 publicly available data sets for which ground truth groupings are available, and the vast majority of which are associated with real applications. These base data sets were obtained 3from the Penn Machine Learning Repository database (Olson et al., 2017) and the UCI Machine Learning Repository (Bache and Lichman, 2013), which we accessed primarily using the R packages pmlbr (Olson et al., 2017) and ucimlrepo (Balamuta and Truong, 2024). To maintain the “realism” of the data distributions, while also allowing for the production of multiple varied data sets with similar characteristics and of size potentially vastly exceeding that of the some of the base data sets themselves, we fit a flexible probability distribution to each of them from which multiple samples could be drawn. From each of these distributions we then generated ten data sets, each of size 5000. In addition, for each base data set in which the class proportions are highly imbalanced, we also produced ten additional data sets of size 5000 where we modified the class priors to be equal for all classes. We then filtered out some batches of ten data sets by how clusterable they are, in the sense that clustering methods can reasonably be expected to produce a partition which reflects the classes substantially more than random guessing. The reason for setting the size of each data set to 5000 is for the recognition that a large number of clustering methods require access to the full collection of pairwise distances, and this may produce a computational bottleneck for substantially larger data sets when evaluation is required over a large number of individual data sets. Moreover it is our experience that, unless the number of individual clusters is very large, 5000 is typically a sufficient number of observations to allow reliable “detection” of all clusters of reasonable magnitude. For those wishing to experiment with data sets of different sizes, we make the following recommendations, in the interest of reproducibility: 1. Users wishing to experiment with samples smaller than 5000 are advised to take the leading rows of each data set (up to the desired number of observations), so that results may be more comparable across different users’ results. 2. Users wishing to experiment with samples between 5000 and 50000 observations are advised to merge (subsets of) the total 10 ×5000 = 50000 observations we have published from each base data set, and if possible document a determin-4istic merging method or make available any randomisation (e.g. indices in 1, ..., 50000 comprising each merged data set) so that others following the same experimental set-up may compare with and/or reproduce the results. 3. Users wishing to experiment with samples larger than 50000, or prefer to gen-erate their own samples from the same or similar distributions, are advised to use the functionality in the ClusBench package, which we describe in Section 5. 
+
+## 1.1 What The ClusBench Repository Is Not 
+
+We have chosen to focus primarily on the “realism” of the data, while also standard-ising the testing context by sample size and number of samples from each base data set. As mentioned previously the sample size standard of 5000 points was chosen as we believe this is a threshold above which some clustering methods may be excluded due to computational demand, while the number of samples from each base distri-bution was set to 10 mainly to storage considerations. However, we recognise some important limitations, including: 1. Big Data: The intention of this repository is not to support testing of the computational limits of the clustering task in any way. However, as alluded to previously, data sets of any size can readily be produced using the ClusBench 
+
+package. 2. Task specific/robustness “challenges”: There are existing clustering benchmark suites (Thrun and Ultsch, 2020; Gagolewski, 2022) which explore the important topic of “stress testing” clustering methods’ robustness under archetypal con-texts, including but not limited to (i) the presence of (and amount of) “noise”; (ii) clearly quantified degree of class overlap; (iii) presence of (and number of) “noise dimensions” in which there is no class relevant information. We de-scribe, in Section 4, a partition of the data sets in ClusBench which intersect with some of these aspects, but not in a well controlled manner as is achievable under simpler simulation set-ups. 5The rest of this paper is organised as follows. In Section 2 we provide details on the procedure we used to convert a given data set into a probability distribution from which multiple samples of any size could be drawn. In Section 3 we briefly discuss how we filtered out data sets deemed unreasonably difficult to cluster, in that producing a partition by any sensible clustering method is unlikely to align with the class distribution. With the final collection of data sets decided upon, we briefly explore their characteristics and describe a (hyper)clustering of the data sets in Section 4. In Section 5 we describe the main functionality of the ClusBench package. We then give a brief concluding discussion in Section 6 
+
+# 2 From Data to Distribution 
+
+The simplest way to obtain multiple data sets from a single benchmark is through resampling; effectively treating the data set as though it represents a population dis-tribution a la the non-parametric bootstrap. However, when the size of the base data set is relatively small it becomes challenging to produce much diversity across resam-ples. Moreover many clustering methods assume data are generated from a continuous probability distribution, which precludes the possibility of repeated observations. The most natural solution is then to fit a continuous probability distribution to the data, and generate multiple samples from this. Depending on the data distribution this may be relatively straightforward; e.g. if the individual classes have distributions which are reasonably represented by parametric densities then the problem simply becomes one of parameter estimation. On the other extreme we may consider fitting a non-parametric density, either to the data as a whole or to each class separately, and sample from this. For the purpose of sampling, arguably the simplest non-parametric formulation is the Kernel Density Estimator (KDE), in which the sampling density is defined by the convolution of the empirical density (the simple bootstrap type resampling) with a smoothing kernel (often a Gaussian density). Practically this is equivalent to first resampling directly from the data and then adding some additional 6noise, with the noise distribution defined by the smoothing kernel. This is highly principled, but choosing the right amount of noise is not always straightforward, and moreover even slightly too much noise can easily smooth over the subtleties in real-world data, and also obscure the separation of clusters. Between the two extremes lies the option of semi-parametric approaches, such as fitting a parametric mixture to each of the classes. However, although a Gaussian Mixture Model (GMM) may give a very good representation of each class, this instead introduces the potential that each class distribution possesses a large number of (possibly subtle) modes (sometimes many more than the actual number of modes) which an “accurate” clustering method may separate into different clusters. In preparatory experimentation we encountered both the oversmoothing issue of KDEs and the “extra-modes” problem of GMMs very frequently, and no single exist-ing strategy we explored was satisfactory. We therefore chose to use a modified KDE, in which first a “shrunken” version of the data is obtained by using a single iteration of a nearest neighbour Mean-Shift (Comaniciu and Meer, 2002, MS) algorithm, before a weighted combination of the original data and its shrunken variant are resampled, before finally adding noise in the style of KDE sampling. Crucially the shrinking step accentuates the structure of distribution from a clustering perspective, by clarifying regions between high density clusters, so that the oversmoothing issue of KDEs is mitigated. Moreover, by defining the shrinkage in terms of the nearest neighbours of each observation we can also use this information to estimate the local covariance and so add smoothing noise which reflects this local variation, instead of the more common global bandwidth applied in KDE. As a further modification we also first project the points from each class onto their leading principal components (PCs), so that the non-parametric resampling is conducted in a lower dimensional subspace. This is useful since the oversmoothing issue of non-parametric estimators is aplified in high dimensional settings, and the modified KDE we employ is not immune to this. For simplicity we model each class distribution in the orthogonal complement of its leading PCs with a Gaussian density. 7The complete set of steps taken to go from a data set to a sampling distribution is outlined below. It is worth noting that some of the decisions made (e.g. the pro-portion of variation to retain using PCA; the choice of “imputation” strategy; the number of neighbours; etc.) may be seen as somewhat arbitrary, however we point out that the intention is not necessarily to obtain the most accurate reflection of the “true” distribution underlying the data, but rather to obtain a probability distribution with similar characteristics to the data distribution, from which samples can be gen-erated which fairly reliably capture the general structure of the distribution, in terms of the relative locations and shapes of the classes, and also some of the subtleties and intricacies which differentiate real-world data sets from simpler simulations: 1. Convert categorical variables: We used the standard approach of converting a categorical variable with w categories into w − 1 binary dummy variables. Note that the data loaded through the pmlbr package do not directly indicate which variables are categorical, and so in order to automate the process we simply converted those variables with the fewest distinct values as though they are categorical. 2. Eliminate missingness: To handle missing entries we applied the following steps, in order: (a) We removed observations which had a missing ground truth label. (b) We used an unsupervised Random Forest based imputation model to han-dle missingness in other variables, using the R package randomForestSRC (Ish-waran and Kogalur, 2025). (c) If any missingness was not resolved using this model, we then removed variables which still contained more than 75% missingness. (d) Finally, if any missingness still remained we removed any incomplete ob-servations. 83. Define class-wise distributions: For each c ∈ [C]; where C is the number of classes, let Xc ∈ Rnc×d be the matrix of observations from class c. We then performed the following steps to arrive at a sampling distribution for the class: (a) Standardisation: If we let μ(c) be the mean of the rows of Xc, and σ(c) the diagonal matrix with variable-wise standard deviations on the diagonal, then we set X′ 
+
+> c
+
+= ( Xc − 1μ(c)⊤)( σ(c))−1.(b) PCA reduction: Let X′⊤ 
+
+> c
+
+X′ 
+
+> c
+
+= VΛV⊤ be the standard spectral decompo-sition, and let dτ = min {j| ∑ji=1 Λii ≥ τ ∑di=1 Λii }, i.e. dτ is the smallest number of dimensions needed to retain at least τ × 100% of the total data variation. We then set dc = max {2, min {50 , d 0.9}} , and project X′ 
+
+> c
+
+onto the first dc principal components, i.e. ˜Xc := X′
+
+> c
+
+V1: dc , where the subscript 1 : dc indicates the first dc columns of the matrix. (c) “Shrink” ˜ Xc with nearest neighbours: For each i ∈ [nc] let Nkc (i) be the indices of the kc nearest rows of ˜Xc to row i (we set kc = 2 ⌊log( nc)⌋). Then let A ∈ Rnc×nc be the matrix with zeroes except in entries {(i, j )|j ∈Nkc (i)}, where it takes the value one. Then the shrunken version of ˜ Xc is set equal to Zc := 1 
+
+> kc
+
+A ˜Xc.(d) Define the sampling distribution for class c: To sample from the distri-bution characterising class c, first a point is sampled from the modified KDE. This involves three steps: (i) sample an index, I, uniformly from [nc]; (ii) sample a location uniformly on the line segment joining the I-th row of ˜ Xc and the I-th row of Zc; and (iii) add location specific noise from a N (0, ∆I + 14 Σ0) distribution, where ∆ i; i ∈ [nc] is the diagonal sample covariance matrix from the kc nearest neighbours of the i-th row of ˜ Xc and Σ0 = 1 
+
+> nc
+> (
+
+˜Xc − Zc  
+
+> )⊤(
+
+˜Xc − Zc
+
+> )
+
+is a (full) shared covariance matrix related to the average amount of shrinkage from ˜Xc to Zc. We can write this sample from the modified KDE as 
+
+X = (
+
+U ˜Xc + (1 − U )Zc 
+
+> )⊤
+> I:
+
++ WI ,
+
+9where I is again the random index in [ nc]; U ∼ U (0 , 1) and WI ∼ N (0, ∆I + 
+
+> 14
+
+Σ0), and we have used the subscript “ I :” to mean the I-th row of the matrix. Now, X lies in Rdc as we only fit the modified KDE in the leading prin-cipal component subspace. We therefore then append X with a V ∼
+
+N (0, 1 
+
+> nc−1
+
+Λ(dc+1): d), where Λ (dc+1): d is the diagonal matrix of the trailing 
+
+d − dc eigenvalues of X′⊤ 
+
+> c
+
+X′
+
+> c
+
+. After realigning [ X, V ] with the cardinal ba-sis, V therefore accounts for the variation orthogonal to the leading PCs and retains the covariance of ˜ Xc in that subspace. After this realignment, the final step is to appropriately shift and re-scale to the appropriate scale and location of the observations in Xc. The sample from the distribution for class c is thus equal to σ(c)(V[X, V ] + μ(c)). We show two examples in Figure 1. In each case we show the first two principal component projections of (i) one of the base data sets to which we applied the above methodology; (ii) a sample generated using the proposed approach; and (iii) a sample generated by fitting a standard Gaussian KDE to each class using Silverman’s rule of thumb bandwidth (Silverman, 1986) of ( 4  
+
+> nc(2+ d)
+> )24+ d
+
+Σc. Figure 1(a) shows the thirty six dimensional Statlog Satellite data set (Srinivasan, 1993) along with the two syn-thesised variants. The most obvious difference here is the substantial rounding effect of the standard KDE, rendering a sample whose classes appear close to Gaussian. The modified approach retains much more of the non-Gaussianity in the individual class distributions, although there is still some rounding of the especially elongated part of the class shown with △’s. Figure 1(b) shows the seven dimensional Auto data set (Quinlan, 1993). In this case the original data set is quite small, with only 392 observations, and so being able to synthesise numerous and varied larger data sets, which respect the nuances of the distribution, becomes important. The multimodal-ity in the class shown with ⃝’s leads to pathological oversmoothing with a standard KDE, which obscures all of the nuance in this distribution. On the other hand the 10 Original Data 
+
+> pca(X)[,1] pca(X)[,2]
+> Modified KDE
+> pca(smp1$X)[,1] pca(smp1$X)[,2]
+> Standard KDE
+> pca(smp4$X)[,1] pca(smp4$X)[,2]
+
+(a) Satellite Original Data 
+
+> pca(X)[,1] pca(X)[,2]
+> Modified KDE
+> pca(smp1$X)[,1] pca(smp1$X)[,2]
+> Standard KDE
+> pca(smp4$X)[,1] pca(smp4$X)[,2]
+
+(b) Auto 
+
+Figure 1: Two commonly used classification data sets (left), each with one synthetic sample generated using our modified KDE (middle) and one using a stan-dard KDE (right) modified KDE produces a data set which is pleasing as a representation of what we might expect a larger sample from the same underlying distribution to look like. It is worth pointing out that, of course, choosing a smaller bandwidth will allow the standard KDE to retain more of the detail in the underlying distribution. However, it is notoriously challenging to select an appropriate global bandwidth which is small enough to retain detail but large enough to ensure samples do not contain “almost exact” replicates. 11 3 Filtering Distributions/Data Sets 
+
+When initially exploring data sets we capped the data dimensions at n ≤ 100000 and 
+
+d ≤ 2000 (after conversion of categorical variables), and also ignored data sets which repeatedly produced errors even after modifying the automated process described above. We also sought to eliminate redundancy across the source repositories, but it is possible some remains. Once the initial collection of data sets, and their modified KDE distributions was obtained, it contained slightly under 250 in total. However, as we described previ-ously it is not always the case that classification data sets lend themselves readily to assessing clustering performance, since if the class distributions do not align at all with what we interpret as clusters then it is unreasonable to expect any clustering methods to reliably distinguish classes. We therefore sought to filter out distributions whose samples could not reasonably be clustered in a way which reflects the actual classes. 
+
+## 3.1 Quantifying Clusterability 
+
+To limit subjectivity in selecting a clustering method to produce solutions for compari-son with the actual classes, we applied all eight variants of the standard agglomerative hierarchical clustering algorithm implemented in R’s hclust function. The reasons for this choice include (i) across all eight linkage methods typically at least one can capture the clusters in any given data set reasonably well; (ii) despite their quadratic computational complexity, when all clustering solutions over quite a broad number of clusters are needed, their hierarchical nature makes finding the full collection of solutions comparatively efficient for data sets up to at least a few thousands; (iii) the pairwise distance calculations can be recycled, meaning the additional cost of computing all eight sets of clustering solutions instead of just one is relatively small; 12 and (iv) aside from the number of clusters there are no additional hyperparameters for any of these methods, therefore further limiting subjectivity. We acknowledge that, although in what we argue accounts for the majority of typical scenarios at least one of the linkage methods is able to capture the clusters in a data set reasonably well, it is of course the case that this may not be true of all data sets. We have therefore been conservative in removing data sets. In particular, for each data set we recorded, for each of the eight clustering models, the highest Adjusted Rand Index (Hubert and Arabie, 1985, ARI) and Adjusted Mutual Information (Vinh et al., 2009, AMI) across a number of clusters from one up to three times the actual number of classes. The only exception to this is that for single linkage models we recorded the highest ARI and AMI up to ten times the number of classes, due to the model’s sensitivity to noise meaning it sometimes “devotes effort” to merging singletons and small groups of points before merging substantial clusters. We then removed data sets only if none of the eight models achieved an average maximum ARI or average maximum AMI (when averaged over the ten data sets sampled from one of the fitted distributions) above 0 .04. As before this threshold is somewhat arbitrary, but visual inspection of data sets with low “clusterability scores”, with simple PCA plots, suggested this as a reasonable threshold which does not lose instances which appear reasonably clusterable by eye. In addition the data which were removed showed, in almost all cases, at least one of the following characteristics: (i) no evidence of cluster structure at all; (ii) clusters which do not align with the class distribution; and (iii) extreme imbalance in class sizes. We show, in Figure 2, for each of the six base data sets with maximum ARI or AMI closest to 0.04 which we removed, one of the ten samples of size 5000 which were generated. Although the class proportions are not equal everywhere, and hence it could be possible to find a spatial partition which gives a reasonable quality alignment with the classes, it is clear that when there are regions which are much more strongly associated with one class than others this typically does not align with how we interpret clusters. 13 Best ARI/AMI = 0.028 
+
+> pca(smp$X[1:5000, ])[,1] pca(smp$X[1:5000, ])[,2]
+> Best ARI/AMI = 0.028
+> pca(smp$X[1:5000, ])[,1] pca(smp$X[1:5000, ])[,2]
+> Best ARI/AMI = 0.029
+> pca(smp$X[1:5000, ])[,1] pca(smp$X[1:5000, ])[,2]
+> Best ARI/AMI = 0.032
+> pca(smp$X[1:5000, ])[,1] pca(smp$X[1:5000, ])[,2]
+> Best ARI/AMI = 0.036
+> pca(smp$X[1:5000, ])[,1] pca(smp$X[1:5000, ])[,2]
+> Best ARI/AMI = 0.037
+> pca(smp$X[1:5000, ])[,1] pca(smp$X[1:5000, ])[,2]
+
+Figure 2: PCA projections of some of the data sets removed due to difficulty in ob-taining clustering solutions which align with the actual classes. Points in different classes are differentiated by colour and point character. These may be seen as arguably the “most clusterable” of those removed. 
+
+## 3.2 Rebalanced Class Proportions 
+
+As mentioned above some of the data sets removed were challenging to cluster “accu-rately” purely because of highly imbalanced class proportions. This class imbalance phenomenon can be problematic even for the supervised classification task, but is particularly challenging in the clustering context. For each underlying data set in which the ratio of the largest to smallest class proportion exceeded three we therefore also generated ten data sets of size 5000 in which the sampling distribution was only modified by setting the class proportions all equal. 14 Best ARI/AMI = 0.02 
+
+> pca(x[1:5000, −ncol(x)])[,1] pca(x[1:5000, −ncol(x)])[,2]
+
+Best ARI/AMI = 0.634 
+
+> pca(x[1:5000, −ncol(x)])[,1] pca(x[1:5000, −ncol(x)])[,2]
+
+Best ARI/AMI = 0.017 
+
+> pca(x[1:5000, −ncol(x)])[,1] pca(x[1:5000, −ncol(x)])[,2]
+
+Best ARI/AMI = 0.13 
+
+> pca(x[1:5000, −ncol(x)])[,1] pca(x[1:5000, −ncol(x)])[,2]
+
+Figure 3: Samples from two distributions which, after rebalancing of class propor-tions, become far more reasonably clusterable. We show, in Figure 3, two examples where samples using the raw class propor-tions led to data sets which we removed due to “unclusterability” but which, after rebalancing the class proportions, crossed the 0.04 threshold for inclusion. 
+
+# 4 Exploring the (Meta) Data 
+
+After filtering the batches of ten data sets generated from each of the sampling dis-tributions (including using the raw proportions and the “rebalanced” proportions), a total of 278 remained. This final collection contains a large variety in terms of dimen-15 sionality; number of classes; class imbalance 1; and levels of clusterability. Figure 4 shows the 278 (batches of) data sets in terms of numbers of dimensions and classes, with points differentiated by size according to the maximum clusterability 2 and by colour according to the linkage method in the hierarchical clustering which gave the best result. The two variants of Ward’s linkage (Ward Jr, 1963) gave the best results far more often than any of the other linkage types, with average; complete and “mc-quitty” each with a handful of best performances and almost no instances where one of single, median or centroid linkage is best. Within this collection very few of the data sets above about 50 dimensions have low clusterability (almost all small points in the plot lie towards the left). However, when considering any interaction with number of classes it is hard to discern anything with clarity partly because of the very large number of data sets with exactly two classes. It is worth pointing out, however, that the way we have quantified clusterability is in terms of the highest achievable ARI or AMI when assuming pseudo-oracle information regarding how many clusters gives the best result. It is arguably likely that appropriately selecting the “best” number of clusters is more challenging the more actual classes there are in the data, and so we may reasonably expect that the practical “clusterability” is in fact related to the number of classes. 
+
+## 4.1 Clustering the Data Sets 
+
+Partly because of the large number of individual data sets in the repository, we sought to group them into data sets with different characteristics. In this way results obtained may be broken down by groups of data sets, and users may explore only certain groups based on the perceived strengths of the clustering method(s) being utilised. Figure 5 shows the data set characteristics in terms of dimension; number of classes; 
+
+> 1note that although we used the ratio of largest to smallest class proportion in order to determine whether or not to also include a rebalanced variant of one of the fitted distributions, we quantify the imbalance going forward using the variance of the class proportions, as in Olson et al. (2017).
+> 2defined as the greatest ARI or AMI across all eight hierarchical models and across a range of numbers of clusters.
+
+16 10  20  30  40          
+
+> Dimension Number of Classes
+> 24816 32 64 128 256 512 1024
+> Best Linkage average complete mcquitty median single ward.D ward.D2
+
+Figure 4: The 278 batches of ten data sets characterised by dimension and number of classes. In addition points are differentiated by size according to maximum clusterability, and by colour according to the hierarchical model giving the best result. class imbalance; and maximum, mean, and minimum clusterability (by clustering model/linkage method). The dendrogram in the left margin is based on Ward type linkage but with Euclidean distance rather than squared Euclidean distance (i.e. 
+
+method = "ward.D" in R’s hclust function). Cutting this dendrogram to produce six clusters gives a reasonable balance of cluster sizes, with the exception of the resulting cluster 2, which is characterised by all linkage methods producing fairly high quality clustering solutions (note the band of darkest colour in the rightmost column in the heatmap). In addition, Figure 6 shows two data sets from each group, projected onto their first two principal components. In each case the “most typical” member is taken to be that which has the smallest average distance from the rest of the group and the “least typical” is that with the largest average distance. In addition, a very brief description of some of the defining/discriminating characteristics of each group is given. 17 dimension num_classes imbalance max_c'ability mean_c'ability min_c'ability  190 82 30 122 241 14 71 272 255 121 61 33 7186 17 201 240 35 99 220 20 258 260 123 235 137 37 550 159 112 46 22 143 11 80 43 239 218 229 Figure 5: Batches of data sets differentiated according to dimension (on a log scale), number of classes, class imbalance and maximum; minimum; and mean clusterability (across linkage method). Cutting the dendrogram in the left margin at six clusters gives a reasonably balanced partition. 
+
+# 5 The ClusBench Package 
+
+Here we very briefly describe the main functionality of the ClusBench package. 
+
+ClusBench is a minimal package, only exporting five objects in total. These are: 1. get data : A function to download and import any of the data sets in the repository. 18 Most Typical 
+
+> Comp.1 Comp.2
+> Least Typical
+> Comp.1 Comp.2
+
+(a) Group 1: Many classes, medium cluster-ability Most Typical 
+
+> Comp.1 Comp.2
+> Least Typical
+> Comp.1 Comp.2
+
+(b) Group 2: Low dimension, highest/easiest clusterability Most Typical 
+
+> Comp.1 Comp.2
+> Least Typical
+> Comp.1 Comp.2
+
+(c) Group 3: Lowest/most difficult cluster-ability Most Typical 
+
+> Comp.1 Comp.2
+> Least Typical
+> Comp.1 Comp.2
+
+(d) Group 4: Few classes, medium cluster-ability Most Typical 
+
+> Comp.1 Comp.2
+> Least Typical
+> Comp.1 Comp.2
+
+(e) Group 5: Highly unbalanced classes Most Typical  
+
+> Comp.1 Comp.2
+> Least Typical
+> Comp.1 Comp.2
+
+(f) Group 6: High/easy clusterability, mostly higher dimensional 
+
+Figure 6: Two data sets from each of the groups. In each case one of the samples from the “most typical” and “least typical” batch of ten is shown. 2. sampleX : A function to fit and sample from a modified KDE, as described in Section 2. 3. SampleXy : A function to fit and sample from a mixture of modified KDEs, stratified according to a given vector of class labels. 19 4. dataset names : A list of all 278 names for the batches of ten data sets in the repository. Each includes both the name of the base data set and a suffix 
+
+original , if the raw class proportions were used, or equal if the rebalanced proportions were used for sampling. Note that not all data sets will have each of the suffices, since some class proportions were reasonably well balanced to begin with, while some highly unbalanced data were removed due to low clusterability. 5. dataset statistics : Additional information related to these 278 batches, in-cluding dimensionality; number of classes; class imbalance; clusterability scores and grouping as described in the previous section. By default get data fetches the first of the ten samples of size 5000 for a given data set name, and others can be obtained by varying the argument version in 1, 2, ..., 10. For example, consider the very well known “iris” data set. The following code chunk loads the original iris data set from the package datasets (part of R’s base distribution), as well as two of samples of size 5000 from the ClusBench repository. It then plots all three, projected onto their first two principal components. 
+
+R> data(iris, package = "datasets") R> iris1 <- get_data("iris_original") R> iris2 <- get_data("iris_original", version = 2) R> par(mfrow = c(1, 3)) R> plot(princomp(iris[,1:4])$scores, col = iris$Species, main = "Original") R> plot(princomp(iris1[,1:4])$scores, col = iris1$y, main = "ClusBench1") R> plot(princomp(iris2[,1:4])$scores, col = iris2$y, main = "ClusBench2") 
+
+The resulting plots are shown in Figure 7. The individual classes in the iris data set are not far from Gaussian, and so this is not an especially interesting example except 20 −3 −2 −1 0 1 2 3 4−1.0  −0.5  0.0  0.5  1.0       
+
+> Original
+> Comp.1 Comp.2
+> −2 024−1.5  −0.5  0.0  0.5  1.0  1.5
+> ClusBench1
+> Comp.1 Comp.2
+> −2 024−1.5  −0.5  0.0  0.5  1.0  1.5
+> ClusBench2
+> Comp.1 Comp.2
+
+Figure 7: The iris data set, as well as two of the synthetic samples generated from it which are included in the ClusBench repository. for the ubiquity of the iris data set making the generation of larger (and realistic) “versions” of it potentially interesting. To illustrate the functionality of the functions sampleX and sampleXy we revist the Statlog Satellite data set. The following code chunk downloads and imports the original data set ( satimage )3, as well as one of the samples from the ClusBench 
+
+repository ( satimage1 ). In addition two new synthetic versions of the data set are created; one with sampleXy and one with sampleX . The first ( sampleXy ) requires both the observations and the labels, and fits a modified KDE to each class separately) while sampleX only requires the observations as it fits a single KDE to the entire data set. In order to retain the indices in the original sample, to be used to create labels for the resulting sample, the argument return ids is set to TRUE .
+
+R> satimage <- pmlbr::fetch_data("satimage") R> satimage1 <- get_data("satimage_original") R> satimage2 <- sampleXy(X = satimage[,1:36], y = satimage$target, n = nrow(satimage)) R> satimage3 <- sampleX(X = satimage[,1:36], n = nrow(satimage), return_ids = TRUE) 
+
+> 3
+
+to run the following chunk you will need to first install the pmlbr package. 
+
+21 Plotting the principal component projections of these four data sets, as in the following code chunk, gives the result shown in Figure 8 4.
+
+R> par(mfrow = c(2, 2)) R> plot(princomp(satimage[,1:36])$scores, col = satimage$target, main = "Original") R> plot(princomp(satimage1[,1:36])$scores, col = satimage1$y, main = "ClusBench") R> plot(princomp(satimage2$X)$scores, col = satimage2$y, main = "SampleXy") R> plot(princomp(satimage3$X)$scores, col = satimage$target[satimage3$ids], main = "SampleX") 
+
+# 6 Conclusions 
+
+We described the production and curation of a large collection of benchmark data sets for assessing the performance of clustering methods. By fitting flexible non-parametric distributions to more than 200 base data sets , we were able to generate multiple samples from each of an extremely varied collection of data generating mech-anisms, which retain much of the nuance of real-world data which is very difficult to replicate in standard simulations. We filtered out some data sets which may be seen as representing unrealistic clustering tasks, in that we should not expect a clustering method to be able to partition the data in a way which reflects the actual classes in the data. We also described the functionality of an R package which can be used to download and import the almost 3000 data sets directly into R, as well as to interface directly with the methods used to produce them and so generate additional data sets for further exploration and testing of clustering capabilities.    
+
+> 4note that due to randomness in the sampling process, running the code will result in alternative versions of satimage2 and satimage3 .
+
+22 −150 −50 0 50 100 −200  0 100 
+
+Original     
+
+> Comp.1 Comp.2
+> −200 −100 050 150 −200  0 100
+
+ClusBench     
+
+> Comp.1 Comp.2
+> −150 −50 050 150 −200  0 100
+
+SampleXy     
+
+> Comp.1 Comp.2
+> −150 −50 050 150 −200  0 100
+
+SampleX 
+
+> Comp.1 Comp.2
+
+Figure 8: The “satimage” (Statlog Satellite) data set, as well as one of the synthetic variants in the ClusBench repository, plus two alternatives generated with the ClusBench package. 
+
+# References 
+
+K. Bache and M. Lichman. UCI machine learning repository, 2013. URL http: //archive.ics.uci.edu/ml .James Joseph Balamuta and Philip Truong. ucimlrepo: Explore UCI ML Reposi-tory Datasets , 2024. URL https://CRAN.R-project.org/package=ucimlrepo . R package version 0.0.2. 23 Dorin Comaniciu and Peter Meer. Mean shift: A robust approach toward feature space analysis. IEEE Transactions on pattern analysis and machine intelligence ,24(5):603–619, 2002. Marek Gagolewski. A framework for benchmarking clustering algorithms. SoftwareX ,20:101270, 2022. Lawrence Hubert and Phipps Arabie. Comparing partitions. Journal of Classification ,2(1):193–218, 1985. H. Ishwaran and U.B. Kogalur. Fast Unified Random Forests for Survival, Regres-sion, and Classification (RF-SRC) , 2025. URL https://cran.r-project.org/ package=randomForestSRC . R package version 3.4.1. Randal S Olson, William La Cava, Patryk Orzechowski, Ryan J Urbanowicz, and Jason H Moore. Pmlb: a large benchmark suite for machine learning evaluation and comparison. BioData mining , 10(1):1–13, 2017. R. Quinlan. Auto MPG. UCI Machine Learning Repository, 1993. DOI: https://doi.org/10.24432/C5859H. B. W. Silverman. Density Estimation for Statistics and Data Analysis . Chapman and Hall, London, 1986. Ashwin Srinivasan. Statlog (Landsat Satellite). UCI Machine Learning Repository, 1993. DOI: https://doi.org/10.24432/C55887. Michael C Thrun and Alfred Ultsch. Clustering benchmark datasets exploiting the fundamental clustering problems. Data in brief , 30:105501, 2020. Nguyen Xuan Vinh, Julien Epps, and James Bailey. Information theoretic measures for clusterings comparison: is a correction for chance necessary? In Proceedings of the 26th annual international conference on machine learning , pages 1073–1080, 2009. 24 Joe H Ward Jr. Hierarchical grouping to optimize an objective function. Journal of the American statistical association , 58(301):236–244, 1963. 25

@@ -1,0 +1,141 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-06-13T20:14:13.445118+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 0,
+    "deep_cap": 7,
+    "deep_selected": 0,
+    "quick_candidates": 3,
+    "quick_skim_target": 12,
+    "quick_selected": 3
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2606.08601v1",
+      "source": "arxiv",
+      "title": "InA-Probe: Instruction-Aware Active Probing for Time Series Forecasting with LLMs",
+      "abstract": "Large Language Models (LLMs) have recently demonstrated impressive potential for time series forecasting. However, existing methods predominantly rely on passive modality alignment or static task reprogramming, which often fail to capture fine-grained, non-stationary temporal patterns or to adapt to nuanced task intents. In this paper, we propose Instruction-aware Active Probing (InA-Probe), which shifts the paradigm from passive alignment toward an active, instruction-driven probing mechanism. Specifically, we design a Multi-Level Instruction Injection mechanism that enriches the model with both global task objectives and fine-grained, patch-level semantic priors. Building on this, an Adaptive Query Generation module produces sample-specific probes that are dynamically modulated by the temporal context. These probes are then refined through a dual-stage attention process: they first internalize task-specific intents via Instruction-Aware Self-Attention, and subsequently interrogate the projected temporal representations through Temporal Cross-Attention to extract salient patterns. Comprehensive experiments on seven real-world benchmarks show that InA-Probe consistently outperforms state-of-the-art deep learning and LLM-based baselines, excelling in both one-for-all generalization and zero-shot transfer while reducing forecasting error by up to 37\\% in challenging cross-domain scenarios. Ablation studies further confirm that the synergy between adaptive querying and fine-grained instructions is key to unlocking the reasoning power of LLMs for complex time series.",
+      "authors": [
+        "Peiliang Gong",
+        "Emadeldeen Eldele",
+        "Chenyu Liu",
+        "Ziyu Jia",
+        "Yi Ding",
+        "Xinliang Zhou",
+        "Lianchao Gu",
+        "Qi Zhu",
+        "Yang Liu",
+        "Daoqiang Zhang",
+        "Xiaoli Li"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-06-07T12:27:13+00:00",
+      "link": "https://arxiv.org/pdf/2606.08601v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "active probing with LLMs for adaptive query generation",
+      "llm_evidence_cn": "利用LLM进行自适应查询生成的主动探测方法",
+      "llm_evidence": "利用LLM进行自适应查询生成的主动探测方法",
+      "canonical_evidence": "利用LLM进行自适应查询生成的主动探测方法",
+      "llm_tldr_en": "InA-Probe uses LLMs with instruction-aware active probing and adaptive query generation for time series forecasting, offering a transferable query strategy paradigm for active learning.",
+      "llm_tldr_cn": "现有LLM时间序列预测方法多采用被动模态对齐，难以捕获细粒度非平稳模式。本文提出指令感知主动探测（InA-Probe），通过多级指令注入和自适应查询生成模块，实现主动、指令驱动的探测机制。在多个时间序列基准上，该方法显著提升预测精度，其查询生成策略可迁移至主动学习聚类中的样本选择问题。",
+      "llm_tldr": "现有LLM时间序列预测方法多采用被动模态对齐，难以捕获细粒度非平稳模式。本文提出指令感知主动探测（InA-Probe），通过多级指令注入和自适应查询生成模块，实现主动、指令驱动的探测机制。在多个时间序列基准上，该方法显著提升预测精度，其查询生成策略可迁移至主动学习聚类中的样本选择问题。",
+      "llm_tags": [
+        "query:active-clust"
+      ],
+      "matched_query_tag": "query:active-clust",
+      "matched_query_text": "query strategy for active clustering",
+      "matched_requirement_id": "req-11",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.10125v1",
+      "source": "arxiv",
+      "title": "Robust Active Learning for Few-Shot Example Selection in Text-to-SQL",
+      "abstract": "Few-shot example retrieval is the dominant paradigm for grounding large language models (LLMs) in domain-specific text-to-SQL systems. However, the quality of the annotated example bank directly governs system accuracy, and expert annotation is prohibitively expensive. We formalize the active selection of these examples as a constrained experimental design problem over the intrinsic, low-dimensional manifold of semantic query embeddings. Unlike standard active learning frameworks, our setting introduces three critical challenges: varying, query-dependent annotation reliability (heteroscedasticity), strict requirements for spatial diversity across semantic topics (partition matroid constraints), and the inherent reality that the true covariance structure of the embedding space is unknown (misspecification). To address these, we propose a stratified greedy algorithm that maximizes a heteroscedastic mutual information objective. We prove that this objective remains submodular and approximately monotonic on the intrinsic manifold, yielding a theoretical constant-factor approximation guarantee. We establish a spectral bound demonstrating that this approximation guarantee degrades gracefully, rather than catastrophically, when the assumed surrogate kernel diverges from the true underlying data-generating process. Empirical results demonstrate that the proposed strategy significantly reduces labeling effort while maintaining high text-to-SQL retrieval accuracy.",
+      "authors": [
+        "Arash Pourhabib"
+      ],
+      "primary_category": "stat.ML",
+      "categories": [
+        "stat.ML",
+        "cs.DB",
+        "cs.LG"
+      ],
+      "published": "2026-06-08T19:56:24+00:00",
+      "link": "https://arxiv.org/pdf/2606.10125v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "robust active learning with diversity constraints for example selection",
+      "llm_evidence_cn": "具有多样性约束的鲁棒主动学习示例选择方法",
+      "llm_evidence": "具有多样性约束的鲁棒主动学习示例选择方法",
+      "canonical_evidence": "具有多样性约束的鲁棒主动学习示例选择方法",
+      "llm_tldr_en": "This paper formalizes active example selection as constrained experimental design, handling heteroscedasticity and partition matroid constraints, applicable to query strategy in active clustering.",
+      "llm_tldr_cn": "在Text-to-SQL任务中，标注示例质量直接影响系统性能，但专家标注成本高昂。本文将主动示例选择建模为约束实验设计问题，应对异方差性和分区拟阵约束。实验表明该方法在少量标注下显著提升SQL生成准确率，其主动学习框架可直接用于主动聚类中的查询策略设计。",
+      "llm_tldr": "在Text-to-SQL任务中，标注示例质量直接影响系统性能，但专家标注成本高昂。本文将主动示例选择建模为约束实验设计问题，应对异方差性和分区拟阵约束。实验表明该方法在少量标注下显著提升SQL生成准确率，其主动学习框架可直接用于主动聚类中的查询策略设计。",
+      "llm_tags": [
+        "query:active-clust"
+      ],
+      "matched_query_tag": "query:active-clust",
+      "matched_query_text": "query strategy for active clustering",
+      "matched_requirement_id": "req-11",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.10673v1",
+      "source": "arxiv",
+      "title": "ClusBench: The Clustering Benchmark Data Resource You've All Been Waiting For (?)",
+      "abstract": "Although some very common test beds exist for assessing the performance of clustering methods, large scale benchmarking is typically limited to relatively simplistic simulation set-ups. Here we describe the production and curation of close to 3000 synthetic data sets, derived from more than 200 publicly available data sets; the majority of which arose from real-world applications. By fitting a flexible non-parametric distribution to each base data set we are able to retain much of the nuance in real-world data which is difficult to reproduce in standard simulations, while also producing data sets whose sizes are sometimes substantially greater than the data sets from which they are derived. The synthetic data sets, plus an accompanying R package, are available for download from https://github.com/DavidHofmeyr/ClusBench.",
+      "authors": [
+        "David P. Hofmeyr"
+      ],
+      "primary_category": "stat.OT",
+      "categories": [
+        "stat.OT",
+        "cs.LG"
+      ],
+      "published": "2026-06-09T10:27:01+00:00",
+      "link": "https://arxiv.org/pdf/2606.10673v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Clustering benchmark resource for evaluating algorithms",
+      "llm_evidence_cn": "用于评估算法的聚类基准资源",
+      "llm_evidence": "用于评估算法的聚类基准资源",
+      "canonical_evidence": "用于评估算法的聚类基准资源",
+      "llm_tldr_en": "Presents ClusBench, a large collection of synthetic datasets derived from real-world data to facilitate clustering method evaluation.",
+      "llm_tldr_cn": "ClusBench提供了近3000个来自真实数据的合成数据集，用于聚类方法评估，保留真实数据细节，可支持主动学习聚类方法的测试。该资源有助于更真实的聚类方法比较。",
+      "llm_tldr": "ClusBench提供了近3000个来自真实数据的合成数据集，用于聚类方法评估，保留真实数据细节，可支持主动学习聚类方法的测试。该资源有助于更真实的聚类方法比较。",
+      "llm_tags": [
+        "query:active-clust"
+      ],
+      "matched_query_tag": "query:active-clust",
+      "matched_query_text": "active learning clustering methods",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

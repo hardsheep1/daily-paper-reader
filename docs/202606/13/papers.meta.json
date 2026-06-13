@@ -1,0 +1,54 @@
+{
+  "label": "2026-06-13",
+  "date": "2026-06-13",
+  "generated_at": "2026-06-13T20:16:37",
+  "count": 3,
+  "papers": [
+    {
+      "paper_id": "202606/13/2606.08601v1-ina-probe-instruction-aware-active-probing-for-time-series-forecasting-with-llms",
+      "section": "quick",
+      "title_en": "InA-Probe: Instruction-Aware Active Probing for Time Series Forecasting with LLMs",
+      "authors": "Peiliang Gong, Emadeldeen Eldele, Chenyu Liu, Ziyu Jia, Yi Ding, Xinliang Zhou, Lianchao Gu, Qi Zhu, Yang Liu, Daoqiang Zhang, Xiaoli Li",
+      "date": "2026-06-07",
+      "pdf": "https://arxiv.org/pdf/2606.08601v1",
+      "score": "6.0",
+      "evidence": "利用LLM进行自适应查询生成的主动探测方法",
+      "tldr": "现有LLM时序预测方法多依赖被动模态对齐或静态重编程，难以捕捉细粒度非平稳模式和任务意图。本文提出指令感知主动探测（InA-Probe），通过多级指令注入注入全局目标与局部语义，自适应查询生成样本特定探针，再经指令感知自注意力和时序交叉注意力提取关键模式。在七个真实基准上，InA-Probe全面超越深度学习和LLM基线，跨域场景误差降低37%，零样本泛化优异。该工作以主动指令驱动释放LLM推理能力，为复杂时序预测提供新范式。",
+      "tags": "query:active-clust",
+      "abstract_en": "Large Language Models (LLMs) have recently demonstrated impressive potential for time series forecasting. However, existing methods predominantly rely on passive modality alignment or static task reprogramming, which often fail to capture fine-grained, non-stationary temporal patterns or to adapt to nuanced task intents. In this paper, we propose Instruction-aware Active Probing (InA-Probe), which shifts the paradigm from passive alignment toward an active, instruction-driven probing mechanism. Specifically, we design a Multi-Level Instruction Injection mechanism that enriches the model with both global task objectives and fine-grained, patch-level semantic priors. Building on this, an Adaptive Query Generation module produces sample-specific probes that are dynamically modulated by the temporal context. These probes are then refined through a dual-stage attention process: they first internalize task-specific intents via Instruction-Aware Self-Attention, and subsequently interrogate the projected temporal representations through Temporal Cross-Attention to extract salient patterns. Comprehensive experiments on seven real-world benchmarks show that InA-Probe consistently outperforms state-of-the-art deep learning and LLM-based baselines, excelling in both one-for-all generalization and zero-shot transfer while reducing forecasting error by up to 37\\% in challenging cross-domain scenarios. Ablation studies further confirm that the synergy between adaptive querying and fine-grained instructions is key to unlocking the reasoning power of LLMs for complex time series.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202606/13/2606.10125v1-robust-active-learning-for-few-shot-example-selection-in-text-to-sql",
+      "section": "quick",
+      "title_en": "Robust Active Learning for Few-Shot Example Selection in Text-to-SQL",
+      "authors": "Arash Pourhabib",
+      "date": "2026-06-08",
+      "pdf": "https://arxiv.org/pdf/2606.10125v1",
+      "score": "6.0",
+      "evidence": "具有多样性约束的鲁棒主动学习示例选择方法",
+      "tldr": "文本到SQL系统依赖少量高质量注释示例，但专家标注昂贵。本文将示例的主动选择建模为受限实验设计问题，考虑异方差、分区多样性和核误设。提出分层贪婪算法最大化异方差互信息，证明其子模性并给出常数因子近似保证。实验表明该方法显著降低标注成本，同时保持高检索精度。",
+      "tags": "query:active-clust",
+      "abstract_en": "Few-shot example retrieval is the dominant paradigm for grounding large language models (LLMs) in domain-specific text-to-SQL systems. However, the quality of the annotated example bank directly governs system accuracy, and expert annotation is prohibitively expensive. We formalize the active selection of these examples as a constrained experimental design problem over the intrinsic, low-dimensional manifold of semantic query embeddings. Unlike standard active learning frameworks, our setting introduces three critical challenges: varying, query-dependent annotation reliability (heteroscedasticity), strict requirements for spatial diversity across semantic topics (partition matroid constraints), and the inherent reality that the true covariance structure of the embedding space is unknown (misspecification). To address these, we propose a stratified greedy algorithm that maximizes a heteroscedastic mutual information objective. We prove that this objective remains submodular and approximately monotonic on the intrinsic manifold, yielding a theoretical constant-factor approximation guarantee. We establish a spectral bound demonstrating that this approximation guarantee degrades gracefully, rather than catastrophically, when the assumed surrogate kernel diverges from the true underlying data-generating process. Empirical results demonstrate that the proposed strategy significantly reduces labeling effort while maintaining high text-to-SQL retrieval accuracy.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202606/13/2606.10673v1-clusbench-the-clustering-benchmark-data-resource-youve-all-been-waiting-for-",
+      "section": "quick",
+      "title_en": "ClusBench: The Clustering Benchmark Data Resource You've All Been Waiting For (?)",
+      "authors": "David P. Hofmeyr",
+      "date": "2026-06-09",
+      "pdf": "https://arxiv.org/pdf/2606.10673v1",
+      "score": "6.0",
+      "evidence": "用于评估算法的聚类基准资源",
+      "tldr": "聚类方法评估常受限于简单模拟，缺乏真实数据复杂性。本文基于200多个真实数据集，通过非参数分布拟合生成近3000个合成数据集，保留了真实数据的细微差别且规模更大。这些数据集构成ClusBench基准资源，附带R包，为大规模聚类基准测试提供了实用工具。",
+      "tags": "query:active-clust",
+      "abstract_en": "Although some very common test beds exist for assessing the performance of clustering methods, large scale benchmarking is typically limited to relatively simplistic simulation set-ups. Here we describe the production and curation of close to 3000 synthetic data sets, derived from more than 200 publicly available data sets; the majority of which arose from real-world applications. By fitting a flexible non-parametric distribution to each base data set we are able to retain much of the nuance in real-world data which is difficult to reproduce in standard simulations, while also producing data sets whose sizes are sometimes substantially greater than the data sets from which they are derived. The synthetic data sets, plus an accompanying R package, are available for download from https://github.com/DavidHofmeyr/ClusBench.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}
