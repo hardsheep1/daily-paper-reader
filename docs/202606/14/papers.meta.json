@@ -1,0 +1,24 @@
+{
+  "label": "2026-06-14",
+  "date": "2026-06-14",
+  "generated_at": "2026-06-14T21:29:07",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "202606/14/2606.13007v1-scllm-dsc-llm-knowledge-enhanced-cross-modal-deep-structural-clustering-for-single-cell-rna-sequencing",
+      "section": "quick",
+      "title_en": "scLLM-DSC: LLM-Knowledge Enhanced Cross-Modal Deep Structural Clustering for Single-Cell RNA Sequencing",
+      "authors": "Ping Xu, Pengjiang Li, Tian Du, Zaitian Wang, Jiawei Gu, Ziyue Qiao, Pengfei Wang, Yuanchun Zhou",
+      "date": "2026-06-11",
+      "pdf": "https://arxiv.org/pdf/2606.13007v1",
+      "score": "7.0",
+      "evidence": "利用大语言模型进行聚类，采用跨模态深度结构聚类",
+      "tldr": "单细胞RNA测序聚类是细胞识别的基础，但现有方法忽略基因的生物学功能。大型语言模型虽具语义能力，但与聚类任务存在结构不匹配。为此提出scLLM-DSC框架，融合知识驱动语义视图（利用NCBI基因先验和Cell2Sentence嵌入）与结构感知拓扑视图（图引导编码器），通过跨模态对比对齐实现生物语义与转录特征的一致性。在多个基准上显著超越11种先进方法，验证了语义增强聚类的有效性。",
+      "tags": "query:ac",
+      "abstract_en": "Clustering is fundamental to scRNA-seq analysis, serving as a cornerstone for identifying cell populations and resolving tissue heterogeneity. However, existing methods focus on mining numerical statistical patterns, suffering from semantic agnosticism by neglecting the intrinsic biological functions encoded by genes. While Large Language Models (LLMs) offer promising semantic capabilities, their direct adaptation to cell clustering is hindered by the structural mismatch between generative pre-training objectives and discriminative downstream tasks. To bridge this gap, we propose scLLM-DSC, a novel LLM-Knowledge Enhanced Cross-Modal Deep Structural Clustering framework. Diverging from data-driven paradigms, scLLM-DSC establishes a semantically-grounded representation by synergizing two views: a Knowledge-Driven Semantic View derived from NCBI gene priors and contextualized Cell2Sentence embeddings, and a Structure-Aware Topological View extracted via a graph-guided encoder. Crucially, we introduce a cross-modal contrastive alignment mechanism to enforce consistency between biological semantics and transcriptomic features within a unified latent space. Extensive benchmarks demonstrate that scLLM-DSC significantly outperforms eleven state-of-the-art baselines in clustering accuracy.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

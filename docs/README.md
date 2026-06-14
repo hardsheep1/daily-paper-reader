@@ -6,30 +6,26 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-06-13
-- 运行时间：2026-06-13 20:16:29 UTC
+- 最新运行日期：2026-06-14
+- 运行时间：2026-06-14 21:29:00 UTC
 - 运行状态：成功
-- 本次总论文数：3
+- 本次总论文数：1
 - 精读区：0
-- 速读区：3
+- 速读区：1
 
 ### 今日简报（AI）
-今日精选3篇应用型研究，涵盖LLM时间序列预测、Text-to-SQL小样本选择与聚类基准。重点关注指令感知主动探测和时间序列预测方法，以及鲁棒主动学习在Text-to-SQL中的应用。建议读者探索如何将主动学习策略融入自身的数据分析或SQL生成任务。
-- 详情：[/202606/13/README](/202606/13/README)
+今日速读1篇单细胞RNA测序研究，聚焦LLM知识增强的跨模态深度结构聚类方法。  
+值得关注的方向：LLM知识融入单细胞聚类，提升跨模态数据整合能力，评分7.0。  
+建议跟进该方法的开源代码或数据集，验证其在稀疏scRNA-seq数据上的实际聚类效果。
+- 详情：[/202606/14/README](/202606/14/README)
 
 ### 精读区论文标签
 - 本次无精读推荐。
 
 ### 速读区论文标签
-1. [InA-Probe: Instruction-Aware Active Probing for Time Series Forecasting with LLMs](/202606/13/2606.08601v1-ina-probe-instruction-aware-active-probing-for-time-series-forecasting-with-llms)  
-   标签：评分：6.0/10、query:active-clust
-   evidence：利用LLM进行自适应查询生成的主动探测方法
-2. [Robust Active Learning for Few-Shot Example Selection in Text-to-SQL](/202606/13/2606.10125v1-robust-active-learning-for-few-shot-example-selection-in-text-to-sql)  
-   标签：评分：6.0/10、query:active-clust
-   evidence：具有多样性约束的鲁棒主动学习示例选择方法
-3. [ClusBench: The Clustering Benchmark Data Resource You've All Been Waiting For (?)](/202606/13/2606.10673v1-clusbench-the-clustering-benchmark-data-resource-youve-all-been-waiting-for-)  
-   标签：评分：6.0/10、query:active-clust
-   evidence：用于评估算法的聚类基准资源
+1. [scLLM-DSC: LLM-Knowledge Enhanced Cross-Modal Deep Structural Clustering for Single-Cell RNA Sequencing](/202606/14/2606.13007v1-scllm-dsc-llm-knowledge-enhanced-cross-modal-deep-structural-clustering-for-single-cell-rna-sequencing)  
+   标签：评分：7.0/10、query:ac
+   evidence：利用大语言模型进行聚类，采用跨模态深度结构聚类
 
 
 <div class="dpr-home-promo-card">
