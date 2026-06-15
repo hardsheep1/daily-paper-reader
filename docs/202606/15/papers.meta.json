@@ -1,0 +1,24 @@
+{
+  "label": "2026-06-15",
+  "date": "2026-06-15",
+  "generated_at": "2026-06-15T22:25:44",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "202606/15/2606.14654v1-abstracting-cross-domain-action-sequences-into-interpretable-workflows",
+      "section": "deep",
+      "title_en": "Abstracting Cross-Domain Action Sequences into Interpretable Workflows",
+      "authors": "Gaurav Verma, Scott Counts",
+      "date": "2026-06-12",
+      "pdf": "https://arxiv.org/pdf/2606.14654v1",
+      "score": "8.0",
+      "evidence": "使用大语言模型将动作序列聚类为高层活动",
+      "tldr": "低层级交互日志虽客观记录应用使用，但细粒度和噪声掩盖了有意义的工作模式。现有深度学习方法对噪声敏感且跨应用泛化差。本文提出WorkflowView框架，利用大语言模型将低层动作序列抽象为高层活动。在浏览器日志零样本重建（语义相似度0.91）、MOOC少样本辍学预测（F1=0.90）和Word文档隐私保护分析三个挑战性任务中验证了方法的有效性和泛化性。该工作证明LLM抽象是稳健高效的前进方向，可将低层行为数据转化为可解释、可操作的洞察。",
+      "tags": "query:ac",
+      "abstract_en": "Sequential or time-stamped interaction logs provide objective records of digital application usage, yet their granularity and noise often obscure meaningful insights into people's work. Such insights are essential for improving digital products in ways grounded in real-world user interactions. Prior research has applied deep learning models to cluster user actions into high-level activities, but these approaches are highly sensitive to noise and struggle to generalize across applications. To address this limitation, we introduce WorkflowView, a framework that uses large language models (LLMs) to abstract low-level action sequences into high-level activities. We establish the effectiveness and generality of our approach across three distinct, challenging sequential tasks and diverse domains: (a) zero-shot task description reconstruction from browser logs (achieving high semantic similarity, $μ_{sim} = 0.91$), (b) few-shot student dropout prediction using MOOC interaction logs (reaching weighted $F_1 = 0.90$ with only five few-shot examples), and (c) anonymized, privacy-preserving analysis of AI tool integration within document workflows in Microsoft Word. Our work demonstrates that LLM-based abstraction is a robust and efficient path forward for transforming low-level behavioral data into high-level, interpretable, and actionable insights. We also discuss practical considerations for deploying LLM-based inferences within logging infrastructures, including computational efficiency and user privacy.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

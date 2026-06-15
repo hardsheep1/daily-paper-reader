@@ -6,26 +6,26 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-06-14
-- 运行时间：2026-06-14 21:29:00 UTC
+- 最新运行日期：2026-06-15
+- 运行时间：2026-06-15 22:25:38 UTC
 - 运行状态：成功
 - 本次总论文数：1
-- 精读区：0
-- 速读区：1
+- 精读区：1
+- 速读区：0
 
 ### 今日简报（AI）
-今日速读1篇单细胞RNA测序研究，聚焦LLM知识增强的跨模态深度结构聚类方法。  
-值得关注的方向：LLM知识融入单细胞聚类，提升跨模态数据整合能力，评分7.0。  
-建议跟进该方法的开源代码或数据集，验证其在稀疏scRNA-seq数据上的实际聚类效果。
-- 详情：[/202606/14/README](/202606/14/README)
+今日精读一篇高分论文，聚焦跨域动作序列到可解释工作流的抽象方法。  
+核心亮点在于将不同域的操作路径转化为可理解的工作流模板，提升任务复用与解释性。  
+建议关注其抽象算法在自动化流程或人机协作场景中的实际应用。
+- 详情：[/202606/15/README](/202606/15/README)
 
 ### 精读区论文标签
-- 本次无精读推荐。
+1. [Abstracting Cross-Domain Action Sequences into Interpretable Workflows](/202606/15/2606.14654v1-abstracting-cross-domain-action-sequences-into-interpretable-workflows)  
+   标签：评分：8.0/10、query:ac
+   evidence：使用大语言模型将动作序列聚类为高层活动
 
 ### 速读区论文标签
-1. [scLLM-DSC: LLM-Knowledge Enhanced Cross-Modal Deep Structural Clustering for Single-Cell RNA Sequencing](/202606/14/2606.13007v1-scllm-dsc-llm-knowledge-enhanced-cross-modal-deep-structural-clustering-for-single-cell-rna-sequencing)  
-   标签：评分：7.0/10、query:ac
-   evidence：利用大语言模型进行聚类，采用跨模态深度结构聚类
+- 本次无速读推荐。
 
 
 <div class="dpr-home-promo-card">
