@@ -1,0 +1,54 @@
+{
+  "label": "2026-06-16",
+  "date": "2026-06-16",
+  "generated_at": "2026-06-16T23:17:00",
+  "count": 3,
+  "papers": [
+    {
+      "paper_id": "202606/16/2606.16045v1-active-learning-with-low-rank-structure-for-data-selection",
+      "section": "deep",
+      "title_en": "Active Learning with Low-Rank Structure for Data Selection",
+      "authors": "Vincent Cohen-Addad, Sasidhar Kunapuli, Vahab Mirrokni, Mahdi Nikdan, David P. Woodruff, Samson Zhou",
+      "date": "2026-06-14",
+      "pdf": "https://arxiv.org/pdf/2606.16045v1",
+      "score": "8.0",
+      "evidence": "使用k中心和k均值聚类的主动学习数据选择方法",
+      "tldr": "针对数据选择问题，现有聚类方法假设几何结构，难以适应现代数据的全局代数结构。本文提出基于低秩近似和残差采样的新框架，通过行子集选择构造损失保持coreset。在嵌入满足Lipschitz条件下，可选出加权子集，使平均损失逼近全数据集，相对误差为1+ε，附加εΦ_k项。实验表明该方法优于均匀采样和聚类敏感度采样。",
+      "tags": "query:active-clust",
+      "abstract_en": "In the data selection problem, the objective is to choose a small, representative subset of data that can be used to efficiently train a machine learning model. Sener and Savarese [ICLR 2018] showed that, given an embedding representation of the data and suitable geometric assumptions, heuristics based on $k$-center clustering can be used to perform data selection. This perspective was further explored by Axiotis et. al. [ICML 2024], who proposed a data selection approach based on $k$-means clustering and sensitivity sampling. However, these methods rely on the assumption that the dataset exhibits intrinsic geometric structure that can be effectively captured by clustering, whereas many modern datasets instead possess global algebraic structure that is better exploited by low-rank approximation or principal component analysis.   In this paper, we introduce a new data selection framework based on low-rank approximation and residual-based sampling, formulated through the lens of row subset selection and loss-preserving coreset construction. Given an embedding representation of the data satisfying mild regularity conditions, which can be interpreted as algebraic or angular notions of Lipschitz continuity, we show that it is possible to select a weighted subset of $\\tilde{O}\\left(k + \\frac{1}{\\varepsilon^2}\\right)$ data points whose average loss approximates the average loss over the full dataset within a $(1+\\varepsilon)$ relative error, up to an additive $\\varepsilon Φ_k$ term, where $Φ_k$ denotes the optimal rank-$k$ approximation cost of the embedding matrix. We complement these theoretical guarantees with empirical evaluations, demonstrating that on a range of real-world datasets, our data selection approach achieves improved performance over prior strategies based on uniform sampling or clustering-based sensitivity sampling.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202606/16/2606.11583v1-beyond-the-golden-teacher-enhancing-graph-learning-through-llm-gnn-co-teaching",
+      "section": "quick",
+      "title_en": "Beyond the Golden Teacher: Enhancing Graph Learning through LLM-GNN Co-teaching",
+      "authors": "Zhuoyi Peng, Hanlin Gu, Lixin Fan, Yi Yang",
+      "date": "2026-06-10",
+      "pdf": "https://arxiv.org/pdf/2606.11583v1",
+      "score": "6.0",
+      "evidence": "LLM-GNN协同教学用于图学习",
+      "tldr": "文本属性图少样本学习中，现有LLM-GNN方法均指定一个模型作为golden teacher，但在稀疏监督下该假设失效，导致盲点传递。本文提出LLM-GNN Co-Teaching双向共教框架，不预设教师，GNN与LLM交换最自信伪标签并每轮更新，结合Round-based Pseudo-Label Preference Optimization进行DPO训练。在六个基准上，3-shot提升7.86%（Cora）和7.73%（ogbn-arxiv），零样本跨数据集迁移也有效。",
+      "tags": "query:ac",
+      "abstract_en": "Text-attributed graphs (TAGs) underlie real-world applications such as citation networks, social media, and e-commerce. Few-shot graph learning on TAGs is hard: with only a handful of labels per class and the rest of the graph unannotated, neither GNNs nor LLMs can learn well on their own. GNNs read topology and fail on cold nodes; LLMs read text and fail on text-ambiguous nodes. Existing LLM-GNN methods all follow the same recipe: designate one model as the golden teacher and use its outputs (e.g., features or pseudo-labels) to supervise the other. We argue this golden-teacher assumption breaks under sparse supervision: neither model is golden, and treating either as such transfers its blind spots into the student. We therefore ask: can we avoid designating either model as the golden teacher, and still perform effective graph learning? We answer with LLM-GNN Co-Teaching, a bidirectional co-teaching framework in which neither model is fixed as teacher. The GNN and LLM exchange their most confident pseudo-labels under an architecture-specific small-loss criterion, and both update every round. Supervision is then mined from the trajectory: whenever a node moves from cross-model contradiction at round t to cross-model agreement at round t+1, the LLM's two answers on the same input form a preference pair (old contradicting self < new peer-endorsed self) for DPO training. We call this Round-based Pseudo-Label Preference Optimization (RPL-PO). On six benchmarks, LLM-GNN Co-Teaching consistently outperforms GNN-as-Judge and all prior methods, with absolute 3-shot gains of 7.86% on Cora and 7.73% on ogbn-arxiv; improvements carry over to 5-shot and to zero-shot cross-dataset transfer. Error-structure analysis further shows that abandoning the golden-teacher assumption substantially improves the LLM's graph learning capability on challenging samples.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202606/16/2606.14690v1-a-complexity-measure-for-active-learning-in-multi-group-mean-estimation",
+      "section": "quick",
+      "title_en": "A Complexity Measure for Active Learning in Multi-group Mean Estimation",
+      "authors": "Abdellah Aznag, Rachel Cummings, Adam N. Elmachtoub",
+      "date": "2026-06-12",
+      "pdf": "https://arxiv.org/pdf/2606.14690v1",
+      "score": "6.0",
+      "evidence": "多组主动学习复杂度度量",
+      "tldr": "针对多组均值估计主动学习的最大风险目标，现有理论缺乏一般下界，未能充分刻画异方差性和模型复杂度的影响。本文提出局部最小最大框架，引入损失诱导的ℓ1几何和表示基实例生成器，将下界分解为预算项、异方差指数和模型依赖的VLC复杂度度量。VLC重参数化为方差-费希尔信息，对常见分布族有闭式解，下界与最强上界相比在广泛参数区间内达到对数因子最优。结果首次揭示了主动学习难度正交因子结构，为高异质场景下的算法设计与理论分析提供了新工具和视角。",
+      "tags": "query:active-clust",
+      "abstract_en": "We study a \\emph{max-risk} objective for active learning in a multi-group mean estimation $d$-armed bandits: a learner adaptively allocates a budget of $T$ samples across $d$ groups to minimize the worst-case uncertainty index $\\max_{k\\in[d]}σ_k^2/n_k$, where $σ_k$ is the standard deviation of the distribution of arm $d$, and $n_k$ is the number of times arm $d$ is sampled. We develop a local minimax framework and prove the first general lower bound for this objective, valid for any finite-variance hypothesis class. The bound separates difficulty into three orthogonal factors: a \\emph{budget} term, a \\emph{heteroscedasticity} index measuring how unevenly the uncertainty is spread across arms, and a model-dependent complexity measure, the \\emph{Variance Local Curvature} ($\\mathrm{VLC}$), which captures how much information a local change of variance creates inside the hypothesis class. For smooth classes, the $\\mathrm{VLC}$ is a reparametrization of a variance--Fisher information, with closed-form values for common families. Benchmarking against the strongest available upper bound shows near-optimality up to logarithmic factors in broad regimes, and pinpoints a systematic gap in highly heterogeneous instances. Our proof introduces two key ingredients: a loss-induced $\\ell_1$ geometry on the decision space, and a representation-based instance generator that reduces hard-instance construction to an explicit random matrix calculation.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

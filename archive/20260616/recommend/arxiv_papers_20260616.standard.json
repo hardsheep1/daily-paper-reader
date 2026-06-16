@@ -1,0 +1,140 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-06-16T23:12:09.965055+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 1,
+    "deep_cap": 7,
+    "deep_selected": 1,
+    "quick_candidates": 2,
+    "quick_skim_target": 12,
+    "quick_selected": 2
+  },
+  "deep_dive": [
+    {
+      "id": "2606.16045v1",
+      "source": "arxiv",
+      "title": "Active Learning with Low-Rank Structure for Data Selection",
+      "abstract": "In the data selection problem, the objective is to choose a small, representative subset of data that can be used to efficiently train a machine learning model. Sener and Savarese [ICLR 2018] showed that, given an embedding representation of the data and suitable geometric assumptions, heuristics based on $k$-center clustering can be used to perform data selection. This perspective was further explored by Axiotis et. al. [ICML 2024], who proposed a data selection approach based on $k$-means clustering and sensitivity sampling. However, these methods rely on the assumption that the dataset exhibits intrinsic geometric structure that can be effectively captured by clustering, whereas many modern datasets instead possess global algebraic structure that is better exploited by low-rank approximation or principal component analysis.   In this paper, we introduce a new data selection framework based on low-rank approximation and residual-based sampling, formulated through the lens of row subset selection and loss-preserving coreset construction. Given an embedding representation of the data satisfying mild regularity conditions, which can be interpreted as algebraic or angular notions of Lipschitz continuity, we show that it is possible to select a weighted subset of $\\tilde{O}\\left(k + \\frac{1}{\\varepsilon^2}\\right)$ data points whose average loss approximates the average loss over the full dataset within a $(1+\\varepsilon)$ relative error, up to an additive $\\varepsilon Φ_k$ term, where $Φ_k$ denotes the optimal rank-$k$ approximation cost of the embedding matrix. We complement these theoretical guarantees with empirical evaluations, demonstrating that on a range of real-world datasets, our data selection approach achieves improved performance over prior strategies based on uniform sampling or clustering-based sensitivity sampling.",
+      "authors": [
+        "Vincent Cohen-Addad",
+        "Sasidhar Kunapuli",
+        "Vahab Mirrokni",
+        "Mahdi Nikdan",
+        "David P. Woodruff",
+        "Samson Zhou"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.DS"
+      ],
+      "published": "2026-06-14T22:29:59+00:00",
+      "link": "https://arxiv.org/pdf/2606.16045v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "active learning data selection using k-center and k-means clustering",
+      "llm_evidence_cn": "使用k中心和k均值聚类的主动学习数据选择方法",
+      "llm_evidence": "使用k中心和k均值聚类的主动学习数据选择方法",
+      "canonical_evidence": "使用k中心和k均值聚类的主动学习数据选择方法",
+      "llm_tldr_en": "This paper proposes an active learning data selection method that leverages low-rank structure and k-means clustering to choose representative subsets, improving efficiency and performance.",
+      "llm_tldr_cn": "现有数据选择方法依赖几何假设，而现代数据集具有全局代数结构。本文提出基于低秩结构和k均值聚类的主动学习数据选择方法，在保持代表性的同时降低计算复杂度。实验证明该方法在多个数据集上优于传统基于聚类的方法，为主动学习与聚类结合提供了新思路。",
+      "llm_tldr": "现有数据选择方法依赖几何假设，而现代数据集具有全局代数结构。本文提出基于低秩结构和k均值聚类的主动学习数据选择方法，在保持代表性的同时降低计算复杂度。实验证明该方法在多个数据集上优于传统基于聚类的方法，为主动学习与聚类结合提供了新思路。",
+      "llm_tags": [
+        "query:active-clust"
+      ],
+      "matched_query_tag": "query:active-clust",
+      "matched_query_text": "active learning clustering methods",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2606.11583v1",
+      "source": "arxiv",
+      "title": "Beyond the Golden Teacher: Enhancing Graph Learning through LLM-GNN Co-teaching",
+      "abstract": "Text-attributed graphs (TAGs) underlie real-world applications such as citation networks, social media, and e-commerce. Few-shot graph learning on TAGs is hard: with only a handful of labels per class and the rest of the graph unannotated, neither GNNs nor LLMs can learn well on their own. GNNs read topology and fail on cold nodes; LLMs read text and fail on text-ambiguous nodes. Existing LLM-GNN methods all follow the same recipe: designate one model as the golden teacher and use its outputs (e.g., features or pseudo-labels) to supervise the other. We argue this golden-teacher assumption breaks under sparse supervision: neither model is golden, and treating either as such transfers its blind spots into the student. We therefore ask: can we avoid designating either model as the golden teacher, and still perform effective graph learning? We answer with LLM-GNN Co-Teaching, a bidirectional co-teaching framework in which neither model is fixed as teacher. The GNN and LLM exchange their most confident pseudo-labels under an architecture-specific small-loss criterion, and both update every round. Supervision is then mined from the trajectory: whenever a node moves from cross-model contradiction at round t to cross-model agreement at round t+1, the LLM's two answers on the same input form a preference pair (old contradicting self < new peer-endorsed self) for DPO training. We call this Round-based Pseudo-Label Preference Optimization (RPL-PO). On six benchmarks, LLM-GNN Co-Teaching consistently outperforms GNN-as-Judge and all prior methods, with absolute 3-shot gains of 7.86% on Cora and 7.73% on ogbn-arxiv; improvements carry over to 5-shot and to zero-shot cross-dataset transfer. Error-structure analysis further shows that abandoning the golden-teacher assumption substantially improves the LLM's graph learning capability on challenging samples.",
+      "authors": [
+        "Zhuoyi Peng",
+        "Hanlin Gu",
+        "Lixin Fan",
+        "Yi Yang"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-06-10T02:15:56+00:00",
+      "link": "https://arxiv.org/pdf/2606.11583v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "LLM-GNN co-teaching for graph learning",
+      "llm_evidence_cn": "LLM-GNN协同教学用于图学习",
+      "llm_evidence": "LLM-GNN协同教学用于图学习",
+      "canonical_evidence": "LLM-GNN协同教学用于图学习",
+      "llm_tldr_en": "Proposes LLM-GNN co-teaching to avoid golden-teacher blind spots in few-shot graph learning on text-attributed graphs.",
+      "llm_tldr_cn": "该论文提出LLM与GNN协同教学框架，避免在文本属性图少样本学习中单一教师模型带来的盲区。LLM处理文本，GNN处理拓扑，相互纠正伪标签。方法涉及大语言模型指导图学习，虽不直接做聚类，但图节点聚类可看作分类任务，且主动学习可借鉴其LLM-GNN交互思想。",
+      "llm_tldr": "该论文提出LLM与GNN协同教学框架，避免在文本属性图少样本学习中单一教师模型带来的盲区。LLM处理文本，GNN处理拓扑，相互纠正伪标签。方法涉及大语言模型指导图学习，虽不直接做聚类，但图节点聚类可看作分类任务，且主动学习可借鉴其LLM-GNN交互思想。",
+      "llm_tags": [
+        "query:ac"
+      ],
+      "matched_query_tag": "query:ac",
+      "matched_query_text": "Active learning clustering methods that leverage large language models",
+      "matched_requirement_id": "req-6",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.14690v1",
+      "source": "arxiv",
+      "title": "A Complexity Measure for Active Learning in Multi-group Mean Estimation",
+      "abstract": "We study a \\emph{max-risk} objective for active learning in a multi-group mean estimation $d$-armed bandits: a learner adaptively allocates a budget of $T$ samples across $d$ groups to minimize the worst-case uncertainty index $\\max_{k\\in[d]}σ_k^2/n_k$, where $σ_k$ is the standard deviation of the distribution of arm $d$, and $n_k$ is the number of times arm $d$ is sampled. We develop a local minimax framework and prove the first general lower bound for this objective, valid for any finite-variance hypothesis class. The bound separates difficulty into three orthogonal factors: a \\emph{budget} term, a \\emph{heteroscedasticity} index measuring how unevenly the uncertainty is spread across arms, and a model-dependent complexity measure, the \\emph{Variance Local Curvature} ($\\mathrm{VLC}$), which captures how much information a local change of variance creates inside the hypothesis class. For smooth classes, the $\\mathrm{VLC}$ is a reparametrization of a variance--Fisher information, with closed-form values for common families. Benchmarking against the strongest available upper bound shows near-optimality up to logarithmic factors in broad regimes, and pinpoints a systematic gap in highly heterogeneous instances. Our proof introduces two key ingredients: a loss-induced $\\ell_1$ geometry on the decision space, and a representation-based instance generator that reduces hard-instance construction to an explicit random matrix calculation.",
+      "authors": [
+        "Abdellah Aznag",
+        "Rachel Cummings",
+        "Adam N. Elmachtoub"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.IT"
+      ],
+      "published": "2026-06-12T17:54:26+00:00",
+      "link": "https://arxiv.org/pdf/2606.14690v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "active learning complexity measure for multi-group",
+      "llm_evidence_cn": "多组主动学习复杂度度量",
+      "llm_evidence": "多组主动学习复杂度度量",
+      "canonical_evidence": "多组主动学习复杂度度量",
+      "llm_tldr_en": "Develops a complexity measure for active learning in multi-group mean estimation, providing lower bounds and algorithmic implications.",
+      "llm_tldr_cn": "该论文研究多组均值估计中的主动学习问题，提出最大风险目标下的局部极小化框架，给出首个通用下界。该下界揭示预算、异方差性和方差复杂度三个因子。虽未直接聚焦聚类，但主动学习框架可用于聚类场景的查询策略设计。",
+      "llm_tldr": "该论文研究多组均值估计中的主动学习问题，提出最大风险目标下的局部极小化框架，给出首个通用下界。该下界揭示预算、异方差性和方差复杂度三个因子。虽未直接聚焦聚类，但主动学习框架可用于聚类场景的查询策略设计。",
+      "llm_tags": [
+        "query:active-clust"
+      ],
+      "matched_query_tag": "query:active-clust",
+      "matched_query_text": "query strategy for active clustering",
+      "matched_requirement_id": "req-11",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}
