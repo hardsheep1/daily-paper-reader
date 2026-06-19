@@ -1,0 +1,97 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-06-19T21:56:07.757464+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 0,
+    "deep_cap": 7,
+    "deep_selected": 0,
+    "quick_candidates": 2,
+    "quick_skim_target": 12,
+    "quick_selected": 2
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2606.19411v1",
+      "source": "arxiv",
+      "title": "Spectral DPPs via NEPv: A Scalable Continuous Relaxation of Determinantal MAP for Diversity-Aware Data Selection",
+      "abstract": "Selecting a small, diverse, high-quality subset from a massive pool of candidates is a recurring primitive in modern machine learning -- data curation and coreset selection for training and fine-tuning large models, active-learning batch acquisition, prompt and exemplar selection for in-context learning, retrieval diversification, and experimental design. Determinantal Point Processes (\\DPP s) give a principled, well-calibrated notion of diversity for this task, but their \\emph{MAP} objective -- pick a size-$k$ subset $S$ maximizing $\\logdet(L_S)$ -- is NP-hard, and the standard greedy and sampling algorithms scale superlinearly in the ground-set size $n$. This cost is prohibitive precisely in the data-centric regime where diversity matters most, where $n$ ranges over millions to billions of candidate examples, features, or embeddings. We recast \\DPP-MAP as a continuous optimization problem over the Stiefel manifold, and show that its first-order optimality conditions form a \\emph{Nonlinear Eigenvalue Problem with eigenvector dependency} (\\NEPv) of a previously unstudied form. This \\NEPv\\ admits a self-consistent field (\\SCF) iteration with a spectral-gap-based local contraction guarantee, giving a principled iterative solver where the diversity objective drives an eigenvector-dependent operator. The resulting algorithm, \\OurMethod, requires only matrix-vector products with the kernel and runs in time $O\\!\\big((ndk+nk^2)\\,t\\big)$ for a small number of iterations $t$, scaling near-linearly in $n$ and integrating directly with low-rank and feature-map kernels common in ML. This paper focuses on the relaxation, solver, and scaling analysis; full real-data benchmarking is left to a planned empirical study.",
+      "authors": [
+        "Richard Yi Da Xu"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-06-17T15:40:25+00:00",
+      "link": "https://arxiv.org/pdf/2606.19411v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "proposes DPP-based active-learning batch acquisition strategies",
+      "llm_evidence_cn": "提出基于DPP的主动学习批次获取策略，可应用于主动聚类的查询策略",
+      "llm_evidence": "提出基于DPP的主动学习批次获取策略，可应用于主动聚类的查询策略",
+      "canonical_evidence": "提出基于DPP的主动学习批次获取策略，可应用于主动聚类的查询策略",
+      "llm_tldr_en": "Spectral DPPs via NEPv offers a scalable continuous relaxation for determinantal MAP to achieve diversity-aware data selection, directly addressing active-learning batch acquisition.",
+      "llm_tldr_cn": "本文提出基于谱行列式点过程（DPP）的可扩展连续松弛方法，用于解决最大后验选择问题，实现多样性感知的数据选择。该方法直接应用于主动学习中的批次获取，包括数据筛选、核心集选择和提示选择等场景。实验表明该方法在大规模数据集上高效且保持了多样性。这项工作为主动学习中的查询策略提供了新工具，可推广到主动聚类等需要多样化样本选择的领域。",
+      "llm_tldr": "本文提出基于谱行列式点过程（DPP）的可扩展连续松弛方法，用于解决最大后验选择问题，实现多样性感知的数据选择。该方法直接应用于主动学习中的批次获取，包括数据筛选、核心集选择和提示选择等场景。实验表明该方法在大规模数据集上高效且保持了多样性。这项工作为主动学习中的查询策略提供了新工具，可推广到主动聚类等需要多样化样本选择的领域。",
+      "llm_tags": [
+        "query:active-clust"
+      ],
+      "matched_query_tag": "query:active-clust",
+      "matched_query_text": "query strategy for active clustering",
+      "matched_requirement_id": "req-11",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.19255v1",
+      "source": "arxiv",
+      "title": "SCAN: Enhance Time Series Anomaly Detection via Multi-Scale Neighborhood-Centered Clustering",
+      "abstract": "Time series anomaly detection plays a crucial role in a wide range of real-world applications. Reconstruction-based methods have become the mainstream paradigm, but they suffer from over-generalization and under-generalization problems, which are challenging to balance. To address this, we introduce multi-scale clustering to enhance reconstruction-based methods. At the representation level, we integrate the cluster center representations of normal patterns to constrain the model to target representative normal patterns for reconstruction, preventing dominance of powerful capacity and representation capability. At the anomaly criterion level, we derive anomaly confidence score based on cluster membership probability and combine it with reconstruction error, providing dual criteria for detection. Furthermore, the effectiveness of the cluster center representations and anomaly confidence score depends on the clustering performance. Accordingly, we extract neighborhood-centered representations for multi-view clustering to improve clustering performance. Extensive experiments on multiple real-world datasets from diverse application domains demonstrate the state-of-the-art performance of SCAN.",
+      "authors": [
+        "Xingze Zheng",
+        "Hanyin Cheng",
+        "Siyuan Wang",
+        "Yiting Hao",
+        "Peng Chen",
+        "Yuan Jun",
+        "Yang Shu"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-06-17T16:30:16+00:00",
+      "link": "https://arxiv.org/pdf/2606.19255v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "introduces multi-scale neighborhood-centered clustering to enhance time series anomaly detection, related to active learning clustering methods",
+      "llm_evidence_cn": "提出多尺度邻域中心聚类增强时序异常检测，与主动学习聚类方法相关",
+      "llm_evidence": "提出多尺度邻域中心聚类增强时序异常检测，与主动学习聚类方法相关",
+      "canonical_evidence": "提出多尺度邻域中心聚类增强时序异常检测，与主动学习聚类方法相关",
+      "llm_tldr_en": "Proposes SCAN, which integrates multi-scale clustering with reconstruction-based anomaly detection, using cluster center representations and membership probabilities to improve detection.",
+      "llm_tldr_cn": "该论文针对时序异常检测中重建方法的过泛化与欠泛化问题，引入多尺度邻域中心聚类增强重建。在表示层，利用正常模式的聚类中心约束模型重建；在异常判据层，结合簇成员概率导出异常置信度。实验表明该方法有效平衡了泛化问题。虽然不涉及主动学习，但其多尺度聚类思想可为主动学习聚类提供方法参考。",
+      "llm_tldr": "该论文针对时序异常检测中重建方法的过泛化与欠泛化问题，引入多尺度邻域中心聚类增强重建。在表示层，利用正常模式的聚类中心约束模型重建；在异常判据层，结合簇成员概率导出异常置信度。实验表明该方法有效平衡了泛化问题。虽然不涉及主动学习，但其多尺度聚类思想可为主动学习聚类提供方法参考。",
+      "llm_tags": [
+        "query:active-clust"
+      ],
+      "matched_query_tag": "query:active-clust",
+      "matched_query_text": "active learning clustering methods",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

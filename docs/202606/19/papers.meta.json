@@ -1,0 +1,39 @@
+{
+  "label": "2026-06-19",
+  "date": "2026-06-19",
+  "generated_at": "2026-06-19T21:57:37",
+  "count": 2,
+  "papers": [
+    {
+      "paper_id": "202606/19/2606.19411v1-spectral-dpps-via-nepv-a-scalable-continuous-relaxation-of-determinantal-map-for-diversity-aware-data-selection",
+      "section": "quick",
+      "title_en": "Spectral DPPs via NEPv: A Scalable Continuous Relaxation of Determinantal MAP for Diversity-Aware Data Selection",
+      "authors": "Richard Yi Da Xu",
+      "date": "2026-06-17",
+      "pdf": "https://arxiv.org/pdf/2606.19411v1",
+      "score": "7.0",
+      "evidence": "提出基于DPP的主动学习批次获取策略，可应用于主动聚类的查询策略",
+      "tldr": "针对大规模数据子集选择中多样性与高质量平衡的挑战，标准DPP-MAP目标是NP-hard且算法超线性。本文将DPP-MAP重铸为Stiefel流形上的连续优化，首次导出其最优性条件形成非线性特征值问题（NEPv），并提出基于自洽场（SCF）迭代的求解器，利用谱间隙保证局部收敛。该算法仅需矩阵-向量乘积，复杂度近线性于候选集规模n，可直接集成低秩和特征映射核，为数据为中心的机器学习提供可扩展的多样性驱动选择方案。",
+      "tags": "query:active-clust",
+      "abstract_en": "Selecting a small, diverse, high-quality subset from a massive pool of candidates is a recurring primitive in modern machine learning -- data curation and coreset selection for training and fine-tuning large models, active-learning batch acquisition, prompt and exemplar selection for in-context learning, retrieval diversification, and experimental design. Determinantal Point Processes (\\DPP s) give a principled, well-calibrated notion of diversity for this task, but their \\emph{MAP} objective -- pick a size-$k$ subset $S$ maximizing $\\logdet(L_S)$ -- is NP-hard, and the standard greedy and sampling algorithms scale superlinearly in the ground-set size $n$. This cost is prohibitive precisely in the data-centric regime where diversity matters most, where $n$ ranges over millions to billions of candidate examples, features, or embeddings. We recast \\DPP-MAP as a continuous optimization problem over the Stiefel manifold, and show that its first-order optimality conditions form a \\emph{Nonlinear Eigenvalue Problem with eigenvector dependency} (\\NEPv) of a previously unstudied form. This \\NEPv\\ admits a self-consistent field (\\SCF) iteration with a spectral-gap-based local contraction guarantee, giving a principled iterative solver where the diversity objective drives an eigenvector-dependent operator. The resulting algorithm, \\OurMethod, requires only matrix-vector products with the kernel and runs in time $O\\!\\big((ndk+nk^2)\\,t\\big)$ for a small number of iterations $t$, scaling near-linearly in $n$ and integrating directly with low-rank and feature-map kernels common in ML. This paper focuses on the relaxation, solver, and scaling analysis; full real-data benchmarking is left to a planned empirical study.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202606/19/2606.19255v1-scan-enhance-time-series-anomaly-detection-via-multi-scale-neighborhood-centered-clustering",
+      "section": "quick",
+      "title_en": "SCAN: Enhance Time Series Anomaly Detection via Multi-Scale Neighborhood-Centered Clustering",
+      "authors": "Xingze Zheng, Hanyin Cheng, Siyuan Wang, Yiting Hao, Peng Chen, Yuan Jun, Yang Shu",
+      "date": "2026-06-17",
+      "pdf": "https://arxiv.org/pdf/2606.19255v1",
+      "score": "6.0",
+      "evidence": "提出多尺度邻域中心聚类增强时序异常检测，与主动学习聚类方法相关",
+      "tldr": "时间序列异常检测中，重建方法常面临过泛化与欠泛化难以平衡的问题。SCAN引入多尺度聚类增强重建方法：在表示层面集成正常模式的聚类中心表示以约束模型；在准则层面结合聚类隶属概率导出异常置信度与重建误差。通过提取邻域中心表示进行多视图聚类提升性能。在多个真实数据集上取得最优结果。",
+      "tags": "query:active-clust",
+      "abstract_en": "Time series anomaly detection plays a crucial role in a wide range of real-world applications. Reconstruction-based methods have become the mainstream paradigm, but they suffer from over-generalization and under-generalization problems, which are challenging to balance. To address this, we introduce multi-scale clustering to enhance reconstruction-based methods. At the representation level, we integrate the cluster center representations of normal patterns to constrain the model to target representative normal patterns for reconstruction, preventing dominance of powerful capacity and representation capability. At the anomaly criterion level, we derive anomaly confidence score based on cluster membership probability and combine it with reconstruction error, providing dual criteria for detection. Furthermore, the effectiveness of the cluster center representations and anomaly confidence score depends on the clustering performance. Accordingly, we extract neighborhood-centered representations for multi-view clustering to improve clustering performance. Extensive experiments on multiple real-world datasets from diverse application domains demonstrate the state-of-the-art performance of SCAN.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}
