@@ -6,29 +6,24 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-06-19
-- 运行时间：2026-06-19 21:57:31 UTC
+- 最新运行日期：2026-06-20
+- 运行时间：2026-06-20 21:27:47 UTC
 - 运行状态：成功
-- 本次总论文数：2
-- 精读区：0
-- 速读区：2
+- 本次总论文数：1
+- 精读区：1
+- 速读区：0
 
 ### 今日简报（AI）
-1) 今日速读2篇，聚焦数据多样性选择与时间序列异常检测新方法。  
-2) 值得关注：Spectral DPPs用连续松弛优化求解行列式点过程，实现大规模多样性数据选择；SCAN通过多尺度邻域聚类显著提升时序异常检测性能。  
-3) 建议优先研读Spectral DPPs的NEPv框架，可作为提升推荐/采样多样性的实用工具。
-- 详情：[/202606/19/README](/202606/19/README)
+今日精读一篇高分论文，发现用语言模型语义聚类预训练Tsetlin机器可提升可解释性。研究证明聚类方法能替代传统神经网络，在保持性能的同时实现透明决策。建议关注Tsetlin机器在隐私敏感场景的应用，可优先试用该聚类预训练策略。
+- 详情：[/202606/20/README](/202606/20/README)
 
 ### 精读区论文标签
-- 本次无精读推荐。
+1. [Clusters are All You Need: Pre-Training the Tsetlin Machine with Semantic Clusters from Language Models for Interpretability](/202606/20/2606.19815v1-clusters-are-all-you-need-pre-training-the-tsetlin-machine-with-semantic-clusters-from-language-models-for-interpretability)  
+   标签：评分：8.0/10、query:ac
+   evidence：利用语言模型嵌入对文本聚类以预训练Tsetlin机器
 
 ### 速读区论文标签
-1. [Spectral DPPs via NEPv: A Scalable Continuous Relaxation of Determinantal MAP for Diversity-Aware Data Selection](/202606/19/2606.19411v1-spectral-dpps-via-nepv-a-scalable-continuous-relaxation-of-determinantal-map-for-diversity-aware-data-selection)  
-   标签：评分：7.0/10、query:active-clust
-   evidence：提出基于DPP的主动学习批次获取策略，可应用于主动聚类的查询策略
-2. [SCAN: Enhance Time Series Anomaly Detection via Multi-Scale Neighborhood-Centered Clustering](/202606/19/2606.19255v1-scan-enhance-time-series-anomaly-detection-via-multi-scale-neighborhood-centered-clustering)  
-   标签：评分：6.0/10、query:active-clust
-   evidence：提出多尺度邻域中心聚类增强时序异常检测，与主动学习聚类方法相关
+- 本次无速读推荐。
 
 
 <div class="dpr-home-promo-card">

@@ -1,0 +1,24 @@
+{
+  "label": "2026-06-20",
+  "date": "2026-06-20",
+  "generated_at": "2026-06-20T21:27:52",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "202606/20/2606.19815v1-clusters-are-all-you-need-pre-training-the-tsetlin-machine-with-semantic-clusters-from-language-models-for-interpretability",
+      "section": "deep",
+      "title_en": "Clusters are All You Need: Pre-Training the Tsetlin Machine with Semantic Clusters from Language Models for Interpretability",
+      "authors": "Jiechao Gao, Rohan Kumar Yadav, Yuangang Li, Yuandong Pan, Jie Wang, Ying Liu, Michael Lepech",
+      "date": "2026-06-18",
+      "pdf": "https://arxiv.org/pdf/2606.19815v1",
+      "score": "8.0",
+      "evidence": "利用语言模型嵌入对文本聚类以预训练Tsetlin机器",
+      "tldr": "预训练语言模型如BERT在文本分类中表现优异但缺乏可解释性，而Tsetlin Machine (TM)虽可解释但语义捕获不足。本文提出一种语义预训练框架，利用K-means或Top2Vec将文本聚类为语义簇，用簇-样本对预训练非否定TM，使其学习可解释的语义关键词再微调。在五个数据集上，该方法显著优于朴素和基于嵌入的TM，性能接近BERT且保持可解释性。",
+      "tags": "query:ac",
+      "abstract_en": "Pre-trained language models such as BERT achieve strong text classification performance but lack transparency, limiting their use in high-stakes settings. The Tsetlin Machine (TM) offers fully interpretable, clause-based reasoning but captures little semantic information, and prior attempts to bridge the two rely on static word embeddings that miss contextual meaning. We propose a semantic pre-training framework that transfers knowledge from a pre-trained language model into a TM without using embeddings. Text samples are grouped into semantically coherent clusters with K-means or Top2Vec, and the resulting cluster-sample pairs pre-train a non-negated TM with enhanced Type I feedback. The TM thereby learns interpretable semantic keywords that are fine-tuned on downstream tasks. Across five datasets, our method substantially outperforms vanilla and embedding-based TMs and reaches performance competitive with BERT while remaining interpretable.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

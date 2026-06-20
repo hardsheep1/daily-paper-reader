@@ -1,0 +1,264 @@
+Title: Clusters are All You Need: Pre-Training the Tsetlin Machine with Semantic Clusters from Language Models for Interpretability
+
+URL Source: https://arxiv.org/pdf/2606.19815v1
+
+Published Time: Fri, 19 Jun 2026 00:29:12 GMT
+
+Number of Pages: 10
+
+Markdown Content:
+## Clusters are All You Need: Pre-Training the Tsetlin Machine with Semantic Clusters from Language Models for Interpretability 
+
+Jiechao Gao 1, Rohan Kumar Yadav 2, Yuangang Li 3, Yuandong Pan 1,Jie Wang 1, Ying Liu 4, and Michael Lepech 11Stanford University 
+
+2Independent Researcher 
+
+3University of California, Irvine 
+
+4University of the Chinese Academy of Sciences 
+
+1{jiechao, ydpan, jiewang, mlepech}@stanford.edu 
+
+2errohanydv@gmail.com , 3yuanganl@uci.edu , 4liuy@ucas.ac.cn 
+
+Abstract 
+
+Pre-trained language models such as BERT achieve strong text classification performance but lack transparency, limiting their use in high-stakes settings. The Tsetlin Machine (TM) of-fers fully interpretable, clause-based reason-ing but captures little semantic information, and prior attempts to bridge the two rely on static word embeddings that miss contextual meaning. We propose a semantic pre-training framework that transfers knowledge from a pre-trained language model into a TM without us-ing embeddings. Text samples are grouped into semantically coherent clusters with K-means or Top2Vec, and the resulting cluster–sample pairs pre-train a non-negated TM with enhanced Type I feedback. The TM thereby learns inter-pretable semantic keywords that are fine-tuned on downstream tasks. Across five datasets, our method substantially outperforms vanilla and embedding-based TMs and reaches perfor-mance competitive with BERT while remaining interpretable. 
+
+1 Introduction 
+
+The Tsetlin Machine (TM) has recently gained attention for its transparent, clause-based learn-ing and explainable decisions (Granmo, 2018), with promising results on document classification (Abeyrathna et al., 2023), sentiment analysis (Ya-dav et al., 2021b), topic classification (Yadav et al., 2021a), and fake news detection (Bhattarai et al., 2022). Its inherent interpretability makes it attrac-tive in high-stakes domains such as legal and med-ical text analysis, where transparency is essential (Saha and Jyhne, 2022; Berge et al., 2018). However, TM operates on Boolean inputs, mak-ing Bag-of-Words (BOW) the most practical encod-ing. While BOW suits TM’s logical mechanism, it prevents the model from leveraging the semantic Process         
+
+> Unlabeled
+> Dataset
+> Text_1 Cluster 1
+> Text_2 Cluster 2
+> Text_3 Cluster 3
+> Text_k Cluster m
+> Non-negated TM
+> (NTM)
+> BERT-variants
+> Top2Vec
+> Labeled
+> Dataset
+> BERT-variants
+> Top2Vec
+> BOW[Text_1 + Keywords(Cluster 1)]
+> BOW[Text_2 + Keywords(Cluster 2)]
+> BOW[Text_3 + Keywords(Cluster 3)]
+> BOW[Text_k + Keywords(Cluster m)]
+> Fine-tune with
+> vanilla TM
+> Text_1 Cluster 1
+> Text_2 Cluster 2
+> Text_3 Cluster 3
+> Text_k Cluster m
+> Pretraining TM
+> Fine-tune TM
+
+Figure 1: Pre-training a Tsetlin Machine using semantic clusters from BERT or Top2Vec, followed by feature-extended fine-tuning with a vanilla TM. 
+
+knowledge of modern pre-trained language mod-els, so TM often trails neural models initialized with large-scale pre-training. Existing attempts add static word embeddings such as Word2Vec, GloVe, or FastText to BOW (Yadav et al., 2021a), but these still miss contextual semantics, and no interpretable method yet integrates transformer-based models such as BERT into TM. In this paper, we propose a framework that trans-fers semantic knowledge from pre-trained language models into TM while preserving interpretabil-ity. As illustrated in Figure 1, it follows two stages. First, unlabeled samples are embedded with a pre-trained language model and grouped into semantic clusters using either K-means or Top2Vec; the resulting cluster–sample pairs pre-train a Non-Negated Tsetlin Machine (NTM) that learns monotone, interpretable cluster representa-tions without negated features, from which we ex-tract high-confidence words or phrases as semantic descriptors for each cluster. In the second stage, labeled samples are enriched with their cluster descriptors to form a semantic Bag-of-Words representation that fine-tunes a stan-dard TM. Clustering and pre-training run once per domain and are reused across downstream tasks, amortizing their cost. Experiments on five datasets 
+
+> arXiv:2606.19815v1 [cs.CL] 18 Jun 2026
+
+against nine baselines show consistent gains over vanilla TM and embedding-augmented TM, with performance comparable to BERT-based models, enabling effective and interpretable use of pre-trained semantic knowledge. 
+
+2 Related Works 
+
+Large-scale pre-trained language models such as BERT dominate NLP (Devlin et al., 2019; Raf-fel et al., 2019; Brown et al., 2020), learning gen-eral representations that are fine-tuned for down-stream tasks and achieving state-of-the-art results on benchmarks such as GLUE (Wang et al., 2018) and SuperGLUE (Wang et al., 2019). However, these models remain opaque, which is problem-atic in sensitive domains where the decision pro-cess must be understood (Jain and Wallace, 2019; Rudin, 2018; Wu et al., 2023). Transparent mod-els (Molnar, 2022; Abeyrathna et al., 2023) offer more insight but often sacrifice accuracy, whereas the Tsetlin Machine (TM) is notable for balancing the two. Integrating semantic embeddings into TM is difficult because of its Boolean BOW represen-tation. A prior attempt encoding GloVe-similar words alongside BOW improved TM to match GloVe-initialized LSTM and CNN models (Yadav et al., 2021a), but the field has since moved to richer pre-trained models such as BERT, which our work targets. An extended discussion is provided in Appendix A. 
+
+3 Proposed Framework 
+
+Here, we describe the proposed framework for pre-training the NTM, extracting words/phrases from the NTM, and then using these in downstream tasks with the vanilla TM. To better understand our framework, we give an overview of the basic TM architecture to understand how the vanilla TM functions in general in our supplemental materials. In this section, we introduce the Non-Negated Tsetlin Machine (NTM), a variant designed to en-hance interpretability and effectively utilize seman-tic information from pre-trained language models. NTM incorporates two critical modifications to im-prove its performance in capturing semantic rela-tionships while maintaining transparency. The primary enhancement in NTM involves boosting positive feedback (Type I feedback). Un-like the standard TM (Granmo, 2018), where Type I feedback reinforces the inclusion of literals con-tributing to correct classifications, NTM signifi-cantly enhances this mechanism by directly incre-menting the TA states associated with these literals. This adjustment prioritizes the reinforcement of TA states through positive feedback before consider-ing other forms of feedback. By concentrating on strengthening features crucial for accurate predic-tions early in the learning process, NTM aims to consolidate learned patterns effectively. This refine-ment enhances the model’s ability to capture subtle semantic relationships inherent in natural language data. The Boosted True Positive TM refines the Tsetlin Machine’s feedback mechanism to enhance accuracy by boosting true positive feedback. This adjustment replaces the standard reward probabil-ity s−1 
+
+> s
+
+with 1.0 and sets the penalty probability  
+
+> 1
+> s
+
+to 0.0, significantly strengthening the reinforce-ment of correct Include actions compared to the standard TM. Additionally, penalties for Exclude actions are adjusted to maintain balance and pre-vent over-penalization, ensuring the model remains appropriately responsive without becoming overly conservative. The second modification addresses the treatment of negated features within clauses. Traditional TM structures clauses as conjunctions of both original (non-negated) and negated forms of input features. However, in NTM, the inclusion of negated features ( ¯Iκι ) is disabled. This simplification results in each clause containing only the original forms of input features: 
+
+Cκι = ^
+
+> k∈Iκι
+
+xk.
+
+By eliminating negated literals from the clauses, NTM reduces complexity and enhances interpretability, making it easier to interpret the logical rules for model’s decisions. 
+
+3.1 Extract Cluster using Pre-trained BERT based Model 
+
+Let D represent a document set with unlabeled data. For our case study, we use the AG News dataset, denoted as DAG . This dataset includes news articles that cover a variety of topics. We clus-ter the unlabeled samples from DAG using either BERT-based embeddings (K-means clustering) or Top2Vec (Hierarchical Density-based Clustering). To ensure robustness and generalization, we vali-date the pre-trained model using AG News across multiple datasets, demonstrating that fixed clusters can effectively work for various test sets. We use the pre-trained BERT model to obtain embeddings for each document in DAG . Let Cluster 1   
+
+> olympic,
+> basketball, teams
+> Cluster 2
+> space, camera,
+> observe
+> Professional basketball players realize the difficulty of winning
+> another Olympic gold medal as the dominance of past teams fades.
+> The national basketball team suffered a significant defeat to an
+> opponent at the Olympics, ending a long winning streak.
+> A shuttle's external fuel tank, involved in a past disaster, will be
+> monitored by a new camera.
+> A space telescope camera has observed a bubble of gas and dust
+> created by particles from a young star.
+> Cluster 1
+> Cluster 1
+> Cluster 2
+> Cluster 2
+> Sam ple-cluster pair s Clause in NTM Cluster Representation
+> Confidence of TA states
+
+Figure 2: Learning Process of pre-training NTM without negated feature and generating cluster representation with high confidence TA states. 
+
+E = {e1, e 2, . . . , e n} represent the set of BERT embeddings, where ei is the embedding of docu-ment di. We apply K-means clustering to E, par-titioning the embeddings into k clusters. For our experiments, we set k = 200 , which was found to be optimal. Each document di is assigned a cluster label ci from the set {1, 2, . . . , k }.Alternatively, we use the Top2Vec model by cre-ating jointly embedded document and word vectors using the BERT Sentence Transformer. The BERT Sentence Transformer generates numerous clusters based on the document content. These clusters are then reduced to 200 clusters to ensure fair evalua-tion, with each document di assigned a cluster label 
+
+ci. The next step involves creating sample-cluster pairs to pre-train the NTM. Each document di in 
+
+DAG is paired with its cluster label ci to form the training set for NTM. Let (di, c i) denote a sample-cluster pair, where di is the document and ci is the cluster label. The set of sample-cluster pairs is rep-resented as S = {(d1, c 1), (d2, c 2), . . . , (dn, c n)}.
+
+3.2 Pre-training Non-Negated Tsetlin Machine 
+
+In this phase, the sample-cluster pairs are trained using the Non-Negated Tsetlin Machine (NTM). Each sample is represented as a Boolean Bag of Words (BOW), with its associated cluster serving as the label. In a typical Tsetlin Machine, each word in the BOW is managed by a pair of Tsetlin Automata (TA): one ( TA ) controls the original form of the literal, and the other ( TA’ ) controls its nega-tion. However, in this approach, we disregard the negation, focusing solely on the literals controlled by TA , as illustrated in Figure 2. During NTM learning, each clause learns a com-bination of literals in conjunction. Each TA decides whether to include or exclude a literal, operating in two modes: Include or Exclude, with 2N states. When a TA moves from state 1 to N , it performs the Exclude action. When it moves from state N +1 
+
+to 2N , it performs the Include action. These moves are triggered by feedback in the form of Reward, Penalty, or Inaction; the full Type I and Type II feedback tables are given in Appendix C. Once the model is trained, we observe the fol-lowing: for Cluster 1, positive clauses such as C1
+
+and C3 contain words like basketball , olympics ,and team , whereas Cluster 2 has clauses that in-clude words like space , observe , and camera . The TA states for these words, after reaching optimal training epochs, indicate their confidence levels within each cluster. For instance, words like space 
+
+and olympics are in deeper TA states, making them more repetitive across clauses compared to other words. This confidence state gives the Tsetlin Machine an advantage over models like Top2Vec, whose cluster keywords are more generic. We define the confidence of literal j for class y as Conf y(j) = 
+
+P
+
+i∈C(p)
+
+> y
+
+TA ij , where C(p)
+
+y are the positive (odd-indexed) clauses of class y that include literal j and TA ij is the state of the TA including j in clause i;a deeper state implies higher confidence. For example, Cluster 1 includes words like 
+
+olympic , basketball , and teams , indicating a sports-related cluster, whereas Cluster 2 includes words like space , camera , and observe , indicating a space or sci-fi cluster. This method generates an inter-pretable confidence-based word representation for clusters obtained from BERT or Top2Vec models. This representation is then used as pre-trained ex-plainable information for fine-tuning the Tsetlin Machine or any other interpretable model. 3.3 Fine-Tune with Pre-trained Word Representation 
+
+In the fine-tuning stage, a labeled dataset is utilized. Similar to the pretraining stage, BERT-variants or Top2Vec are applied to assign clusters to the text samples. For each cluster, the Bag of Words (BOW) representation of the text samples is aug-mented with the pre-trained keywords obtained from the NTM. The enriched BOW representations are then used to fine-tune the vanilla TM. This integration of pre-trained keywords aims to lever-age the interpretable and discriminative power of the NTM, thereby improving the performance and interpretability of the vanilla TM in handling the labeled dataset. By combining pre-trained word representations with fine-tuning, we aim to create a more robust and interpretable TM model, capable of accurately capturing and leveraging the nuances of the text data within each cluster. 
+
+4 Experiments and Results 
+
+In this section, we start by introducing the bench-mark datasets used to evaluate our model. Our goal was to include widely recognized topic classifica-tion datasets. Following this, we introduce several baseline models that serve as benchmarks for com-parison with our approach. Finally, we analyze our proposed model to demonstrate its capabilities and performance consistency across different scenarios. 
+
+Datasets. We evaluate on five topic classification datasets: NYT-Topics, derived from the New York Times Annotated Corpus (Sandhaus, 2008; Meng et al., 2019), AG-News (Zhang et al., 2015), DB-pedia (Lehmann et al., 2015), and the R8 and R52 subsets of Reuters-21578 (8 and 52 categories, re-spectively). Dataset statistics and curation details are provided in Appendix B. 
+
+Baselines. We compare against a curated set of baselines spanning traditional and neural meth-ods: BoW with TF-IDF (Jones, 2021), char-CNN (Zhang et al., 2015), LSTM with and without GloVe (Hochreiter and Schmidhuber, 1997), Fast-Text (Joulin et al., 2017), BERT-base and BERT-large (Sun et al., 2019; Chen and Miyake, 2021), vanilla TM and GloVe-embedded TM (Yadav et al., 2021a), and Top2Vec (Angelov, 2020) for keyword comparison. Rather than enumerating many vari-ants of each model, we keep one representative per family so that the comparison isolates the effect of interpretable semantic pre-training rather than architectural tuning. Detailed descriptions of each baseline are provided in Appendix E. 
+
+4.1 Experimental Details 
+
+For pre-training we obtain embeddings from BERT (base and large) and from Top2Vec ini-tialized with the Universal Sentence Encoder, and cluster the unlabeled AG-News samples into 
+
+{50 , 100 , 200 , 300 , 400 , 500 } clusters. The NTM uses 2000 clauses ( 1000 per cluster), threshold 
+
+T = 4000 , and specificity s = 10 , with the weighted Tsetlin Machine of Abeyrathna et al. (2020). During fine-tuning we reintroduce negated literals and lower s to 5 for more flexible literal inclusion. Full hyperparameter settings and their rationale are provided in Appendix D. 
+
+4.2 Performance Comparison 
+
+Table 1 presents a comprehensive comparison of the accuracy percentages across several datasets, highlighting the performance of various models, including traditional methods from BOW , LSTM, CNN, BERT-based models, and our proposed Tsetlin Machine (TM) approach enhanced with pre-trained semantic clusters. While BERT-based models, particularly BERT-large, tend to achieve the highest accuracy, our approach, pre-training TM with BERT-derived clusters, consistently deliv-ers competitive performance, often within 1-2% of BERT-large, and in some cases, even surpasses it. Across the datasets, TM pre-trained with BERT clusters typically achieves accuracy within 1-2% of BERT-large. For example, on the AG-News and NYT datasets, our method trails BERT-large by only about 0.9% and 1.1%, respectively, while on the DBpedia dataset, the difference is a mere 0.3%. This demonstrates that the semantic richness captured by BERT can be effectively transferred into TM, significantly boosting its accuracy. More-over, our method outperforms TM initialized with Top2Vec by 1-2% on most datasets, further validat-ing the advantage of using keyword extracted from NTM in contrast with Top2Vec. Although there is a slight performance gap com-pared to BERT-large, this is largely due to the infor-mation loss inherent in the retraining process within TM, where the binary nature of TM’s input repre-sentation leads to some loss of the nuanced seman-tic information captured by BERT. Despite this, our method achieves impressive accuracy, within 1% of BERT-large on the DBpedia and R52 datasets, demonstrating that this trade-off is minimal when Table 1: Performance of fine-tuned Vanilla TM on pre-trained cluster representation from NTM. The baseline ranges from typical BOW to BERT-based models.                                                                       
+
+> Model/Datasets AG-News NYT DBpedia R8 R52
+> BoW TFIDF 89.64 88.24 97.37 93.74 86.95 char-CNN 87.20 88.67 98.3 94.02 85.37 LSTM 86.06 87.72 98.55 93.68 85.54 LSTM (GloVe) 92.10 89.54 98.70 96.09 90.48 fastText, h = 10 91.50 91.76 98.10 94.74 90.99 BERT-base 94.75 93.83 99.29 97.49 94.26 BERT-large 95.71 94.82 99.38 98.28 94.32 TM 88.34 88.50 98.20 96.16 84.62 TM (GloVe) 90.12 90.32 98.42 97.50 89.14
+> TM (NTM pretrain with Top2vec) 92.40 ± 0.92 92.32 ± 0.92 98.66 ± 0.92 97.70 ± 0.92 93.24 ± 0.92
+> TM (NTM pretrain with BERT-base) 94.12 ± 0.71 93.41 ± 0.71 98.98 ± 0.71 97.88 ± 0.71 95.44 ± 0.71
+> TM (NTM pretrain with BERT-large) 94.80 ± 0.64 93.72 ± 0.64 99.10 ± 0.64 97.92 ± 0.64 95.27 ± 0.64
+
+considering the increased interpretability and ex-plainability offered by TM. Overall, the results strongly support our main hypothesis: pre-training TM with semantically en-riched clusters from a pre-trained language model like BERT significantly enhances its performance, making it a highly competitive and interpretable alternative to more complex and less transparent models. This approach successfully narrows the ac-curacy gap between TM and state-of-the-art BERT models, setting a new standard for explainable text classification. 
+
+4.3 Impact of Cluster Sizes on Performance 
+
+We first study the impact of selecting various clus-ter sizes for BERT and Top2Vec approaches. We run the selected cluster sizes with the same con-figuration selected above for NTM and fine-tuning vanilla TM. For ease of illustration, we use only three datasets to show the cluster size impact. The performance of these cluster sizes is shown in Table 2. From the results, we observe that smaller cluster sizes (e.g., 50 ) provide limited contextual informa-tion, resulting in lower accuracy across all mod-els. For instance, in AG-News, Top2Vec achieves 90.24%, BERT-b 91.50%, and BERT-l 92.52%. As the cluster size increases to 100 , the accuracy im-proves due to enhanced contextual information. For example, in AG-News, Top2Vec achieves 91.72%, BERT-b 93.20%, and BERT-l 93.87%. The cluster size of 200 provides the highest accuracy across all datasets and models, with AG-News showing Top2Vec at 92.40%, BERT-b at 94.12%, and BERT-l at 94.80%. This indicates that 200 is an optimal cluster size for this setup. However, increasing the cluster size beyond 200 results in a decline in accu-racy. This is due to the disintegration of contextual information into smaller chunks, making it harder for the NTM to learn effectively. For instance, in AG-News, Top2Vec drops to 91.22% at a cluster size of 300, 90.13% at 400, and 88.88% at 500 .In summary, a cluster size of 200 strikes the best balance between contextual richness and coherence in all the selected datasets, while sizes smaller or larger than 200 tend to reduce model performance. 
+
+4.4 Impact Confidence of keywords on Performance 
+
+Additionally, we demonstrate the effectiveness of confidence-based keywords derived from the NTM TA-state confidence measure defined above. By selecting high-confidence keywords based on the states of Tsetlin Automata (TA) associated with each word, we enhance the impact of pre-trained information during fine-tuning. This highlights the advantage of using NTM pre-trained information over Top2Vec topic keywords. We experiment by using several number of high confidence literals for fine-tuning it on vanilla TM as shown in Figure 3. As illustrated in Figure 3, the performance metrics for AG News, DBpedia, R8, NYT, and R52 datasets exhibit a general improve-ment with the increase in the number of high-confidence words/literals. For instance, AG News shows a peak performance at 20 high-confidence words/literals, reaching 94.8%, and then slightly declines. Similarly, DBpedia achieves its high-est performance of 98.9% at 20 high-confidence words/literals. R8 also peaks at 20 words with Table 2: Accuracy of Different Models on Various Datasets for Different Cluster Sizes                                                                     
+
+> Cluster Size AG-News DBpedia R8 Top2Vec BERT-b BERT-l Top2Vec BERT-b BERT-l Top2Vec BERT-b BERT-l 50 90.24 91.50 92.52 97.50 97.58 97.89 95.89 96.28 96.70
+> 100 91.72 93.20 93.87 98.28 98.48 98.80 96.40 97.14 97.42 200 92.40 94.12 94.80 98.66 98.98 99.10 97.70 97.88 97.92 300 91.22 93.50 93.01 97.82 97.96 98.92 96.35 96.96 97.20
+> 400 90.13 92.00 92.75 97.42 97.42 97.88 95.90 96.10 96.35
+> 500 88.88 89.70 90.82 96.12 96.30 96.68 94.26 94.80 95.10
+> Figure 3: Comparison of accuracy for different selected number of high confidence words/literals based on the sum of their TA states in the clause. We have used BERT-l and 200 cluster size.
+
+97.9% performance. These trends suggest that there is an optimal number of high-confidence words/literals that maximizes performance for each dataset. Beyond this point, the benefit diminishes, in-dicating the importance of selecting an appropri-ate number of high-confidence words/literals for fine-tuning the model. This is because, even in NTM pre-trained information, there exist some noisy words that are out of context for the cluster type. If we add more words, the chances that the context will include noisy or out-of-context words increase, thereby reducing accuracy. 
+
+5 Explainability in NTM/Fine-tuned TM 
+
+We illustrate the transparency of both phases on a sports-cluster example (Figure 4). During pre-training, the NTM clauses start from random literal patterns and, guided by Type I feedback, converge to a monotone pattern for the sports cluster, [bas-ketball AND winning AND team AND olympic], without any negated literals. During fine-tuning with the vanilla TM, negated literals are reintro-duced. A labeled sports sentence whose obvious cues ([game, soccer, team, victory]) give only a thin 
+
+> Figure 4: Learning Process of pre-training NTM without negated feature and generating cluster representation with high confidence TA states.
+
+representation would otherwise force the clause to rely heavily on negated features; embedding the cluster descriptors enriches the input with seman-tic words such as [basketball, winning, olympic], yielding a representation that depends on only a few negations and improves the model’s understanding of the class, similar to BERT-style embeddings. A full step-by-step trace of clause convergence and feature enrichment is provided in Appendix F. 
+
+6 Conclusion 
+
+In this paper, we introduced an innovative method to enhance the Tsetlin Machine (TM) by pre-training it with semantic clusters derived from lan-guage models like BERT. By clustering text data using K-means or Top2Vec and leveraging these clusters to pre-train the TM, we effectively trans-ferred rich semantic information into the TM. This approach significantly improved the TM’s perfor-mance in text classification tasks while maintaining its interpretability. Our results demonstrate that the combination of semantic clustering and TM pre-training provides a powerful and explainable model, offering a promising direction for our future research and applications in explainable AI. Limitations 
+
+The proposed method depends on the quality of semantic clusters generated by a pre-trained lan-guage model, which may affect performance on noisy or low-resource data. The pre-training stage adds offline computational cost, and fine-grained contextual dependencies may remain better cap-tured by fully neural models. 
+
+References 
+
+K. Darshana Abeyrathna, Ahmed A. O. Abouzeid, Bi-mal Bhattarai, Charul Giri, Sondre Glimsdal, Ole-Christoffer Granmo, Lei Jiao, Rupsa Saha, Jivitesh Sharma, Svein A. Tunheim, and Xuan Zhang. 2023. Building concise logical patterns by constraining tsetlin machine clause size. In Proceedings of the Thirty-Second International Joint Conference on Ar-tificial Intelligence , IJCAI ’23. Kuruge Darshana Abeyrathna, Ole-Christoffer Granmo, and Morten Goodwin. 2020. Extending the tsetlin machine with integer-weighted clauses for increased interpretability. IEEE Access , 9:8233–8248. Dimitar Angelov. 2020. Top2vec: Distributed represen-tations of topics. ArXiv , abs/2008.09470. Geir Thore Berge, Ole-Christoffer Granmo, Tor Odd-bjørn Tveit, Morten Goodwin, Lei Jiao, and Bernt Viggo Matheussen. 2018. Using the tsetlin machine to learn human-interpretable rules for high-accuracy text categorization with medical applica-tions. IEEE Access , 7:115134–115146. Bimal Bhattarai, Ole-Christoffer Granmo, and Lei Jiao. 2022. Explainable tsetlin machine framework for fake news detection with credibility score assessment. In Proceedings of the Thirteenth Language Resources and Evaluation Conference , pages 4894–4903, Mar-seille, France. European Language Resources Asso-ciation. Tom B. Brown, Benjamin Mann, Nick Ryder, Melanie Subbiah, Jared Kaplan, Prafulla Dhariwal, Arvind Neelakantan, Pranav Shyam, Girish Sastry, Amanda Askell, Sandhini Agarwal, Ariel Herbert-Voss, Gretchen Krueger, Tom Henighan, Rewon Child, Aditya Ramesh, Daniel M. Ziegler, Jeffrey Wu, Clemens Winter, and 12 others. 2020. Language models are few-shot learners. In Proceedings of the 34th International Conference on Neural Information Processing Systems , NIPS ’20, Red Hook, NY, USA. Curran Associates Inc. Lei Chen and Hirokazu Miyake. 2021. Label-guided learning for item categorization in e-commerce. In 
+
+Proceedings of the 2021 Conference of the North American Chapter of the Association for Computa-tional Linguistics: Human Language Technologies: Industry Papers , pages 296–303, Online. Association for Computational Linguistics. Jacob Devlin, Ming-Wei Chang, Kenton Lee, and Kristina Toutanova. 2019. Bert: Pre-training of deep bidirectional transformers for language understand-ing. In North American Chapter of the Association for Computational Linguistics .Ole-Christoffer Granmo. 2018. The tsetlin machine -a game theoretic bandit driven approach to optimal pattern recognition with propositional logic. ArXiv ,abs/1804.01508. Kelvin Guu, Kenton Lee, Zora Tung, Panupong Pasu-pat, and Ming-Wei Chang. 2020. Realm: retrieval-augmented language model pre-training. In Proceed-ings of the 37th International Conference on Machine Learning , ICML’20. JMLR.org. Sepp Hochreiter and Jürgen Schmidhuber. 1997. Long short-term memory. Neural Computation , 9:1735– 1780. Sarthak Jain and Byron C. Wallace. 2019. Attention is not Explanation. In Proceedings of the 2019 Con-ference of the North American Chapter of the Asso-ciation for Computational Linguistics: Human Lan-guage Technologies, Volume 1 (Long and Short Pa-pers) , pages 3543–3556, Minneapolis, Minnesota. Association for Computational Linguistics. Karen Spärck Jones. 2021. A statistical interpretation of term specificity and its application in retrieval. J. Documentation , 60:493–502. Armand Joulin, Edouard Grave, Piotr Bojanowski, and Tomas Mikolov. 2017. Bag of tricks for efficient text classification. In Proceedings of the 15th Con-ference of the European Chapter of the Association for Computational Linguistics: Volume 2, Short Pa-pers , pages 427–431, Valencia, Spain. Association for Computational Linguistics. Jens Lehmann, Robert Isele, Max Jakob, Anja Jentzsch, Dimitris Kontokostas, Pablo N. Mendes, Sebastian Hellmann, Mohamed Morsey, Patrick van Kleef, S. Auer, and Christian Bizer. 2015. Dbpedia - a large-scale, multilingual knowledge base extracted from wikipedia. Semantic Web , 6:167–195. Yang Liu. 2019. Fine-tune bert for extractive summa-rization. ArXiv , abs/1903.10318. Yu Meng, Jiaxin Huang, Guangyuan Wang, Zihan Wang, Chao Zhang, Yu Zhang, and Jiawei Han. 2019. Dis-criminative topic mining via category-name guided text embedding. Proceedings of The Web Conference 2020 .Christoph Molnar. 2022. Interpretable Machine Learn-ing .Colin Raffel, Noam M. Shazeer, Adam Roberts, Kather-ine Lee, Sharan Narang, Michael Matena, Yanqi Zhou, Wei Li, and Peter J. Liu. 2019. Exploring the limits of transfer learning with a unified text-to-text transformer. J. Mach. Learn. Res. , 21:140:1–140:67. Cynthia Rudin. 2018. Stop explaining black box ma-chine learning models for high stakes decisions and use interpretable models instead. Nature Machine Intelligence , 1:206 – 215. Rupsa Saha and Sander Jyhne. 2022. Interpretable text classification in legal contract documents using tsetlin machines. 2022 International Symposium on the Tsetlin Machine (ISTM) , pages 7–12. Evan Sandhaus. 2008. The new york times annotated corpus. Chi Sun, Xipeng Qiu, Yige Xu, and Xuanjing Huang. 2019. How to fine-tune bert for text classification? In China National Conference on Chinese Computa-tional Linguistics .David Wadden, Ulme Wennberg, Yi Luan, and Han-naneh Hajishirzi. 2019. Entity, relation, and event extraction with contextualized span representations. In Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Lan-guage Processing (EMNLP-IJCNLP) , pages 5784– 5789, Hong Kong, China. Association for Computa-tional Linguistics. Alex Wang, Yada Pruksachatkun, Nikita Nangia, Aman-preet Singh, Julian Michael, Felix Hill, Omer Levy, and Samuel R. Bowman. 2019. Superglue: a stickier benchmark for general-purpose language understand-ing systems. In Proceedings of the 33rd International Conference on Neural Information Processing Sys-tems , Red Hook, NY, USA. Curran Associates Inc. Alex Wang, Amanpreet Singh, Julian Michael, Felix Hill, Omer Levy, and Samuel R. Bowman. 2018. Glue: A multi-task benchmark and analysis plat-form for natural language understanding. In Black-boxNLP@EMNLP .Zhaofeng Wu, William Merrill, Hao Peng, Iz Beltagy, and Noah A. Smith. 2023. Transparency helps re-veal when language models learn meaning. Transac-tions of the Association for Computational Linguis-tics , 11:617–634. Rohan Kumar Yadav, Lei Jiao, Ole-Christoffer Granmo, and Morten Goodwin. 2021a. Enhancing inter-pretable clauses semantically using pretrained word representation. In Proceedings of the Fourth Black-boxNLP Workshop on Analyzing and Interpreting Neural Networks for NLP , pages 265–274, Punta Cana, Dominican Republic. Association for Compu-tational Linguistics. Rohan Kumar Yadav, Lei Jiao, Ole-Christoffer Granmo, and Morten Goodwin Olsen. 2021b. Human-level in-terpretable learning for aspect-based sentiment anal-ysis. In AAAI Conference on Artificial Intelligence .Xiang Zhang, Junbo Jake Zhao, and Yann LeCun. 2015. Character-level convolutional networks for text classi-fication. In Neural Information Processing Systems .Jinhua Zhu, Yingce Xia, Lijun Wu, Di He, Tao Qin, Wengang Zhou, Houqiang Li, and Tie-Yan Liu. 2020. Incorporating bert into neural machine translation. In 
+
+ICLR .
+
+A Extended Related Work 
+
+Pre-trained language models are most commonly used by fine-tuning a pre-trained model on a su-pervised downstream dataset: most of the model’s parameters are retained while a randomly initial-ized task-specific layer is added to adapt the model to the new task (Guu et al., 2020; Liu, 2019; Wad-den et al., 2019; Zhu et al., 2020). This paradigm has substantially improved natural language under-standing across many tasks and industrial applica-tions. Despite this success, transparency and ex-plainability remain open problems, particularly in sensitive fields where the decision process must be understood. Transparent models provide more in-sight into their inner workings but frequently trade away accuracy, which motivates models such as the Tsetlin Machine that aim to retain both. Ear-lier work integrated GloVe embeddings alongside BOW features in TM and reached accuracy com-parable to GloVe-initialized LSTM and CNN mod-els (Yadav et al., 2021a); our work instead trans-fers contextual knowledge from transformer-based models such as BERT and from Top2Vec (Angelov, 2020) through semantic clusters, while keeping the representation interpretable. 
+
+B Dataset Details 
+
+We focus on topic classification to assess general text classification performance. NYT-Topics is de-rived from the New York Times Annotated Corpus spanning January 1987 to June 2007, which con-tains 1.8 million articles with metadata (Sandhaus, 2008). The NYT-Topics subset was curated by selecting major categories (each containing over 100 documents) from topics and locations, keep-ing documents that carry a single label for both categories so that each document has exactly one ground-truth topic label and one ground-truth loca-tion label (Meng et al., 2019). We additionally use AG-News (Zhang et al., 2015), DBpedia (Lehmann et al., 2015), and the R8 and R52 subsets of Reuters-21578, segmented into 8 and 52 categories respec-tively. Statistics for all datasets are summarized in Table 3. Table 3: Statistics of selected datasets.                   
+
+> Datasets Train Test Class
+> AG-News 30,000 7,600 4NYT-Topic 30,000 3,000 9DBPedia 30,000 70,000 14 R8 5,485 2,189 8R52 6,532 2,568 52
+
+Table 4: The Type I and Type II Feedback.                                                                  
+
+> Input Type I Feedback Type II Feedback Clause 10Clause 10Literal 1010Literal 1010Include Literal P(Reward) s−1
+> sNA 00P(Reward) 0NA 00P(Inaction) 1
+> sNA s−1
+> ss−1
+> sP(Inaction) 1.0 NA 1.0 1.0 P(Penalty) 0NA 1
+> s
+> 1
+> sP(Penalty) 0NA 00Exclude Literal P(Reward) 01
+> s
+> 1
+> s
+> 1
+> sP(Reward) 0000P(Inaction) 1
+> ss−1
+> ss−1
+> ss−1
+> sP(Inaction) 1.0 01.0 1.0 P(Penalty) s−1
+> s000P(Penalty) 01.0 00
+
+C Tsetlin Machine Feedback 
+
+Table 4 details the Type I and Type II feedback that drive the Tsetlin Automata during NTM learning. Type I feedback reinforces true positive outputs and combats false negatives, while Type II feed-back combats false positives. The probabilities are governed by the specificity hyperparameter s.
+
+D Experimental Details 
+
+For the Top2Vec approach, which generates as many clusters as possible based on the data type, we reduce the clusters to the selected numbers us-ing the Top2Vec library. The NTM uses 2000 
+
+clauses, that is, 1000 clauses per cluster, to cap-ture rich AND rules for learning semantics. The threshold T = 4000 means clauses stop updating once the clause sum for each cluster reaches T . The specificity s = 10 controls the inclusion of literals in the clauses; this value gives a reasonable proba-bility of selecting literals, facilitating the transition between states toward a local minimum. We use the weighted Tsetlin Machine throughout (Abeyrathna et al., 2020). For fine-tuning, we keep the same configuration but reintroduce negated literals to capture a broader range of patterns and reduce s
+
+to 5 for more flexible literal inclusion, allowing the model to leverage pre-trained knowledge while adapting to the new data. 
+
+E Baseline Descriptions 
+
+We provide detailed descriptions of the baselines used in our experiments. • BoW TFIDF selects the most frequent words from each dataset’s training subset, using word counts as features. In the TF-IDF ver-sion (Jones, 2021), term frequencies are com-puted and features are normalized based on inverse document frequency, scaling them by the largest feature value. For TM, this reduces to a Boolean BOW. • char-CNN uses character-level convolutional networks (ConvNets) for text classification. Large-scale datasets were constructed to show that character-level ConvNets can achieve state-of-the-art or competitive results (Zhang et al., 2015). • LSTM and LSTM (GloVe) represent the en-tire text using the last hidden state (Hochreiter and Schmidhuber, 1997). We test this model both with and without pre-trained word em-beddings. • FastText averages word features to create effective sentence representations, achieving competitive performance with deep learning methods while being much faster (Joulin et al., 2017). • BERT : We fine-tune BERT-base and BERT-large on the selected datasets. For AG-News and DBpedia the baselines are taken from (Sun et al., 2019). For R8 and R52 we add the LguidedLearn BERT variant, a label-guided learning framework for text classification ap-plied to BERT (Chen and Miyake, 2021). • TM : We compare against the vanilla TM and the GloVe-embedded TM, a typical baseline for such comparisons (Yadav et al., 2021a). • Top2Vec (Angelov, 2020) is used to compare the keywords extracted from NTM with those from Top2Vec; we extract a similar number of keywords per cluster to facilitate this com-parison. 
+
+F Explainability Walkthrough 
+
+We provide the full trace summarized in Section 5. During pre-training, we use two sample sentences from the sports domain. Initially, the clauses form random patterns using the features available in both samples, and neither sample satisfies the Boolean conjunction of literals, so the clause out-put is 0. This happens because the clause includes words like “ player ” and “ professional ”, which are absent from Sample 2, and words like “ defeat ”and “ opponent ”, which are absent from Sample 1. As learning progresses, Type I feedback (Re-ward, Penalty, and Inaction) adjusts the inclusion and exclusion of literals. This continues until the clause correctly identifies the semantic pattern for both samples (clause output 1), reaching the in-tended sports-cluster pattern [basketball AND win-ning AND team AND olympic]. In the fine-tuning phase with the vanilla TM, the clauses are no longer monotone and negated literals are reintroduced. Consider the labeled sports sam-ple “ After an intense game, the soccer team se-cured a stunning victory and the crowd erupted in celebration. ” Its tokenized input is [intense, game, soccer, team, secured, stunning, victory, crowd, erupted, celebration]. The obvious sports-related features are [game, soccer, team, victory], which provide only a limited representation of the domain, so the clause may lack enough informa-tion to classify the sample as sports and instead relies mostly on negated features. After clustering, cluster-representation words are embedded into the sample, producing the enriched feature set [intense, game, soccer, team, secured, stunning, victory, crowd, erupted, celebration, basketball, winning, team, olympic]. The enriched input adds semantic information about sports, represented as [soccer, team, victory, basketball, winning, olympic] with only a few negated features, improving the model’s semantic understanding of the sports class in a man-ner similar to BERT-based embeddings.
