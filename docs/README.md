@@ -6,24 +6,24 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-06-20
-- 运行时间：2026-06-20 21:27:47 UTC
+- 最新运行日期：2026-06-21
+- 运行时间：2026-06-21 20:54:34 UTC
 - 运行状态：成功
 - 本次总论文数：1
-- 精读区：1
-- 速读区：0
+- 精读区：0
+- 速读区：1
 
 ### 今日简报（AI）
-今日精读一篇高分论文，发现用语言模型语义聚类预训练Tsetlin机器可提升可解释性。研究证明聚类方法能替代传统神经网络，在保持性能的同时实现透明决策。建议关注Tsetlin机器在隐私敏感场景的应用，可优先试用该聚类预训练策略。
-- 详情：[/202606/20/README](/202606/20/README)
+今天速读一篇关于利用大语言模型实现零样本主动特征获取的论文。该方法无需训练数据即可动态选择特征，适用于数据缺失场景。建议对主动学习和LLM落地应用感兴趣的读者关注其零样本能力。
+- 详情：[/202606/21/README](/202606/21/README)
 
 ### 精读区论文标签
-1. [Clusters are All You Need: Pre-Training the Tsetlin Machine with Semantic Clusters from Language Models for Interpretability](/202606/20/2606.19815v1-clusters-are-all-you-need-pre-training-the-tsetlin-machine-with-semantic-clusters-from-language-models-for-interpretability)  
-   标签：评分：8.0/10、query:ac
-   evidence：利用语言模型嵌入对文本聚类以预训练Tsetlin机器
+- 本次无精读推荐。
 
 ### 速读区论文标签
-- 本次无速读推荐。
+1. [Zero-Shot Active Feature Acquisition via LLM-Elicitation](/202606/21/2606.18933v1-zero-shot-active-feature-acquisition-via-llm-elicitation)  
+   标签：评分：6.0/10、query:ac
+   evidence：基于LLM的零样本主动特征获取，与主动学习方法相关
 
 
 <div class="dpr-home-promo-card">

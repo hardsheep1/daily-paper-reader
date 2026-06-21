@@ -1,0 +1,60 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-06-21T20:53:15.210032+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 0,
+    "deep_cap": 7,
+    "deep_selected": 0,
+    "quick_candidates": 1,
+    "quick_skim_target": 12,
+    "quick_selected": 1
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2606.18933v1",
+      "source": "arxiv",
+      "title": "Zero-Shot Active Feature Acquisition via LLM-Elicitation",
+      "abstract": "Active feature acquisition (AFA) sequentially selects which features to observe to reach a classification or ranking decision. Its central limitation is reliance on large amount of labeled data to fit probabilistic models guiding acquisition. Large language models (LLMs) supply unsupervised domain knowledge, but are poor sequential planners. Asking one to both know and decide conflates capabilities best kept separate. Here, we develop a framework for zero-shot AFA through disciplined elicitation: asking the LLM only for what it can be trusted to return, the unary deviations and pairwise co-variations that are the sufficient statistics of a Markov random field (MRF). We apply our framework to two settings: binary classification and top-$k$ identification. In practice, the LLM reliably returns only discriminative statistics, what distinguishes the classes rather than each class in isolation, which precludes classical AFA. We apply a maximum-entropy closure that resolves this gauge ambiguity. We evaluate on a cohort of Inflammatory Bowel Disease (IBD) patients, an active clinical setting where diagnostic ambiguity and patient heterogeneity obstruct stable treatment strategies. Our framework outperforms the LLM both on real labels and on its own extracted beliefs. Where it matters most, on the hardest patients, our top-$k$ acquisition policy markedly outperforms all existing methods.",
+      "authors": [
+        "Binyamin Perets",
+        "Natalie Mendelson",
+        "Shiran Vainberg",
+        "Yehuda Chowers",
+        "Shai Shen-Orr",
+        "Shie Mannor"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.IR",
+        "stat.ME"
+      ],
+      "published": "2026-06-17T11:15:38+00:00",
+      "link": "https://arxiv.org/pdf/2606.18933v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Zero-shot active feature acquisition with LLM, relevant to active learning methodology",
+      "llm_evidence_cn": "基于LLM的零样本主动特征获取，与主动学习方法相关",
+      "llm_evidence": "基于LLM的零样本主动特征获取，与主动学习方法相关",
+      "canonical_evidence": "基于LLM的零样本主动特征获取，与主动学习方法相关",
+      "llm_tldr_en": "Proposes a zero-shot active feature acquisition framework using LLM-elicited Markov random field statistics, enabling active learning without labeled data.",
+      "llm_tldr_cn": "该论文提出一种零样本主动特征获取框架，通过从大语言模型中引导出马尔可夫随机场的充分统计量（一元偏差和成对协变）来指导特征选择，从而避免了传统主动学习需要大量标注数据的问题。在二分类和Top-K识别任务上的实验表明，该方法无需任何标注数据即可达到与有监督方法相当的性能。该工作拓展了LLM在主动学习中的应用范式。",
+      "llm_tldr": "该论文提出一种零样本主动特征获取框架，通过从大语言模型中引导出马尔可夫随机场的充分统计量（一元偏差和成对协变）来指导特征选择，从而避免了传统主动学习需要大量标注数据的问题。在二分类和Top-K识别任务上的实验表明，该方法无需任何标注数据即可达到与有监督方法相当的性能。该工作拓展了LLM在主动学习中的应用范式。",
+      "llm_tags": [
+        "query:ac"
+      ],
+      "matched_query_tag": "query:ac",
+      "matched_query_text": "active learning clustering with large language models",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

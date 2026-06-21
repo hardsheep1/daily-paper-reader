@@ -1,0 +1,24 @@
+{
+  "label": "2026-06-21",
+  "date": "2026-06-21",
+  "generated_at": "2026-06-21T20:54:41",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "202606/21/2606.18933v1-zero-shot-active-feature-acquisition-via-llm-elicitation",
+      "section": "quick",
+      "title_en": "Zero-Shot Active Feature Acquisition via LLM-Elicitation",
+      "authors": "Binyamin Perets, Natalie Mendelson, Shiran Vainberg, Yehuda Chowers, Shai Shen-Orr, Shie Mannor",
+      "date": "2026-06-17",
+      "pdf": "https://arxiv.org/pdf/2606.18933v1",
+      "score": "6.0",
+      "evidence": "基于LLM的零样本主动特征获取，与主动学习方法相关",
+      "tldr": "主动特征获取（AFA）受限于对大量标注数据的依赖。本文通过结构化查询将LLM的领域知识解耦为马尔可夫随机场的充分统计量，实现零样本AFA。针对LLM仅能返回判别性统计导致的规范模糊性，采用最大熵闭合解决。在IBD患者诊断中，该方法在硬样本上的top-k获取策略显著优于现有方法。",
+      "tags": "query:ac",
+      "abstract_en": "Active feature acquisition (AFA) sequentially selects which features to observe to reach a classification or ranking decision. Its central limitation is reliance on large amount of labeled data to fit probabilistic models guiding acquisition. Large language models (LLMs) supply unsupervised domain knowledge, but are poor sequential planners. Asking one to both know and decide conflates capabilities best kept separate. Here, we develop a framework for zero-shot AFA through disciplined elicitation: asking the LLM only for what it can be trusted to return, the unary deviations and pairwise co-variations that are the sufficient statistics of a Markov random field (MRF). We apply our framework to two settings: binary classification and top-$k$ identification. In practice, the LLM reliably returns only discriminative statistics, what distinguishes the classes rather than each class in isolation, which precludes classical AFA. We apply a maximum-entropy closure that resolves this gauge ambiguity. We evaluate on a cohort of Inflammatory Bowel Disease (IBD) patients, an active clinical setting where diagnostic ambiguity and patient heterogeneity obstruct stable treatment strategies. Our framework outperforms the LLM both on real labels and on its own extracted beliefs. Where it matters most, on the hardest patients, our top-$k$ acquisition policy markedly outperforms all existing methods.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}
