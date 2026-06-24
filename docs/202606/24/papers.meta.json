@@ -1,0 +1,39 @@
+{
+  "label": "2026-06-24",
+  "date": "2026-06-24",
+  "generated_at": "2026-06-24T22:07:21",
+  "count": 2,
+  "papers": [
+    {
+      "paper_id": "202606/24/2606.24094v1-universal-guideline-driven-image-clustering-via-a-hybrid-llm-agent",
+      "section": "deep",
+      "title_en": "Universal Guideline-Driven Image Clustering via a Hybrid LLM Agent",
+      "authors": "Wenliang Zhong, Rob Barton, Lucas Goncalves, Kushal Kumar, Feng Jiang, Hehuan Ma, Yuzhi Guo, Vidit Bansal, Karim Bouyarmane, Junzhou Huang",
+      "date": "2026-06-23",
+      "pdf": "https://arxiv.org/pdf/2606.24094v1",
+      "score": "9.0",
+      "evidence": "通过指南驱动和LLM代理的图像聚类",
+      "tldr": "图像聚类面临场景多样、任务间存在根本差距的挑战。现有方法通常针对特定场景设计，难以统一。我们提出Guideline-Driven Image Clustering Agent，这是一个通过文本指南统一不同聚类场景的通用框架。核心方法包括Generative Concept Proxy Modeling生成指南感知嵌入，以及基于最小生成树的LLM Traversal自动发现聚类结构。在粗细粒度、全局局部、均衡长尾等多种聚类任务上，该方法一致超越专门方法，是首个无需任务特定训练的统一框架。",
+      "tags": "query:ac",
+      "abstract_en": "Unifying image clustering across different clustering scenarios remains challenging due to fundamental gaps among tasks. We introduce a Guideline-Driven Image Clustering Agent, the first universal framework that bridges these gaps through textual guidelines. To incorporate complex guidelines without task-specific training, we propose Generative Concept Proxy Modeling, which generates guideline-aware embeddings via concept proxy extraction. For scenarios requiring automatic cluster discovery, we introduce LLM Traversal based on Minimum Spanning Tree that selectively applies LLM reasoning for complex semantic judgments. Our method generalizes across diverse clustering scenarios spanning from general to fine-grained categorization, from global to local criteria, and from balanced to long-tail distributions. Our framework consistently outperforms specialized methods across diverse clustering tasks.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202606/24/2606.18833v1-seed-guided-semi-supervised-clustering-by-a-contrario-anomaly-detection",
+      "section": "quick",
+      "title_en": "Seed-Guided Semi-Supervised Clustering by A-Contrario Anomaly Detection",
+      "authors": "Nassir Mohammad",
+      "date": "2026-06-17",
+      "pdf": "https://arxiv.org/pdf/2606.18833v1",
+      "score": "6.0",
+      "evidence": "半监督聚类框架",
+      "tldr": "针对聚类中异常值过度分配和密度方法依赖全局参数的挑战，本文提出基于a-contrario统计推理的半监督聚类框架。将聚类定义为无异常点最大子集，通过最小化用户种子标签初始化簇心，利用期望阈值<1的感知算法迭代扩展非异常点。在图像和文本数据集上，仅需每类10-30个种子即达强性能，线性复杂度。",
+      "tags": "query:active-clust",
+      "abstract_en": "This paper introduces a semi-supervised clustering framework grounded in the statistical duality between grouping principles and anomaly detection. We address the challenge of robust cluster definition in noisy environments -- a task where partitioning algorithms often over-assign outliers and density-based methods remain sensitive to heuristic global parameters. Drawing on \\textit{a-contrario} statistical reasoning and Gestalt proximity principles, we define a cluster as a maximal subset of data points containing no anomalies relative to a null hypothesis of uniform randomness. Central to this approach is the Perception algorithm, which utilises a principled expectation-based threshold ($\\mathbb{E} < 1$) to identify outliers without manual parameter tuning. By treating clustering as the dual of anomaly detection, we employ an iterative ``clustering-by-exclusion'' mechanism. The algorithm is seed-guided, leveraging minimal user-provided labels to initialise robust cluster medians and form initial groups, which are subsequently expanded by admitting non-anomalous points. This approach naturally isolates fringe points, isolated noise, and emerging unknown clusters. We evaluate the method on synthetic and real-world benchmarks, including image and text datasets represented through raw, linear-reduced, and neighbourhood-preserving embeddings. Results demonstrate that with as few as 10--30 seeds per cluster, the proposed method achieves competitive and often very strong performance under a practical low-tuning benchmarking protocol, while maintaining linear scalability with respect to both observations and dimensionality for a fixed number of seeded clusters and iterations.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

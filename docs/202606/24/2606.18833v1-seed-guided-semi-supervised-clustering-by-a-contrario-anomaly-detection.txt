@@ -1,0 +1,490 @@
+Title: Seed-Guided Semi-Supervised Clustering by A-Contrario Anomaly Detection
+
+URL Source: https://arxiv.org/pdf/2606.18833v1
+
+Published Time: Thu, 18 Jun 2026 00:40:47 GMT
+
+Number of Pages: 48
+
+Markdown Content:
+# Seed-Guided Semi-Supervised Clustering by A-Contrario Anomaly Detection 
+
+Nassir Mohammad ∗† 
+
+Cyber Innovation Lab, Airbus, Newport, UK 
+
+June 18, 2026 
+
+Abstract 
+
+This paper introduces a semi-supervised clustering framework grounded in the statistical duality between grouping principles and anomaly de-tection. We address the challenge of robust cluster definition in noisy environments—a task where partitioning algorithms often over-assign outliers and density-based methods remain sensitive to heuristic global parameters. Drawing on a-contrario statistical reasoning and Gestalt proximity principles, we define a cluster as a maximal subset of data points containing no anomalies relative to a null hypothesis of uni-form randomness. Central to this approach is the Perception algo-rithm, which utilises a principled expectation-based threshold ( E < 1) to identify outliers without manual parameter tuning. By treating clustering as the dual of anomaly detection, we employ an iterative “clustering-by-exclusion” mechanism. The algorithm is seed-guided, leveraging minimal user-provided labels to initialise robust cluster me-dians and form initial groups, which are subsequently expanded by ad-mitting non-anomalous points. This approach naturally isolates fringe points, isolated noise, and emerging unknown clusters. We evaluate the method on synthetic and real-world benchmarks, including im-age and text datasets represented through raw, linear-reduced, and neighbourhood-preserving embeddings. Results demonstrate that with as few as 10–30 seeds per cluster, the proposed method achieves com-petitive and often very strong performance under a practical low-tuning benchmarking protocol, while maintaining linear scalability with re-spect to both observations and dimensionality for a fixed number of seeded clusters and iterations. 
+
+> ∗
+
+Email: nassir.mohammad@airbus.com 
+
+> †
+
+Project code is available at https://github.com/M-Nassir/clustering 
+
+1
+
+> arXiv:2606.18833v1 [cs.LG] 17 Jun 2026
+
+## 1 Introduction 
+
+Grouping is a fundamental cognitive process, particularly critical in the interpretation of visual information. This is evidenced by Gestalt Psychol-ogy, where local groupings (partial gestalts) repeatedly fuse to culminate in global perceptions [6]. Consequently, cluster analysis has become a cor-nerstone of modern data mining, with applications ranging from malware detection in cybersecurity and topic modelling in document processing to gene expression analysis in molecular biology. Despite its importance, clustering remains an inherently ill-posed prob-lem. Conventional definitions often describe clusters as regions where in-ternal points are similar and external points are dissimilar , yet this fails to provide a computable criterion for where a group begins and ends. Asignificant challenge in current methodologies is the “forceful lumping” of disparate observations into existing groups, which often masks underlying noise or emerging anomalous structures. This is particularly problematic in partitioning algorithms that lack a native mechanism for outlier rejection. Furthermore, many established algorithms rely on heuristic parameters, such as the number of clusters k or density thresholds ε, which are difficult to infer without prior knowledge of the data’s scale. In practice, such param-eters specify the resolution at which the clustering process is carried out. Practitioners often estimate these values through iterative trial-and-error, effectively transforming unsupervised tasks into informal semi-supervised processes. Recent shifts towards constrained clustering have sought to for-malise this guidance using labelled samples or instance-level relationships [28]. However, these methods frequently inherit the underlying sensitivi-ties of their parent algorithms to outliers and rigid geometric assumptions, without necessarily improving performance. Recent work has also moved beyond a strict separation between parti-tioning and density-based clustering. Hybrid density-partitioning and subspace-density methods combine density estimates, density peaks, feature or sub-space weighting, and partitioning objectives in order to mitigate limitations of both global density thresholds and rigid centroid-based assignments. The motivation of the present work should therefore not be read as a claim that modern clustering remains confined to a simple partitioning-versus-density dichotomy. Rather, the gap addressed here is more specific: even when hybrid methods improve the discovery of density-aware structures, they do not necessarily provide an explicit statistical criterion for deciding whether a candidate point should be admitted into a seed-defined target cluster or re-jected as inconsistent with all target clusters. Our contribution is therefore 2complementary: we introduce a seed-guided, anomaly-aware membership principle in which cluster expansion is governed by an a-contrario admis-sion/rejection test rather than by complete assignment to the nearest, dens-est, or globally optimised partition. In the present work, we integrate the objectivity of automated discovery with the targeted intent of semi-supervised guidance. We introduce a for-malised framework grounded in the duality between grouping principles and anomaly detection. At the computational level, we view clustering as the complement of anomaly detection under a chosen statistical model of mean-ingful structure. In the present paper, this broader principle is instantiated through an a-contrario null hypothesis of uniform randomness together with a concrete iterative “clustering-by-exclusion” mechanism. In this paradigm, user-provided seeds initialise the process and define the target resolution, while the statistical model autonomously determines cluster membership and rejects fringe points. The primary contributions of this paper are as follows: 
+
+• Statistical Duality Framework: We formalise clustering as the statistical dual of anomaly detection at the computational level, and provide a computable instantiation of this principle grounded in the 
+
+a-contrario framework. 
+
+• Robust Perception Kernel: We provide a reproducible implemen-tation of an autonomous, self-thresholding anomaly detector that elim-inates the need for manual parameter tuning. 
+
+• Resilient Expansion Algorithm: We introduce a seed-guided ex-pansion process that effectively integrates expert intent while remain-ing robust to noisy initialisation, as inconsistent seeds are statistically ejected during the iterative refinement phase. 
+
+• High-Dimensional Evaluation and Scalability: We demonstrate that the method achieves competitive performance on synthetic and real-world benchmarks, including image and text datasets evaluated in raw, linear-reduced, and neighbourhood-preserving representations, while maintaining linear computational complexity with respect to both observations and dimensionality for fixed seeded-cluster and it-eration counts. The remainder of this paper is organised as follows: Section 2 reviews established paradigms and their semi-supervised variants. Section 3 de-tails the computational theory and mathematical formulation. Section 4 3describes the algorithmic implementation. Finally, Section 5 presents ex-perimental results and Section 6 discusses limitations and future work. 
+
+## 2 Related Work 
+
+Clustering is a fundamental task in data mining, with established paradigms including hierarchical, density-based, probabilistic, and centroid-based meth-ods. Despite the proliferation of new techniques, practitioners often favour 
+
+k-means, DBSCAN, and Gaussian Mixture Models (GMMs) for their sim-plicity and widespread availability. However, systemic limitations persist, particularly regarding hyperparameter sensitivity, the “curse of dimension-ality”, and the difficulty of defining robust cluster boundaries in the presence of noise. 
+
+2.1 Unsupervised Baselines 
+
+Hierarchical methods [29] provide multi-resolution insights but suffer from 
+
+O(n2 log n) time complexity and irreversible merge decisions, making them sensitive to initial noise. DBSCAN [7] identifies arbitrary shapes and isolates noise; however, its performance often degrades in high-dimensional spaces and it is highly sensitive to the ε and minP ts parameters, which assume globally uniform density. Probabilistic methods such as GMMs offer flexible ellipsoidal modelling via Expectation-Maximisation but are sensitive to ini-tialisation and assume clusters follow a specific distribution. The k-means algorithm [20] remains the benchmark for efficiency but lacks a native mech-anism for outlier rejection, often leading to distorted centroids as anomalies are forcefully absorbed. 
+
+2.2 Hybrid Density–Partitioning and Subspace Density Meth-ods 
+
+Recent work has moved beyond a strict separation between partitioning and density-based clustering. Hybrid density-partitioning, projection, and subspace clustering approaches combine density estimates, density peaks, feature or subspace weighting, and partitioning objectives to mitigate limita-tions of both global density thresholds and rigid centroid-based assignments. Representative examples include SDENK, an unbiased subspace density-k
+
+clustering method [34], weighted-density subspace clustering methods such as “Weighted Density for The Win: Accurate Subspace Density Cluster-ing” [17], and DipNSub, which uses dip-test-based projections to identify 4subspace cluster structure [3]. These methods primarily aim at structural discovery: identifying density-relevant subspaces, density peaks, or parti-tions that better reflect the intrinsic organisation of the data. In contrast, the present work assumes seed-defined target groups and focuses on the statistical admission or rejection of candidate observations relative to those groups. 
+
+2.3 Semi-Supervised and Constrained Clustering 
+
+Semi-supervised clustering incorporates prior knowledge to align algorithmic outcomes with user intent. Constrained clustering commonly uses instance-level information, such as must-link and cannot-link pairs, as in Seeded k-means [1], COP-KMeans [28], and PCK-Means [2]. Semi-supervised extensions of DBSCAN [15] and Gaussian Mixture Models [27] similarly incorporate labels or equivalence constraints to guide density or model estimation. Graph-based label-propagation methods, including label propagation and Label-Spreading [33, 32], provide another important semi-supervised paradigm: labels are diffused from labelled examples across a similarity graph or ker-nel. These methods are effective when the graph captures the class geometry, but they remain sensitive to graph or kernel construction and typically prop-agate labels to all observations rather than preserving an explicit rejected or unassigned set. More recent approaches have explored stronger structural assumptions about data geometry and density. Examples include density-based semi-supervised hierarchical clustering via low-density separation (DBSSHC) [11], semi-supervised clustering under a compact-cluster assumption (CSSC) [9], and unsupervised and semi-supervised clustering via density- and distance-based label prop-agation and assignment (DDBC) [10]. These methods represent comple-mentary paradigms: density-guided hierarchical splitting, compact-cluster modelling, and density/distance-based propagation. Compared with clas-sical constrained and graph-propagation methods, they improve flexibility, but they generally still depend on the quality of the learned representation and on neighbourhood, density, graph, or propagation parameters. Further semi-supervised paradigms extend clustering into structured or fuzzy representational frameworks. Semi-supervised spectral clustering [12] incorporates pairwise constraints into the graph Laplacian to guide label propagation over a similarity graph, but inherits sensitivity to graph con-struction and spectral decomposition parameters. Semi-supervised subspace clustering [16] combines sparse or low-rank subspace representations with supervision constraints to recover union-of-subspace structure, but requires 5the subspace dimension or sparsity level to be specified. Semi-supervised fuzzy clustering [25] relaxes hard cluster assignments by allowing graded memberships guided by labelled examples, but introduces membership de-gree parameters and relies on a fixed partition count. The proposed framework uses supervision differently from these paradigms. Seed labels define the target groups, but they are not propagated to all ob-servations and they are not used to construct a complete partition. Instead, each candidate observation is tested for statistical admissibility relative to the seed-defined cluster centre using the fixed a-contrario criterion. Obser-vations that fail this test for every seeded cluster remain rejected or unas-signed. In this sense, the method does not require a pre-specified subspace dimension, a fuzzy membership degree, or a graph construction step; it provides a complementary admission-and-rejection layer that can protect seeded clusters from fringe observations, noise, or unseeded structures. Hy-brid density-partitioning or subspace-density methods may still supply use-ful representations or candidate structures, while the proposed mechanism evaluates whether individual observations are statistically coherent mem-bers of the seeded target groups. For a comprehensive taxonomy and recent advances in semi-supervised constrained clustering, we refer the reader to the survey by Gonz´ alez-Almagro et al. [8]. 
+
+2.4 Deep Clustering 
+
+Deep clustering methods use neural networks to learn latent representations that are optimised jointly with clustering objectives, as reviewed in recent surveys [26]. Representative examples include Deep Embedded Clustering (DEC) [30], Deep Clustering Networks (DCN) [31], and DipEncoder [13], which encourages multimodal latent representations. These approaches are especially relevant for high-dimensional data because clustering quality of-ten depends as much on the representation as on the final grouping rule. However, many deep clustering models remain partition-oriented: they as-sign observations to latent clusters without providing an explicit statistical test for whether a candidate observation should be admitted to, or rejected from, a target cluster. 
+
+2.5 Outlier-Aware Clustering 
+
+Outlier-aware clustering methods address a related but distinct limitation of complete partitioning. Methods such as k-means– [4] and COR [18] jointly consider clustering and outlier removal, but typically introduce additional 6non-trivial choices, such as the number or treatment of observations to be re-moved. More recent work has considered heterogeneous anomaly structure, including scattered outliers, clustered anomalous groups, and multi-granular outlier patterns. For example, MGOD studies multi-granular outlier detec-tion with clustlier analysis [5], while hierarchical reference-set approaches distinguish scattered and clustered outliers [19]. These methods address a related but distinct problem: they aim to detect or characterise different forms of anomalous structure, whereas the present paper uses anomaly de-tection as a membership criterion for seeded clustering. This distinction is relevant because the rejected set in anomaly-aware clustering may itself contain heterogeneous structure, including isolated noise, coherent unseeded groups, or multi-granular clustliers. 
+
+## 3 A Computational Theory for Clustering 
+
+The goal of the present work is to draw insights from the human visual process of object grouping to develop a robust algorithmic framework for large-scale data analysis. We treat clustering as an information-processing task structured according to Marr’s tri-level hypothesis [21]. This top-down hierarchy disciplines the analysis to delineate the statistical logic of the task from its specific algorithmic implementation, ensuring the method is both theoretically grounded and computationally efficient. 
+
+3.1 The Tri-level Framework 
+
+Marr’s analysis posits that a complex information-processing system cannot be understood through a single level of explanation; instead, it requires three distinct levels of formalisation that separate the logic of the problem from the mechanics of the solution: 1. The Computational Level: This level deals with the logic of the task: what information is extracted and why the computation is ap-propriate. For clustering, we introduce the a-contrario principle as a fundamental constraint grounded in the Helmholtz principle of human perception [6]. This principle posits that a pattern is meaningful only when its occurrence is statistically unexpected under a null hypothesis of uniform randomness. This logic is appropriate because it provides an objective, computable boundary for clusters based on statistical significance, effectively differentiating true structural groupings from 7stochastic fluctuations without the need for heuristic parameters such as a pre-defined number of clusters k or global density thresholds. 2. The Algorithmic Level: This level is concerned with how the com-putations are carried out. We utilise the Euclidean distance to the clus-ter median as our primary representation, mapping high-dimensional data into a robust one-dimensional distance space. The transforma-tion is achieved through an iterative “clustering-by-exclusion” process that grows clusters from initial seeds by admitting only those points that maintain the statistical integrity of the group. The procedure is designed to remain computationally scalable for fixed seeded-cluster and iteration counts, with the full complexity analysis provided in Section 4.3. 3. The Implementation Level: This level focuses on the physical re-alisation of the algorithm. We provide an implementation in Python that preserves the theoretical efficiency of the algorithmic design. By utilising vectorised operations and efficient memory management, the implementation ensures that the linear complexity translates into prac-tical scalability. This is suitable for high-dimensional datasets and large-scale industrial applications where computational overhead is a critical constraint, regardless of the underlying hardware architecture. This structured approach allows us to reconcile automated discovery with semi-supervised interaction. By permitting a small fraction of labelled seeds, we provide the algorithm with the necessary resolution (scale of interest) and 
+
+intent (specific groups of interest) to guide the iterative process towards user-defined objectives, while the a-contrario logic handles the objective membership boundaries. 
+
+3.2 Theoretical Formulation of Clustering Duality 
+
+The clustering problem is inherently ill-posed; without principled constraints, any partition of data remains arbitrary. Building upon the perceptual logic established in Section 3.1, we formalise the relationship between cluster-ing and anomaly detection through the following definitions. The duality is understood here at the computational level: clustering is treated as the recovery of statistically coherent sets by excluding observations that are anomalous under a chosen null model. The specific median-based repre-sentation, uniform null hypothesis, discrete counting model, and overlap 8handling adopted below constitute one concrete algorithmic instantiation of this broader principle. 
+
+Definition 3.1 (Anomaly) . Let H0 be a null hypothesis representing a uni-form random distribution of data. An observation x is defined as an anomaly if its expectation of occurrence satisfies E(x | H 0) < 1. This signifies that the occurrence is statistically unexpected, as such a configuration would appear less than once on average under the null hypothesis of pure randomness. 
+
+Definition 3.2 (Cluster) . A cluster C ⊂ X is a maximal subset of data points such that every constituent point x ∈ C is non-anomalous with re-spect to the group’s internal distribution. Formally, C must satisfy the condition: 
+
+C = {x ∈ X | E(x | C) ≥ 1} (1) subject to the maximality constraint: there exists no x′ ∈ X \ C such that the augmented set {C ∪ x′} remains non-anomalous. This clustering-by-exclusion framework ensures that points are grouped only while they maintain statistical coherence. A significant advantage of this approach is that it is inherently self-scaling; because the expectation E
+
+is calculated relative to the internal distribution of C, the rejection threshold adapts to the local density of each group. In dense regions, the expectation for a point to exist at a relatively large distance is low, resulting in a tighter boundary. Conversely, in sparser regions, the model naturally accommo-dates a larger spread, provided the configuration remains more likely than a random occurrence. By allowing the statistical model to dictate these boundaries, the frame-work avoids the “forceful lumping” characteristic of partitioning algorithms like k-means, which lack a native mechanism to exclude outliers. Further-more, the maximality constraint prevents arbitrary over-fragmentation by requiring the cluster to grow until it reaches a statistically significant bound-ary. In multi-cluster environments, clusters compete for observations based on their relative statistical coherence. For fixed seeds and a fixed determin-istic cluster ordering, the resulting assignment procedure is reproducible. However, we do not claim a unique global partition independent of the ini-tial supervision or overlap-resolution policy; rather, the method converges empirically to a stable seeded partition in the experiments considered here. Consequently, disparate or unknown observations are naturally left unas-signed. This facilitates iterative discovery, as these “excluded” points can be subsequently evaluated as potential seeds for new clusters, ensuring that noise does not distort the representation of established groups. 93.3 Representation and Seed-Guidance 
+
+The choice of representation determines which Gestalt grouping principles are highlighted and how the statistical expectation is calculated. We utilise the Euclidean distance to the cluster median as our primary representation. The median is selected for its robust properties, possessing a 50% breakdown point compared to the high sensitivity of the mean to outliers. This ensures that the cluster centre remains stable during the iterative expansion, even if the initial seed set contains significant noise. Crucially, this representation maps high-dimensional observations into a one-dimensional distance space relative to the cluster centre. This di-mensionality reduction allows the a-contrario framework to operate on the distribution of distances, reducing the sparsity issues typically associated with the “curse of dimensionality” in raw feature spaces. However, it does not eliminate the need for a meaningful metric representation. If pairwise or centre-relative distances are already degraded by high-dimensional concen-tration, sparsity, or an unsuitable metric, the expectation test may become unstable or uninformative. We therefore do not claim a universal maximum dimensionality bound for the Gestalt-based criterion; its stability depends on the intrinsic dimension, representation geometry, noise level, and distance metric. At the same time, the centre-distance representation introduces a bias toward compact, centre-based clusters. As a consequence, the present formulation is less naturally suited to strongly non-convex, multi-modal, or manifold-shaped classes unless a more suitable representation is used up-stream. This bias is nevertheless useful in many practical settings. As in centroid-based methods such as k-means, a centre-relative representation can provide an effective summary when target groups are compact, or when an upstream embedding makes them approximately compact. Acknowledging that clustering is an inherently interactive process, we utilise seed-guidance to resolve the ambiguity of cluster resolution. A small fraction of user-provided labels XL ⊂ X provides the algorithm with three critical components: 1. Intent : Directing the algorithm toward specific groups of interest amongst a vast number of potential statistical partitions. 2. Initialisation : Defining the initial cluster medians to anchor the first iteration of the expectation-based membership test. 3. Noise Tolerance : The iterative process naturally accounts for er-roneous supervision; mislabelled or inconsistent seeds are statistically 10 ejected if they satisfy the anomaly condition ( E < 1) during the re-finement phase. Accordingly, the framework should be understood as replacing global hyper-parameter search with limited, interpretable supervision rather than elimi-nating user input altogether. Observations rejected by all seeded clusters are retained as an explicit anomaly or unassigned set. This separates the seeded target structures from points that are statistically inconsistent with them, and leaves such points available for subsequent inspection or interactive refinement. The rejected set is not automatically decomposed by the present method: it may con-tain isolated noise, coherent unseeded groups, or multi-granular “clustlier” structures. An unseeded dense group is therefore rejected only insofar as it is inconsistent with every seeded cluster under the chosen representation; if such a group is seeded, or is statistically coherent with a seeded cluster, it may instead be admitted. 
+
+## 4 Algorithmic Realisation 
+
+The proposed algorithm transforms a dataset into a set of coherent clus-ters by iteratively refining memberships through statistical exclusion. This approach prioritises computational efficiency, ensuring the method scales linearly with both the number of observations and the feature dimensional-ity. 
+
+4.1 The Perception Anomaly Detector 
+
+The core of the clustering method is the Perception anomaly detection al-gorithm [23]. It operates on the principle that an observation is anomalous if its occurrence is unexpected under a null hypothesis H0 of uniform ran-domness. To formalise this, continuous distance measurements are transformed into a discrete representation suitable for combinatorial analysis. This is achieved by shifting the decimal point to the right—up to a maximum pre-cision α—until the required numerical resolution is captured in an integer space. Specifically, the distance D is mapped to a discrete space V by shift-ing the decimal point to eliminate fractional components. In the Perception implementation used throughout this paper, α acts as a cap on the retained decimal precision rather than a fixed effective precision in every case. Thus, if the observed distances are already integers, no decimal shift is needed, 11 whereas if the finest observed precision is two decimal places, retaining two decimal places is sufficient. Because the discrete a-contrario counting model operates on integerised distances, some finite decimal cut-off must be cho-sen when mapping continuous values into discrete space. We therefore treat 
+
+α as an implementation-level numerical precision setting required to inte-gerise the data, rather than as a heuristic tuning parameter or decision threshold. The default value α = 4 was used as a practical upper bound that retained sufficient significant digits for the distance representation in our experiments. This quantisation allows the algorithm to treat distances as discrete unit-intervals from the cluster centre, thereby enabling the use of combinatorial probability to evaluate statistical significance. Consider a set of such observations represented as discrete non-negative integers V = [ v1, v 2, . . . , v W ], where W is the number of discrete bins and 
+
+S = P V is the total sum of indicators (total events). Under H0, the expected number of n-tuples in a given configuration, E(Cn), is calculated as: 
+
+E(Cn) = 
+
+Sn
+
+ 1
+
+W n−1 (2) An event is perceived as an anomaly if E(Cn) < 1. This threshold is both principled and data-driven; if an event is unexpected under the random model but appears in the data, it is, by definition, anomalous. This mecha-nism allows the algorithm to adapt to the specific density and scale of each cluster without manual parameter tuning. The implementation details for the training and testing phases are provided in Algorithms 1 and 2. 
+
+Algorithm 1: Perception Training Phase 
+
+Input: Data matrix X ∈ Rn×d, distance metric d(·), precision α
+
+Output: Model parameters θ = {S, W, ˜x, μ, σ, med V } 
+
+> 1
+
+1. Compute robust scaling parameters μ, σ and standardise X → X′ 
+
+> 2
+
+2. Compute marginal median ˜ x where ˜ xj = median( {X′ 
+
+> i,j
+
+}ni=1 ) for 
+
+j = 1 . . . d  
+
+> 3
+
+3. Compute distance vector D where Di = d(X′
+
+> i
+
+, ˜x) for i = 1 . . . n  
+
+> 4
+
+4. Map to discrete space: V = ⌊D · 10 α⌋ 
+
+> 5
+
+5. Calculate central deviation relative to training median: 
+
+Vrel = |V − median( V )| 
+
+> 6
+
+6. S ← P Vrel ; W ← length( Vrel ); med V ← median( V ) 
+
+> 7
+
+return {S, W, ˜x, μ, σ, med V }
+
+12 Algorithm 2: Perception Test Phase (Anomaly Scoring) 
+
+Input: Point x ∈ Rd, Model parameters θ
+
+Output: Anomaly score Z, Binary label Y 
+
+> 1
+
+1. Standardise x using μ, σ and compute distance Dx = d(x′, ˜x) 
+
+> 2
+
+2. Discretise relative to training median: n = ⌊| (Dx · 10 α) − med V |⌋  
+
+> 3
+
+3. Compute expectation: E =  Sn
+
+ 1  
+
+> Wn−1
+> 4
+
+4. Z ← − 1 
+
+> S
+
+ln( E) // Log-transformed score  
+
+> 56
+
+if Z > 0 then Y ← 1 (Anomaly)  
+
+> 7
+
+else Y ← 0 (Normal)  
+
+> 8
+
+return Z, Y 
+
+4.2 Iterative Seed-Guided Expansion 
+
+The clustering process utilises a small, user-provided subsample of labelled data, XL, to initialise the procedure. These seeds define the initial cluster medians, while all unlabelled points are initially classified as anomalies (label 
+
+−1). The procedure seeks a stationary statistical equilibrium through two alternating phases: ejection and admission , as detailed in Algorithm 3. During the ejection phase, a Perception model is fitted to the current members of a cluster; any observation found to be anomalous relative to the group’s evolving distribution ( E < 1) is removed. In the admission phase, the model is re-fitted to the pruned group, and all currently unassigned points are tested for membership. To resolve overlaps under this greedy assignment scheme, clusters are processed in an order determined by their statistical coherence (Step 2). This is a heuristic ordering rule rather than a quantity derived directly from the underlying a-contrario model. If an observation would satisfy the non-anomaly condition ( E ≥ 1) for multiple groups, processing compact clusters first reduces the tendency of more dif-fuse groups to absorb ambiguous points prematurely. The empirical effect of this ordering rule is evaluated in Section 5.6.2. For fixed seeds, fixed cluster ordering, and deterministic overlap han-dling, each iteration induces a deterministic update of the label vector L.The practical implementation always terminates in finite time because the loop is capped at tmax , and a fixed point is declared when no labels change between successive iterations. Accordingly, the method is deterministically reproducible for a fixed seeded configuration, but it does not imply a unique global solution across all possible seed sets. In all experiments, tmax was fixed to a conservative value of 100 and used only as a safety cap; termina-13 tion was instead governed by the fixed-point criterion, which was reached well before this limit in practice. No initial proximity graph is constructed in the present implementation. Thus, the method does not require a neighbourhood size, minP ts value, graph connectivity threshold, or minimal structural constant analogous to those used in graph- or density-connectivity methods. The main implemen-tation choices are the seed set and the metric/representation in which centre distances are computed. The decision threshold itself remains fixed at E < 1. 
+
+Algorithm 3: Seed-Guided Semi-Supervised Clustering 
+
+Input: X (Data), XL (Labelled seeds), tmax (Max iterations) 
+
+Output: L (Labels), M (Membership scores)  
+
+> 1
+
+1. Initialise L for unlabelled points as −1; labels for XL as per user input;  
+
+> 2
+
+2. Order clusters by minimum sum of squared error (compactness);  
+
+> 3
+
+for counter = 1 to tmax do  
+
+> 4
+
+foreach cluster Ck do  
+
+> 5
+
+3. Ejection Phase :;  
+
+> 6
+
+Train Perception model Pk on current members of Ck (Alg. 1);  
+
+> 7
+
+Identify and remove points x ∈ Ck where Z(x | Pk) > 0;  
+
+> 8
+
+Set L(x) ← − 1 for all ejected points;  
+
+> 9
+
+4. Admission Phase :;  
+
+> 10
+
+Re-train Pk using the pruned set Ck to update S, W, and ˜ x; 
+
+> 11
+
+foreach unassigned point xa where L(xa) = −1 do  
+
+> 12
+
+Test xa using Algorithm 2 against updated Pk; 
+
+> 13
+
+if Y (xa | Pk) = 0 then  
+
+> 14
+
+Assign xa to Ck and set L(xa) ← k; 
+
+> 15
+
+end  
+
+> 16
+
+end  
+
+> 17
+
+end  
+
+> 18
+
+if no label changes occurred in L then  
+
+> 19
+
+Break;  
+
+> 20
+
+end  
+
+> 21
+
+end  
+
+> 22
+
+5. Compute final membership scores M based on log-expectation;  
+
+> 23
+
+return L, M ;14 4.3 Computational Complexity 
+
+The computational efficiency of the proposed framework is a key advantage for large-scale applications. Let N denote the number of observations, D the dimensionality of the representation used by the clustering algorithm, K the number of seeded target clusters, and t the number of admission/ejection iterations, with t ≤ tmax . Training a Perception model for one cluster is linear in the number of points assigned to that cluster and in D, because it requires robust scaling, marginal median estimation, and centre-distance computation. Testing candidate points for admission is likewise linear in the number of tested observations and in D.In the worst case, each iteration may test all observations against each seeded cluster, giving a time complexity of O(tKN D ). When K and t are small relative to N , as in the reported experiments, this behaves linearly in both the number of observations and the feature dimensionality. The space complexity is O(N D + KN ) when storing the data representation, labels, membership scores, and per-cluster temporary score vectors. The method does not store a full pairwise distance matrix or neighbourhood graph, avoiding the O(N 2) memory cost common to graph-based cluster-ing methods. Any dimensionality-reduction preprocessing, such as PCA, TruncatedSVD, or UMAP, is external to the clustering algorithm and its computational cost should be accounted for separately. 
+
+## 5 Experimental Results 
+
+This section evaluates the proposed algorithm across synthetic and real-world benchmark datasets. We compare against established and recent reproducible baselines from several method families. The benchmark was designed to prioritise reproducibility and practical comparability: included baselines have stable, directly callable implementations and are evaluated under a common low-tuning protocol. Abbreviations used in the result ta-bles are given in parentheses, and Ours denotes the proposed method: 1. Unsupervised : k-means (KM), DBSCAN, Agglomerative Clustering (Agg), Gaussian Mixture Models (GMM), and DipNSub. 2. Semi-supervised : Seeded k-means (S-KM), Constrained k-means (C-KM), COP-KMeans (COP-KM), and LabelSpreading (LS). 3. Deep Learning : Deep Embedded Clustering (DEC) and DipEncoder (DipEnc). 15 To ensure reasonable baseline performance, all methods requiring it were provided with the ground-truth number of clusters ( k). All baselines utilised standard scikit-learn [24], ClustPy [14], or established open-source imple-mentations with their default settings unless otherwise required by the eval-uation protocol. We intentionally maintained default hyperparameters for these baselines to reflect the practical difficulty of manual parameter tuning in real-world scenarios, where the underlying data distribution and noise levels are typically unknown. Accordingly, the present study should be in-terpreted as a practical low-tuning comparison with reproducible baselines rather than an exhaustive hyperparameter-optimised benchmark. 
+
+5.1 Evaluation Methodology and Robustness 
+
+Evaluating clustering algorithms is inherently challenging, as many estab-lished metrics inadvertently favour specific optimisation criteria. Notably, total partitioning algorithms often appear to outperform anomaly-aware methods under conventional metrics. This discrepancy arises because many benchmark datasets enforce a global assignment, leaving no provision for anomalous or outlying points. Consequently, even the ground truth may fail to reflect the underlying statistical structure of the data. For instance, in synthetic Gaussian mixtures, observations in the extreme tails are rea-sonably considered outliers relative to the core density, yet they are rarely labelled as such in standard benchmarks (see Figure 9). Furthermore, a single dataset can often yield multiple valid partitions depending on the feature-space resolution. An algorithm may discover sta-tistically significant groupings that are informative yet do not align with predefined human labels. While expert human evaluation remains the gold standard for resolving such ambiguity, its resource-intensive nature makes it impractical for large-scale validation. Therefore, this work adopts a dual evaluation strategy: controlled synthetic benchmarks are first used to il-lustrate the statistical patterns and anomaly-rejection behaviour of the al-gorithm. This is followed by quantitative evaluation using external valida-tion metrics to benchmark performance against reproducible unsupervised, semi-supervised, subspace/projection, label-propagation, and deep cluster-ing baselines. Where applicable, reported quantitative scores are averaged over ten independent runs with randomised seed selection. 16 5.2 One-dimensional Synthetic Data 
+
+The first dataset, 1d gauss , evaluates the algorithm’s ability to distinguish core cluster structures from heterogeneous noise. It consists of three Gaussian-distributed clusters of sizes [10 000 .00 , 5000 .00 , 2500 .00] with centres at [0 , 50 , 100] and standard deviations of [1 , 3, 8], respectively. The dataset is further com-plicated by the addition of isolated local anomalies, several deliberately mis-labelled examples, and a small, globally anomalous cluster for which no seeds are provided. Figure 1 visualises the ground-truth distribution. As established in our methodology, standard Gaussian distributions contain observations in their extreme tails that are statistically unexpected; however, traditional ground-truth labels rarely categorise these as outliers. By contrast, our a-contrario 
+
+framework explicitly identifies these “fringe points” as anomalies based on the Helmholtz Principle of unexpectedness. To initialise the seed-guided process, a minimal fraction of the data— comprising only 35 examples (0.2%)—was randomly selected as seeds, ex-cluding the small anomalous cluster. These seeds represent the sparse do-main knowledge typically available in interactive exploratory sessions. No-tably, the algorithm does not require seeds for every existing group; unseeded clusters are simply reported as anomalies, allowing for subsequent discovery. The performance of the proposed method is illustrated in Figure 2. The algorithm successfully recovers the three seeded clusters while isolating the anomalous group and individual outliers. A significant advantage is visi-ble in Figure 3: the method identifies mislabelled data and fringe points— observations that are rare relative to the cluster mass—as anomalies. This demonstrates a strict adherence to the definition of a cluster as a statistically coherent set rather than a spatial partition. To provide comparative context, Figure 4 illustrates the results for k-means ( k = 3). As a total partitioning algorithm, k-means is forced to absorb every outlier and the entire anomalous cluster, which inherently dis-torts the resulting centroids. While DBSCAN (Figure 5) performs better by identifying some noise, it fails to provide the nuanced, self-scaling threshold-ing required to identify fringe points within varying density regions, often resulting in the absorption of Gaussian tails into the cluster core. 17 Figure 1: Ground-truth distribution of the 1d gauss dataset. The plot and accompanying histogram reveal three primary clusters, isolated anomalies, and a small, disparate anomalous group. 18 Figure 2: Clustering results of the proposed method. The algorithm identi-fies the primary clusters while relegating the unseeded anomalous group to the outlier category, preserving cluster purity. 
+
+Figure 3: A close up view of cluster 1 from Figure 2 showing the identi-fication of not only anomalies and mislabelled data, but also fringe points that can be considered rare or unusual in a Gaussian distributed cluster of points. 19 Figure 4: The result of applying k-means where all points are put into one of three groups. It hasn’t any notion of outliers in the data that do not belong to any cluster. 
+
+Figure 5: DBSCAN results using its default parameters are shown, where it largely detects the three clusters and also produces anomaly labels for points that were deemed insufficient to be part of a cluster. 20 5.3 Two-dimensional Synthetic Data 
+
+The next evaluation utilises a two-dimensional dataset, 2d gauss , comprising 10 300 .00 observations distributed across eight Gaussian clusters with signif-icantly varying scales (standard deviations: [0 .6, 2, 0.2, 0.7, 3, 0.4, 0.6, 0.6]). As illustrated in Figure 6, the set includes scattered isolated anomalies and a concentrated, unseeded group at coordinates (11 , 20), representing an emerging cluster for which no prior labels exist. 
+
+Figure 6: Ground-truth for the 2d gauss dataset featuring eight clusters with heterogeneous scales, alongside isolated noise and a discrete anomalous group. To guide the expansion, a random sample of approximately 100 points (1% of total data) was selected as seeds (Figure 7). In alignment with our subsequent empirical analysis, 10–30 seeds per cluster are sufficient to anchor the robust marginal medians. Crucially, the iterative nature of the algorithm ensures that the a-contrario mechanism remains resilient to noisy supervision; mislabelled or poorly positioned seeds are statistically ejected as anomalies during the refinement phase. The resulting clustering is presented in Figure 8. The algorithm suc-cessfully delineates all eight clusters, including those that are overlapping or possess disparate densities. Figure 9 highlights a primary advantage of the proposed method: the ability to identify fringe points and outliers relative 21 Figure 7: Initial seed distribution (1% of data) providing the necessary intent to guide the clustering process. to the specific local mass of a cluster. Because the expectation E is calcu-lated relative to the cluster’s internal distribution, the threshold naturally adapts to the scale of each group. In contrast, k-means ( k = 8) produces a mathematically convenient but physically unintuitive partition (Figure 10). By failing to accommodate varying scales, it merges distinct structures and forcibly assigns anomalies to the nearest centroid. Similarly, DBSCAN (Figure 11) exhibits the “chain-ing effect”, collapsing several distinct clusters into a single mass due to its reliance on a global density parameter. Perhaps most significantly, semi-supervised baselines like COP-KMeans (Figure 12) fail to overcome these fundamental geometric limitations. De-spite the inclusion of seed constraints, the underlying partitioning objec-tive remains vulnerable to outliers and heterogeneous scales. This indicates that augmenting a distance-to-centroid model with labels is insufficient to achieve the robust boundary definition provided by the proposed clustering-by-exclusion framework, which treats outliers as a structural necessity rather than a secondary nuisance. 22 Figure 8: Clustering results of the proposed method. Core structures are recovered, while unseeded groups and isolated noise are correctly identified as anomalies. 23 Figure 9: Zoomed view of Cluster 7. The method effectively identifies fringe points as anomalies by applying expectation-based thresholding. 
+
+Figure 10: Results for k-means. The algorithm fails to accommodate het-erogeneous cluster scales and forcibly partitions all anomalies. 24 Figure 11: Results for DBSCAN. The lack of adaptive thresholding results in the merging of distinct Gaussian clusters despite identifying some noise. 
+
+Figure 12: Results for COP-KMeans. Despite seed constraints, the algo-rithm inherits the partitioning flaws of the k-means objective. 25 5.4 Multi-dimensional Real-world Benchmarks 
+
+This section evaluates the proposed framework on a diverse suite of real-world benchmarks, ranging from low-dimensional UCI repositories to high-dimensional text and image corpora. These datasets were selected to rep-resent varied structural characteristics, heterogeneous densities, and vary-ing levels of intrinsic complexity [8]. Quantitative performance is assessed using five standard external validation metrics: Purity, V-Measure, Nor-malised Mutual Information (NMI), Adjusted Rand Index (ARI), and the Fowlkes–Mallows Index (FMI). Consistent with our established methodol-ogy, the main benchmark tables report retained-point metrics: external vali-dation scores are computed on observations with non-anomaly ground-truth labels and non-rejected predicted labels. This assesses the quality of the admitted cluster assignments without conflating it with anomaly or rejec-tion behaviour, which is reported separately through rejection rates and the auxiliary full-dataset evaluation. Table 1 summarises the dataset characteristics, including the number of observations ( n), feature dimensionality ( Dim ), and class counts. In the 
+
+yeast and shuttle datasets, minority classes were treated as anomalies due to their lack of a coherent statistical structure relative to the dominant groups; this resulted in a reduction from 10 and 7 classes to 4 and 3, respec-tively. For these datasets this follows common practice in anomaly-detection benchmarking, where the minority or rare classes are treated as outliers; however, in the present work it should be understood as a task-specific re-labelling adopted to align the evaluation with the anomaly-aware clustering formulation, rather than as a replacement of the original benchmark anno-tations. For high-dimensional datasets ( Dim > 30), such as ionosphere and the MNIST digits, we applied the Uniform Manifold Approximation and Projection (UMAP) algorithm [22] to reduce dimensionality to 10. This reduction was applied uniformly across all baselines to ensure the evalu-ation isolates clustering logic rather than feature engineering capabilities. Accordingly, the resulting experiments should be interpreted as evaluations in embedding space rather than as a complete characterisation of clustering quality in the original raw feature space. An exception was made for the 
+
+cover type dataset, which was retained in its original 54-dimensional form to serve as a rigorous large-scale benchmark for scalability. For the text benchmark, we use a six-category subset of the 20 News-groups corpus; the feature count reflects the dimensionality following lemma-tisation, TF-IDF vectorisation, and subsequent UMAP reduction. Table 1 also specifies the percentage of labelled data utilised for the semi-supervised 26 baselines. While smaller datasets required a slightly higher proportion of seeds to guide the grouping effectively, the average number of labels per cluster remained consistently low across the entire suite. All datasets and experimental configurations are accessible in the accompanying repository; benchmarks were conducted on a MacBook M1 Pro with 16 GB of RAM. Table 1: Summary of benchmark datasets used in the evaluation.                                                                                      
+
+> Dataset nDim #Classes % Labelled #Lbl/Clust.
+> 1d gauss 17,528 130.2 12 2d gauss 10,300 28113 6Newsgroups UMAP10 10,496 10 6117 MNIST UMAP10 1,797 10 10 59banknote 1,372 42213 breast cancer 569 30 2720 cover type 581,012 54 70.02 15 glass 214 9630 10 ionosphere UMAP10 351 10 210 17 iris 150 4320 10 land mines 338 3530 20 pendigits 10,992 16 10 2.5 27 seeds 210 7320 14 shuttle 43,500 930.2 29 wine 178 13 330 17 yeast 1,484 84518
+
+5.5 Performance Analysis and Benchmarking 
+
+Tables 2–7 compare the proposed method with the benchmark methods un-der the retained-point evaluation protocol. The method is among the best-performing approaches across the reported metrics on MNIST UMAP10 ,
+
+6Newsgroups UMAP10 , and ionosphere UMAP10 , and it successfully com-pletes the large-scale cover type benchmark where several baselines do not (Table 7). Across the full suite, however, the method is not uniformly dom-inant: its strongest relative performance occurs on datasets where the cho-sen representation yields compact, seed-defined structures, while on other datasets baselines better matched to the inlier class geometry achieve higher external scores. 27 This pattern follows directly from the difference in modelling objective. The proposed algorithm is not designed to optimise complete-assignment ac-curacy; it is designed to recover statistically coherent seeded clusters while leaving unsupported observations unassigned. LabelSpreading is a particu-larly strong competitor when the seed labels propagate cleanly through the similarity graph, while GMM is strong on low-dimensional datasets such as iris , wine , and breast cancer , where the true number of clusters is sup-plied and the class structure is well approximated by parametric compo-nents. In such settings, the proposed method should be viewed as a robust semi-supervised alternative rather than a replacement for methods whose assumptions closely match the benchmark labels. The recent baselines add further context. DipNSub, a subspace/projection method, is highly competitive on the synthetic Gaussian benchmarks and performs well on some individual real-world datasets, such as banknote and in purity on MNIST UMAP10 . However, its performance varies substan-tially across the heterogeneous real-world suite, with weaker ARI/NMI/FMI results on several tabular datasets and on the embedded MNIST, 6 News-groups, and ionosphere benchmarks compared with the proposed method. DipEnc generally follows the behaviour of the other deep clustering base-lines, giving reasonable results on several datasets but not matching the strongest retained-point performance on the embedded image and text bench-marks. This comparison is useful because these methods address representa-tion and subspace structure, whereas the proposed method adds a statistical admission/rejection layer on top of the chosen representation. The empirical runtimes reported in Table 7 are consistent with the 
+
+O(tKN D ) complexity of the proposed framework and its linear dependence on N and D for fixed K and t. On cover type (n ≈ 581 , 000), several baselines—indicated by dashed lines—failed to converge, encountered mem-ory exhaustion, or exceeded the practical computational budget, whereas the proposed method completed successfully. On smaller datasets, the current implementation shows higher relative overhead due to the iterative admis-sion and ejection phases. This reflects the additional cost of explicit outlier rejection rather than an inherent limitation of the underlying complexity; profiling indicates the overhead is primarily attributable to redundant pre-processing in the current Python implementation, and substantial speedups are achievable through lower-level optimisation. Because retained-point evaluation measures the quality of admitted as-signments, it should be read together with coverage. We therefore add two auxiliary full-dataset views. Table 8 reports full-dataset metrics for the pro-posed method, where ground-truth outliers and rejected observations are 28 retained during evaluation as an additional anomaly/unassigned label, and rejection counts are reported explicitly as n/N . Table 9 provides a com-pact full-dataset comparison across methods using ARI and NMI. For meth-ods without an explicit rejection mechanism, this full-dataset view is their standard all-observation evaluation. These scores can still differ from the retained-point tables, because retained-point evaluation excludes ground-truth anomaly labels and method-specific rejected predictions; methods such as DBSCAN may also differ because they can assign observations to a noise label. Comparing these auxiliary results with the retained-point scores in Ta-bles 2–6 makes the coverage–quality trade-off explicit. When rejection rates are negligible or modest, the retained-point and full-dataset scores are simi-lar. Larger differences occur on the highest rejection-rate datasets— MNIST UMAP10 ,
+
+6Newsgroups UMAP10 , iris , and ionosphere UMAP10 —where rejection ranges from 18% to 27%. Three of these high-rejection cases are also among the strongest retained-point results, showing that high admitted-cluster qual-ity and a non-negligible coverage cost can occur together. Conversely, a few datasets, including shuttle , yeast , and banknote , show modest ARI/NMI gains under the full-dataset view, indicating that the rejected/unassigned la-bel can sometimes align with minority or anomalous structure. Overall, the auxiliary tables clarify when the retained-point conclusions transfer directly to the full dataset and when they should instead be read as high-quality cluster-core results obtained at a measurable coverage cost. Sensitivity to the supervision level, greedy ordering rule, numerical pre-cision, and representation choice is examined in the following additional analyses. 
+
+5.6 Additional Analyses 
+
+5.6.1 Sensitivity to Supervision 
+
+The relationship between the volume of supervision and clustering qual-ity is illustrated in Figures 13 and 14, which plot Purity and NMI scores against the number of seeds per cluster. These results represent the mean performance over ten independent runs with randomised seed selection. For most datasets, the curves flatten relatively quickly, and typically 10–30 seeds per cluster are sufficient to obtain stable, high-quality groupings, although 
+
+land mines continues to benefit more steadily from additional supervision across the tested range. Overall, however, the results still suggest that the method generalises effectively from a small set of representative examples, 29 Table 2: Purity metric results averaged over ten runs. KM GMM S-KM C-KM COP-KM Agg DBSCAN DEC DipNSub DipEnc LS Ours dataset 1d gauss 1.00 1.00 1.00 0.93 1.00 1.00 1.00 1.00 1.00 1.00 0.63 1.00 
+
+2d gauss 0.81 0.88 0.84 0.81 0.77 0.78 0.52 0.84 0.86 0.67 0.77 0.89 
+
+6NewsgroupsUMAP10 0.74 0.74 0.78 0.74 0.74 0.72 0.34 0.74 0.82 0.74 0.76 0.89 
+
+MNIST UMAP10 0.88 0.88 0.88 0.87 0.87 0.88 0.97 0.88 0.96 0.88 0.98 0.99 
+
+banknote 0.61 0.56 0.61 0.61 0.62 0.56 0.70 0.56 0.80 0.56 0.89 0.62 breast cancer 0.85 0.95 0.85 0.87 0.86 0.78 0.63 0.85 0.63 0.82 0.90 0.90 cover type 0.49 0.57 0.49 – – – – 0.49 – – – 0.50 glass 0.59 0.56 0.57 0.62 0.62 0.54 0.49 0.43 0.43 0.36 0.70 0.56 ionosphere UMAP10 0.70 0.69 0.70 0.70 0.72 0.70 0.64 0.68 0.85 0.70 0.67 0.85 
+
+iris 0.89 0.97 0.89 0.89 0.79 0.89 0.69 0.93 0.77 0.91 0.97 0.89 land mines 0.23 0.38 0.30 0.30 0.45 0.28 0.21 0.26 0.21 0.25 0.52 0.41 pendigits 0.75 0.71 0.77 0.77 0.71 0.72 0.10 0.75 0.60 0.72 0.96 0.69 seeds 0.90 0.93 0.90 0.90 0.91 0.89 0.53 0.86 0.33 0.67 0.91 0.90 shuttle 0.79 0.79 0.83 0.79 – – 0.79 0.79 1.00 0.79 0.93 0.84 wine 0.70 0.85 0.70 0.70 0.78 0.70 0.40 0.70 0.40 0.67 0.77 0.70 yeast 0.49 0.44 0.50 0.49 0.49 0.47 0.36 0.47 0.43 0.51 0.52 0.44 Table 3: V-Measure metric results averaged over ten runs. KM GMM S-KM C-KM COP-KM Agg DBSCAN DEC DipNSub DipEnc LS Ours dataset 1d gauss 1.00 1.00 1.00 0.80 1.00 1.00 1.00 1.00 1.00 1.00 0.16 1.00 
+
+2d gauss 0.87 0.92 0.83 0.83 0.82 0.85 0.72 0.85 0.85 0.80 0.71 0.84 6NewsgroupsUMAP10 0.61 0.61 0.62 0.60 0.60 0.61 0.29 0.62 0.57 0.61 0.51 0.76 
+
+MNIST UMAP10 0.90 0.90 0.90 0.87 0.89 0.90 0.93 0.90 0.87 0.90 0.95 0.98 
+
+banknote 0.03 0.01 0.03 0.03 0.03 0.00 0.17 0.01 0.33 0.01 0.57 0.01 breast cancer 0.46 0.71 0.46 0.50 0.48 0.32 0.00 0.46 0.00 0.41 0.52 0.49 cover type 0.07 0.17 0.07 – – – – 0.04 – – – 0.11 glass 0.43 0.40 0.40 0.36 0.45 0.39 0.31 0.14 0.24 0.06 0.51 0.36 ionosphere UMAP10 0.12 0.11 0.12 0.12 0.16 0.12 0.10 0.11 0.23 0.12 0.11 0.42 
+
+iris 0.74 0.90 0.74 0.76 0.63 0.77 0.60 0.81 0.39 0.81 0.88 0.77 land mines 0.01 0.20 0.10 0.12 0.18 0.08 0.00 0.01 0.00 0.01 0.24 0.20 pendigits 0.69 0.68 0.69 0.69 0.68 0.73 0.00 0.74 0.38 0.71 0.91 0.64 seeds 0.69 0.76 0.69 0.69 0.73 0.73 0.29 0.65 0.00 0.55 0.71 0.69 shuttle 0.00 0.00 0.26 0.16 – – 0.00 0.08 0.16 0.12 0.64 0.21 wine 0.43 0.58 0.43 0.43 0.50 0.42 0.00 0.43 0.00 0.38 0.45 0.41 yeast 0.12 0.11 0.16 0.12 0.13 0.13 0.00 0.09 0.03 0.16 0.19 0.08 30 Table 4: Normalised Mutual Information (NMI) results averaged over ten runs. KM GMM S-KM C-KM COP-KM Agg DBSCAN DEC DipNSub DipEnc LS Ours dataset 1d gauss 1.00 1.00 1.00 0.80 1.00 1.00 1.00 1.00 1.00 1.00 0.16 1.00 
+
+2d gauss 0.87 0.92 0.83 0.83 0.82 0.85 0.72 0.85 0.85 0.80 0.71 0.84 6NewsgroupsUMAP10 0.61 0.61 0.62 0.60 0.60 0.61 0.29 0.62 0.57 0.61 0.51 0.76 
+
+MNIST UMAP10 0.90 0.90 0.90 0.87 0.89 0.90 0.93 0.90 0.87 0.90 0.95 0.98 
+
+banknote 0.03 0.01 0.03 0.03 0.03 0.00 0.17 0.01 0.33 0.01 0.57 0.01 breast cancer 0.46 0.71 0.46 0.50 0.48 0.32 0.00 0.46 0.00 0.41 0.52 0.49 cover type 0.07 0.17 0.07 – – – – 0.04 – – – 0.11 glass 0.43 0.40 0.40 0.36 0.45 0.39 0.31 0.14 0.24 0.06 0.51 0.36 ionosphere UMAP10 0.12 0.11 0.12 0.12 0.16 0.12 0.10 0.11 0.23 0.12 0.11 0.42 
+
+iris 0.74 0.90 0.74 0.76 0.63 0.77 0.60 0.81 0.39 0.81 0.88 0.77 land mines 0.01 0.20 0.10 0.12 0.18 0.08 0.00 0.01 0.00 0.01 0.24 0.20 pendigits 0.69 0.68 0.69 0.69 0.68 0.73 0.00 0.74 0.38 0.71 0.91 0.64 seeds 0.69 0.76 0.69 0.69 0.73 0.73 0.29 0.65 0.00 0.55 0.71 0.69 shuttle 0.00 0.00 0.26 0.16 – – 0.00 0.08 0.16 0.12 0.64 0.21 wine 0.43 0.58 0.43 0.43 0.50 0.42 0.00 0.43 0.00 0.38 0.45 0.41 yeast 0.12 0.11 0.16 0.12 0.13 0.13 0.00 0.09 0.03 0.16 0.19 0.08 Table 5: Adjusted Rand Index (ARI) results averaged over ten runs. KM GMM S-KM C-KM COP-KM Agg DBSCAN DEC DipNSub DipEnc LS Ours dataset 1d gauss 1.00 1.00 1.00 0.77 1.00 1.00 1.00 1.00 1.00 1.00 0.09 1.00 
+
+2d gauss 0.76 0.85 0.73 0.73 0.70 0.72 0.43 0.80 0.76 0.63 0.57 0.78 6NewsgroupsUMAP10 0.61 0.60 0.63 0.60 0.58 0.55 0.12 0.60 0.52 0.60 0.51 0.77 
+
+MNIST UMAP10 0.81 0.81 0.82 0.79 0.81 0.81 0.91 0.82 0.79 0.81 0.95 0.98 
+
+banknote 0.05 0.00 0.05 0.05 0.05 0.00 0.02 0.01 0.20 0.01 0.60 0.02 breast cancer 0.49 0.81 0.49 0.54 0.51 0.29 0.00 0.49 0.00 0.40 0.64 0.62 cover type -0.00 0.09 -0.00 – – – – 0.01 – – – 0.05 glass 0.27 0.25 0.27 0.22 0.27 0.26 0.16 0.06 0.17 0.02 0.31 0.18 ionosphere UMAP10 0.15 0.14 0.15 0.15 0.20 0.15 -0.07 0.13 0.17 0.15 0.11 0.49 
+
+iris 0.72 0.90 0.72 0.73 0.57 0.73 0.52 0.82 0.17 0.77 0.90 0.74 land mines -0.01 0.07 0.03 0.04 0.11 0.01 0.00 0.00 -0.01 -0.00 0.21 0.05 pendigits 0.58 0.54 0.60 0.60 0.56 0.55 0.00 0.60 0.21 0.56 0.91 0.52 seeds 0.72 0.80 0.72 0.72 0.76 0.71 0.05 0.64 0.00 0.48 0.75 0.71 shuttle 0.00 0.00 0.46 0.10 – – 0.00 0.04 0.00 0.09 0.72 0.23 wine 0.37 0.61 0.37 0.37 0.48 0.37 0.00 0.37 0.00 0.39 0.46 0.36 yeast 0.09 0.08 0.11 0.10 0.10 0.06 -0.00 0.07 0.00 0.11 0.15 0.06 31 Table 6: Fowlkes–Mallows Index (FMI) results averaged over ten runs. KM GMM S-KM C-KM COP-KM Agg DBSCAN DEC DipNSub DipEnc LS Ours dataset 1d gauss 1.00 1.00 1.00 0.87 1.00 1.00 1.00 1.00 1.00 1.00 0.66 1.00 
+
+2d gauss 0.80 0.87 0.77 0.77 0.75 0.77 0.60 0.82 0.79 0.71 0.63 0.81 6NewsgroupsUMAP10 0.68 0.68 0.70 0.67 0.66 0.64 0.44 0.68 0.60 0.68 0.59 0.81 
+
+MNIST UMAP10 0.84 0.83 0.84 0.81 0.83 0.83 0.92 0.85 0.81 0.83 0.95 0.98 
+
+banknote 0.55 0.51 0.55 0.55 0.55 0.50 0.51 0.52 0.51 0.51 0.81 0.60 breast cancer 0.79 0.91 0.79 0.81 0.80 0.74 0.73 0.79 0.73 0.71 0.83 0.84 cover type 0.26 0.36 0.26 – – – – 0.24 – – – 0.34 glass 0.51 0.48 0.49 0.40 0.45 0.51 0.43 0.32 0.54 0.38 0.47 0.40 ionosphere UMAP10 0.59 0.58 0.59 0.59 0.61 0.59 0.54 0.58 0.48 0.59 0.57 0.77 
+
+iris 0.81 0.94 0.81 0.82 0.71 0.82 0.71 0.88 0.35 0.85 0.94 0.82 land mines 0.19 0.31 0.23 0.24 0.29 0.23 0.44 0.20 0.17 0.24 0.37 0.35 pendigits 0.62 0.59 0.64 0.64 0.61 0.61 0.32 0.65 0.28 0.61 0.92 0.57 seeds 0.81 0.87 0.81 0.81 0.84 0.81 0.47 0.76 0.57 0.70 0.83 0.81 shuttle 0.80 0.81 0.84 0.61 – – 0.80 0.80 0.04 0.55 0.91 0.73 wine 0.58 0.74 0.58 0.58 0.66 0.58 0.58 0.58 0.58 0.63 0.64 0.59 yeast 0.39 0.45 0.46 0.39 0.39 0.47 0.53 0.34 0.13 0.41 0.38 0.37 Table 7: Runtime (s) comparison. Dashed lines indicate non-convergence or memory exhaustion. KM GMM S-KM C-KM COP-KM Agg DBSCAN DEC DipNSub DipEnc LS Ours dataset 1d gauss 0.05 0.04 0.01 1.50 3.59 4.81 0.22 17.92 0.02 210.90 0.03 0.12 2d gauss 0.02 0.14 0.01 5.89 4.80 1.40 0.07 12.17 0.02 76.04 0.03 0.11 6NewsgroupsUMAP10 0.02 0.11 0.01 2.25 1.52 0.42 0.09 6.76 0.38 44.44 0.03 0.12 MNIST UMAP10 0.01 0.03 0.00 0.48 0.47 0.03 0.01 2.58 0.57 14.27 0.02 2.60 banknote 0.01 0.01 0.00 0.20 0.08 0.02 0.00 2.04 0.16 19.79 0.02 0.02 breast cancer 0.01 0.10 0.00 0.05 0.12 0.00 0.01 0.85 0.19 8.88 0.00 0.01 cover type 1.04 81.25 0.99 – – – – 570.80 – – – 26.27 glass 0.00 0.01 0.00 0.07 0.64 0.00 0.00 0.37 0.04 2.26 0.01 0.79 ionosphere UMAP10 0.00 0.00 0.00 0.02 0.02 0.00 0.00 0.59 0.13 5.92 0.01 0.01 iris 0.01 0.01 0.00 0.03 0.01 0.00 0.00 0.32 0.07 2.41 0.02 0.00 
+
+land mines 0.01 0.03 0.00 0.11 0.17 0.00 0.00 0.58 0.06 3.48 0.02 0.70 pendigits 0.04 2.00 0.01 22.32 13.04 2.10 0.43 14.04 22.51 88.87 2.16 0.14 seeds 0.00 0.01 0.00 0.03 0.02 0.00 0.00 0.35 0.02 2.88 0.01 0.00 
+
+shuttle 0.17 0.52 0.03 8.16 – – 0.55 46.73 203.89 521.01 0.54 0.77 wine 0.00 0.01 0.00 0.04 0.04 0.00 0.00 0.32 0.03 3.04 0.02 0.00 
+
+yeast 0.02 0.13 0.01 1.62 0.24 0.02 0.04 2.22 0.30 15.46 0.02 0.02 32 Table 8: Full-dataset evaluation of the proposed method. Rejected observa-tions are retained as an additional anomaly/unassigned label during metric computation, and rejection counts are reported explicitly as n/N .Dataset ARI NMI V-Measure FMI Purity Rejected ( n/N ) Rejection Rate 1d gauss 0.91 0.87 0.87 0.95 0.98 955/17528 0.05 2d gauss 0.80 0.83 0.83 0.82 0.89 644/10300 0.06 6NewsgroupsUMAP10 0.54 0.60 0.60 0.62 0.77 1078/5881 0.18 MNIST UMAP10 0.64 0.80 0.80 0.68 0.84 394/1797 0.22 banknote 0.05 0.08 0.08 0.57 0.64 99/1372 0.07 breast cancer 0.60 0.46 0.46 0.81 0.90 39/569 0.07 cover type 0.05 0.11 0.11 0.34 0.49 7407/581012 0.01 glass 0.14 0.32 0.32 0.34 0.53 19/214 0.09 ionosphere UMAP10 0.26 0.24 0.24 0.60 0.82 93/351 0.27 iris 0.42 0.51 0.51 0.59 0.75 41/150 0.27 land mines 0.05 0.20 0.20 0.34 0.42 0/338 0.00 pendigits 0.51 0.64 0.64 0.56 0.69 0/10992 0.00 seeds 0.68 0.63 0.63 0.78 0.89 13/210 0.06 shuttle 0.34 0.31 0.31 0.73 0.83 1647/43500 0.04 wine 0.35 0.39 0.39 0.58 0.72 8/178 0.04 yeast 0.10 0.14 0.14 0.42 0.42 52/1484 0.04 making it practical for domains where labelling costs are prohibitive. 
+
+5.6.2 Greedy Ordering Ablation 
+
+The overlap-resolution rule used in Algorithm 3 is a heuristic ordering rule rather than a quantity derived from the a-contrario model. Because the admission phase is greedy, overlap is resolved by the order in which clusters claim currently unassigned admissible points, rather than by an explicit post-hoc tie. If a diffuse or noisy cluster is processed first, it may claim observations that would also be admissible to a more compact cluster. The compactness/SSE rule is therefore used to process tighter clusters first. To assess this design choice, we compare the current deterministic com-pactness/SSE ordering with random greedy priority, keeping all other set-tings fixed. For random priority, the cluster processing order is randomly permuted, and results are reported as mean ± standard deviation over ten random-order trials. The ablation shows that greedy ordering can materially affect the coverage– quality trade-off. On 2d gauss , compactness/SSE improves retained-point ARI and purity relative to the mean random-priority result, while NMI 33 Table 9: Compact full-dataset comparison across methods using ARI and NMI. Metric Dataset KM GMM S-KM C-KM COP-KM Agg DBSCAN DEC DipNSub DipEnc LS Ours ARI 1d gauss 1.00 1.00 1.00 0.77 1.00 1.00 1.00 1.00 1.00 1.00 0.09 0.91 2d gauss 0.76 0.85 0.73 0.73 0.70 0.72 0.52 0.80 0.74 0.61 0.54 0.80 6NewsgroupsUMAP10 0.61 0.60 0.63 0.60 0.58 0.55 0.12 0.60 0.52 0.60 0.51 0.54 MNIST UMAP10 0.81 0.81 0.82 0.79 0.81 0.81 0.91 0.82 0.79 0.81 0.95 0.64 banknote 0.05 0.00 0.05 0.05 0.05 0.00 0.01 0.01 0.20 0.01 0.60 0.05 breast cancer 0.49 0.81 0.49 0.54 0.51 0.29 0.00 0.49 0.00 0.40 0.64 0.60 cover type -0.00 0.09 -0.00 – – – – 0.01 – – – 0.05 glass 0.27 0.25 0.27 0.22 0.27 0.26 0.16 0.06 0.17 0.02 0.31 0.14 ionosphere UMAP10 0.15 0.14 0.15 0.15 0.20 0.15 -0.06 0.13 0.17 0.15 0.11 0.26 
+
+iris 0.72 0.90 0.72 0.73 0.57 0.73 0.52 0.82 0.17 0.77 0.90 0.42 land mines -0.01 0.07 0.03 0.04 0.11 0.01 0.00 0.00 -0.01 -0.00 0.21 0.05 pendigits 0.58 0.54 0.60 0.60 0.56 0.55 0.00 0.60 0.21 0.56 0.91 0.51 seeds 0.72 0.80 0.72 0.72 0.76 0.71 0.06 0.64 0.00 0.48 0.75 0.68 shuttle 0.00 0.00 0.46 0.10 – – 0.00 0.04 0.00 0.09 0.71 0.34 wine 0.37 0.61 0.37 0.37 0.48 0.37 0.00 0.37 0.00 0.39 0.46 0.35 yeast 0.09 0.08 0.11 0.10 0.10 0.06 0.01 0.07 0.00 0.12 0.13 0.10 NMI 1d gauss 1.00 1.00 1.00 0.80 1.00 1.00 0.99 1.00 0.99 0.99 0.16 0.87 2d gauss 0.87 0.92 0.83 0.83 0.82 0.85 0.74 0.85 0.83 0.78 0.68 0.83 6NewsgroupsUMAP10 0.61 0.61 0.62 0.60 0.60 0.61 0.28 0.62 0.57 0.61 0.51 0.60 MNIST UMAP10 0.90 0.90 0.90 0.87 0.89 0.90 0.93 0.90 0.87 0.90 0.95 0.80 banknote 0.03 0.01 0.03 0.03 0.03 0.00 0.17 0.01 0.33 0.01 0.57 0.08 breast cancer 0.46 0.71 0.46 0.50 0.48 0.32 0.00 0.46 0.00 0.41 0.52 0.46 cover type 0.07 0.17 0.07 – – – – 0.04 – – – 0.11 glass 0.43 0.40 0.40 0.36 0.45 0.39 0.31 0.14 0.24 0.06 0.51 0.32 ionosphere UMAP10 0.12 0.11 0.12 0.12 0.16 0.12 0.09 0.11 0.23 0.12 0.11 0.24 
+
+iris 0.74 0.90 0.74 0.76 0.63 0.77 0.60 0.81 0.39 0.81 0.88 0.51 land mines 0.01 0.20 0.10 0.12 0.18 0.08 0.00 0.01 0.00 0.01 0.24 0.20 pendigits 0.69 0.68 0.69 0.69 0.68 0.73 0.00 0.74 0.38 0.71 0.91 0.64 seeds 0.69 0.76 0.69 0.69 0.73 0.73 0.30 0.65 0.00 0.55 0.71 0.63 shuttle 0.00 0.00 0.26 0.16 – – 0.00 0.08 0.16 0.12 0.62 0.31 wine 0.43 0.58 0.43 0.43 0.50 0.42 0.00 0.43 0.00 0.38 0.45 0.39 yeast 0.12 0.11 0.16 0.12 0.13 0.13 0.02 0.09 0.04 0.16 0.16 0.14 Table 10: Ablation of greedy cluster-ordering rules. Compactness/SSE is deterministic; random priority reports mean ± standard deviation over re-peated random cluster-order trials with the same seed set. Dataset Ordering rule ARI NMI Purity Rej. (%) 2d gauss Compactness/SSE 0.78 0.84 0.89 6.25 Random priority 0.74 ± 0.06 0.84 ± 0.02 0.84 ± 0.05 5.55 ± 0.37 breast cancer Compactness/SSE 0.62 0.49 0.90 6.85 Random priority 0.35 ± 0.24 0.32 ± 0.14 0.89 ± 0.01 23.53 ± 19.40 wine Compactness/SSE 0.36 0.41 0.70 4.49 Random priority 0.20 ± 0.10 0.28 ± 0.08 0.63 ± 0.04 17.19 ± 10.19 MNIST UMAP10 Compactness/SSE 0.98 0.98 0.99 21.93 Random priority 0.98 ± 0.00 0.98 ± 0.00 0.99 ± 0.00 21.87 ± 0.00 34 Figure 13: Purity scores of the proposed method as a function of the number of seeds per cluster at initialisation. remains comparable. On breast cancer , random priority is substantially less stable: the mean ARI and NMI decrease and the rejection rate has a large standard deviation, consistent with the fact that reversing the two-cluster processing order can substantially alter which ambiguous observa-tions are admitted. On wine , compactness/SSE improves the retained-point scores and reduces rejection relative to the mean random ordering, while 
+
+MNIST UMAP10 is insensitive to the ordering rule. These results indicate that compactness/SSE should not be interpreted as an optimality guarantee; rather, it provides a deterministic ordering that prioritises compact clusters and avoids stochastic greedy-order effects. 
+
+5.6.3 Sensitivity to Numerical Precision 
+
+To test whether the numerical precision cap α materially affects the results, we repeated representative experiments across synthetic, image, text, and tabular benchmarks for α ∈ { 2, 3, 4, 5, 6}. Because α is used only to inte-gerise continuous distances before applying the fixed E < 1 decision rule, we report the range of each metric across the sweep rather than treating α
+
+as a tuned hyperparameter. Specifically, each ∆ value is computed as the 35 Figure 14: Normalised Mutual Information (NMI) scores as a function of the number of seeds per cluster. maximum score over the tested α values minus the corresponding minimum score. The results in Table 11 show that retained-point ARI and NMI are ef-fectively unchanged across the tested precision range. The largest variation occurs for the full-dataset MNIST scores, where the rejection rate varies by 0.83 percentage points across the sweep; nevertheless, retained-point ARI and NMI vary by only 0.0001. This is a useful stress test for the precision cap because UMAP produces continuous embedding coordinates, and hence centre-distance values, with multiple decimal places. The limited variation is consistent with the role of α as a discretisation precision: coarser set-tings can merge distance values that differ only beyond the retained decimal places. These results support treating α as a fixed numerical precision cap rather than as a clustering decision threshold. All main experiments there-fore use the global default α = 4, which lies within the stable range observed in the sensitivity sweep. 36 Table 11: Range of evaluation metrics across α ∈ { 2, 3, 4, 5, 6}, computed as maximum minus minimum over the tested α values. Subscripts r and f
+
+denote retained-point and full-dataset evaluation, respectively. Rej. denotes the percentage of observations left unassigned. Dataset Representation Dim. ∆ARI r ∆NMI r ∆ARI f ∆NMI f ∆Rej. (pp) 2d Gaussian Raw features 2 0.0043 0.0015 0.0036 0.0011 0.0486 MNIST UMAP 10 0.0001 0.0001 0.0212 0.0095 0.8347 6 Newsgroups UMAP 10 0.0005 0.0021 0.0027 0.0016 0.0850 Wine Raw features 13 0.0000 0.0000 0.0000 0.0000 0.0000 
+
+5.6.4 Representation Controls on High-Dimensional Data 
+
+To assess whether the proposed method depends specifically on nonlinear UMAP preprocessing, we conducted additional representation-control ex-periments on the two highest-dimensional benchmarks considered in this study: MNIST and 6 Newsgroups. For MNIST, we compare the original pixel representation, a linear PCA embedding, and the UMAP embedding used in the main benchmark. For 6 Newsgroups, we compare the original TF-IDF representation, a linear TruncatedSVD embedding, and the UMAP embedding used in the main benchmark. TruncatedSVD is used as the sparse-text analogue of PCA, since the TF-IDF matrix is high-dimensional and sparse. The purpose of this experiment is not to treat dimensionality reduc-tion as an incidental preprocessing detail, but to make explicit how strongly the proposed centre-distance representation depends on the feature space in which distances are computed. The same seed protocol, clustering proce-dure, and evaluation metrics are used across all representations. The results in Table 12 quantify the sensitivity of the proposed method to the representation used for high-dimensional data. This sensitivity is sub-stantial. On the digit images, the raw 64-dimensional pixel representation gives moderate retained-point performance (ARI r = 0 .48, NMI r = 0 .62), while PCA to 10 dimensions does not improve the result. By contrast, the UMAP representation yields a much stronger retained-point score (ARI r =0.98, NMI r = 0 .98), albeit with a larger rejection rate and a corresponding full-dataset penalty. The pattern is even clearer for the 6 Newsgroups cor-pus: raw TF-IDF is ineffective for the present centre-distance formulation (ARI r = 0 .00, NMI r = 0 .04), TruncatedSVD provides a partial improve-ment, and UMAP gives the strongest retained-point result. 37 Table 12: Effect of representation on the proposed method for high-dimensional benchmark datasets. Raw high-dimensional features are com-pared with linear dimensionality reduction and UMAP embeddings. Sub-scripts r and f denote retained-point and full-dataset evaluation, respec-tively. Rej. denotes the percentage of observations left unassigned by the proposed method. Dataset Representation Dim. ARI r NMI r ARI f NMI f Rej. (%) MNIST Raw pixels 64 0.48 0.62 0.48 0.62 0.00 MNIST PCA 10 0.43 0.61 0.43 0.60 0.28 MNIST UMAP 10 0.98 0.98 0.64 0.80 22 6 Newsgroups Raw TF-IDF 2000 0.00 0.04 0.00 0.04 2.79 6 Newsgroups TruncatedSVD 10 0.44 0.49 0.43 0.48 1.41 6 Newsgroups UMAP 10 0.77 0.76 0.54 0.60 18 These results show that the current implementation should be under-stood as an anomaly-aware admission/rejection mechanism applied after a representation has been chosen, rather than as an image-specific or text-specific clustering pipeline that is independent of representation quality. This behaviour is expected, since the algorithm evaluates statistical co-herence through distances to seed-defined cluster centres; in raw pixel or sparse TF-IDF spaces, Euclidean or cosine distances can be degraded by sparsity, irrelevant variation, and distance concentration. Linear dimension-ality reduction provides a useful control derived without nonlinear manifold learning, while UMAP tests the method in a neighbourhood-preserving em-bedding where local proximity is more meaningful. Accordingly, the high-dimensional experiments should be interpreted as evidence for the proposed mechanism in suitable representations, not as proof that the current centre-based implementation is invariant to arbitrary raw high-dimensional feature spaces. UMAP is not part of the statistical thresholding rule itself; it is a representation step preceding the fixed a-contrario decision criterion. 
+
+5.7 Qualitative Analysis of High-Dimensional Corpora 
+
+To further evaluate the practical utility of the proposed framework in com-plex domains, we examine two high-dimensional benchmarks: the MNIST handwritten digits dataset and a six-category subset of the 20 Newsgroups corpus. These datasets represent distinct challenges in computer vision and 38 natural language processing, characterised by non-linear manifolds and in-herently subjective ground-truth labels. 
+
+5.7.1 MNIST Handwritten Digits 
+
+The MNIST dataset presents a significant challenge due to the high di-mensionality of raw pixel data and the significant variance in individual handwriting styles. To enhance clustering stability and address the sparsity of the raw feature space, we utilised UMAP [22] with a cosine metric to project the data into a 10-dimensional latent space. We note that this pre-processing step may discard information; the results reported here therefore demonstrate performance in a reduced representation where local proximity is more meaningful for distance-based grouping. Figure 15 illustrates the ground-truth distribution. While ten promi-nent clusters are visible, the presence of smaller, disparate groupings sug-gests that the benchmark labels may not fully capture all anomaly-relevant structure; digit interpretation is often ambiguous even to human observers, and anomaly definitions can depend on the modelling perspective. For the clustering process, we utilised a 5% random sample (90 examples) as seeds to initialise the process. The qualitative results, shown in Figure 16, support the top-tier perfor-mance obtained according to the external validation metrics relative to es-tablished baselines. Furthermore, a closer examination of the visual results demonstrates that the clustering-by-exclusion approach identifies stylistic variations—such as the digit ‘1’ written with a horizontal baseline—as anoma-lies. By refusing to force these stylistic outliers into the main centroids, the method preserves the statistical integrity of the core clusters and prevents the “smearing” of cluster boundaries often observed in partitioning methods. 
+
+5.7.2 20 Newsgroups Corpus 
+
+The 20 Newsgroups corpus is a standard benchmark for semantic document clustering. We selected a subset of six distinct categories to assess the al-gorithm’s performance in a high-dimensional TF-IDF space reduced to 10 dimensions via UMAP. Figure 17 reveals significant overlap between seman-tic categories and a disparate cluster (top-left) containing examples from multiple ground-truth classes. By leveraging a minimal 1% seed sample, the algorithm successfully re-covered the six primary categories (Figure 18). A key finding is the algo-rithm’s treatment of transitional documents—those located at the semantic 39 Figure 15: 2-dimensional UMAP projection of the MNIST dataset. Points are colour-coded by ground-truth labels, revealing latent ambiguity between digit classes. 
+
+Figure 16: Clustering results on MNIST ( Dim = 10). The algorithm suc-cessfully delineates digit classes while relegating ambiguous or rare variations to the anomaly set. 40 boundaries between topics—which are flagged as anomalies. This behaviour supports that the a-contrario mechanism acts as a natural “safety valve,” preventing the corruption of cluster centroids by documents with ambiguous or multi-topic signatures. Table 13 presents the top 10 keywords for each recovered cluster. While the keywords for the six primary clusters align with their respective cate-gory labels (e.g., encryption , hockey , bible ), the keywords for the anomalous group represent a generic, incoherent mix (e.g., thanks , like , com ). This sug-gests that the rejected points do not collectively behave as a single coherent seventh semantic category. Instead, they appear to form a heterogeneous residual set, potentially comprising transitional documents, unstructured noise, and smaller unseeded subgroups, consistent with their exclusion from the statistically coherent primary clusters. 
+
+Figure 17: 2-dimensional UMAP projection of the 6-category Newsgroup subset coloured by ground-truth labels. 41 Figure 18: Clustering results on the Newsgroup dataset. The algorithm effectively delineates semantic boundaries, isolating transitional documents as anomalies. Table 13: Top 10 Keywords for Recovered Clusters and the Anomaly Group. 
+
+Category Keywords Anomalies helmet, thanks, edu, just, like, list, mail, com, dog, wa 
+
+comp.windows.x use, display, application, program, motif, widget, thanks, file, server, window 
+
+rec.motorcycles rider, road, just, like, riding, dod, motorcycle, ride, wa, bike 
+
+rec.sport.hockey espn, season, playoff, play, year, player, hockey, wa, team, game 
+
+sci.crypt escrow, use, nsa, algorithm, phone, government, encryp-tion, clipper, chip, key 
+
+soc.religion.christian christians, bible, people, sin, christ, christian, church, je-sus, wa, god 
+
+talk.politics.guns just, weapon, government, law, did, right, fbi, people, wa, gun 
+
+42 6 Conclusion 
+
+This work has presented a formalisation of clustering as the statistical dual of anomaly detection, structured according to Marr’s tri-level hypothesis [21]. By linking Gestalt grouping principles with the a-contrario framework, we defined a cluster as a maximal subset of observations devoid of internal anomalies relative to a null hypothesis of uniform randomness. This pro-vides a principled clustering criterion in which meaningful structure is identi-fied through statistical unexpectedness rather than through manually tuned decision thresholds alone. On this basis, we developed a semi-supervised 
+
+clustering-by-exclusion algorithm built on the Perception anomaly detection kernel [23]. Starting from a small number of seeds, the method iteratively admits statistically coherent points while ejecting inconsistent or fringe ob-servations. In this way, it preserves compact cluster cores without forcing every observation into a partition, and it replaces global hyperparameter search with a small amount of interpretable supervision that expresses the intended clustering resolution. The empirical results show that this approach is practically effective across synthetic and real-world benchmarks. Under the low-tuning proto-col adopted here, the method recovers strong retained-point cluster quality while maintaining O(tKN D ) worst-case time complexity, which is linear in the number of observations and dimensions for fixed K and t, and scal-ing to large datasets such as cover type . The added full-dataset evaluation further clarifies the expected trade-off between coverage and quality: per-formance changes little when rejection rates are low, but decreases more noticeably when a substantial fraction of observations is explicitly left unas-signed. At the same time, the qualitative analyses of MNIST UMAP10 and 
+
+6Newsgroups UMAP10 indicate that some rejected observations correspond to visually or semantically distinct fringe structure that is not fully repre-sented by the benchmark ground truth, so standard external metrics do not always capture the full anomaly-aware behaviour of the method. These results should also be interpreted in light of the method’s cur-rent scope. The present formulation is centre-based and is therefore best suited to compact, approximately spherical groups; it is expected to be less effective when classes are strongly overlapping, genuinely multi-modal, or embedded in spaces where the chosen distance representation does not pre-serve meaningful local structure. The experiments on UMAP embeddings therefore validate the method in a reduced representation where local prox-imity is more meaningful, rather than providing a complete characterisation in the original very high-dimensional raw feature spaces. 43 More broadly, the framework supports an interactive view of clustering in which seeds express user intent directly, and rejected observations pro-vide a natural focus for subsequent inspection. This is particularly relevant for large-scale industrial settings, where exhaustive parameter search and trial-and-error validation can be costly: expert input is concentrated into representative seeds and, when needed, the review of rejected observations for possible new target groups. The current implementation is designed for static batch datasets; applying the method in streaming or dynamic en-vironments would require incremental updates of scaling statistics, cluster medians, distance counts, and admission/rejection decisions. Future work will therefore explore alternative grouping laws and representations within the same a-contrario framework, null models that remain stable directly in very high-dimensional sparse spaces, automated procedures for suggesting new seeds from the rejected set, online or streaming variants of the admis-sion/ejection mechanism, and further optimisation of the iterative phases. 
+
+## References 
+
+[1] Sugato Basu, Arindam Banerjee, and Raymond J. Mooney. Semi-supervised clustering by seeding. In ICML , pages 27–34. Morgan Kauf-mann, 2002. [2] Sugato Basu, Arindam Banerjee, and Raymond J. Mooney. Active semi-supervision for pairwise constrained clustering. Proceedings of the tenth ACM SIGKDD international conference on Knowledge discovery and data mining , pages 333–342, 2004. [3] Lena G. M. Bauer, Collin Leiber, Christian B¨ ohm, and Clau-dia Plant. Extension of the dip-test repertoire: Efficient and differentiable p-value calculation for clustering. In Proceed-ings of the 2023 SIAM International Conference on Data Min-ing (SDM) , pages 109–117. Society for Industrial and Applied Mathematics, 2023. doi: 10.1137/1.9781611977653.ch13. URL 
+
+https://doi.org/10.1137/1.9781611977653.ch13 .[4] Sanjay Chawla and Aristides Gionis. k-means-: A unified approach to clustering and outlier detection. In SDM , pages 189–197. SIAM, 2013. [5] Qingsheng Chen, Mingjie Zhao, Yuzhu Ji, Xiaopeng Luo, Yiqun Zhang, and Yue Zhang. Mgod: Multi-granular outlier detection with 44 clustlier analysis. In 2024 IEEE International Conference on Bioin-formatics and Biomedicine (BIBM) , pages 3105–3110, 2024. doi: 10.1109/BIBM62325.2024.10821743. [6] Agns Desolneux, Lionel Moisan, and Jean-Michel Morel. From Gestalt Theory to Image Analysis: A Probabilistic Approach . Springer Publish-ing Company, Incorporated, 1st edition, 2007. ISBN 0387726357. [7] Martin Ester, Hans-Peter Kriegel, J¨ org Sander, and Xiaowei Xu. A density-based algorithm for discovering clusters in large spatial databases with noise. Proceedings of the 2nd International Conference on Knowledge Discovery and Data Mining (KDD) , pages 226–231, 1996. [8] Germ´ an Gonz´ alez-Almagro, Daniel Peralta, Eli De Poorter, Jos´ e Ram´ on Cano, and Salvador Garc´ ıa. Semi-supervised con-strained clustering: an in-depth overview, ranked taxonomy and future research directions. Artif. Intell. Rev. , 58(5):157, 2025. [9] Zhen Jiang, Yongzhao Zhan, Qirong Mao, and Yang Du. Semi-supervised clustering under a compact-cluster assumption. IEEE Transactions on Knowledge and Data Engineering , 35(5):5244–5256, May 2023. ISSN 1041-4347. doi: 10.1109/TKDE.2022.3145347. URL 
+
+https://doi.org/10.1109/TKDE.2022.3145347 .[10] Zhen Jiang, Bolin Niu, Jinxin Gua, and Yuping Xing. Unsuper-vised and semi-supervised clustering via density and distance-based label propagation and assignment. Information Systems , 136: 102639, 2025. ISSN 0306-4379. doi: 10.1016/j.is.2025.102639. URL 
+
+https://www.sciencedirect.com/science/article/pii/S0306437925001255 .[11] Zhen Jiang, Haolei Qin, Zeyu Feng, and Haizhen Guan. Semi-supervised hierarchical clustering via low-density sepa-ration. Knowledge and Information Systems , 68(1), March 2026. ISSN 0219-1377. doi: 10.1007/s10115-026-02717-1. URL 
+
+https://doi.org/10.1007/s10115-026-02717-1 .[12] Sepandar D. Kamvar, Dan Klein, and Christopher D. Manning. Spec-tral learning. In IJCAI , pages 561–566. Morgan Kaufmann, 2003. [13] Collin Leiber, Lena G. M. Bauer, Michael Neumayr, Claudia Plant, and Christian B¨ ohm. The DipEncoder: Enforcing multimodality in autoencoders. In Proceedings of the 28th ACM SIGKDD Conference on Knowledge Discovery and Data Mining , KDD ’22, pages 846–856, New 45 York, NY, USA, 2022. Association for Computing Machinery. ISBN 9781450393850. doi: 10.1145/3534678.3539407. [14] Collin Leiber, Lukas Miklautz, Claudia Plant, and Christian B¨ ohm. Benchmarking deep clustering algorithms with clustpy. In 2023 IEEE International Conference on Data Mining Workshops (ICDMW) , pages 625–632. IEEE, 2023. doi: 10.1109/ICDMW60847.2023.00087. [15] Levi Lelis and J¨ org Sander. Semi-supervised density-based clustering. In ICDM , pages 842–847. IEEE Computer Society, 2009. [16] Chun-Guang Li and Ren´ e Vidal. Structured sparse subspace clustering: A unified optimization framework. In Proceedings of the IEEE Con-ference on Computer Vision and Pattern Recognition (CVPR) , pages 277–286, 2015. [17] Shuoyang Li, Yuantao Gu, and Wenwu Wang. Weighted density for the win: Accurate subspace density clustering. In ICASSP 2025 - 2025 IEEE International Conference on Acoustics, Speech and Signal Pro-cessing (ICASSP) , 2025. doi: 10.1109/ICASSP49660.2025.10890745. [18] Hongfu Liu, Jun Li, Yue Wu, and Yun Fu. Clustering with outlier removal. IEEE Trans. Knowl. Data Eng. , 33(6):2369–2379, 2021. [19] Xiaopeng Luo, Xin Xu, Herschel Rabitz, Yiqun Zhang, Zexi Tan, Shenghong Cai, Zihua Yang, Sen Feng, Yuzhu Ji, and Haijun Zhang. Hierarchical reference sets for robust unsupervised detection of scat-tered and clustered outliers. IEEE Internet of Things Journal , 13(5): 9350–9364, 2026. doi: 10.1109/JIOT.2025.11300877. Early access: De-cember 2025. [20] J. MacQueen. Some methods for classification and analysis of multi-variate observations. In Proceedings of the Fifth Berkeley Symposium on Mathematical Statistics and Probability, Volume 1: Statistics , pages 281–297, Berkeley, Calif., 1967. University of California Press. [21] David Marr. Vision: A Computational Investigation into the Human Representation and Processing of Visual Information . Henry Holt and Co., Inc., USA, 1982. ISBN 0716715678. [22] Leland McInnes, John Healy, and James Melville. Umap: Uniform manifold approximation and projection for dimension reduction. arXiv preprint arXiv:1802.03426 , 2018. 46 [23] Nassir Mohammad. Anomaly detection using principles of human per-ception, 2021. URL https://arxiv.org/abs/2103.12323 .[24] F. Pedregosa, G. Varoquaux, A. Gramfort, V. Michel, B. Thirion, O. Grisel, M. Blondel, P. Prettenhofer, R. Weiss, V. Dubourg, J. Van-derplas, A. Passos, D. Cournapeau, M. Brucher, M. Perrot, and E. Duchesnay. Scikit-learn: Machine learning in Python. Journal of Machine Learning Research , 12:2825–2830, 2011. [25] Witold Pedrycz. Fuzzy sets in pattern recognition: Methodology and methods. Pattern Recognition , 23(1-2):121–146, 1990. doi: 10.1016/0031-3203(90)90054-O. [26] Yazhou Ren et al. Deep clustering: A comprehensive survey. IEEE Transactions on Neural Networks and Learning Systems , 36(4):5858– 5878, 2025. [27] Noam Shental, Aharon Bar-Hillel, Tomer Hertz, and Daphna Wein-shall. Computing gaussian mixture models with EM using equivalence constraints. In NIPS , pages 465–472. MIT Press, 2003. [28] Kiri Wagstaff, Claire Cardie, Seth Rogers, and Stefan Schr¨ odl. Con-strained k-means clustering with background knowledge. In ICML ,pages 577–584, 2001. [29] Joe H Ward Jr. Hierarchical grouping to optimize an objective function. 
+
+Journal of the American Statistical Association , 58(301):236–244, 1963. [30] Junyuan Xie, Ross B. Girshick, and Ali Farhadi. Unsupervised deep embedding for clustering analysis. In ICML , volume 48 of JMLR Work-shop and Conference Proceedings , pages 478–487. JMLR.org, 2016. [31] Bo Yang, Xiao Fu, Nicholas D. Sidiropoulos, and Mingyi Hong. Towards k-means-friendly spaces: Simultaneous deep learning and clustering. In 
+
+ICML , volume 70 of Proceedings of Machine Learning Research , pages 3861–3870. PMLR, 2017. [32] Dengyong Zhou, Olivier Bousquet, Thomas N. Lal, Jason Weston, and Bernhard Sch¨ olkopf. Learning with local and global consistency. In 
+
+Advances in Neural Information Processing Systems , volume 16, pages 321–328, 2004. 47 [33] Xiaojin Zhu and Zoubin Ghahramani. Learning from labeled and unla-beled data with label propagation. Technical Report CMU-CALD-02-107, Carnegie Mellon University, 2002. [34] Rong Zou, Yunfan Zhang, Mingjie Zhao, Zexi Tan, Yiqun Zhang, and Yiu-Ming Cheung. SDENK: Unbiased subspace density-k-clustering. Neurocomputing , 567:131225, 2025. ISSN 0925-2312. doi: 10.1016/j.neucom.2025.131225. 48

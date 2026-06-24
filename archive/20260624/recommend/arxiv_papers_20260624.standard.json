@@ -1,0 +1,100 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-06-24T22:03:13.588427+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 1,
+    "deep_cap": 7,
+    "deep_selected": 1,
+    "quick_candidates": 1,
+    "quick_skim_target": 12,
+    "quick_selected": 1
+  },
+  "deep_dive": [
+    {
+      "id": "2606.24094v1",
+      "source": "arxiv",
+      "title": "Universal Guideline-Driven Image Clustering via a Hybrid LLM Agent",
+      "abstract": "Unifying image clustering across different clustering scenarios remains challenging due to fundamental gaps among tasks. We introduce a Guideline-Driven Image Clustering Agent, the first universal framework that bridges these gaps through textual guidelines. To incorporate complex guidelines without task-specific training, we propose Generative Concept Proxy Modeling, which generates guideline-aware embeddings via concept proxy extraction. For scenarios requiring automatic cluster discovery, we introduce LLM Traversal based on Minimum Spanning Tree that selectively applies LLM reasoning for complex semantic judgments. Our method generalizes across diverse clustering scenarios spanning from general to fine-grained categorization, from global to local criteria, and from balanced to long-tail distributions. Our framework consistently outperforms specialized methods across diverse clustering tasks.",
+      "authors": [
+        "Wenliang Zhong",
+        "Rob Barton",
+        "Lucas Goncalves",
+        "Kushal Kumar",
+        "Feng Jiang",
+        "Hehuan Ma",
+        "Yuzhi Guo",
+        "Vidit Bansal",
+        "Karim Bouyarmane",
+        "Junzhou Huang"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-06-23T03:20:09+00:00",
+      "link": "https://arxiv.org/pdf/2606.24094v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Clustering via LLM agent with textual guidelines",
+      "llm_evidence_cn": "通过指南驱动和LLM代理的图像聚类",
+      "llm_evidence": "通过指南驱动和LLM代理的图像聚类",
+      "canonical_evidence": "通过指南驱动和LLM代理的图像聚类",
+      "llm_tldr_en": "Proposes a universal image clustering framework using a hybrid LLM agent that integrates generative concept proxy modeling and LLM traversal for automatic cluster discovery.",
+      "llm_tldr_cn": "现有图像聚类方法难以统一不同场景。本文提出通用指南驱动图像聚类代理，通过生成式概念代理建模生成指南感知嵌入，并引入基于最小生成树的LLM遍历进行自动聚类探索。实验证明该方法在多种聚类场景下均有效，弥合了不同任务间的差距。",
+      "llm_tldr": "现有图像聚类方法难以统一不同场景。本文提出通用指南驱动图像聚类代理，通过生成式概念代理建模生成指南感知嵌入，并引入基于最小生成树的LLM遍历进行自动聚类探索。实验证明该方法在多种聚类场景下均有效，弥合了不同任务间的差距。",
+      "llm_tags": [
+        "query:ac"
+      ],
+      "matched_query_tag": "query:ac",
+      "matched_query_text": "clustering using large language models",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2606.18833v1",
+      "source": "arxiv",
+      "title": "Seed-Guided Semi-Supervised Clustering by A-Contrario Anomaly Detection",
+      "abstract": "This paper introduces a semi-supervised clustering framework grounded in the statistical duality between grouping principles and anomaly detection. We address the challenge of robust cluster definition in noisy environments -- a task where partitioning algorithms often over-assign outliers and density-based methods remain sensitive to heuristic global parameters. Drawing on \\textit{a-contrario} statistical reasoning and Gestalt proximity principles, we define a cluster as a maximal subset of data points containing no anomalies relative to a null hypothesis of uniform randomness. Central to this approach is the Perception algorithm, which utilises a principled expectation-based threshold ($\\mathbb{E} < 1$) to identify outliers without manual parameter tuning. By treating clustering as the dual of anomaly detection, we employ an iterative ``clustering-by-exclusion'' mechanism. The algorithm is seed-guided, leveraging minimal user-provided labels to initialise robust cluster medians and form initial groups, which are subsequently expanded by admitting non-anomalous points. This approach naturally isolates fringe points, isolated noise, and emerging unknown clusters. We evaluate the method on synthetic and real-world benchmarks, including image and text datasets represented through raw, linear-reduced, and neighbourhood-preserving embeddings. Results demonstrate that with as few as 10--30 seeds per cluster, the proposed method achieves competitive and often very strong performance under a practical low-tuning benchmarking protocol, while maintaining linear scalability with respect to both observations and dimensionality for a fixed number of seeded clusters and iterations.",
+      "authors": [
+        "Nassir Mohammad"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-06-17T09:08:02+00:00",
+      "link": "https://arxiv.org/pdf/2606.18833v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "semi-supervised clustering framework",
+      "llm_evidence_cn": "半监督聚类框架",
+      "llm_evidence": "半监督聚类框架",
+      "canonical_evidence": "半监督聚类框架",
+      "llm_tldr_en": "Seed-Guided Semi-Supervised Clustering using A-Contrario anomaly detection for robust cluster definition without manual parameters.",
+      "llm_tldr_cn": "本文针对噪声环境下聚类算法对离群点敏感和参数依赖问题，提出基于先验反证统计推理的半监督聚类框架。利用感知算法通过期望值阈值自动识别离群点，无需手动参数。在多个数据集上展示了优于传统方法的分割质量和鲁棒性，为半监督聚类提供了参数自由的新途径。",
+      "llm_tldr": "本文针对噪声环境下聚类算法对离群点敏感和参数依赖问题，提出基于先验反证统计推理的半监督聚类框架。利用感知算法通过期望值阈值自动识别离群点，无需手动参数。在多个数据集上展示了优于传统方法的分割质量和鲁棒性，为半监督聚类提供了参数自由的新途径。",
+      "llm_tags": [
+        "query:active-clust"
+      ],
+      "matched_query_tag": "query:active-clust",
+      "matched_query_text": "semi-supervised clustering with active learning",
+      "matched_requirement_id": "req-10",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}
