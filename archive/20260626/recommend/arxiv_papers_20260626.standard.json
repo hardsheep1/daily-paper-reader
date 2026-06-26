@@ -1,0 +1,57 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-06-26T20:45:28.532834+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 1,
+    "deep_cap": 7,
+    "deep_selected": 1,
+    "quick_candidates": 0,
+    "quick_skim_target": 12,
+    "quick_selected": 0
+  },
+  "deep_dive": [
+    {
+      "id": "biorxiv-10-64898-2026-06-21-733596-v1",
+      "source": "biorxiv",
+      "title": "Ambiguity-Aware Multi-Stage Cell-Type Annotation for Spatial Transcriptomics",
+      "abstract": "Spatial transcriptomics enables characterization of cellular organization in intact tissue, but robust cell type annotation remains challenging due to heterogeneous expression profiles, mixed populations, and transitional states. Existing methods often enforce a single label per cluster, obscuring biologically meaningful ambiguity and producing overconfident assignments. We propose an ambiguity-aware, multi-stage framework for spatial cell-type annotation. The method combines hybrid spatial feature clustering with constrained language-model inference over curated label sets, and assigns confidence scores based on marker coverage, candidate separation, and entropy. Low-confidence clusters are selectively refined via local reclustering of ambiguous regions, while unresolved clusters are preserved as mixed rather than forcibly labeled. Applied to 10x Genomics Xenium spatial transcriptomics data from cholangiocarcinoma, the proposed refinement reduces cluster-level ambiguity from 16.1% to 2.27% and cell-level ambiguity from 18.4% to 0.86%, while improving confidence calibration. Spatial ablation confirms that topological integration resolves structural ambiguity over feature-only baselines, while constrained inference via a lightweight language model ensures scalable and biologically coherent annotations. These results highlight the importance of explicit ambiguity handling for reliable spatial annotation in heterogeneous tumors.",
+      "authors": [
+        "Mahmud, M. I.",
+        "Kochat, V.",
+        "Anzum, H.",
+        "Satpati, S.",
+        "Dwarampudi, J. M. R.",
+        "Rai, K.",
+        "Banerjee, T."
+      ],
+      "primary_category": "bioinformatics",
+      "categories": [
+        "bioinformatics"
+      ],
+      "published": "2026-06-25T00:00:00+00:00",
+      "link": "https://www.biorxiv.org/content/10.64898/2026.06.21.733596v1.full.pdf",
+      "tags": [
+        "keyword:active-clust",
+        "query:active-clust"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "clustering using large language models",
+      "llm_evidence_cn": "使用大语言模型进行聚类",
+      "llm_evidence": "使用大语言模型进行聚类",
+      "canonical_evidence": "使用大语言模型进行聚类",
+      "llm_tldr_en": "This paper presents an ambiguity-aware multi-stage framework for spatial cell-type annotation that combines hybrid spatial feature clustering with constrained language-model inference.",
+      "llm_tldr_cn": "针对空间转录组学中细胞类型标注的模糊性问题，本文提出了一种多阶段框架。该方法结合混合空间特征聚类与受限语言模型推理，基于标记覆盖、候选分离和熵分配置信度。低置信度簇通过局部重聚类进行选择性细化，在保留生物学歧义性的同时提高注释准确性。",
+      "llm_tldr": "针对空间转录组学中细胞类型标注的模糊性问题，本文提出了一种多阶段框架。该方法结合混合空间特征聚类与受限语言模型推理，基于标记覆盖、候选分离和熵分配置信度。低置信度簇通过局部重聚类进行选择性细化，在保留生物学歧义性的同时提高注释准确性。",
+      "llm_tags": [
+        "query:ac"
+      ],
+      "matched_query_tag": "query:ac",
+      "matched_query_text": "clustering using large language models",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": []
+}

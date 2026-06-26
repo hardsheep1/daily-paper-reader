@@ -1,0 +1,24 @@
+{
+  "label": "2026-06-26",
+  "date": "2026-06-26",
+  "generated_at": "2026-06-26T20:46:39",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "202606/26/biorxiv-10-64898-2026-06-21-733596-v1-ambiguity-aware-multi-stage-cell-type-annotation-for-spatial-transcriptomics",
+      "section": "deep",
+      "title_en": "Ambiguity-Aware Multi-Stage Cell-Type Annotation for Spatial Transcriptomics",
+      "authors": "Mahmud, M. I., Kochat, V., Anzum, H., Satpati, S., Dwarampudi, J. M. R., Rai, K., Banerjee, T.",
+      "date": "2026-06-25",
+      "pdf": "https://www.biorxiv.org/content/10.64898/2026.06.21.733596v1.full.pdf",
+      "score": "8.0",
+      "evidence": "使用大语言模型进行聚类",
+      "tldr": "空间转录组学细胞注释面临异质性、混合群体和过渡状态等模糊性问题，现有方法强制单一标签导致过度自信。本文提出模糊感知的多阶段框架，融合空间特征聚类与轻量语言模型约束推理，依据标记覆盖、分离度和熵分配置信度，低置信度簇局部重聚类，未解决簇保留混合。在胆管癌Xenium数据上，簇级模糊性从16.1%降至2.27%，细胞级从18.4%降至0.86%，校准改善。显式处理模糊性提升了异质性肿瘤空间注释的可靠性。",
+      "tags": "query:ac",
+      "abstract_en": "Spatial transcriptomics enables characterization of cellular organization in intact tissue, but robust cell type annotation remains challenging due to heterogeneous expression profiles, mixed populations, and transitional states. Existing methods often enforce a single label per cluster, obscuring biologically meaningful ambiguity and producing overconfident assignments. We propose an ambiguity-aware, multi-stage framework for spatial cell-type annotation. The method combines hybrid spatial feature clustering with constrained language-model inference over curated label sets, and assigns confidence scores based on marker coverage, candidate separation, and entropy. Low-confidence clusters are selectively refined via local reclustering of ambiguous regions, while unresolved clusters are preserved as mixed rather than forcibly labeled. Applied to 10x Genomics Xenium spatial transcriptomics data from cholangiocarcinoma, the proposed refinement reduces cluster-level ambiguity from 16.1% to 2.27% and cell-level ambiguity from 18.4% to 0.86%, while improving confidence calibration. Spatial ablation confirms that topological integration resolves structural ambiguity over feature-only baselines, while constrained inference via a lightweight language model ensures scalable and biologically coherent annotations. These results highlight the importance of explicit ambiguity handling for reliable spatial annotation in heterogeneous tumors.",
+      "source": "biorxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}
