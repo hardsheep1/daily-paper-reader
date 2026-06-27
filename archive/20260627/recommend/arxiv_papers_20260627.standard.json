@@ -1,0 +1,56 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-06-27T21:07:28.951365+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 0,
+    "deep_cap": 7,
+    "deep_selected": 0,
+    "quick_candidates": 1,
+    "quick_skim_target": 12,
+    "quick_selected": 1
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2606.21743v1",
+      "source": "arxiv",
+      "title": "Cohort Organized Learning: Clustering Through Agreement",
+      "abstract": "In this article we describe Cohort Organized Learning (CoOL), a method for clustering data without explicit distance or similarity computations. Herein, we will describe CoOL, derive the gradients determined by expectation maximization to train the networks, show how to monitor convergence during training and evaluate the clusters after training, and discuss a series of examples and use cases. We also discuss CoOL's limitations and future prospects on related tasks. Because CoOL uses neural networks to estimate the clusters, it can be used to cluster any data that can be made compatible and we illustrate this on vector data and images.",
+      "authors": [
+        "Finn Henry O'Shea",
+        "Maria Elena Monzani"
+      ],
+      "primary_category": "cs.MA",
+      "categories": [
+        "cs.MA",
+        "cs.AI"
+      ],
+      "published": "2026-06-19T21:00:06+00:00",
+      "link": "https://arxiv.org/pdf/2606.21743v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "novel clustering method without distance computations",
+      "llm_evidence_cn": "无需距离计算的新型聚类方法",
+      "llm_evidence": "无需距离计算的新型聚类方法",
+      "canonical_evidence": "无需距离计算的新型聚类方法",
+      "llm_tldr_en": "Introduces CoOL, a clustering method that uses neural networks with expectation-maximization to cluster data without explicit similarity, applicable to any compatible data type.",
+      "llm_tldr_cn": "传统聚类方法依赖距离或相似度计算，在高维或复杂数据上受限。本文提出Cohort Organized Learning（CoOL），利用神经网络和期望最大化训练，无需显式距离即可对任意兼容数据聚类。在向量和图像数据上验证了有效性。该方法为聚类提供新思路，虽未涉及主动学习，但可作为主动聚类的基础模型。",
+      "llm_tldr": "传统聚类方法依赖距离或相似度计算，在高维或复杂数据上受限。本文提出Cohort Organized Learning（CoOL），利用神经网络和期望最大化训练，无需显式距离即可对任意兼容数据聚类。在向量和图像数据上验证了有效性。该方法为聚类提供新思路，虽未涉及主动学习，但可作为主动聚类的基础模型。",
+      "llm_tags": [
+        "query:active-clust"
+      ],
+      "matched_query_tag": "query:active-clust",
+      "matched_query_text": "active learning clustering methods",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

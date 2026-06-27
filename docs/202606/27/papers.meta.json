@@ -1,0 +1,24 @@
+{
+  "label": "2026-06-27",
+  "date": "2026-06-27",
+  "generated_at": "2026-06-27T21:08:35",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "202606/27/2606.21743v1-cohort-organized-learning-clustering-through-agreement",
+      "section": "quick",
+      "title_en": "Cohort Organized Learning: Clustering Through Agreement",
+      "authors": "Finn Henry O'Shea, Maria Elena Monzani",
+      "date": "2026-06-19",
+      "pdf": "https://arxiv.org/pdf/2606.21743v1",
+      "score": "6.0",
+      "evidence": "无需距离计算的新型聚类方法",
+      "tldr": "传统聚类通常需要显式距离或相似度计算，限制了其对复杂数据（如图像）的适用性。本文提出CoOL方法，通过神经网络和期望最大化梯度训练实现聚类，无需距离计算。该方法在向量和图像数据上验证了有效性，并能监控收敛和评估聚类质量。CoOL避免了距离计算，扩展了聚类技术的适用范围。",
+      "tags": "query:active-clust",
+      "abstract_en": "In this article we describe Cohort Organized Learning (CoOL), a method for clustering data without explicit distance or similarity computations. Herein, we will describe CoOL, derive the gradients determined by expectation maximization to train the networks, show how to monitor convergence during training and evaluate the clusters after training, and discuss a series of examples and use cases. We also discuss CoOL's limitations and future prospects on related tasks. Because CoOL uses neural networks to estimate the clusters, it can be used to cluster any data that can be made compatible and we illustrate this on vector data and images.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}
