@@ -1,0 +1,24 @@
+{
+  "label": "2026-06-28",
+  "date": "2026-06-28",
+  "generated_at": "2026-06-28T21:23:26",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "202606/28/biorxiv-10-64898-2026-06-22-733750-v1-speak-spatial-prompting-with-expert-aligned-knowledge-for-tissue-domain-identification-in-spatial-transcriptomics",
+      "section": "deep",
+      "title_en": "SPEAK: Spatial Prompting with Expert Aligned Knowledge for Tissue Domain Identification in Spatial Transcriptomics",
+      "authors": "Wei, H., Luo, X., Yu, H., Liang, J., Yang, L., Sauler, M., Kaminski, N., Popa, A., Yan, X.",
+      "date": "2026-06-26",
+      "pdf": "https://www.biorxiv.org/content/10.64898/2026.06.22.733750v1.full.pdf",
+      "score": "8.0",
+      "evidence": "基于大模型的空间域识别（聚类），包含原型更新，类似主动学习",
+      "tldr": "空间转录组学数据分析中，准确识别空间域是下游分析的关键。现有方法往往忽略先验知识且鲁棒性不足。SPEAK方法利用大语言模型和人类专家知识，通过构建空间上下文提示，实现零样本推理和专家引导微调。在多个数据集上，SPEAK在域预测准确性、鲁棒性和可解释性上均优于现有方法，并展现出良好的泛化能力。",
+      "tags": "query:ac",
+      "abstract_en": "Spatially resolved transcriptomic (SRT) data requires spatial domain identification to enable tissue microenvironment-specific downstream analyses. Here we present SPEAK (Spatial Prompting with Expert-Aligned Knowledge), a large language model (LLM) -based method to identify spatial domains from SRT data by taking advantage of the prior knowledge from both LLM and human experts. SPEAK constructs a spatial context prompt for each cell/spot based on cell types and marker genes of its neighboring cells, enabling zero-shot inference, expert-guided fine-tuning, and prototype updating through two-stage prompting. Applications to STARmap, Visium, MERFISH and Xenium datasets showed advantages of SPEAK over existing spatial domain identification methods in domain prediction accuracy, robustness to limited prior knowledge, biological interpretability, and capacity for efficient expert-guided fine-tuning with generalizability to other tissue sections.",
+      "source": "biorxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}
