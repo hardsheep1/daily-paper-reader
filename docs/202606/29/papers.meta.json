@@ -1,0 +1,39 @@
+{
+  "label": "2026-06-29",
+  "date": "2026-06-29",
+  "generated_at": "2026-06-29T21:55:40",
+  "count": 2,
+  "papers": [
+    {
+      "paper_id": "202606/29/2606.23243v1-unlocking-in-context-learning-in-audio-language-models-from-decentralized-medical-audio",
+      "section": "quick",
+      "title_en": "Unlocking In-Context Learning in Audio-Language Models from Decentralized Medical Audio",
+      "authors": "Ran Piao, Tsai-Ning Wang, Martijn den Dekker, Linda Moonen, Hareld Kemps, Yuan Lu, Aaqib Saeed",
+      "date": "2026-06-22",
+      "pdf": "https://arxiv.org/pdf/2606.23243v1",
+      "score": "6.0",
+      "evidence": "使用无监督聚类为语言模型上下文学习生成伪标签",
+      "tldr": "临床音频诊断在低资源场景下依赖小样本学习。本文提出Federated Self-Contextualization (FSC)框架，通过无监督聚类生成伪标签，构建支持-查询对，结合联邦优化实现上下文学习。在呼吸和心脏疾病评估中，2-way 2-shot准确率达71.6%，优于音频语言基线超9%。FSC首次实现了联邦环境下音频语言模型的小样本诊断，有效利用分散数据。",
+      "tags": "query:ac",
+      "abstract_en": "Clinical audio diagnosis in low-resource settings requires models that identify conditions from minimal examples without large annotated corpora. We propose Federated Self-Contextualization (FSC), a multimodal language model framework for in-context clinical audio diagnosis across federated hospital clients. FSC constructs pseudo-label episodes via unsupervised clustering of audio representations, bypassing scarce real diagnostic labels, and enables contextual reasoning from support-query pairs. Our progressive three-stage pipeline first aligns audio embeddings with the language model via caption-based pretraining, then adapts it for episodic in-context inference through federated optimization. At test time, given a small labeled support set, the model diagnoses an unseen query through multimodal reasoning. On held-out respiratory and cardiac conditions, FSC achieves 71.6% accuracy in 2-way 2-shot evaluation, outperforming audio-language baselines by over 9%.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202606/29/2606.27061v1-how-to-evaluate-clustering-with-ground-truth",
+      "section": "quick",
+      "title_en": "How to evaluate clustering with ground truth?",
+      "authors": "Pasi Fränti",
+      "date": "2026-06-25",
+      "pdf": "https://arxiv.org/pdf/2606.27061v1",
+      "score": "6.0",
+      "evidence": "提供了聚类评估方法，可用于主动学习聚类",
+      "tldr": "当聚类有真实标签时，外部指标可用于评估。本文回顾基于集合匹配的常见指标，重点推荐中心指数（CI）作为直观可解释的聚类级度量；若需点级精细度量，对集指数（PSI）提供无聚类大小偏差的归一化分数；若所有点同等重要，聚类准确率（ACC）等集合匹配度量适用。该指南帮助用户根据评估粒度选择合适的指标。",
+      "tags": "query:active-clust",
+      "abstract_en": "External indexes can be used for cluster evaluation when ground truth is available. We review the most common external validity indexes focusing on set-matching-based measures. We recommend centroid index (CI), because it is an intuitive cluster-level measure with an explainable result. If we need a more fine-tuned, point-level measure, there are more choices. Pair-set index (PSI) provides a normalized score which is not biased by cluster sizes. If all points should matter equally, then clustering accuracy (ACC) or any other set-matching measure is suitable.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

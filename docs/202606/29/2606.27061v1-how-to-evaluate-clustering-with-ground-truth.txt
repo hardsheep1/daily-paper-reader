@@ -1,0 +1,683 @@
+Title: Cluster evaluation
+
+URL Source: https://arxiv.org/pdf/2606.27061v1
+
+Published Time: Fri, 26 Jun 2026 01:02:36 GMT
+
+Number of Pages: 13
+
+Markdown Content:
+25.6.2026 
+
+# How to evaluate clustering with ground truth?  
+
+> Pasi Fränti
+> School of Computing
+> University of Eastern Finland
+> Joensuu, Finland
+
+Abstract: External indexes can be used for cluster evaluation when ground truth is available . We 
+
+review the most common external validity indexes focusing on set -matching -based measures . We 
+
+recommend centroid index (CI) , because it is an intuitive cluster -level measure with an explainable 
+
+result. If we need a more fine -tuned , point -level measure, there are more choices. Pair -set index (PSI )
+
+provides a normalized score which is not biased by cluster sizes . If all points should matter equally, 
+
+then clustering accuracy (ACC ) or any other set -matching measure is suitable .
+
+1.  Introduction 
+
+Classification accuracy can be evaluated by comparing the predicted labels against the ground truth 
+
+labels. In clustering, however, class labels do not exist . The cluster index is an arbitrary number 
+
+without any correspondence to the ground truth labels . The number of clusters can also differ from 
+
+that of ground truth , see Fig. 1 . Evaluating clustering requires, therefore, slightly more attention than 
+
+evaluating classification .
+
+Classification:  Clustering: 
+
+Figure 1 : Evaluation of clustering differs from that of classification. 
+
+According to [ 1], there are three approaches to evaluate clustering: 
+
+1.  Application -level performance 
+
+2.  Internal validation 
+
+3.  External validation 
+
+The first choice is to measure the effect of the clustering in a larger application. However, clustering 
+
+is just one component, and rarely the most critical . In classical voice biometrics , clustering was used 
+
+to model the distribution of feature vectors [2], as shown in Fig. 2. Random subsampling was found 
+
+insufficient, and some clustering algorithm was required. However, t he exact choice of the algorithm 
+
+was not critical [3]. It was enough to avoid the poor est algorithm and not use the small est model size; 
+
+see Fig. 3. For this reason, application -level performance is not very useful for providing deeper 
+
+insight into the clustering algorithm. Figure 2: The role of clustering here is to model data distribution. Two different models 
+
+are demonstrated: vector quantization (centroids) and the Gaussian mixture model. 
+
+Figure 3: The choice of clustering method algorithm ha s
+
+only a marginal effect on the recognition performance. [3]
+
+The second approach is i nternal validation . It is the easiest as it does not require ground truth or a 
+
+large application for testing . All we need is a cost function (internal validity index ) to optimiz e. The 
+
+most common cost function is the sum -of -square d errors (Fig. 4 ):
+
+𝑆𝑆𝐸 = ∑ 𝑑𝑖𝑠𝑡 (𝑥 𝑖 , 𝑐 𝑎 (𝑖 ))2𝑁 
+
+> 𝑖 =1
+
+It measures the square d distance between the data points X={ x1, x2, …, xN} and the ir cluster centroids 
+
+C = { c1, c2, …, ck}. A = { a1, a2, …, aN} is the cluster assignments of the datapoints so that ai ϵ [1, k].
+
+Dist is the distance function (usually Euclidean) . SSE minimizes intra -cluster variance (compactness) 
+
+directly , and maximizes between -cluster variance indirectly [4]. Finding a good algorithm minimizing SSE is essentially a solved problem. In theory, minimizing SSE 
+
+is an NP -hard problem , meaning that finding a guaranteed global minimum may take exponential 
+
+time. In practice, however, we do not need to find the exact global minimum. Typical solution space 
+
+can have multiple plateaus with virtually equal SSE -value [ 5]. A good algorithm, such as random 
+
+swap [6], genetic algorithm [7], or global k -means [8], is likely to find such , and even repeated k -
+
+means have a good chance when the clusters overlap [ 9]. Random swap can find the correct global 
+
+allocation in O( Nk2) expected time [6] if the data contains detectable clusters. 
+
+Internal validation can also include the number of clusters ( k) as an unknown variable, which must 
+
+be estimated as well . Some indices work well in practice, includ ing Silhouette [ 10 ], Calinski -
+
+Harabasz [ 11], WB -index [ 12 ], and kCE -index [ 13 ]. The Davies -Bouldin index [ 14 ] is also popular 
+
+but exhibits unstable behavior and is often inaccurate ; therefore, it is not recommended . For an 
+
+implementation of these and several others, we refer to [ 15 ]. 
+
+Figure 4: Most i nternal indexes aim at minimizing variance within the clusters. 
+
+Here, clustering A leads to a smaller SSE than clustering B. 
+
+The main advantage of i nternal indexe s is that they can be used directly as the objective function in 
+
+the optimization algorithm [16 , 17 ]. The ir main drawback is that they do not provide a clear, 
+
+explainable interpretation. We can optimize th is value , but cannot know how far the result is from the 
+
+optimum, or whether the correct cluster ing structure was found (if it even exists) .
+
+To address this issue, artificial data sets with known ground truth have been widely used to evaluate 
+
+clustering algorithms . The ground truth can be given either as partition labels or cluster centroid s. For 
+
+example, most benchmark datasets in [ 18 ] were created by selecting k seed points (cluster centroids) 
+
+and generating random points around them with a Gaussian distribution. The clustering result can 
+
+then be compared against the ground truth using an external index. 
+
+The most common external indices in the literature are the adjusted rand index (ARI) [ 19 ], 
+
+normalized mutual information (NMI) [ 20 ], and clustering accuracy (ACC) [1]. We next review the 
+
+most common clustering validity indexes. They can be divided roughly into two categories: 
+
+1.  Pairwise measures 
+
+2.  Set -matching -based measures We first briefly cover the first class and then focus on the set -matching -based measures. Note that all 
+
+the measures can be used to evaluate the similarity of any two clusterings, not only against ground 
+
+truth. 
+
+2.  Pairwise Measures 
+
+Classical Rand index [21 ] measures the consistency of all pairwise datapoints in terms of how they 
+
+are clustered. If a pair of points is in the same cluster in the ground truth , they are expected to be in 
+
+the same cluster also in the clustering result. And vice versa: if two points are in different ground 
+
+truth clusters, they are expected to be clustered into different clusters , see Fig. 5 .
+
+However, there are a quadratic number of pairs , and most pairs appear in different clusters in the 
+
+ground truth. The measure is therefore overwhelmed by the agreements of such pairs (d) [22 ]. 
+
+Consequently, Rand index provides high values (close to 1.0) for almost any reasonable clustering .
+
+Adjusted Rand index [ 19 ] normaliz es the measure according to the expected value of random 
+
+clustering. This makes the measure more useful for practical applications , but i t still tend s to yield 
+
+relatively high value s for clustering results that are far from perfect . Also , if cluster sizes are 
+
+unbalanced, ARI will primarily reflect the agreement of the biggest clusters [23 ].
+
+Figure 5: Pairwise measure evaluates the consistency of whether a pair of points is clustered in the 
+
+same way (same cluster or different cluster), both in the ground truth and in the clustering result. 
+
+Rand index counts the percentage of consistent points: RI = ( a+b) / ( a+b+c+d). Here K and K’ are 
+
+the number of clusters , n and n’ are the number of points in two clustering solutions A and B. 
+
+Information -theoretic measures extend the consistency of a pair of points to a pair of clusters. Mutual 
+
+information (MI) measures how much a pair of clusters shares, quantified by their entropy . The more 
+
+similar the clusters , the lower the information value. Normalized mutual information (NMI) is the 
+
+most common index in this class, see Fig. 6 and Fig. 7. It was shown to be equivalent to several other 
+
+information -theoretic indexes, including adjusted variation of information (A VI S), normalized 
+
+variation of information (NVI S), and adjusted mutual information (AMI) in [24 ]. Figure 6: NMI measures c luster -level consistency as the shared information value 
+
+of a pair of clusters relative to the self -entropy of the two clusters. 
+
+Here H(G|P) and H(P|G) refer to conditional entropy. 
+
+Figure 7: Example of measuring NMI between two clusterings, A and B. The number on an edge 
+
+refers to the number of shared points in the two clusters the edge connects. 
+
+3.  Set -matching -based measures 
+
+Instead of comparing every pair of clusters, set -matching measure s find the best -matching cluster for 
+
+each cluster and calculate their similarity [ 24 ]. Th is principle is meaningful as a cluster is the main 
+
+component in a clustering result. There are three design components: 
+
+- How to match the clusters? 
+
+- How to measure their similarity? 
+
+- What about normaliz ation ?
+
+Three measures were invented around the same time in early 2000 : normalized van Dongen (NVD) 
+
+[25 ], Criterion H (CH) [ 26 ], and clustering accuracy (ACC) . They follow the same principle with 
+
+only minor differences in their design . ACC is the most popular due to its fancy name and the publicly 
+
+available MATLAB code by [ 27 ], but it was not properly documented until recently in [ 18 ]. Several 
+
+other measures have also been introduced as slight variations of these three . Table 1 summarizes the 
+
+design choices for some variants , which w e discuss in the following subsections. Table 1. Variants of the set -matching -based measures . Here, A refers to the clustering result and G
+
+to the ground truth , but they apply to comparing any two clusterings, A and B.                                                                                     
+
+> Similarity in…
+> Measure Year Ref. Mapping Score Mapping strategy Normalization
+> ACC 2000 [1]|AG||AG|Optimal pairing N
+> NVD 2000 [25 ]|AG||AG|Matching (2 -ways) 2N
+> CH 2001 [26 ]|AG||AG|Greedy pairing N
+> Purity 2011 [28]|AG||AG|Matching ( G→
+> )N
+> FM 2012 [29 ]SD |A| × SD Matching ( G→
+> )N
+> CI 2014 [5]Nearest 0/1 Matching (2 -ways) -
+> CSI 2014 [5]Nearest Jaccard Matching (2 -ways) 2N
+> CR 2014 [30 ]Nearest 0/1 Greedy pairing k
+> GCI 2016 [31]|AG|0/1 Matching (2 -ways) -
+> PSI 2016 [24 ]BBBB Optimal pairing k
+
+3.1 Matching 
+
+Matching the clusters is the key component. There are two ways to do it: 
+
+- Mapping 
+
+- Pairing 
+
+One -direction al mapping takes a cluster from one solution and finds its best match in the other 
+
+solution . Purity and F measure (FM ) assume that the first solution is ground truth (G) and the mapping 
+
+is from G to A. The one -directional mapping may fail if the number of clusters differ s. For example, 
+
+mapping from B to A in Fig. 8 yield s a perfect match when no normaliz ation is applied . For this 
+
+reason, normalized van Dongen (NVD ), centroid index (CI ), centroid similarity index (CSI ), and 
+
+generalized centroid index (GCI ) perform bidirection al mapping and calculate the average (or 
+
+maximum ) of the two mappings as the final score .
+
+The second approach considers matching as a pairing problem. This prevents multiple clusters from 
+
+being map ped to the same cluster. Some measures require that the number of clusters be equal in both 
+
+solutions . This is the case with the original ACC measure [ 32 ] and the corresponding MATLAB code 
+
+[27 ], but the revised version addressed this by creat ing dummy clusters before pairing [1], as shown 
+
+in Fig. 8 (i.e., the two empty clusters in Solution A on the right) .
+
+Solving the mapping problem is easy: it is essentially a nearest -neighbor search. Solving the pairing 
+
+problem is more challenging. CH and CR use greedy pairing, finding the best match for each cluster 
+
+one by one. ACC and PSI solve the o ptimal pairing using the Hungarian algorithm . The original 
+
+algorithm is quite complicated and takes O( k3) time [33 , 34 ], which is usually not a problem since 
+
+k<< N. ACC uses the Jonker -Volgenant variant [35 ] with the same worst -case time complexity , but is 
+
+much faster for sparse matrices , close to O( k2) time . For the full story of ACC, we refer to [ 1], and 
+
+the software is on GitHub 1 includ ing both the mapping and pairing variants . 
+
+> 1https://github.com/uef -machine -learning/ClusterAccuracy
+
+Figure 8. Example of mapping (left) and pairing (right) . The total number of matched 
+
+points is (5 +10)/ 20 = 75 % in mapping, and 5/ 10 = 50 % in pairing. Mapping tends to 
+
+find more matches than pairing. 
+
+3. 2 Similarity 
+
+A similarity measure is needed to count how much the matched clusters have in common. It is needed 
+
+for two purposes . First, we need it to select the best match for every cluster. Second, we need it to 
+
+compute the final score for the measure .
+
+The first (and most common ) approach is to count the number of shared points |A ∩ G|. ACC, NVD, 
+
+CH, Purity, and GCI use this raw score. However, when cluster sizes are unbalanced, the score is 
+
+dominated by the largest clusters , a s with ARI [ 23 ]. This is fine if we want all points to contribute 
+
+equally. However, if we want all clusters to contribute equally, then a normalization step is needed. 
+
+The second approach is to appl y a set similarity measure to make the score invariant to cluster size s.
+
+CSI uses Jaccard, which divides the intersection size by their union size . PSI uses Braun -Banquet, 
+
+which divides by the maximum cluster size. FM uses Sorensen Dice, which divides by the average 
+
+of the cluster sizes ; although the normalization effect is canceled later by multiplying the result by 
+
+the set size |A|. These similarity measures are listed below: 
+
+Shared points: S = |A  G|
+
+Jaccard: J = |A  G| / |A  G|
+
+Braun -Banquet: BB = | A  G| / max (| A|, |G|) 
+
+Sorensen -Dice:  SD  = | A  G|∙2  / | A|+|G| 
+
+The third approach is to match the centroid s. CI, CSI , and CR find the nearest centroids in the other 
+
+solution . CI counts the number of unmatched centroids (orphans) . CR counts the number of unstable 
+
+centroids. CSI uses the nearest centroid for matching but applies Jaccard for scoring. GCI is a
+
+generalized version of CI ; it uses |A  G| for the matching, but the number of non -ma tched centroids 
+
+as the score. 3. 3 Normalization 
+
+Most measures normalize simply by dividing by the number of points ( N). In this way, all points 
+
+contribute equally , and the score is in the range [0,1] . Using set -matching measures, we can eliminate 
+
+the effect of cluster sizes . Now , each cluster's score is already in the range [0,1] , so we can take the 
+
+average of each cluster's score as the result. 
+
+CI, CGI, and CRI each calculate a score for each cluster as a binary value of 0 or 1. The total score is 
+
+the sum of these binary values in the range [0, k], providing an explainable measure. However, if 
+
+desired, the score can also be normalized to the scale [0,1] by averaging ( dividing the integer score 
+
+by k) instead of summing. For example, relative -CI ( referred to as rel -CI ) has been used in [ 18 ]. In 
+
+this case, the score is the percentage of the cluster errors, which is still explainable. 
+
+3.4  Implementation 
+
+ARI requires calculating the consistency of every pair of points, which may sound like a bit of a 
+
+tedious process. Practical implementation uses a so -called contingency table of size k2, where each 
+
+cell [ a, b] contains the count of points that belong to both cluster aϵA and cluster bϵB. Each point 
+
+contributes to one cell , and the contingency table can be created in O( n) time . NMI and set -matching 
+
+measures can also be computed from the contingency table. NMI calculate s the probabilities and 
+
+entropy whereas set -matching measure s calculate the similarity of the clusters. 
+
+We have a C implementation of some of the measures in CBEVI 2, and the Python software of the 
+
+ACC measure available on GitHub 3. It include s two variants: a backward -compatible variant (ACC -
+
+pair) and a simpler variant (ACC -match) that avoids the Hungarian algorithm. The pseudo -code for 
+
+ACC is below.                                                                    
+
+> ACC -pair (La,Lb,mappingMethod):
+> kA =number of unique labels in La
+> kB =number of unique labels in Lb
+> N=length of La and Lb
+> contg =ContingencyMatrix(La,Lb,N,kA,kB,"pairing")
+> mapAtoB =hungarian( -contg)
+> return CountMatches(La,Lb,mapAtoB)
+> ACC -match (La,Lb):
+> acc1 =MatchOneWay(La,Lb)
+> acc2 =MatchOneWay(Lb,La)
+> return min(acc1,acc2)
+> MatchOneWay (La,Lb):
+> contg =ContingencyMatrix(La,Lb,N,kA,kB,"matching")
+> FOR i=1:kA
+> mapAtoB[i] =ARGMAX{contg[i][j]: j=1,...,kB}
+> return CountMatches(La,Lb,mapAtoB)
+> CountMatches (La,Lb,N,mapAtoB):
+> correct=0
+> FOR i=1..N
+> IF Lb[i] == mapAtoB[La[i]]
+> correct+=1
+> return correct/N
+> 2https://cs.uef.fi/ml/software/
+> 3https://github.com/uef -machine -learning/ClusterAccuracy ContingencyMatrix (La,Lb,N,kA,kB,mappingMethod)
+> IF mappingMethod == "pairing"
+> contg =matrixOfZeros(MAX{kA,kB},MAX{kA,kB})
+> ELSE
+> #Sparse matrix implemented using hash tables
+> contg =matrixOfZeros(kA,kB)
+> FOR i=1..N
+> #Number of points belonging to both clusters
+> contg[La[i]][Lb[i]] += 1
+
+4. Centroid index 
+
+NMI, ARI, ACC, and all the other measures in Section 3 are good for most practical use but lack in 
+
+an important aspect: they are not explainable. A v alue in the range [0,1] is just a number where a 
+
+higher value indicate s a better clustering . But what does the value of 0.80 or 0.90 mean exactly? 
+
+Should we aim at 0.99 or would 0.90 be sufficient? 
+
+Figure 9 shows the NMI and CI values for several clustering algorithms on seven selected datasets 
+
+from [ 18 ]. Green indicates visually verified correct clustering results. NMI gives high values (0.9 3-
+
+1.00 ) for all the correct clustering . However, it sometimes provide s high values also for incorrect 
+
+clustering results . For example, the first column shows a Birch2 clustering result with 18 (out of 100) 
+
+clusters incorrectly located (CI=18) , yet a high NMI=0.96. In this case, the high values can be 
+
+attributed to a known bias in NMI, especially for a large number of clusters ( k=100) [36 ]. The problem 
+
+is less severe in the S 1-S4 datasets, but persists in two cases, with incorrect results of 0.93 and 0.95. 
+
+In other words, NMI results are difficult to interpret and not comparable across datasets . Centroid 
+
+index (CI), on the other hand , provides an intuitive, and explainable value. The value directly 
+
+indicates how many clusters are incorrectly solved. I f all clusters are correctly solved, the centroid 
+
+index provides a clear CI=0 .
+
+The main limitation of centroid index is that, as such, it can be used only for centroid -based clustering. 
+
+However, a rather straightforward generalization to other clustering models has been proposed in 
+
+[31 ]. The idea is to replac e the nearest -centroid mapping by selecting the cluster with the most 
+
+matches . Centroids are not needed . A slightly different variant called centroid ratio (CR) [30 ] counts 
+
+the number of unstable centroids. Stability was calculated based on the distance between the matched 
+
+centroid s relative to the distance to the nearest centroids in the same clustering. 
+
+In general, centroid index and its variants (CI, CR, GCI) can be categorized as c luster -level measures. 
+
+They measure cluster -level errors in the range [0, k] in contrast to point -level calculations of the other 
+
+measures. This leads to a very intuitive , explainable measure. 
+
+Centroid index has a limitation : it does not even attempt to measure point -level differences. Figure 
+
+10 demonstrates the situation with two clustering results. The value CI=7 on the left (Birch 2) is clear: 
+
+there are 7 places where the centroid s (red) are in the wrong p ositions . At the same time, seven places 
+
+miss a centroid (the red centroid is between two clusters). On the right (S 3), all centroids are at the 
+
+correct places, matching perfectly with the ground truth. However, the centroids exhibit slight 
+
+de viations, leading to point -level differences (yellow areas) that CI doe s not capture. The point -level differences can therefore be needed in applications requir ing measuring detailed 
+
+point -level differences. A stability -based approach has been used to determine the number of clusters .
+
+However, it was shown to be highly sensitive to the parameter setup , to the extent that CI was found 
+
+unsuitable as an evaluation measure [ 37 ]. 
+
+Normalized mutual information (NMI) :
+
+Centroid index (CI) :
+
+Figure 9: Sample results of NMI and CI . Each column (except the leftmost one) corresponds to an 
+
+algorithm from [ 18 ], including k -means ( the second column ) and genetic algorithm ( the right most 
+
+column ). Green indicates correct clusterings. Blue circles highlight inconsistent NMI results. 
+
+# Birch 2: CI=7  S3: CI=0 
+
+Figure 10 : Two examples of centroid index. The CI=7 value (left) indicates that 7 centroids are 
+
+mislocated . In other words, a real cluster has two centroids ( orange circles) and one centroid tries to 
+
+cover two real clusters in seven places . Value CI=0 (right) indicates that all centroids are roughly at 
+
+their correct locations. However, CI do es not measure point -level differences (yellow areas). 5.  Conclusion and recommendations 
+
+We have reviewed clustering evaluation measures (external indexes) that use ground truth. They are 
+
+needed when we want to compare the performance of clustering algorithms in a controlled 
+
+environment. 
+
+We recommend using centroid index (CI) [5]. It is an intuitive cluster -level measure with an 
+
+explainable result. If we need a fine -tuned point -level measure, our recommendation is clustering 
+
+accuracy (ACC). It has been documented in detail, behavior analyzed, and an easy -to -use software is 
+
+available [ 1]. 
+
+For point -level measures , there are plenty of other choices. Namely , any other set -matching -based 
+
+measure can be used . If a normalized score is needed , PSI [ 24 ] would be a better choice , as it does 
+
+not favor larger clusters . However, if the argument is that all points should matter equally , then ACC 
+
+or any other set -matching measure is good .
+
+Among the pairwise consistency measures, ARI and NMI can also be used, but both have biases. In 
+
+cases of u nbalanced cluster sizes, ARI reflect s the agreement among the largest clusters [23 ], whereas 
+
+NMI is biased when there are many clusters [36 ]. 
+
+The only measure we do not recommend is Rand index. It is biased regardless of the number of 
+
+clusters or their sizes [ 22]. 
+
+References 
+
+1.  P. Fränti and S. Sieranoja, Clustering accuracy, Applied Computing and Intelligence , 4 (1), 24 -
+
+44, 2024. 
+
+2.  T. Kinnunen and H. Li, An overview of text -independent speaker recognition: From features to 
+
+supervectors , Speech Communication , 52 (1), 12 -40, 2010. 
+
+3.  T. Kinnunen, I. Sidoroff, M. Tuononen, and P. Fränti, Comparison of clustering methods: a case 
+
+study of text -independent speaker modeling, Pattern Recognition Letters , 32 (13), 1604 -1617. 
+
+October 2011. 
+
+4.  P. Fränti, C. Cariou and Q. Zhao, Cluster overlap as objective function, CMC -Computers, 
+
+Materials & Continua , 66534, 1 -28, 2025. 
+
+5.  P. Fränti, M. Rezaei and Q. Zhao , Centroid index: cluster level similarity measure, Pattern 
+
+Recognition , 47 (9), 3034 -3045, 2014. 
+
+6.  P. Fränti, Efficiency of random swap clustering, Journal of Big Data , 5:13, 1 -29, 2018. 
+
+7.  P. Fränti, Genetic algorithm with deterministic crossover for vector quantization, Pattern 
+
+Recognition Letters , 21 (1), 61 -68, 2000. 
+
+8.  A. Likas, N. Vlassis, J.J. Verbeek, The global k -means clustering algorithm , Pattern Recognition ,
+
+36 (2), 451 -461, 200 3.
+
+9.  P. Fränti and S. Sieranoja, How much k -means can be improved by using better initialization and 
+
+repeats?, Pattern Recognition , 93, 95 -112, 2019. 
+
+10.  P. Rousseeuw, Silhouettes: a graphical aid to the interpretation and validation of cluster analysis, 
+
+J. Comput. Appl. Math. 20, 53 –65, 1987. 
+
+11.  T. Calinski, J. Harabasz, A dendrite method for cluster analysis, Commun. Stat . 3 , 1–27 , 1974. 12.  Q. Zhao and P. Fränti, WB -index: a sum -of -squares based index for cluster validity, Data & 
+
+Knowledge Engineering , 92, 77 -89, July 2014. 
+
+13.  J. Hämäläinen, S . Jauhiainen, T . Kärkkäinen , Comparison of internal clustering validation 
+
+indices for prototype -based clustering, Algorithms 10 (3), 105, 2017. 
+
+14.  D. Davies, D. Bouldin, Cluster separation measure, IEEE Trans. Pattern Anal ysis and Mach ine 
+
+Intell igence, 1 (2) , 95 –104 , 1979. 
+
+15.  M. Niemelä, S. Äyrämö, and T. Kärkkäinen, Toolbox for distance estimation and cluster 
+
+validation on data with missing values. IEEE Access , 10 , pp.352 -367, 2021. 
+
+16.  A.M. Bagirov, R.M. Aliguliyev, N. Sultanova, Finding compact and well -separated clusters: 
+
+Clustering using silhouette coefficients , Pattern Recognition , 135, 109144, March 2023. 
+
+17.  A.M. Ikotun, F. Habyarimana, A.E. Ezugwu, Cluster validity indices for automatic clustering: A 
+
+comprehensive review , Heliyon , 11 (2), e41953, January 2025. 
+
+18.  P. Fränti and S. Sieranoja, "K -means properties on six clustering benchmark datasets", Applied 
+
+Intelligence , 48 (12), 4743 -4759, December 2018. 
+
+19.  L. Hubert and P. Arabie, Comparing partitions. Journal of Classification , 2 (1), 193 -218 (1985). 
+
+20.  T.O. Kvålseth, Entropy and correlation: some comments, IEEE Trans. Syst ems, Man and 
+
+Cybern etic , 17 (3), 517 -519, 1987. 
+
+21.  W.M. Rand , Objective criteria for the evaluation of clustering methods. Journal of the American 
+
+Statistical Association 66: 846 –850 , 1971. 
+
+22.  M.J. Warrens and H. van der Hoef, Understanding the Rand index. Advanced Studies in 
+
+Classification and Data Science , pp. 301 -313, Springer, Singapore, 2020. 
+
+23.  M.J. Warrens and H. van der Hoef, Understanding the adjusted Rand index and other partition 
+
+comparison indices based on counting object pairs . Journal of Classification , 39, 487 –509 , 2022. 
+
+24.  M. Rezaei and P. Fränti, Set matching measures for external cluster validity, IEEE Trans. on 
+
+Knowledge and Data Engineering , 28 (8), 2173 -2186, August 2016. 
+
+25.  S. van Dongen, Performance criteria for graph clustering and Markov cluster experiments, 
+
+Technical Report INSR0012 , Centrum voor Wiskunde en Informatica, 2000. 
+
+26.  M. Meila and D. Heckerman, An experimental comparison of model based clustering methods, 
+
+Machine Learning , 41(1 -2), pp. 9 –29, 2001. 
+
+27.  D. Cai, X. He, J. Han, Document clustering using locality preserving indexing, IEEE Trans. 
+
+Knowledge and Data Engineering , 17 (12), 2005, 1624 -1637. 
+
+28.  E. Rendón, I. Abundez, A. Arizmendi, and E.M. Quiroz, Internal versus external cluster 
+
+validation indexes. Int. Journal of computers and communications , 5 (1), 27 -34, 2011. 
+
+29.  M.C.P. de Souto, A.L.V. Coelho, K. Faceli, T.C. Sakata, V. Bonadia, and I.G. Costa, A 
+
+comparison of external clustering evaluation indices in the context of imbalanced data sets, 2012 
+
+Brazilian Symposium on Neural Networks , pp. 49 -54, 2012. 
+
+30.  Q. Zhao and P. Fränti, Centroid ratio for pairwise random swap clustering algorithm, IEEE Trans. 
+
+on Knowledge and Data Engineering , 26 (5), 1090 -1101, May 2014. 
+
+31.  P. Fränti and M. Rezaei, Generalized centroid index to different clustering models,  S+SSPR’16 ,
+
+Merida, Mexico, LNCS 10029, 285 -296, November 2016. 
+
+32.  N. Slonim and N. Tishby, Document clustering using word clusters via the information 
+
+bottleneck method. Int. ACM SIGIR Conf. on Research and development in information retrieval ,
+
+208 -215, 2000. 
+
+33.  H.W. Kuhn, The Hungarian method for the assignment problem, Naval Res. Logist. Quart. , 2 (1 -
+
+2) , 83 –97, 1955. 34.  J. Munkres, Algorithms for the assignment and transportation problems, J. Soc. Ind. Appl. Math. ,
+
+5 (1), 32 –38, 1957. 
+
+35.  R. Jonker and A. Volgenant, A shortest augmenting path algorithm for dense and sparse linear 
+
+assignment problems, Computing , 38 (4): 325 –340, December 1987. doi:10.1007/BF02278710. 
+
+S2CID 7806079. 
+
+36.  A. Mahmoudi and D. Jemielniak , Proof of biased behavior of normalized mutual information ,
+
+Scientific Reports , 14:9021, 1 -17, 2024. 
+
+37.  M. Rezaei and P. Fränti, Can the number of clusters be determined by external indices?, IEEE 
+
+Access , 8 (1), 89239 -89257, December 2020.

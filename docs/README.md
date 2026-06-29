@@ -6,24 +6,27 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-06-28
-- 运行时间：2026-06-28 21:23:19 UTC
+- 最新运行日期：2026-06-29
+- 运行时间：2026-06-29 21:55:33 UTC
 - 运行状态：成功
-- 本次总论文数：1
-- 精读区：1
-- 速读区：0
+- 本次总论文数：2
+- 精读区：0
+- 速读区：2
 
 ### 今日简报（AI）
-今日精读一篇空间转录组组织域识别高分论文（8.0/10），SPEAK方法通过空间提示与专家对齐知识提升识别精度。核心方向是利用空间上下文和先验知识驱动弱监督学习，结论优于现有模型。建议对空间转录组数据分析感兴趣的读者关注该方法的提示设计思路，可尝试复现于自有数据集。
-- 详情：[/202606/28/README](/202606/28/README)
+今日速读两篇论文，聚焦医学音频的上下文学习和聚类评估方法。前者探索从去中心化医学音频中激活语言模型的上下文学习能力，后者讨论如何利用真实标签评估聚类效果。建议优先阅读聚类评估文章，有助于理解无监督学习评价标准。
+- 详情：[/202606/29/README](/202606/29/README)
 
 ### 精读区论文标签
-1. [SPEAK: Spatial Prompting with Expert Aligned Knowledge for Tissue Domain Identification in Spatial Transcriptomics](/202606/28/biorxiv-10-64898-2026-06-22-733750-v1-speak-spatial-prompting-with-expert-aligned-knowledge-for-tissue-domain-identification-in-spatial-transcriptomics)  
-   标签：评分：8.0/10、query:ac
-   evidence：基于大模型的空间域识别（聚类），包含原型更新，类似主动学习
+- 本次无精读推荐。
 
 ### 速读区论文标签
-- 本次无速读推荐。
+1. [Unlocking In-Context Learning in Audio-Language Models from Decentralized Medical Audio](/202606/29/2606.23243v1-unlocking-in-context-learning-in-audio-language-models-from-decentralized-medical-audio)  
+   标签：评分：6.0/10、query:ac
+   evidence：使用无监督聚类为语言模型上下文学习生成伪标签
+2. [How to evaluate clustering with ground truth?](/202606/29/2606.27061v1-how-to-evaluate-clustering-with-ground-truth)  
+   标签：评分：6.0/10、query:active-clust
+   evidence：提供了聚类评估方法，可用于主动学习聚类
 
 
 <div class="dpr-home-promo-card">
