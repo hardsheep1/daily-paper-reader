@@ -1,0 +1,348 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-07-02T21:49:59.686508+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 2,
+    "deep_cap": 7,
+    "deep_selected": 2,
+    "quick_candidates": 6,
+    "quick_skim_target": 12,
+    "quick_selected": 6
+  },
+  "deep_dive": [
+    {
+      "id": "2606.28517v1",
+      "source": "arxiv",
+      "title": "Drag, Infer, Reproject: Grounding LLMs through Spatial Interaction for Image Clustering",
+      "abstract": "Dimension reduction and semantic interaction support image clustering by making similarity structure visible and manipulable. Existing semantic interaction methods encode users' clustering criterion (a user-interpretable semantic dimension, e.g., action, location, or mood) from direct manipulation to steer reprojection, giving users direct control over the resulting layout. Yet they typically depend on learned embeddings or a predefined criterion. In practice, users' clustering criterion often emerges gradually and becomes refined through interaction rather than being fully clear at the outset. In this work, we present CriterionSI (Criterion-guided Semantic Interaction), a method that translates incremental drag interactions into criterion-guided reprojection. CriterionSI uses large language models to infer and refine the clustering criterion from sequential user drags, while grounding semantic interpretation in human-provided feedback rather than fixed prior assumptions. CriterionSI combines the inferred criterion with local drags to guide global reprojection. The simulation-based evaluation and usage scenario demonstrate that CriterionSI can discover and refine the target criterion from sequential interactions and progressively produce criterion-aligned clustering layouts. Our code and data are available at: https://github.com/4C79/CriterionSI.",
+      "authors": [
+        "Yang Liu",
+        "Xuxin Tang",
+        "Jiahao Xu",
+        "Chris North"
+      ],
+      "primary_category": "cs.HC",
+      "categories": [
+        "cs.HC"
+      ],
+      "published": "2026-06-26T18:14:03+00:00",
+      "link": "https://arxiv.org/pdf/2606.28517v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "directly uses LLM for image clustering with interactive user feedback, resembling active learning",
+      "llm_evidence_cn": "直接利用大语言模型进行图像聚类，并通过用户拖拽交互实现类似主动学习的反馈机制",
+      "llm_evidence": "直接利用大语言模型进行图像聚类，并通过用户拖拽交互实现类似主动学习的反馈机制",
+      "canonical_evidence": "直接利用大语言模型进行图像聚类，并通过用户拖拽交互实现类似主动学习的反馈机制",
+      "llm_tldr_en": "CriterionSI grounds LLMs in spatial drag interactions to iteratively infer and refine clustering criteria for image clustering, enabling active-learning-like user guidance without predefined criteria.",
+      "llm_tldr_cn": "现有语义交互方法依赖预定义准则或固定嵌入，难以应对用户聚类意图的动态性。本文提出CriterionSI，将大语言模型与用户拖拽操作结合，通过增量式交互推断聚类准则并指导重投影。实验表明，该方法能有效将用户意图融入布局，显著提升聚类结果的可解释性和交互性，为主动学习聚类提供了基于LLM的新范式。",
+      "llm_tldr": "现有语义交互方法依赖预定义准则或固定嵌入，难以应对用户聚类意图的动态性。本文提出CriterionSI，将大语言模型与用户拖拽操作结合，通过增量式交互推断聚类准则并指导重投影。实验表明，该方法能有效将用户意图融入布局，显著提升聚类结果的可解释性和交互性，为主动学习聚类提供了基于LLM的新范式。",
+      "llm_tags": [
+        "query:ac"
+      ],
+      "matched_query_tag": "query:ac",
+      "matched_query_text": "active learning clustering with large language models",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2607.00448v1",
+      "source": "arxiv",
+      "title": "Real-Time Hard Negative Sampling via LLM-based Clustering for Large-Scale Two-Tower Retrieval",
+      "abstract": "The two-tower model has been widely used for large-scale recommendation systems, particularly in the retrieval stage. Industry standards for training two-tower models typically involve in-batch and/or out-of-batch negative sampling. However, these methods often produce easy negatives that models can quickly learn, failing to sufficiently challenge the model. To address this issue, a novel self-supervised hard negative sampling technique is proposed that leverages a large language model (LLM) to generate hard negatives from the same cluster during model training. By utilizing the LLM to learn media representations, the proposed approach ensures that the generated negatives are more challenging and informative. This real-time sampling framework is designed for seamless integration into production models, capable of handling billions of training data points with minimal computational complexity. Experiments on public datasets, along with deployment to a large-scale online system, demonstrate that the proposed negative sampling technique outperforms widely used industry methods. Furthermore, analysis in industrial applications reveals that this sampling method can help break inherent feedback loops in recommendations and significantly reduce popularity bias.",
+      "authors": [
+        "Ivan Ji",
+        "Liuyi Hu",
+        "Harrison",
+        "Zhao",
+        "Lei Huang",
+        "Qunshu Zhang",
+        "Max",
+        "Fan",
+        "Aameek Singh"
+      ],
+      "primary_category": "cs.IR",
+      "categories": [
+        "cs.IR",
+        "cs.AI"
+      ],
+      "published": "2026-07-01T05:07:32+00:00",
+      "link": "https://arxiv.org/pdf/2607.00448v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "LLM-based clustering for hard negative sampling in retrieval",
+      "llm_evidence_cn": "基于LLM的聚类用于检索中的难负样本采样",
+      "llm_evidence": "基于LLM的聚类用于检索中的难负样本采样",
+      "canonical_evidence": "基于LLM的聚类用于检索中的难负样本采样",
+      "llm_tldr_en": "Proposes a self-supervised hard negative sampling technique using LLM-based clustering to generate more challenging negatives for two-tower retrieval models.",
+      "llm_tldr_cn": "该工作针对两塔检索模型中负样本过于简单的问题，提出一种基于大语言模型聚类的自监督难负样本采样方法，在训练过程中从同一聚类中生成更具挑战性的负样本，提升了检索模型的判别能力。",
+      "llm_tldr": "该工作针对两塔检索模型中负样本过于简单的问题，提出一种基于大语言模型聚类的自监督难负样本采样方法，在训练过程中从同一聚类中生成更具挑战性的负样本，提升了检索模型的判别能力。",
+      "llm_tags": [
+        "query:ac"
+      ],
+      "matched_query_tag": "query:ac",
+      "matched_query_text": "clustering using large language models",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2606.28517v2",
+      "source": "arxiv",
+      "title": "Drag, Infer, Reproject: Grounding LLMs through Spatial Interaction for Image Clustering",
+      "abstract": "Dimension reduction and semantic interaction support image clustering by making similarity structure visible and manipulable. Existing semantic interaction methods encode users' clustering criterion (a user-interpretable semantic dimension, e.g., action, location, or mood) from direct manipulation to steer reprojection, giving users direct control over the resulting layout. Yet they typically depend on learned embeddings or a predefined criterion. In practice, users' clustering criterion often emerges gradually and becomes refined through interaction rather than being fully clear at the outset. In this work, we present CriterionSI (Criterion-guided Semantic Interaction), a method that translates incremental drag interactions into criterion-guided reprojection. CriterionSI uses large language models to infer and refine the clustering criterion from sequential user drags, while grounding semantic interpretation in human-provided feedback rather than fixed prior assumptions. CriterionSI combines the inferred criterion with local drags to guide global reprojection. The simulation-based evaluation and usage scenario demonstrate that CriterionSI can discover and refine the target criterion from sequential interactions and progressively produce criterion-aligned clustering layouts. Our code and data are available at: https://github.com/4C79/CriterionSI.",
+      "authors": [
+        "Yang Liu",
+        "Xuxin Tang",
+        "Jiahao Xu",
+        "Chris North"
+      ],
+      "primary_category": "cs.HC",
+      "categories": [
+        "cs.HC"
+      ],
+      "published": "2026-06-26T18:14:03+00:00",
+      "link": "https://arxiv.org/pdf/2606.28517v2",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "LLM-based semantic interaction for image clustering",
+      "llm_evidence_cn": "基于LLM的语义交互图像聚类",
+      "llm_evidence": "基于LLM的语义交互图像聚类",
+      "canonical_evidence": "基于LLM的语义交互图像聚类",
+      "llm_tldr_en": "CriterionSI translates user drag interactions into clustering criteria by grounding LLMs through spatial interaction, enabling emergent clustering refinement in image clustering tasks.",
+      "llm_tldr_cn": "该工作针对现有语义交互方法依赖预定义准则的问题，提出CriterionSI方法，通过将用户的拖拽交互转化为聚类准则，利用大语言模型生成重投影布局，实现渐进式的聚类标准细化。实验表明该方法能有效捕捉用户隐式聚类意图，提升图像聚类的交互性和可控性。",
+      "llm_tldr": "该工作针对现有语义交互方法依赖预定义准则的问题，提出CriterionSI方法，通过将用户的拖拽交互转化为聚类准则，利用大语言模型生成重投影布局，实现渐进式的聚类标准细化。实验表明该方法能有效捕捉用户隐式聚类意图，提升图像聚类的交互性和可控性。",
+      "llm_tags": [
+        "query:ac"
+      ],
+      "matched_query_tag": "query:ac",
+      "matched_query_text": "clustering using large language models",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.27984v1",
+      "source": "arxiv",
+      "title": "Dual-Learning based Penalized Multi-Align Clustering for Multi-View Incomplete and Disorderly Data",
+      "abstract": "Multimodal feature fusion can effectively capture complex patterns in real-world data by integrating complementary information from different modalities. However, in many applications, such as boiler combustion monitoring, equipment failure, inconsistent sensor sampling frequencies, and network delays often cause missing modalities and temporal asynchrony. These issues lead to incomplete and disorderly multimodal data. To address them, previous studies have proposed several data fusion methods that align cluster centers before fusion. However, these methods have two key limitations. First, they cannot guarantee accurate sample-level alignment of data pairs. Second, they do not address significant discrepancies in data sizes across different classes, which may affect subsequent fusion performance.   To address these problems, we propose a dual-learning based penalized multi-align clustering model, named DLPMAC. The dual-learning mechanism enables the model to learn prior knowledge from each modality, including semantic and structural information. This helps preserve semantic consistency and structural similarity across modalities at both local and global levels. In addition, the penalized multi-align module performs multi-to-multi data alignment through a penalty mechanism. It allows one sample to form data pairs with different samples from other modalities, thereby improving data-pair alignment accuracy. The penalty mechanism also prevents data aggregation, avoiding the case where excessive samples are linked to a single sample. Experimental results demonstrate the effectiveness of DLPMAC in addressing data alignment and fusion challenges from both sampling and clustering perspectives.",
+      "authors": [
+        "Liang Zhao",
+        "Shubin Ma",
+        "Bo Xu",
+        "Qingchen Zhang"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-06-26T11:32:20+00:00",
+      "link": "https://arxiv.org/pdf/2606.27984v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "proposes a clustering method",
+      "llm_evidence_cn": "提出聚类方法",
+      "llm_evidence": "提出聚类方法",
+      "canonical_evidence": "提出聚类方法",
+      "llm_tldr_en": "Proposes a dual-learning based penalized multi-align clustering method for multi-view incomplete and disorderly data, achieving effective sample-level alignment and superior clustering performance.",
+      "llm_tldr_cn": "该论文针对多视图不完整且无序数据的聚类问题，提出了一种基于对学习的惩罚多对齐聚类方法（PMA-Clustering）。方法通过双学习机制和惩罚项优化样本级对齐和簇中心对齐，有效处理缺失模态和时间异步问题。在多个基准数据集上的实验表明，该方法在聚类准确率和鲁棒性方面优于现有方法。该工作为不完整多视图数据聚类提供了有效方案，但对主动学习和LLM未涉及。",
+      "llm_tldr": "该论文针对多视图不完整且无序数据的聚类问题，提出了一种基于对学习的惩罚多对齐聚类方法（PMA-Clustering）。方法通过双学习机制和惩罚项优化样本级对齐和簇中心对齐，有效处理缺失模态和时间异步问题。在多个基准数据集上的实验表明，该方法在聚类准确率和鲁棒性方面优于现有方法。该工作为不完整多视图数据聚类提供了有效方案，但对主动学习和LLM未涉及。",
+      "llm_tags": [
+        "query:ac"
+      ],
+      "matched_query_tag": "query:ac",
+      "matched_query_text": "c",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.00620v1",
+      "source": "arxiv",
+      "title": "Identifying Latent Concepts and Structures for Generalized Category Discovery",
+      "abstract": "Generalized Category Discovery (GCD) aims to recognize known classes while autonomously discovering novel ones in open-world settings. However, current approaches primarily focus on designing clustering objectives, often overlooking a critical bottleneck: standard vision backbones yield high-rank, entangled token representations that are ill-suited for unsupervised discovery of latent concepts and structures. In this paper, we propose Compositional Primitive Fields (CPF-GCD), a novel representation learning framework that reshapes the feature space to make such latent structure identifiable by enforcing a low-rank compositional organization. Our core hypothesis is that all categories, whether known or novel, can be expressed as compositions and spatial arrangements of a finite set of learnable visual primitives that capture reusable concepts. CPF instantiates this geometric constraint via a spatial field mechanism. Inserted between the backbone and the head, it rewrites noisy patch tokens through low-rank primitive mixtures, effectively decomposing images into reusable atomic parts and their spatial layouts. By explicitly modeling the spatial distribution of primitives, CPF enables novel categories to emerge naturally as new activation patterns over a shared vocabulary. This shifts the focus of representation from merely partitioning global embeddings to constructing a structured and separable primitive field. Extensive experiments demonstrate that CPF serves as a generic, plug-and-play module that consistently boosts performance across diverse GCD baselines, validating that identifying and leveraging low-rank compositional structure is a crucial inductive bias for open-world recognition.",
+      "authors": [
+        "Boyang Dai",
+        "Chaoqi Chen",
+        "Yizhou Yu"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "published": "2026-07-01T08:40:46+00:00",
+      "link": "https://arxiv.org/pdf/2607.00620v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Novel clustering representation learning for category discovery, relevant to modern active clustering methods",
+      "llm_evidence_cn": "新颖的聚类表示学习用于类别发现，与现代主动聚类方法相关",
+      "llm_evidence": "新颖的聚类表示学习用于类别发现，与现代主动聚类方法相关",
+      "canonical_evidence": "新颖的聚类表示学习用于类别发现，与现代主动聚类方法相关",
+      "llm_tldr_en": "Proposes CPF-GCD to learn low-rank compositional representations for generalized category discovery, improving clustering of both known and novel classes.",
+      "llm_tldr_cn": "该论文针对广义类别发现提出组合基元场（CPF-GCD），通过低秩组合表示学习，使特征空间适合无监督聚类。该方法在已知和未知类别的聚类上均表现优异，为主动聚类提供了更强的表示基础。",
+      "llm_tldr": "该论文针对广义类别发现提出组合基元场（CPF-GCD），通过低秩组合表示学习，使特征空间适合无监督聚类。该方法在已知和未知类别的聚类上均表现优异，为主动聚类提供了更强的表示基础。",
+      "llm_tags": [
+        "query:active-clust:composite"
+      ],
+      "matched_query_tag": "query:active-clust:composite",
+      "matched_query_text": "Papers central to 帮助我研究一下传统的最新的主动学习聚类是怎么发展的，我想从中找一下能加入大模型优化的创新点, especially work that connects or combines: active learning clustering methods; traditional active learning algorithms for clustering; deep active learning for clustering; semi-supervised clustering with active learning; query strategy for active clustering; evolution of active learning clustering methods from traditional to modern; recent advances in active clustering with large language models.",
+      "matched_requirement_id": "req-composite-active-clust",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.29532v1",
+      "source": "arxiv",
+      "title": "SemJoin: Semantic Join Optimization",
+      "abstract": "Integrating unstructured data into relational database systems is increasingly important as demand grows for natural language querying and analysis. A semantic join, joining two tables under a natural-language predicate, can be evaluated with a large language model (LLM), but comparing every pair of tuples requires O(M x N) LLM invocations and is cost-prohibitive at scale. Existing systems reduce this cost but typically commit to a single fixed strategy (e.g., embedding similarity or one batched scheme) regardless of the data or the join predicate. We propose an LLM-agent-based decision pipeline that optimizes semantic joins by matching the execution strategy to the characteristics of the underlying tables. An LLM advisor routes each join to one of two strategies: a Cluster Join, which prunes candidates via unsupervised embedding clustering and sample-based filtering, or a Classifier strategy for predicates that reduce to a shared discrete label set. Across three diverse datasets (IMDb reviews, email contradictions, and Stack Overflow tags), the advisor consistently identifies the optimal execution strategy for each workload. This dynamic routing proves decisive: it outperforms adaptive block join (ABJ) by 20-33 F1 points across all datasets while consuming fewer tokens on two of the three, and achieves higher F1 scores than featurized-decomposition join (FDJ) at one to two orders of magnitude lower token cost.",
+      "authors": [
+        "Christopher Gou",
+        "Aditya Banerjee",
+        "Jiaxuan Wang",
+        "Chunwei Liu"
+      ],
+      "primary_category": "cs.DB",
+      "categories": [
+        "cs.DB",
+        "cs.AI"
+      ],
+      "published": "2026-06-28T17:57:10+00:00",
+      "link": "https://arxiv.org/pdf/2606.29532v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "uses LLM for clustering strategy in join optimization",
+      "llm_evidence_cn": "在连接优化中使用LLM进行聚类策略",
+      "llm_evidence": "在连接优化中使用LLM进行聚类策略",
+      "canonical_evidence": "在连接优化中使用LLM进行聚类策略",
+      "llm_tldr_en": "Proposes LLM-agent-based semantic join optimization with a Cluster Join strategy; relevant as LLM-driven clustering method.",
+      "llm_tldr_cn": "论文提出了基于LLM智能体的语义连接优化框架，其中包含一种聚类连接策略（Cluster Join），由LLM路由选择。该方法利用大模型根据数据特征选择聚类策略，体现了聚类与大模型的结合，但并非主动学习。",
+      "llm_tldr": "论文提出了基于LLM智能体的语义连接优化框架，其中包含一种聚类连接策略（Cluster Join），由LLM路由选择。该方法利用大模型根据数据特征选择聚类策略，体现了聚类与大模型的结合，但并非主动学习。",
+      "llm_tags": [
+        "query:ac"
+      ],
+      "matched_query_tag": "query:ac",
+      "matched_query_text": "clustering using large language models",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.30322v1",
+      "source": "arxiv",
+      "title": "Hybrid Active-Online Learning Framework for Label-Efficient Concept Drift Adaptation in Optical Network Failure Detection",
+      "abstract": "We propose a hybrid active-online learning framework for label-efficient concept drift adaptation in optical network failure detection. Using margin-based selective labeling, our method achieves nearceiling accuracy and AUC scores while querying only 3.4% of streaming samples, with negligible latency overhead compared to static inference.",
+      "authors": [
+        "Yousuf Moiz Ali",
+        "Jaroslaw E. Prilepsky",
+        "João Pedro",
+        "Sasipim Srivallapanondh",
+        "Antonio Napoli",
+        "Sergei K. Turitsyn",
+        "Pedro Freire"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "eess.SP"
+      ],
+      "published": "2026-06-29T14:04:08+00:00",
+      "link": "https://arxiv.org/pdf/2606.30322v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Active learning query strategy (margin-based) for concept drift detection, transferable to active clustering",
+      "llm_evidence_cn": "基于边界的主动学习查询策略用于概念漂移检测，可迁移至主动聚类",
+      "llm_evidence": "基于边界的主动学习查询策略用于概念漂移检测，可迁移至主动聚类",
+      "canonical_evidence": "基于边界的主动学习查询策略用于概念漂移检测，可迁移至主动聚类",
+      "llm_tldr_en": "Proposes a hybrid active-online learning framework with margin-based selective labeling for concept drift adaptation, querying only 3.4% samples.",
+      "llm_tldr_cn": "该论文针对光网络故障检测提出混合主动在线学习框架，采用基于边界的选择性标注策略适应概念漂移。仅需3.4%的样本查询即可达到近最优精度，其查询策略对主动聚类中的标签获取有借鉴意义。",
+      "llm_tldr": "该论文针对光网络故障检测提出混合主动在线学习框架，采用基于边界的选择性标注策略适应概念漂移。仅需3.4%的样本查询即可达到近最优精度，其查询策略对主动聚类中的标签获取有借鉴意义。",
+      "llm_tags": [
+        "query:active-clust"
+      ],
+      "matched_query_tag": "query:active-clust",
+      "matched_query_text": "query strategy for active clustering",
+      "matched_requirement_id": "req-11",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.30336v2",
+      "source": "arxiv",
+      "title": "FlexTab: A Flexible Encoder-Decoder Architecture for In-Context Learning Across Diverse Tabular Tasks",
+      "abstract": "We introduce FlexTab, a flexible encoder-decoder architecture for in-context learning on tabular data that pairs a single, task-agnostic encoder with a suite of task-specific decoders. Unlike existing tabular in-context learners, which entangle feature representations with a specific prediction target, our design produces target-agnostic row embeddings that can be leveraged across a wide range of downstream tasks within a table-native in-context learning setup. We demonstrate this flexibility on six distinct problems: classification, regression, anomaly detection, clustering, entity matching, and entity classification in relational databases. Both the encoder and the task-specific decoders are trained on a large corpus of real-world, unlabeled tables. FlexTab achieves state-of-the-art performance on classification, regression, anomaly detection and entity matching, while remaining competitive with specialized models on entity classification in a relational setting. These results demonstrate that a single shared encoder, paired with task-specific decoders, can serve as an effective general-purpose backbone for diverse tabular prediction problems. The inference code and checkpoints will be made publicly available at https://github.com/SAP-samples/flextab.",
+      "authors": [
+        "Marek Polewczyk",
+        "Maximilian Schambach",
+        "Marco Spinaci",
+        "Sam Thelin",
+        "Johannes Höhne"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-06-29T14:14:34+00:00",
+      "link": "https://arxiv.org/pdf/2606.30336v2",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "FlexTab handles clustering via LLM in-context learning on tabular data",
+      "llm_evidence_cn": "FlexTab通过LLM上下文学习处理表格数据聚类",
+      "llm_evidence": "FlexTab通过LLM上下文学习处理表格数据聚类",
+      "canonical_evidence": "FlexTab通过LLM上下文学习处理表格数据聚类",
+      "llm_tldr_en": "FlexTab is a flexible encoder-decoder architecture for tabular in-context learning that supports clustering among six tasks, using a single encoder and task-specific decoders.",
+      "llm_tldr_cn": "该工作针对现有表格上下文学习将特征表示与特定任务纠缠的问题，提出FlexTab架构，采用任务无关的编码器和任务特定解码器，在包括聚类在内的六个任务上展示了灵活性。通过大规模语料训练，该方法在表格数据聚类等任务上取得了良好效果。",
+      "llm_tldr": "该工作针对现有表格上下文学习将特征表示与特定任务纠缠的问题，提出FlexTab架构，采用任务无关的编码器和任务特定解码器，在包括聚类在内的六个任务上展示了灵活性。通过大规模语料训练，该方法在表格数据聚类等任务上取得了良好效果。",
+      "llm_tags": [
+        "query:ac"
+      ],
+      "matched_query_tag": "query:ac",
+      "matched_query_text": "clustering using large language models",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

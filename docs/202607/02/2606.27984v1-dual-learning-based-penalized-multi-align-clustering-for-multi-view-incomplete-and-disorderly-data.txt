@@ -1,0 +1,419 @@
+Title: Dual-Learning based Penalized Multi-Align Clustering for Multi-View Incomplete and Disorderly Data
+
+URL Source: https://arxiv.org/pdf/2606.27984v1
+
+Published Time: Mon, 29 Jun 2026 00:51:26 GMT
+
+Number of Pages: 9
+
+Markdown Content:
+# Dual-Learning based Penalized Multi-Align Clustering for Multi-View Incomplete and Disorderly Data 
+
+## Liang Zhao 
+
+Dalian University of Technology Dalian, Liaoning, China liangzhao@dlut.edu.cn 
+
+## Shubin Ma 
+
+Dalian University of Technology Dalian, Liaoning, China 1369830844@mail.dlut.edu.cn 
+
+## Bo Xu ∗
+
+Dalian University of Technology Dalian, Liaoning, China boxu@dlut.edu.cn 
+
+## Qingchen Zhang 
+
+Hainan University Haikou, Hainan, China zhangqingchen@hainanu.edu.cn 
+
+Abstract 
+
+Multimodal feature fusion, by integrating the complementary in-formation from each modality, can effectively capture complex features in real-world data. However, in many use cases, such as boiler combustion monitoring, factors including equipment failure, inconsistent sensor sampling frequencies, and network delays often cause data collected from different modalities to suffer from missing modality and temporal asynchrony. This leads to the incomplete-ness and disorderliness of multimodal data. To address these issues, previous studies have proposed several data fusion methods that align the cluster centers before fusion. However, these approaches have two key limitations: 1) they do not guarantee a high alignment accuracy of data pairs at the sample level, and 2) they do not address the issue of significant discrepancies in data sizes across different classes, which impacts the subsequent data fusion performance. To these ends, we propose a dual-learning based penalized multi-align clustering model (DLPMAC). The Dual-Learning mechanism in the model ensures that it can learn the prior knowledge inherent in each modality’s data, specifically the semantic and structural information. This facilitates the maintenance of both semantic con-sistency and structural similarity—on both local and global lev-els—across different modalities. Additionally, the Penalized Multi-Align module achieves multi-to-multi data alignment based on a penalty mechanism, which enables a single sample to form data pairs with different samples from other modalities, thereby en-hancing the alignment accuracy of data pairs. The introduction of the penalty mechanism prevents data aggregation phenomena, thereby avoiding situations where excessive samples are linked to a single sample. Experimental results validate the efficacy of this model in addressing data alignment(from the sampling and the clus-tering perspectives) and fusion challenges. The code and related  
+
+> ∗Corresponding author. Permission to make digital or hard copies of all or part of this work for personal or classroom use is granted without fee provided that copies are not made or distributed for profit or commercial advantage and that copies bear this notice and the full citation on the first page. Copyrights for components of this work owned by others than the author(s) must be honored. Abstracting with credit is permitted. To copy otherwise, or republish, to post on servers or to redistribute to lists, requires prior specific permission and/or a fee. Request permissions from permissions@acm.org.
+> MM ’25, October 27–31, 2025,Dublin, Ireland.
+> ©2025 Copyright held by the owner/author(s). Publication rights licensed to ACM. ACM ISBN 979-8-4007-2035-2/2025/10 https://doi.org/10.1145/3746027.3755116
+
+supporting materials are available at: https://github.com/Autism-mm/DLPMAC. 
+
+CCS Concepts 
+
+• Computing methodologies → Cluster analysis .
+
+Keywords 
+
+Dual-Learning; Align; Incomplete and misalign; Clustering 
+
+ACM Reference Format: 
+
+Liang Zhao, Shubin Ma, Bo Xu, and Qingchen Zhang. 2025. Dual-Learning based Penalized Multi-Align Clustering for Multi-View Incomplete and Disorderly Data. In Proceedings of Proceedings of the 33rd ACM International Conference on Multimedia (MM ’25). ACM, New York, NY, USA, 9 pages. https://doi.org/10.1145/3746027.3755116 
+
+1 Introduction 
+
+The multimodal clustering[ 3, 7 , 14 , 26 , 28 , 29 , 33 ] method, by utiliz-ing multimodal data[ 13 , 18 , 34 , 36 ], can provide more comprehen-sive and rich information than a single modality. In the application of multimodal data, the alignment of complete data across different modalities offers complementary information for data fusion[ 27 ]. However, in industrial data collection, multimodal data (such as pressure, temperature, images, etc.) often suffer from missing val-ues and misalignment due to equipment malfunctions, inconsistent sensor sampling frequencies, environmental factors, and other prob-lems. As a result, the collected multimodal exhibit missing values and also suffer from misalignment[ 22 , 35 ], meaning that the num-ber of data points across different modalities is inconsistent and disordered. Incompleteness[ 8, 19 , 23 , 30 ] refers to the absence of certain data in some modalities, while misalignment refers to the inability to establish a one-to-one correspondence between data items across different modalities. Figure 1 provides a toy example of clustering[ 1, 5, 9, 12 , 15 , 25 ]incomplete and misaligned[ 17 ] multimodal data. Solid lines indi-cate that two data points belong to the same pair, while dashed lines indicate that they belong to the same class. The multimodal data are divided into two parts: the fully aligned multimodal data and the incomplete and misaligned multimodal data. In the second part, the data from the two modalities are not only inconsistent in quantity but also lack corresponding relationships across modali-ties. For example, in road traffic monitoring research, the system uses multiple images to determine whether a vehicle is violating  
+
+> arXiv:2606.27984v1 [cs.LG] 26 Jun 2026 MM ’25, , October 27–31, 2025,Dublin, Ireland. Liang Zhao, Shubin Ma, Bo Xu, Qingchen Zhang
+
+Figure 1: Example graph of incomplete and misaligned data 
+
+regulations or speeding. However, the images of the same vehicle are not captured consecutively. Between the capture of two images, the camera continues to capture images of other vehicles, and there may be missed shots due to vehicle occlusion or system issues. This leads to the phenomenon of incomplete and misaligned multimodal data in the application. The main challenge in dealing with incomplete and disordered multimodal data[ 6] is how to align and fuse the incomplete and disordered data effectively. Due to the data being disordered and lacking label information[ 4 ], it becomes particularly difficult to leverage both intra-modal and inter-modal information for data completion. Currently, research on the issues of incomplete and misaligned multimodal data is relatively scarce, with previous work mainly focusing on addressing data misalignment. In tackling this issue, researchers have optimized the process in two key areas. First, by preprocessing the initial data to enhance its quality and consistency. For example, Qian et al.[ 16 ] proposed a deep learning-based variational inference framework (DeepVNC) that automati-cally extracts latent clustering information from data without strict labels, uncovering underlying structures and guiding cross-view learning. He et al.[ 10 ] introduced the VITAL framework, which combines variational inference with contrastive learning, model-ing data samples as Gaussian distributions in latent space, where the mean represents shared information and the variance captures view-specific details. Second, researchers have improved network design and training to strengthen the model’s feature extraction capabilities. For instance, Yang et al.[ 21 ] designed a noise-resistant contrastive loss to reduce the impact of false-negative pairs. Zeng et al.[ 24 ] integrated autoencoders with cross-entropy losses to reduce cross-modal differences and improve semantic distinctions. Zhao et al.[ 31 ] applied GCN for identifying difficult-to-align representa-tions and dynamically optimized the adjacency graph, progressively learning consistency across multiple views for more reliable align-ment. In addressing the issues of incompleteness and misalignment, Yang et al.[ 20 ] directly handle zeroed incomplete and misaligned multimodal data, using the Hungarian algorithm for alignment and filling in missing data(SURE). Zhao et al.[ 2], on the other hand, align data at the class level and then perform feature fusion across multimodal classes without the need to fill in missing instances or sequence information. However, both approaches fail to ensure high alignment accuracy at the sample level and do not effectively address the issue of significant data size differences between differ-ent classes, which subsequently affects the data fusion process. To ensure high alignment accuracy of data pairs at the sam-ple level, we propose a Dual-Learning mechanism that enables the model to learn prior knowledge, such as semantic consistency within multimodal classes, correlations between data, and similari-ties in both local and global structures of multimodal data. Com-bined with contrastive learning, the model further enhances its understanding of the semantic consistency within classes and the semantic distinction between classes. To address the issue of signif-icant differences in data quantities across classes, we design a Pe-nalized Multi-Align module. This module facilitates multi-to-multi alignment of multimodal incomplete and disordered data, allow-ing a single sample to form data pairs with multiple samples from other modalities for data fusion. Moreover, the introduction of the penalty mechanism effectively prevents clustering phenomena (i.e., one sample aligning with too many others). Experimental results demonstrate that this approach is significantly effective in solving the issues of multimodal data incompleteness and misalignment. The contributions of this paper can be summarized below. 
+
+• We are the first to study the alignment problem from the sampling perspective, addressing data alignment from the sampling perspective and the clustering perspective. Experi-ments carried out on 16 datasets demonstrate that the model shows strong versatility and effectiveness in sample-level alignment tasks. 
+
+• We propose a Dual-Learning mechanism that learns both semantic and structural information across multimodal data, fully considering the semantic consistency within classes and the local and global structural similarities between different modalities. 
+
+• We design a Penalized Multi-Align module that resolves the issue of significant data size differences between classes through multi-to-multi alignment. The introduction of the penalty mechanism effectively prevents clustering phenom-ena during the data alignment process. 
+
+2 The Proposed Method 
+
+Given a dataset 𝑋 = {𝑋 (1) , 𝑋 (2) , 𝑋 (3) , . . . , 𝑋 (𝑣 ) } ,𝑋 (𝑣 ) ∈ 𝑅 𝑛 ×𝑑𝑣 ,represents the data of the vth modality with n samples and dimen-sionality dv . 𝑋 = {𝐴, 𝐵 }, where 𝐴 ∈ 𝑅 𝑛 𝑎 ×𝑑𝑣 represents the fully aligned data and 𝐵 ∈ 𝑅 𝑛 𝑏 ×𝑑𝑣 represents the incomplete and mis-aligned data. The data in B is disordered, and the missing values in 
+
+B are handled based on the incompleteness rate 𝜂 .To address the issue of low alignment accuracy and poor data fusion performance in incomplete and disordered multimodal data, we propose DLPMAC. In the model, we effectively learn multimodal data’s semantic and structural information through sample-level Dual-Learning based Penalized Multi-Align Clustering for Multi-View Incomplete and Disorderly Data MM ’25, , October 27–31, 2025,Dublin, Ireland. 
+
+Dual-Learning. This ensures the consistency of similar data infor-mation across modalities and the similarity of modal structures. Additionally, by utilizing the Penalized Multi-Align module, we ef-ficiently leverage the information from incomplete and disordered data, thereby solving the problems of low alignment accuracy and poor data fusion. The specific methodology is as follows. 
+
+2.1 Dual-Learning 
+
+Data belonging to the same class across different modalities exhibit high semantic consistency, whereas data from different classes demonstrate significant semantic divergence. Based on this, by training with complete cross-modal aligned data, the model can effectively capture the semantic correlations between data from different modalities, thus learning the semantic consistency among data of the same class across modalities. The loss function is as follows 
+
+𝐿 1 =
+
+> 𝑚
+
+∑︁ 
+
+> 𝑖 ≠𝑗 𝑛
+
+∑︁ 
+
+> 𝑘 =1
+
+
+
+𝑓 𝑖 (𝑎 𝑖 𝑘 ) − 𝑓 𝑗 (𝑎 𝑗 𝑘 )
+
+2
+
+! 12
+
+. (1) To ensure that the model can accurately capture the latent fea-tures of the data, we introduce a reconstruction loss to enforce semantic consistency between the data before and after training 
+
+𝐿 2 =
+
+> 𝑚
+
+∑︁ 
+
+> 𝑖 =1
+> 𝑛
+
+∑︁ 
+
+> 𝑘 =1
+
+ 𝑎 𝑖 𝑘 − 𝑑 𝑖 
+
+ 𝑓 𝑖 (𝑎 𝑖 𝑘 ) 2
+
+! 12
+
+, (2) where, 𝑎 𝑖 𝑘 represents the kth data of the ith modality, 𝑓 𝑖 (·) de-notes the encoder of the ith modality ,and 𝑑 𝑖 (·) denotes the decoder of the ith modality. After the model has initially learned the infor-mation associations between the data, it jointly learns the structure between modalities based on the semantic information of the data. During each training step, a small portion 𝐴 𝑏 is extracted from the fully aligned data 𝐴 , and then scrambled using a permutation matrix 𝑃 𝑎 to obtain ¯𝐴 𝑏 .For the 𝑖 , 𝑗 modalities 
+
+(𝑓 𝑖 ( ¯𝐴 𝑖 𝑏 ) = 𝑓 𝑖 (𝐴 𝑖 𝑏 )
+
+𝑓 𝑗 ( ¯
+
+𝐴 𝑗 𝑏 ) = 𝑃 𝑎 · 𝑓 𝑗 (𝐴 𝑗 𝑏 ) . (3) To re-align the data of the two modalities, the model uses the Hungarian algorithm to learn a permutation matrix ¯𝑃 𝑎 
+
+𝐿 3 = ¯𝑃 𝑎 − 𝑃 𝑎 𝐹 . (4) Through iterative optimization, the model progressively learns the local structural features of the data while maintaining local structural consistency across different modalities. As the number of training epochs increases, the model effectively accumulates local structural information, enabling precise modeling of the global structure across modalities. To further aggregate data of the same class across modalities and distinguish data of different classes, we introduce a cross-modal contrastive loss function 
+
+𝐿 4 = 12𝑛 
+
+> 𝑛
+
+∑︁ 
+
+> 𝑖 =1
+
+
+
+𝑌 · 𝐷 (𝑧 𝑖 𝑘 , 𝑧 𝑗 ℎ ) + ( 1 − 𝑌 ) · 1
+
+𝑚 (5) 
+
+max 
+
+
+
+𝛼 · 𝑚 · 𝐷 (𝑧 𝑖 𝑘 , 𝑧 𝑗 ℎ ) 12 − 𝐷 (𝑧 𝑖 𝑘 , 𝑧 𝑗 ℎ ) 32 , 0
+
+2 !
+
+,
+
+where 𝑧 = 𝑓 (𝑥 ) represents the latent feature representation of the data, Y represents the labels of positive and negative data pairs, 𝐷 (𝑥 𝑘 , 𝑥 ℎ ) = 𝑓 𝑖 (𝑥 𝑖 𝑘 ) − 𝑓 𝑗 (𝑥 𝑗 ℎ ) 22, and 𝛼 is a hyperparameter that controls the distance range within which false negative pairs can be mitigated. The final loss function of Dual-Learning is as follows 
+
+𝐿 𝑑𝑙 = 𝐿 1 + 𝐿 2 + 𝜆𝐿 3 + 𝐿 4. (6) Here, 𝜆 is set to 1 and can be fine-tuned. Within the Dual-Learning mechanism, the model leverages the supervision from aligned data to enhance the accuracy of cross-modal retrieval. 
+
+2.2 Penalized Multi-Align 
+
+Multi-to-multi sample-level alignment mechanism: During the cross-modal alignment process, we ignore the missing data within each modality and transform the problem into an asymmetric multi-modal alignment task, where the data samples across modalities are unequal in number. The incomplete and disordered data are collectively represented as the set B.Due to the incompleteness and misalignment of multimodal data, the order of some data may become disrupted, and the distribution of data across classes may be uneven. This characteristic can lead to errors in the alignment process between different modalities, causing data from different classes to be incorrectly matched into pairs, as shown in Figure 3. In Figure 3, each row represents a different modality, with markers of the same shape indicating the same class, while markers with the same shape and color represent correctly aligned data pairs. 
+
+Figure 3: Pairwise alignment of data with varying numbers within the same class. First case: When there is a significant disparity in the number of data points across different classes, the class with a larger amount MM ’25, , October 27–31, 2025,Dublin, Ireland. Liang Zhao, Shubin Ma, Bo Xu, Qingchen Zhang 
+
+Figure 2: Incomplete and unaligned DLPMAC model. In the Dual-Learning mechanism, latent features are learned through semantic consistency of data and structural similarity between modalities, while noise-contrastive learning removes some false negative pairs and further distinguishes data from different classes. In the Penalized Multi-Align module, a multi-to-multi approach is used to align incomplete and disordered data streams from different modalities, effectively solving the issues of incompleteness and misalignment in multimodal data. 
+
+of data will dominate the alignment process, forcing the data from other classes to be incorrectly matched with it. This misalignment issue propagates layer by layer, ultimately leading to a significant decrease in the proportion of correctly aligned data in the smaller classes. As shown in Figure 3, in this case, the alignment accuracy can only reach 50%. 
+
+Second case: Suppose that data 𝐵 1 
+
+> 𝑘
+
+and 𝐵 2 
+
+> 𝑘
+
+belong to the same semantic class, but due to the highest similarity between 𝐵 1 
+
+> ℎ
+
+and 𝐵 2
+
+> 𝑘
+
+across modalities, they are incorrectly matched as an aligned pair. This misalignment causes the 𝐵 1 
+
+> 𝑘
+
+data in modality k (represented as a blue square in Figure 3) to deviate from its true correspon-dence, further reducing the alignment accuracy. To address the aforementioned issues, a sample-level alignment and class-level fusion strategy is employed. The specific computation formula is as follows 
+
+𝑠 𝑖 𝑗 𝑘ℎ =
+
+(
+
+arg max 𝑆 (𝑏 𝑖 𝑘 , 𝑏 𝑗 ℎ ), ℎ ∈ [ 1, 𝑛 𝑏 ] if 𝑆 (𝑏 𝑖 𝑘 , 𝑏 𝑗 ℎ ) > 00, if 𝑛𝑜 𝑚𝑎𝑡𝑐ℎ 𝑒𝑥𝑖𝑠𝑡𝑠 𝑓 𝑜𝑟 𝑏 𝑗 ℎ
+
+. (7) Here, 𝑠 𝑖 𝑗 𝑘ℎ represents the similarity between the kth data of the 
+
+ith modality and the hth data of the jth modality. S denotes the alignment matrix, which stores the alignment information and similarity between the data in the two modalities. As shown in Figure 4, a data point can be aligned with multiple other data points; however, it is also possible that a data point does 
+
+Figure 4: Multi-to-multi alignment results 
+
+not align with any other data, as indicated by the two dashed rect-angles. Finally, after obtaining the alignment relationships between different modalities, the latent feature representations from differ-ent modalities are concatenated and fused based on these alignment relationships, generating a unified multimodal clustering represen-tation. In the multi-to-multi alignment process, it is possible for a single data point to align with too many other data points, leading to data aggregation. To effectively mitigate this phenomenon, we introduce a penalty mechanism during the alignment process. This is achieved by dynamically reducing the similarity between already aligned data points to optimize the alignment, as illustrated in Figure 5. As seen in Figure 5, the 4th data point of the jth modality is bidirectionally aligned with both the 1st and 2nd data points of the 
+
+ith modality, while the 2nd data point of the jth modality does not exhibit any valid alignment relationships. Dual-Learning based Penalized Multi-Align Clustering for Multi-View Incomplete and Disorderly Data MM ’25, , October 27–31, 2025,Dublin, Ireland. 
+
+Table 1: The 𝑎𝑐𝑐 𝑠 of seven different algorithms across sixteen datasets 
+
+Datasets 
+
+Methods 3Sources BBCsports Caltech101 BDGP HandWritten Movies flower17 Prokaryotic 
+
+PVC(20’NeurIPS) 0.4688 0.3784 0.4641 0.7880 0.7930 0.1459 0.3037 0.4207 MvCLN(21’CVPR) 0.3254 0.3546 0.2624 0.2676 0.0955 0.0600 0.0570 0.4111 SURE(22’TPAMI) 0.2249 0.3014 0.2309 0.2572 0.0910 0.0843 0.0559 0.3230 SMILE(23’TPAMI) 0.3852 0.3443 0.3252 0.3448 0.1735 0.0665 0.0934 0.6339 EGPVC(23’ICASSP) 0.4178 0.3598 0.4803 0.7916 0.6685 0.1540 0.2882 0.3964 DGPPVC(24’TNNLS) 0.3964 0.3546 0.3550 0.8144 0.4995 0.1669 0.0588 0.3848 DLPMAC 0.9379 0.7507 0.8728 0.9240 0.8260 0.6335 0.4589 0.8404 Methods yale_mtv Reuters_dim10 ORL MSRCv1 20NewsGroups BBC4 ALOI Wikipedia-test 
+
+PVC(20’NeurIPS) 0.4661 0.4416 0.355 0.7333 0.2980 0.3401 0.2827 0.3723 MvCLN(21’CVPR) 0.0636 0.2344 0.0337 0.15 0.2320 0.2781 0.0132 0.1400 SURE(22’TPAMI) 0.0788 0.2709 0.0525 0.2238 0.2040 0.2131 0.0180 0.0967 SMILE(23’TPAMI) 0.1594 0.5093 0.1400 0.2048 0.2340 0.2628 0.0980 0.1313 EGPVC(23’ICASSP) 0.4333 0.4397 0.4225 0.7286 0.2740 0.4029 0.3158 0.3709 DGPPVC(24’TNNLS) 0.1212 0.3983 0.1000 0.1667 0.3360 0.5401 0.3154 0.3045 DLPMAC 0.8490 0.7193 0.7695 0.9261 0.7653 0.8772 0.7622 0.6501 Table 2: Clustering performance (ACC, NMI, F1) on datasets with alignment rate 0.5 and incomplete rate 0.5 
+
+Methods Datasets PVC 20’ MvCLN 21’ EGPVC 22’ SMILE 23’ SURE 23’ DGPPVC 24’ Ours ACC 0.4686 0.3645 0.4278 0.3462 0.2823 0.4905 0.6346 
+
+3Sources NMI 0.3354 0.1039 0.2182 0.0918 0.1256 0.2270 0.5423 
+
+F1 0.4836 0.2809 0.4331 0.3091 0.3515 0.4048 0.6568 
+
+ACC 0.7880 0.3396 0.7916 0.4644 0.5314 0.8144 0.9403 
+
+BDGP NMI 0.5720 0.1060 0.5549 0.1658 0.4151 0.5767 0.8372 
+
+F1 0.7899 0.3137 0.7933 0.4545 0.5426 0.8109 0.9407 
+
+ACC 0.4416 0.3211 0.4397 0.4304 0.3202 0.3983 0.5257 
+
+Reuters_dim10 NMI 0.2090 0.04 0.1894 0.2099 0.0692 0.0764 0.3173 
+
+F1 0.4410 0.2278 0.4219 0.4603 0.4322 0.3452 0.5531 
+
+ACC 0.7333 0.3929 0.7289 0.4762 0.5166 0.1667 0.7748 
+
+MSRCv1 NMI 0.6601 0.2313 0.6035 0.3380 0.4188 0.0651 0.6694 
+
+F1 0.7334 0.3924 0.7201 0.4534 0.5213 0.0802 0.7744 
+
+ACC 0.2827 0.1857 0.3158 0.2405 0.3236 0.3154 0.7744 
+
+ALOI NMI 0.5382 0.3542 0.5556 0.4468 0.5719 0.4772 0.8488 
+
+F1 0.2598 0.1790 0.2936 0.2247 0.4013 0.3099 0.7730 
+
+ACC 0.4333 0.3437 0.4588 0.4109 0.3721 0.2751 0.5861 
+
+yale_mtv NMI 0.5182 0.4044 0.5335 0.4796 0.4529 0.3749 0.6135 
+
+F1 0.4189 0.3288 0.4465 0.4090 0.3611 0.2198 0.6070 
+
+3 Experiments 
+
+This study conducts sample-level alignment experiments on 16 
+
+widely used multimodal datasets and clustering experiments on 
+
+6 widely used multimodal datasets. The model’s advancement is demonstrated through alignment accuracy and clustering results. To validate the model’s effectiveness in solving the issues of multi-modal incompleteness and misalignment, we benchmark it against six state-of-the-art methods proposed in recent years, using ACC, NMI, and weighted F1-score as performance metrics. Experiments are conducted under high alignment rate (0.7), medium alignment rate (0.5), and low alignment rate (0.3). Considering that models like PVC[ 11 ], MvCLN[ 21 ], SMILE[ 24 ], EGPVC[ 32 ], and DGPPVC[ 31 ]only address misalignment, we first preprocess the data by handling missing values and filling them using Gaussian kernel interpolation to ensure the smoothness of the imputed data before conducting the model experiments. MM ’25, , October 27–31, 2025,Dublin, Ireland. Liang Zhao, Shubin Ma, Bo Xu, Qingchen Zhang 
+
+> Table 3: Clustering performance (ACC, NMI, F1) on datasets with alignment rate 0.3 and incomplete rate 0.5
+
+Methods Datasets PVC 20’ MvCLN 21’ EGPVC 22’ SMILE 23’ SURE 23’ DGPPVC 24’ Ours ACC 0.3710 0.3538 0.4414 0.3643 0.3426 0.4651 0.6548 
+
+3Sources NMI 0.2210 0.0996 0.2247 0.1122 0.1834 0.2386 0.4935 
+
+F1 0.3757 0.2794 0.4286 0.3222 0.3971 0.3747 0.6434 
+
+ACC 0.7596 0.3300 0.6336 0.3802 0.4115 0.6384 0.9039 
+
+BDGP NMI 0.5157 0.0988 0.3784 0.1243 0.2488 0.3703 0.7635 
+
+F1 0.7631 0.2940 0.6483 0.3761 0.4334 0.6340 0.9040 
+
+ACC 0.4447 0.3394 0.4277 0.4468 0.4016 0.2737 0.5319 
+
+Reuters_dim10 NMI 0.2136 0.0825 0.2145 0.2240 0.1773 0.0039 0.3053 
+
+F1 0.4300 0.3093 0.4046 0.4738 0.5271 0.1196 0.5512 
+
+ACC 0.7381 0.4222 0.6381 0.4313 0.5450 0.3762 0.7669 
+
+MSRCv1 NMI 0.6182 0.2604 0.5156 0.2829 0.4552 0.3095 0.6255 
+
+F1 0.7358 0.4217 0.6353 0.4097 0.5498 0.2852 0.7670 
+
+ACC 0.2976 0.1886 0.2819 0.2617 0.3080 0.3779 0.7226 
+
+ALOI NMI 0.5624 0.3448 0.5364 0.4520 0.5403 0.5295 0.8202 
+
+F1 0.2571 0.1929 0.2603 0.2457 0.4117 0.3715 0.7181 
+
+ACC 0.4364 0.3297 0.4424 0.4388 0.3636 0.1830 0.5038 
+
+yale_mtv NMI 0.5036 0.4106 0.5228 0.4995 0.4361 0.2480 0.5439 
+
+F1 0.4339 0.3080 0.4270 0.4336 0.4103 0.1640 0.5370 Table 4: Clustering performance (ACC, NMI, F1) on datasets with alignment rate 0.7 and incomplete rate 0.5 
+
+Methods Datasets PVC 20’ MvCLN 21’ EGPVC 22’ SMILE 23’ SURE 23’ DGPPVC 24’ Ours ACC 0.4414 0.3539 0.4201 0.3118 0.3698 0.4716 0.6362 
+
+3Sources NMI 0.3303 0.0874 0.2183 0.0863 0.2116 0.2445 0.5419 
+
+F1 0.4603 0.2530 0.4229 0.2896 0.4556 0.3794 0.6615 
+
+ACC 0.8592 0.2952 0.7828 0.5756 0.5116 0.8932 0.9380 
+
+BDGP NMI 0.7080 0.0679 0.5774 0.3124 0.4024 0.7411 0.8262 
+
+F1 0.8588 0.2576 0.7819 0.5816 0.5582 0.8924 0.9379 
+
+ACC 0.4656 0.3181 0.4631 0.4636 0.4402 0.2637 0.5416 
+
+Reuters_dim10 NMI 0.2212 0.0411 0.2261 0.2487 0.1943 0.0064 0.3313 
+
+F1 0.4554 0.2321 0.4850 0.4886 0.5195 0.1129 0.5636 
+
+ACC 0.7714 0.3839 0.7143 0.4667 0.5262 0.1524 0.7865 
+
+MSRCv1 NMI 0.6397 0.1919 0.5657 0.3291 0.4082 0.0276 0.6884 
+
+F1 0.7682 0.3851 0.7097 0.4591 0.5524 0.0546 0.7837 
+
+ACC 0.2806 0.1908 0.3185 0.3287 0.2814 0.3285 0.8222 
+
+ALOI NMI 0.5373 0.3459 0.5683 0.5445 0.5725 0.4839 0.8801 
+
+F1 0.2513 0.1994 0.3000 0.3173 0.3370 0.3330 0.8192 
+
+ACC 0.4497 0.3224 0.4412 0.4115 0.3766 0.2497 0.5930 
+
+yale_mtv NMI 0.5287 0.3860 0.5170 0.4768 0.0759 0.3825 0.6129 
+
+F1 0.4394 0.3101 0.4244 0.4032 0.4176 0.2030 0.6166 Dual-Learning based Penalized Multi-Align Clustering for Multi-View Incomplete and Disorderly Data MM ’25, , October 27–31, 2025,Dublin, Ireland. 
+
+Table 5: Introduction to datasets                                                        
+
+> Datasets 3Sources BBCsports Caltech101 BDGP Handwritten Movies flowers17 Prokaryoic yale_mtv Reuters_dim10 ORL Dim 1 3560 2582 1984 1750 47 1878 1360 393 4096 10 4096 Dim 2 3631 2544 512 79 240 1398 1360 438 3304 10 3304 Instances 169 282 2386 2500 2000 617 1360 551 165 18758 400 Classes 6520 510 17 17 415 640
+
+Figure 5: Red and bold values indicate the similarity scores between aligned data pairs. Each time a pair is marked, their similarity is reduced by 0.1. 
+
+The experiments are conducted in a Python 3.8 environment, using PyCharm 2022.2.3 as the integrated development environ-ment, with the deep learning framework PyTorch 1.8.2 and CUDA version 11.1. Detailed information about the datasets used in the experiments can be found in Table 5,6. Since the main challenge of multimodal alignment problems arises from misalignment, we set the incompleteness rate to 0.5, which is a typical value for this setting. 
+
+Table 6: Introduction to datasets                          
+
+> Datasets MSRCv1 20NewsGroups BBC4 ALOI Wikipedia-test Dim 1 24 2000 4659 77 128 Dim 2 576 2000 4633 64 10 Instances 210 500 685 10800 693 Classes 755100 10
+
+3.1 Experimental Results and Analysis 
+
+In this experiment, the best-optimized values for each metric are highlighted in bold, while the second-best values are underlined. 𝐹 1
+
+refers to the F-score(weighted), and 𝑎𝑐𝑐 𝑠 represents the sample-level alignment accuracy, defined as follows 
+
+𝑎𝑐𝑐 𝑠 = 𝑁 𝑡 /𝑁 𝑠 , (8) where 𝑁 𝑡 represents the number of aligned data pairs, and 𝑁 𝑠 
+
+represents the total number of data pairs. Table 1 compares the sample-level alignment performance of DLPMAC with six other models. Since PVC, EGPVC, and DGPPVC use soft alignment (based on probability distributions), we use the clustering ACC value in-stead of 𝑎𝑐𝑐 𝑠 for these models. 
+
+• As shown in Table 1, our model achieves the best perfor-mance across all 16 datasets, significantly improving the sample-level alignment accuracy, thus validating its effective-ness and generalizability in solving the sample-level align-ment problem. 
+
+• This study is the first to explore the alignment problem from the sampling perspective and proposes a model with high generalizability across multimodal datasets. The model ad-dresses the data alignment task and effectively performs post-alignment fusion clustering. Tables 2, 3, and 4 report the experimental results of 7 differ-ent methods on 6 multimodal datasets, with evaluation metrics including ACC, NMI, and F1. These metrics are used to assess the performance of each method in clustering tasks. From these results, we draw the following conclusions. 
+
+• Tables 2, 3, and 4 present the clustering results of the model using seven different methods on six datasets. Our model achieves the optimal values across all metrics on every dataset, demonstrating its strong performance in addressing the chal-lenges of multimodal incompleteness and misalignment. 
+
+• On the ALOI dataset, for different alignment rates (0.3, 0.5, 0.7), our model significantly outperforms other models in clustering tasks, proving its effectiveness in handling multi-modal clustering problems with multiple data and classes. 
+
+• Furthermore, our model achieves the best results on all datasets, indicating its ability to perform well on both small datasets with fewer classes and large datasets with more classes. This demonstrates that, to these ends, we propose a dual-learning based penalized multi-align clustering model (DLPMAC). Our model can effectively capture structural in-formation between data and learn the underlying features of the data. 
+
+3.2 Ablation Experiment 
+
+In this section, we validate the effectiveness of our proposed Penal-ized Multi-Align module through ablation experiments. Specifically, on the one hand, we perform data alignment and fusion using a one-to-one alignment method and discard the unaligned data; on the other hand, we use the Penalized Multi-Align module for data align-ment and fusion. We conducted experiments on 6 datasets using 3
+
+evaluation metrics. Here, O2O denotes the one-to-one alignment method, and M2M refers to the multi-to-multi alignment method. As shown in Table 7, the M2M alignment method improves the model’s clustering performance to some extent. Particularly on the larger datasets, Reuters_dim10 and ALOI, the ACC, NMI, and F1 MM ’25, , October 27–31, 2025,Dublin, Ireland. Liang Zhao, Shubin Ma, Bo Xu, Qingchen Zhang 
+
+Figure 6: Learning rates of different datasets 
+
+Figure 7: Clustering results of alignment rates (0.3, 0.5, 0.7) Table 7: Clustering results of ablation experiments 
+
+Methods O2O M2M O2O M2M O2O M2M 3sources BDGP Reuters_dim10 ACC 0.6204 0.6346 0.8819 0.9403 0.4199 0.5257 
+
+NMI 0.4731 0.5423 0.7085 0.8372 0.1665 0.3173 
+
+F1 0.6022 0.6568 0.8815 0.9407 0.4396 0.5531 
+
+MSRSv1 ALOI yale_mtv ACC 0.7403 0.7748 0.6673 0.7744 0.5141 0.5861 
+
+NMI 0.6298 0.6694 0.7794 0.8488 0.5454 0.6135 
+
+F1 0.7454 0.7744 0.6599 0.7730 0.5233 0.607 
+
+metrics improved by 10.58%, 15.08%, and 11.35%, and 10.71%, 6.94%, and 11.31%, respectively. This indicates that, in large-scale incom-plete and disordered data, data missingness significantly affects subsequent alignment operations, potentially causing many data points to remain unmatched. In this case, using the M2M align-ment method allows for better matching of similar data, thereby enhancing clustering performance. 
+
+3.3 Complementary Experiments 
+
+This section presents the clustering results of the model on the BDGP dataset with an alignment rate of 0.3,0.5 and 0.7, as shown in Figure 7. From the figure, it is evident that our model performs well in clustering on the BDGP dataset. In addition, we provide the learning rates corresponding to each dataset used in the experi-ments, as shown in Figure 6. Let 𝛽 represent the vertical axis value, then the learning rate is defined as 
+
+𝐿𝑒𝑎𝑟𝑛𝑖𝑛𝑔 _𝑟𝑎𝑡𝑒 = 1 × 10 −𝛽 . (9) 
+
+4 Conclusion 
+
+In this paper, we propose the DLMMAC model to address the is-sues of incompleteness and misalignment in multimodal data. The model not only effectively solves the sample-level data alignment problem but also improves the alignment at the clustering level. By proposing a Dual-Learning mechanism, we ensure that the model learns the prior knowledge of each modality—specifically, the se-mantic consistency of the data and the structural similarity of the modalities. Additionally, the design of the Penalized Multi-Align module allows a single sample to form data pairs with different samples from other modalities, improving the alignment accuracy of data pairs and preventing clustering phenomena between data. In the future, we will focus more on semantic structure learning for multimodal data with low alignment rates, further addressing the issue of multimodal incompleteness and misalignment in the absence of prior knowledge. 
+
+Acknowledgments 
+
+This work was supported by the Science and Technology Project of Liaoning Province (2024JH2/102600027, 2023JH2/101700363), the Science and Technology Project of Dalian City (2024JJ12GX025, 2023JJ12SN029, and 2023JJ11CG005), and the Hainan Provincial Natural Science Foundation of China under Grant No. 825CXTD608. 
+
+References 
+
+[1] Ahmed Abbas and Paul Swoboda. 2023. ClusterFuG: clustering fully connected graphs by multicut. In International Conference on Machine Learning . PMLR, 19–30. [2] Anonymous. 2024. Incomplete and Unpaired Multi-view Graph Clustering with Cross-view Feature Fusion. In The 39th Annual AAAI Conference on Artificial Intelligence . https://openreview.net/forum?id=o8NR2rcS47 [3] Jie Chen, Hua Mao, Wai Lok Woo, and Xi Peng. 2023. Deep multiview clustering by contrasting cluster assignments. In Proceedings of the IEEE/CVF international conference on computer vision . 16752–16761. [4] Yu Chen, Yanan Wu, Na Han, Xiaozhao Fang, Bingzhi Chen, and Jie Wen. 2024. Partial Multi-label Learning Based On Near-Far Neighborhood Label Enhance-ment And Nonlinear Guidance. In Proceedings of the 32nd ACM International Conference on Multimedia . 3722–3731. [5] Hao Dai, Yang Liu, Peng Su, Hecheng Cai, Shudong Huang, and Jiancheng Lv. 2024. Multi-view clustering by inter-cluster connectivity guided reward. In 
+
+Forty-first International Conference on Machine Learning .[6] Yangshen Deng, Ted Shaowang, and Tapan Srivastava. 2025. Reproducibility Report for ACM SIGMOD 2024 Paper:’PECJ: Stream Window Join on Disorder Data Streams with Proactive Error Compensation’. In Reproducibility Reports of the 2024 International Conference on Management of Data . 5–7. [7] Zhibin Dong, Siwei Wang, Jiaqi Jin, Xinwang Liu, and En Zhu. 2023. Cross-view topology based consistent and complementary information for deep multi-view clustering. In Proceedings of the IEEE/CVF International Conference on Computer Vision . 19440–19451. [8] Liang Du, Yukai Shi, Yan Chen, Peng Zhou, and Yuhua Qian. 2024. Fast and scalable incomplete multi-view clustering with duality optimal graph filtering. In 
+
+Proceedings of the 32nd ACM International Conference on Multimedia . 8893–8902. [9] Ruiming Guo, Mouxing Yang, Yijie Lin, Xi Peng, and Peng Hu. 2024. Robust Contrastive Multi-view Clustering against Dual Noisy Correspondence. Advances in Neural Information Processing Systems 37 (2024), 121401–121421. [10] Changhao He, Hongyuan Zhu, Peng Hu, and Xi Peng. 2024. Robust Variational Contrastive Learning for Partially View-unaligned Clustering. In Proceedings of the 32nd ACM International Conference on Multimedia . 4167–4176. [11] Zhenyu Huang, Peng Hu, Joey Tianyi Zhou, Jiancheng Lv, and Xi Peng. 2020. Partially view-aligned clustering. Advances in Neural Information Processing Systems 33 (2020), 2892–2902. [12] Jing Li, Quanxue Gao, Qianqian Wang, Ming Yang, and Wei Xia. 2023. Orthogonal non-negative tensor factorization based multi-view clustering. Advances in neural information processing systems 36 (2023), 18186–18202. [13] Zheng Lian, Lan Chen, Licai Sun, Bin Liu, and Jianhua Tao. 2023. Gcnet: Graph completion network for incomplete multimodal learning in conversation. IEEE Transactions on pattern analysis and machine intelligence 45, 7 (2023), 8419–8432. Dual-Learning based Penalized Multi-Align Clustering for Multi-View Incomplete and Disorderly Data MM ’25, , October 27–31, 2025,Dublin, Ireland. 
+
+[14] Shubin Ma, Liang Zhao, Mingdong Lu, Yifan Guo, and Bo Xu. 2025. Consistency-Aware Padding for Incomplete Multi-Modal Alignment Clustering Based on Self-Repellent Greedy Anchor Search. arXiv preprint arXiv:2507.03917 (2025). [15] Yiqiao Mao, Xiaoqiang Yan, Jiaming Liu, and Yangdong Ye. 2023. ConGMC: Consistency-Guided Multimodal Clustering via Mutual Information Maximin. 
+
+IEEE Transactions on Multimedia 26 (2023), 5131–5146. [16] Shengsheng Qian, Dizhan Xue, Jun Hu, Huaiwen Zhang, and Changsheng Xu. 2024. Nonparametric Clustering-Guided Cross-View Contrastive Learning for Partially View-Aligned Representation Learning. IEEE Transactions on Image Processing (2024). [17] Yazhou Ren, Xinyue Chen, Jie Xu, Jingyu Pu, Yonghao Huang, Xiaorong Pu, Ce Zhu, Xiaofeng Zhu, Zhifeng Hao, and Lifang He. 2024. A novel federated multi-view clustering method for unaligned and incomplete data fusion. Information Fusion 108 (2024), 102357. [18] Jinping Wang, Jun Li, Yanli Shi, Jianhuang Lai, and Xiaojun Tan. 2022. AM 3Net: Adaptive mutual-learning-based multimodal data fusion network. IEEE Transac-tions on Circuits and Systems for Video Technology 32, 8 (2022), 5411–5426. [19] Yi Wen, Siwei Wang, Ke Liang, Weixuan Liang, Xinhang Wan, Xinwang Liu, Suyuan Liu, Jiyuan Liu, and En Zhu. 2023. Scalable incomplete multi-view clustering with structure alignment. In Proceedings of the 31st ACM International Conference on Multimedia . 3031–3040. [20] Mouxing Yang, Yunfan Li, Peng Hu, Jinfeng Bai, Jiancheng Lv, and Xi Peng. 2022. Robust multi-view clustering with incomplete information. IEEE Transactions on Pattern Analysis and Machine Intelligence 45, 1 (2022), 1055–1069. [21] Mouxing Yang, Yunfan Li, Zhenyu Huang, Zitao Liu, Peng Hu, and Xi Peng. 2021. Partially view-aligned representation learning with noise-robust contrastive loss. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition . 1134–1143. [22] Hong Yu, Jia Tang, Guoyin Wang, and Xinbo Gao. 2021. A novel multi-view clus-tering method for unknown mapping relationships between cross-view samples. In Proceedings of the 27th ACM SIGKDD conference on knowledge discovery & data mining . 2075–2083. [23] Honglin Yuan, Shiyun Lai, Xingfeng Li, Jian Dai, Yuan Sun, and Zhenwen Ren. 2024. Robust Prototype Completion for Incomplete Multi-view Clustering. In 
+
+Proceedings of the 32nd ACM International Conference on Multimedia . 10402– 10411. [24] Pengxin Zeng, Mouxing Yang, Yiding Lu, Changqing Zhang, Peng Hu, and Xi Peng. 2023. Semantic invariant multi-view clustering with fully incomplete information. IEEE Transactions on Pattern Analysis and Machine Intelligence 
+
+(2023). [25] Hanlei Zhang, Hua Xu, Fei Long, Xin Wang, and Kai Gao. 2024. Unsupervised Multimodal Clustering for Semantics Discovery in Multimodal Utterances. arXiv preprint arXiv:2405.12775 (2024). [26] Xiaotong Zhang, Xianchao Zhang, Han Liu, and Xinyue Liu. 2016. Multi-task multi-view clustering. IEEE Transactions on Knowledge and Data Engineering 28, 12 (2016), 3324–3338. [27] Fei Zhao, Chengcui Zhang, and Baocheng Geng. 2024. Deep multimodal data fusion. ACM computing surveys 56, 9 (2024), 1–36. [28] Liang Zhao, Pingda Huang, Tengtuo Chen, Chunjiang Fu, Qinghao Hu, and Yangqianhui Zhang. 2023. Multi-sentence complementarily generation for text-to-image synthesis. IEEE Transactions on Multimedia (2023). [29] Liang Zhao, Xiao Wang, Zhenjiao Liu, Ziyue Wang, and Zhikui Chen. 2024. Learn-able Graph Guided Deep Multi-view Representation Learning via Information Bottleneck. IEEE Transactions on Circuits and Systems for Video Technology (2024). [30] Liang Zhao, Zihao Wang, Yukun Yuan, and Feng Ding. 2023. Unrestricted anchor graph based gcn for incomplete multi-view clustering. In ICASSP 2023-2023 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP) . IEEE, 1–5. [31] Liang Zhao, Qiongjie Xie, Zhengtao Li, Songtao Wu, and Yi Yang. 2024. Dynamic Graph Guided Progressive Partial View-Aligned Clustering. IEEE Transactions on Neural Networks and Learning Systems (2024). [32] Liang Zhao, Qiongjie Xie, Sontao Wu, and Shubin Ma. 2023. An end-to-end framework for partial view-aligned clustering with graph structure. In ICASSP 2023-2023 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP) . IEEE, 1–5. [33] Lihua Zhou, Guowang Du, Kevin Lü, Lizheng Wang, and Jingwei Du. 2024. A Survey and an Empirical Evaluation of Multi-view Clustering Approaches. 
+
+Comput. Surveys 56, 7 (2024), 1–38. [34] Ye Zhu, Yu Wu, Nicu Sebe, and Yan Yan. 2024. Vision+ x: A survey on multimodal learning in the light of data. IEEE Transactions on Pattern Analysis and Machine Intelligence (2024). [35] Linlin Zong, Xianchao Zhang, and Xinyue Liu. 2018. Multi-view clustering on unmapped data via constrained non-negative matrix factorization. Neural Networks 108 (2018), 155–171. [36] Yongshuo Zong, Oisin Mac Aodha, and Timothy Hospedales. 2024. Self-supervised multimodal learning: A survey. IEEE Transactions on Pattern Analysis and Machine Intelligence (2024).
