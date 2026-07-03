@@ -1,0 +1,1452 @@
+Title: Group-invariant Coresets for Data-efficient Active Learning
+
+URL Source: https://arxiv.org/pdf/2607.01089v1
+
+Published Time: Thu, 02 Jul 2026 01:15:29 GMT
+
+Number of Pages: 17
+
+Markdown Content:
+> PREPRINT 1
+
+# Group-invariant Coresets for Data-efficient Active Learning 
+
+Luciano C. Ayres, José C. M. Bermudez, Sérgio J. M. de Almeida, and Ricardo A. Borsoi 
+
+Abstract —Active learning reduces labeling cost by querying the most informative unlabeled samples, but standard coreset methods ignore known data symmetries and can waste budget on transformed versions of the same instance. We propose GRINCO, a group-invariant coreset framework that performs acquisition in the quotient space induced by a transformation group, so that selection operates on orbits rather than raw samples. The method uses either canonical representatives or learned orbit-separating invariant embeddings to define practical quotient metrics, and combines quotient-space k-center selection with invariant training through an orbit-averaged loss. We further derive a generalization bound that relates excess orbit-averaged risk to quotient-space coverage, label uncertainty, and intra-orbit variability. Experiments on synthetic scale-invariant data and image benchmarks with rotation-induced redundancy show that GRINCO improves orbit coverage and achieves stronger label efficiency than conventional coreset baselines, especially when group-induced redundancy is substantial. 
+
+Index Terms —Active learning, coresets, invariance, quotient space. 
+
+I. I NTRODUCTION 
+
+# ACQUIRING high-quality labels for classification tasks can be expensive and time-consuming, particularly in domains such as medical imaging [1], precision agriculture [2], and remote sensing [3]. This has made data efficiency a key objective in machine learning [4], [5]. Active Learning (AL) aims to reduce labeling burden by selecting only the most informative samples for annotation [6]. In contrast to standard supervised learning, AL adaptively queries data in a pool of unlabeled samples which are expected to provide the greatest utility for model improvement. By iterating between model training and targeted querying, active strategies can often reach state-of-the-art performance with substantially fewer labeled examples [7]. AL frequently relies on diversity/coverage criteria to avoid redundant queries. One of the most effective techniques is the use of coresets [8], which construct a small but representative subset of the dataset [9], [10]. The fundamental design is based on geometric covering objectives such as the k-center objective, which selects a subset of k samples that best covers the unlabeled pool [9]. This approach has later been refined           
+
+> L. C. Ayres and J. C. M. Bermudez are with Universidade Federal de Santa Catarina, Florianópolis, SC, Brazil; S. J. M. de Almeida is with Universidade Católica de Pelotas, Pelotas, RS, Brazil; R. A. Borsoi is with Université de Lorraine, CNRS, CRAN, Vandoeuvre-lès-Nancy, France. E-mails: lu-cayress@gmail.com, j.bermudez@ieee.org, sergio.almeida@ucpel.edu.br, and ricardo.borsoi@univ-lorraine.fr. Corresponding author: L. C. Ayres. This work has been submitted to the IEEE for possible publication. Copyright may be transferred without notice, after which this version may no longer be accessible.
+
+with criteria that aim to favor locally sparse regions of the pool [11] or to improve robustness in low-budget regimes [12], [13]. Recent work also considered the use of fairness con-straints [14], robust metrics [15] as well as statistical models of repulsive inter-sample interactions [16] to improve different aspects of coreset selection (see Section II-B for more details). Despite their success, coreset methods suffer from a key limitation: existing works do not properly account for data invariances (i.e., transformations of the input that preserve semantic content). This can lead to the selection of redundant samples that are transformed versions of the same datum. On the other hand, significant effort has been dedicated to accounting for data symmetries in supervised and represen-tation learning using the framework of group theory (see Section II-C), which improves sample efficiency and gener-alization [17]. This can be performed by designing neural network architectures that are intrinsically invariant to the action of a known symmetry group [18]–[22]. A different approach is to enforce invariance through care-fully designed data augmentation [23], or by the use of approaches which map transformed versions of the same sample to a canonical representative [24]. Moreover, recent self-supervised representation learning (SSL) methods such as RotNet [25], SimCLR [26] and DINO [27] learn embeddings that are empirically robust to augmentation-induced nuisance factors due to carefully designed training criteria, including work that learns invariances to a specific group directly from training data to yield invariant embeddings [28]. However, these approaches primarily address model and representation learning rather than data acquisition and coreset selection. Recent works have shown the importance of employing good representations to achieve competitive performance in coreset selection in AL. For instance, [29] showed that using self-supervised learning (SSL) to improve the representation can have a larger impact on AL performance than the choice of sophisticated query strategies. Similarly, [30] investigated hybrid strategies that combine diversity-based selection in early query rounds followed by uncertainty-based sampling, along with SSL to improve the learned models. Deep metric learning has also been used in AL for coreset selection in 3D image segmentation [31] to obtain a diversity objective where the distances better reflect task-relevant similarity. Another AL algorithm targeting 3D molecular graphs has incorporated graph isomorphism and isometries in the designed querying rule to avoid selecting redundant queries under physically meaningful molecular graph transformations [32]. Despite the effectiveness of the aforementioned strategies in promoting sample diversity in coreset selection and AL, they  
+
+> arXiv:2607.01089v1 [eess.IV] 1 Jul 2026 PREPRINT 2
+
+often overlook inherent data symmetries, which can lead to the selection of redundant (transformed) samples. In this paper, we address this gap by proposing a general group-invariant coreset construction framework (which we call GRINCO ) for AL that performs acquisition at the level of orbits induced by a known transformation group (i.e., the set of admissible group-transformed versions of a sample) [17], [33]. By designing a coverage criterion in the corresponding quotient space induced by the group action (see Section II-C), the proposed method enforces non-redundancy at the orbit level. Candidate pool elements are effectively organized into orbits and label budget is allocated to semantically distinct samples, promoting data efficiency. Thus, our GRINCO coreset frame-work can achieve state-of-the-art performance in AL with fewer labeled examples. Unlike previous works that improved representations used in specific application tasks (e.g., molecu-lar graphs or 3D segmentation) [29], [31], [32], our framework provides a general coreset formulation that is not tied to a specific domain or task, and can be instantiated for different transformation groups and application domains. Moreover, by leveraging the concept of orbit-separating functions [34], [35] (mappings that distinguish orbits), we introduce quotient metrics that can be implemented using representation learning to compute distances between orbits. This leads to a principled and computationally efficient approach for coreset selection in the quotient space applicable to different groups. Furthermore, our coreset acquisition criterion uses a sym-metry group that can be aligned with the invariances accounted for in the training of the downstream model, which can be achieved via invariant architectures or data-augmentation strategies [18], [20], [23]. A theoretical analysis for the pro-posed method yields generalization bounds that link the orbit-averaged risk (i.e., the expected loss averaged over the group orbit of each sample) to coverage in the quotient metric, while also accounting for label noise and intra-orbit variability. Ex-perimental results show that our approach achieves improved performance compared to state-of-the-art coreset-based AL methods, attaining comparable accuracy with fewer labeled ex-amples, particularly in datasets that contain significant group-induced redundancy. The contributions of this work include:  
+
+> ‚
+
+A group-theoretic coreset formulation that performs ac-quisition over orbits in the quotient space induced by the transformation group, ensuring a coverage criterion that inherently excludes redundant copies of the same underlying sample.  
+
+> ‚
+
+An efficient instantiation of the framework via quotient-space metrics (distances between orbits) induced by orbit-separating mappings (analytic canonicalization or learned embedders), together with a k-centers-style selection pro-cedure in the induced quotient metric coupled with a training objective based on orbit-averaged losses.  
+
+> ‚
+
+A theoretical analysis linking coverage in the quotient metric to excess orbit-averaged risk. This yields gen-eralization bounds and a term-wise interpretation that clarifies the impact of label noise, intra-orbit variability, and group-prior misspecification on the resulting error. The remainder of this paper is structured as follows. Sec-tion II reviews the background and related work. Section III introduces our proposed framework, including the group in-variant coreset formulation, the corresponding AL framework, and its theoretical analysis. Section IV presents the experi-mental results. Section V concludes the paper. Appendix A provides the proof of the generalization theorem. II. B ACKGROUND ON AL, CORESETS AND GROUP THEORY 
+
+Let X Ď Rd denote the input space and Y “t1, 2, . . . , C u the label set. We consider a labeled dataset 
+
+DL “ tp xi, y iqu NL
+
+> i“1
+
+, where each feature vector xi P X is associated with a class label yi P Y. A parametric model 
+
+fw : X Ñ ∆C , with parameter vector w P Rm, where 
+
+∆C :“ t p P RC : pc ě 0, řCc“1 pc “ 1u is the C-class probability simplex, is learned by minimizing a pointwise loss 
+
+Lpfwpxq, y q (e.g., cross-entropy). Here fwpxq P ∆C is the model output (class-probability vector) for input x P X and 
+
+y P Y is the corresponding true label. Assuming pxi, y iq are drawn i.i.d. from a joint measure 
+
+ppX, Y q over X ˆ Y, the empirical risk is denoted by 
+
+ˆRpfwq “ 1
+
+NLNLÿ
+
+> i“1
+
+Lpfwpxiq, y iq. (1) This constitutes an approximation to the population risk 
+
+Rpfwq “ EppX,Y q
+
+“LpfwpXq, Y q‰, where EppX,Y q denotes expectation with respect to the measure ppX, Y q.
+
+A. Active Learning 
+
+In AL, an additional unlabeled dataset DU “ t xiuNL`NU
+
+> i“NL`1
+
+with NU samples is also available. Many tasks demand substantial labeled data for robust classification [1], [36]. AL alleviates this burden by iteratively querying labels for the most informative samples in DU [37]. In a pool-based scenario [6], one starts with a small labeled set DL and a large unlabeled pool DU . A query strategy A identifies the point x˚ P DU that maximizes an informativeness criterion. An oracle O then provides the label y˚, after which px˚, y ˚q is added to DL and the model is retrained. This process continues until a labeling budget is exhausted or desired performance is reached [38], [39]. In practice, one often queries a full batch of samples for labeling at each iteration rather than a single point, as this reduces retraining overhead and leverages parallel labeling. Among various query strategies, such as uncertainty sampling, query-by-committee, expected model change, variance reduc-tion, and density-weighted methods, coreset approaches have been recently emphasized for selecting points that compre-hensively represent the data and improving efficiency [40], [41]. A more detailed definition of the batch AL selection, labeling, dataset-update, and retraining will be presented in Section III-D in the context of the proposed method. 
+
+B. Coresets 
+
+Given a dataset D “ t xiuNi“1 with N samples, a coreset 
+
+C Ď D of size |C| ! N is a small representative subset of the original dataset such that solving some optimization PREPRINT 3
+
+problem using only the samples in C closely approximates the solution that would be obtained on the full dataset [8], [42]. Coresets are also equipped with weights wx ą 0 which reflect the importance of each datapoint x P C. Originally introduced to tackle geometric approximation tasks like k-means and k-median clustering [8], coresets have been applied to regression, classification, and Bayesian inference problems [42]. In AL, coreset-based approaches select samples from DU
+
+that maximize coverage and diversity, leading to efficient querying strategies that reduce labeling redundancy [9]. Of particular interest are geometric coresets, which are con-structed based only on the input data x. A classic example is the k-centers formulation, which aims to select k represen-tative centers such that every other point in DU is as close as possible to its nearest center [43]. This objective (which is NP-hard) is commonly approximated by a greedy procedure that iteratively adds the point in DU which is the farthest from the coreset C that was selected in the previous iteration. This prevents repeatedly querying samples from densely populated regions. Moreover, no label or model-specific information is required, making these coresets agnostic to the subsequent task. Recent works have proposed other coreset extensions to address specific challenges, including fairness, robustness, and metric learning. For instance, [14] proposes a framework that generates weighted synthetic samples by minimizing the Wasserstein distance between the coreset and the original dataset, subject to demographic parity (fairness) constraints ignored by standard geometric approaches. Probabilistic sam-pling methods based on determinantal point processes (which model repulsive interactions) have also been explored for coreset construction [16]. Representation learning has also been integrated in subset selection for high-dimensional data to find better metrics when the raw input distances are uninformative [31]. The sensitivity of empirical mean-based coreset selection to noisy or corrupted data was also addressed in [15] by using the geometric median, which offers a higher breakdown point against outliers. However, these methods can be computationally intensive (especially for large datasets) and none of these works properly address group-induced redundancy via invariance-aware coreset selection, which is the focus of our proposed method. 
+
+C. Group-invariance in statistical learning 
+
+To provide the necessary background for our invariant-aware framework, we briefly review the relevant group-theoretic ter-minology [17], [33]. We focus on the group-theoretic concepts that enable us to rigorously define equivalence relations among transformed samples, and conclude by linking these concepts to statistical learning and risk minimization. 
+
+1) Groups, Actions, and Orbits: A group is a pair pG, ¨q 
+
+where G is a set with a binary operation that satisfies closure, associativity, has an identity element e, and provides an inverse for every element. A group G is finite if |G| ă 8 . If the multiplication and inversion are smooth maps, G is said to be a Lie group . Given a set (data space) X , a left action of G on 
+
+X is a map 
+
+G ˆ X Ñ X , pg, xq Þ Ñ g ¨ x (2) such that e ¨ x “ x and pgh q ¨ x “ g ¨ p h ¨ xq for all transformations g, h P G, x P X . If X is a vector space, a (linear) representation is a homomorphism ρX : G Ñ GL pX q
+
+so that g ¨ x “ ρX pgq x. A map f : X Ñ Y is G-invariant if 
+
+f pg ¨ xq “ f pxq for all g P G. The orbit of x P X under a group G is 
+
+OGpxq :“ G ¨ x “ t g ¨ x : g P Gu, (3) i.e., all transformations of x under G. The stabilizer (isotropy subgroup) of x is Gx :“ t g P G : g¨x “ xu. When G is finite, the orbit-stabilizer theorem gives |OGpxq| “ | G|{| Gx|. The 
+
+quotient space ¯X :“ X {G is the set of all orbits, with orbit map πG : X Ñ ¯X , x Þ Ñ OGpxq. We use OGpxq consistently to denote an orbit, and we use rxsG only as shorthand when needed. When a canonical representative of an orbit is well defined, we denote it by ¯x P OGpxq.Two brief illustrative examples follow. For rotations, let 
+
+G “ SO p2q act on images X “ RHˆW by in-plane rotation about the image center. The orbit OGpxq “ t g¨x : g P SO p2qu 
+
+collects all rotated versions of x. Note that a class label is typically invariant to this action. For uniform scalings, let 
+
+G “ R` (under multiplication) act elementwise by g ¨x “ g x.The orbit OGpxq “ tg x : g P R`u contains brightness or intensity rescalings of the same sample, for example due to illumination or exposure changes. These concrete group actions show how multiple transformed inputs can represent a single semantic instance. In both cases, reasoning on the quotient space X {G avoids redundancy and enhances sample efficiency by effectively unifying all transformed inputs into equivalence classes. 
+
+2) Use in statistical learning: From a statistical learning standpoint, a symmetry group G often represents transforma-tions under which the semantic content of x is unchanged. This is related to probabilistic symmetries [44], where invariance is imposed at the level of conditional distributions. Recent work also demonstrated how invariance can improve statistical efficiency by means of data augmentation, which can reduce the variance of estimators under invariant distributions [23]. Besides data augmentation [23], other established methods for handling symmetries in statistical learning include explicit reg-ularization and invariance-aware representation learning [45]– [48], as well as neural network architecture designs that guarantee invariance [17], [18], [21], [22]. Formally, a classifier (or model) f : X Ñ ∆C is G-invariant if it assigns the same outputs to all transformed inputs, that is, f pxq “ f pg ¨ xq for all g P G. Consequently, the assigned labels are invariant under the group action. More generally, a statistical learning problem is G-invariant when the conditional distribution of outputs remains unchanged under group actions: 
+
+Definition 1 (Label invariance) . We say that ppY | xq is G-invariant if, for all g P G,
+
+ppY | xq “ p`Y | g ¨ x˘. (4) PREPRINT 4
+
+Remark 1. Deterministic classifiers are included by taking 
+
+ppY | xq “ δY ´ˆypxq. Here δa´b equals 1 if a “ b and 0
+
+otherwise, and ˆypxq is the predicted label for input x.
+
+Under the label invariance assumption, data augmentation can be mathematically modeled by sampling transformations 
+
+g from a probability measure Q supported on the group G,and training on transformed pairs pg ¨ xi, y iq, for g „ Q and 
+
+pxi, y iq „ ppX, Y q. When G is compact, Q can be taken to be the normalized Haar measure on G, i.e., the unique measure satisfying left and right invariance, QpgA q “ QpAq
+
+and QpAg q “ QpAq for all g P G and measurable A Ď G.Sampling g „ Q corresponds to drawing a group transforma-tion “uniformly”. For G “ SO p2q, Q is the uniform distribution over angles. For finite groups such as the cyclic rotation group 
+
+C4 “ t 0˝, 90 ˝, 180 ˝, 270 ˝u, it is the discrete uniform mea-sure. When G is non-compact, such as arbitrary scalings, no finite Haar probability measure exists. In such cases, one can either consider the Haar measure on a compact subgroup, or define an application-specific measure that reflects the desired variability. This probabilistic view makes augmentation an expectation over group actions under Q, which motivates the 
+
+per-sample orbit-averaged loss [23]: 
+
+LQpx, y, f wq :“ EQpgq
+
+“L`fwpg ¨ xq, y ˘‰ 
+
+“
+
+ż
+
+> G
+
+L`fwpg ¨ xq, y ˘ dQpgq, (5) which can be interpreted as averaging along the orbit of 
+
+x induced by G. In implementations, this expectation is approximated via a Monte Carlo average over sampled trans-formations. This group-based perspective will be instrumental for our construction of group-invariant coresets in quotient spaces, where samples differing only by a transformation in 
+
+G are treated under a single equivalence class. III. P ROPOSED APPROACH : GROUP -INVARIANT CORESETS AND AL FOR DATA EFFICIENCY 
+
+The fundamental idea of our group-invariant coreset frame-work is to account for symmetries in the data (induced by a group G) during the selection process. This improves data efficiency compared to standard criteria [9], [43] when redundant samples are present. To this end, we redefine the unit of selection to a geometric object in the form of orbits 
+
+OGpxq, which naturally incorporates group information. Figure 1 illustrates this idea with a simple example based on the rotation group G “ SO p2q, with the input space X
+
+represented as a cylinder in 3D space, one axis corresponding to semantic content (defining the class) and the other two to pose information (rotation angle). Each point x P X (e.g., an airplane) generates a continuous trajectory of points as it undergoes transformations by G, which corresponds to the orbit OGpxq “ t g ¨ x : g P Gu Ă X containing the set of transformed examples (shown as colored dashed loops). The pose axes can be “collapsed” by mapping the input space X
+
+to the quotient space X {G, which captures only the semantic content. In this representation, each orbit OGpxq is mapped to a single point in X {G by a projection πG.Class A Class B semantic content pose axis                  
+
+> pose axis
+> Figure 1. Illustrative example. In the input space X, one axis corresponds to semantic content (i.e., distinct classes) and the other two to pose information (rotation angle) induced by a group G. Each point xPX(such as an airplane) generates an orbit OGpxqas it undergoes transformations by G(shown as colored dashed loops). The quotient space X{Gcaptures only the semantic content, mapping each orbit to a single point. A quotient metric dGmeasures a distance between two orbits, being invariant to pose information.
+
+Considering a standard distance-based selection criterion operating in X immediately reveals potential issues, as an airplane at 0˝ and its 180 ˝ rotation might be treated as far from one another despite being semantically identical. Therefore, we consider a quotient metric dG that measures the distance between two orbits, effectively formulating the selection cri-terion in the quotient space X {G. In the illustration, this corresponds to the distance between loops, which captures semantic content while being invariant to pose alignment. This ensures that the AL oracle needs to supply only a single label per orbit, thereby concentrating the labeling budget on task-related information. This will be formalized in detail in Section III-A. Following this idea, the proposed selection objective is a coreset CX {G on the quotient-space, which we call GRINCO 
+
+(standing for GRoup-INvariant COreset). Denoting by DU “txnuNU 
+
+> n“1
+
+the unlabeled pool 1, each sample xi induces an orbit 
+
+Oi :“ OGpxiq under G. The key idea behind GRINCO is that the coreset is constructed over orbits rather than in the input space, thus, by selecting a set of representative indices 
+
+i1, . . . , i K P t 1, . . . , N U u, the coreset can be expressed as: 
+
+CX {G “ t Oi1 , . . . , OiK u , (6) where K ! NU is the coreset size. Note that, in general, the set of indices i1, . . . , i K is not unique: if two samples 
+
+xn and xm belong to the same orbit, then Oin “ Oim .Therefore, the selected indices depend on the choice of a so-called representative sample for each orbit, which will be discussed later. This notation emphasizes that selection acts on equivalence classes. This formulation allows us to define geometric coreset objectives (e.g., k-centers, coverage maxi-mization) in the quotient space. Thus, the choice of quotient        
+
+> 1We index the samples xnstarting from n“1for convenience. PREPRINT 5
+
+metric dG is crucial, and is the first step of our method, which is fully formalized and detailed in Section III-A. In short, the distance dG can be computed either by directly aligning orbits (which can be computationally prohibitive) or, in a more efficient and practical approach by using orbit-separating invariant functions , i.e., learned G-invariant maps that can separate orbits and give an efficient way to realize the quotient geometry. This will be detailed in the following subsection. The coreset CX {G is then integrated into an invariant AL framework (a pipeline summarizing the proposed method is shown in Figure 2). At each iteration, after a batch is selected on the quotient space, one representative sample from each orbit is supplied to the oracle O for labeling, ensuring labeling budget is not wasted on multiple redundant copies within the same orbit. Then, the classifier is re-trained with a properly designed orbit-averaged loss or invariant NN architecture, ensuring that selection, training, and prediction account for the data symmetries in a congruent way. This is discussed in detail in Section III-B. Symmetries and Invariances  
+
+> Group Prior
+> Oracle Selector
+> Unlabeled Samples
+> Model
+> Embedders / Classifiers
+> Samples Labels
+> Training Data
+> Annotation Strategies Query Fine-tuning Re-training or Add New Labeled Samples to Training Data
+
+Figure 2. Overview of the group-invariant coreset and AL pipeline. 
+
+A. Group-invariant Coresets 1) Quotient space representation : Following the group-theoretic view of invariance, we therefore work on the quotient space X {G of the data under G and formulate selection directly in the resulting quotient geometry. This way, orbits serve as natural summaries under invariance assumptions, which motivates operating on equivalence classes [23], [44] rather than raw samples for eliminating transformed duplicates in coreset construction. The following definition makes the orbit-based equivalence precise. 
+
+Definition 2. Given x, x1 P X , define the equivalence relation 
+
+„G by writing x „G x1 if there exists g P G such that x “
+
+g ¨ x1.
+
+Remark 2. Definition 2 is equivalent to the existence of g, g 1 P
+
+G such that g ¨ x “ g1 ¨ x1. If g ¨ x “ g1 ¨ x1, apply g´1 on the left to obtain x “ p g´1g1q ¨ x1, which matches Definition 2. 
+
+Definition 3. The orbit of a point x P X under the action of 
+
+G is the equivalence class of x under the relation „G, defined as OGpxq “ t g ¨ x : g P Gu. The quotient X {G is defined as the set of orbits of X , that is, the equivalence classes rxsG
+
+modulo the equivalence relation „G.
+
+The collection of orbits induced by the action of G on X
+
+yields a partition of X : each orbit OGpxq is nonempty, any two 
+
+Figure 3. Visualizing the quotient mapping. Left: The input space 
+
+X contains full orbits. Center: The projection πG maps each orbit to a single point in the quotient space X {G. Right: The selector σ
+
+maps each quotient point back to a unique canonical representative 
+
+¯x in the input space. 
+
+distinct orbits are disjoint, and the union of all orbits equals X .Consequently the quotient set X {G is well defined, and there exists a projection mapping πG : X Ñ X {G, sending each point to its orbit/equivalence class. When a consistent choice of representative from each orbit is available (a canonical representative), the quotient may be identified with the set of those representatives; otherwise one works with orbits as described below. 
+
+Remark 3. For many choices of group actions (under addi-tional regularity conditions) there may exist a canonical cross-section S Ď X and a selector σ : X {G Ñ S satisfying 
+
+πG
+
+`σpOGpxqq ˘ “ OGpxq for every x P X . The canonical representative of x is then ¯x :“ σ`OGpxq˘ P OGpxq. The composition σ ˝ πG : X Ñ S maps each point to its chosen representative; it is constant on orbits and therefore generally not injective on X (injectivity holds only for the trivial action). 
+
+This is illustrated in Figure 3, where the left panel shows the raw input space X , the center panel illustrates the quotient space X {G obtained via the projection πG, and the right panel shows the selection of canonical representatives via the section σ. Note that once an orbit is included in the coreset during AL, the annotating oracle O only needs to label a single representative from that orbit, even if the pool contains multiple transformed copies (under the assumption that transformed samples share the same label–an assumption that will be slightly relaxed in a probabilistic setting later). A natural choice is to label the canonical representative ¯x
+
+selected by σpOGpxqq .A key element of the framework is the definition of a suitable metric dG on the quotient space X {G that captures a relevant notion of similarity between orbits. This met-ric is essential for geometric coreset selection, and several constructions are possible. In the following, we present two approaches: an idealized orbit-minimization distance, which is instructive but less practical to implement, and a more efficient one based on orbit-separating functions and invariant representations. The following pseudo-distance inspired by [49] focuses on groups that act by isometries, for example, compact Lie groups with orthogonal representations. PREPRINT 6
+
+Definition 4. For x, x1 P X and a group G acting by isometries, define the ambient pseudo-distance 
+
+˜dGpx, x1q :“ inf  
+
+> gPG
+
+}x ´ g ¨ x1} . (7) 
+
+Proposition 1. If G acts by isometries (i.e., g P G is an isometry w.r.t. the norm), then the ambient pseudo-distance can be written as 
+
+˜dGpx, x1q :“ inf  
+
+> g,g 1PG
+
+}g ¨ x ´ g1 ¨ x1} . (8) 
+
+This pseudo-distance induces a metric on the quotient space X {G between orbits [49], which we denote by 
+
+dG
+
+`OGpxq, OGpx1q˘ :“ ˜dGpx, x1q. When G is compact and the action is continuous, the infimum is attained. Proof. This result follows from [50, Lemma 3.1]. Since G acts by isometries, we have }x ´ x1} “ } g ¨ x ´ g ¨ x1}. Applying 
+
+g´1 inside the norm implies the equivalence. Therefore, ˜dG defines the metric between orbits in the quotient space X {G, as required for our formulation. In the following, we will continue to use dG to denote the quotient metric between orbits, and ˜dG for its equivalent ambient space pseudo-distance. Examples of groups that act isometrically include the orthogonal group (acting by matrix multiplication) and the symmetric (permutation) group, although the latter is discrete rather than a Lie group. 
+
+2) Practical quotient metrics : Despite its simplicity, the ambient pseudo-distance in Definition 4 is not applicable in general. When G is non-compact, the infimum in (7) may not be attained. When G is not isometric, ˜dG is not independent of the choice of representative within the orbit, and thus does not define a quotient pseudo-distance. Moreover, computing the solution to (7) can be computationally impractical for some groups (e.g., large permutation groups). While other canonical pseudo-distances can be defined on quotient spaces in full generality through minimizations over sequences [51], it is typically intractable to compute in practice. These issues motivate an alternative construction explained next. Our goal is to define a tractable distance on the quo-tient space X {G that is semantically meaningful and easy to compute. We thus define a quotient metric using the notion of orbit-separating invariants [34], [35], i.e., functions 
+
+h : X ˆ X Ñ R` that (i) are G-invariant ( hpxq “ hpg ¨ xq for all g P G) and (ii) separate orbits: 
+
+hpxq ‰ hpx1q ðñ OGpxq ‰ OGpx1q . (9) When such an h is available, a practical quotient distance is obtained from the Euclidean distance in the image of h:
+
+dG,h px, x1q :“ } hpxq ´ hpx1q} . (10) Various definitions of dG,h px, x1q are possible. For simple cases, a closed-form canonicalizer can be used, that is, if every orbit OGpxq has a unique canonical representative σpxq “ ¯x,the map hpxq “ ¯x is an orbit-separating invariant, being G-invariant by construction and satisfying the condition in (9). For example, hpxq “ x{} x} is a canonicalizer for positive rescaling, thus dG,h px, x1q “ } hpxq ´ hpx1q} .Another appealing option is to consider an orbit-separating function hψ as a neural network with parameters ψ, learned from unlabeled data using invariant representation learning [28]. In that case, hψ is trained to be G-invariant while separat-ing distinct orbits, and the induced distance provides a useful quotient metric for sample selection. Detailed constructions and learning-based methods for orbit-separating invariants (in-cluding polynomial and symmetrization approaches for groups such as the symmetric, orthogonal and general linear groups) are discussed in [34], [35]. Practical implementations can also leverage architectures with built-in invariance [17], [18], group-invariant autoencoders [52] or augmentation-based rep-resentation learning [25]–[27]. Throughout the paper (includ-ing experiments) dG,h is the practical surrogate that replaces the ideal quotient metric dG and its equivalent ambient space pseudo-distance ˜dG.
+
+3) Group-invariant coresets with quotient k-centers selec-tion : Based on the quotient space representation presented in the previous subsection, we can formulate the coreset selection directly on the quotient space X {G to eliminate redundancy by using a geometric criterion. While many coreset objectives are possible, we focus here on the k-center objective [9], [43] due to its simplicity and popularity in AL. The proposed frame-work can also be extended to other geometric criteria (e.g., geometric medians, probabilistic sampling or other coverage maximization criteria), the key difference being the use of the quotient metric dG which ensures the selection is performed among equivalence classes. Let U “ t 1, . . . , N U u denote the index set of the unla-beled pool DU . We formulate the G-invariant k-centers-based GRINCO coreset selection as follows. 
+
+Definition 5 (k-centers GRINCO) . A G-invariant k-center coreset is defined as the set of orbits that solve 
+
+Cidx P arg min 
+
+> SĎU
+> |S|“ K
+
+max  
+
+> nPU
+
+min  
+
+> sPS
+
+dG
+
+`OGpxnq, OGpxsq˘. (11) 
+
+This corresponds to the k-center objective in the quotient space X {G.
+
+Here Cidx denotes the indices of the samples that serve as representatives for the selected orbits in the unlabeled pool, and the coreset itself is given by CX {G “ t OGpxsq : s P Cidx u.Note that problem (11) might have multiple optimal solutions corresponding to different choices of representatives for the same set of orbits. 
+
+Remark 4. The k-centers GRINCO objective in (11) can also be written equivalently using the ambient pseudo-distance 
+
+˜dG in Definition 4, or the orbit-separating invariant-based distance dG,h in (10) . Since these choices of distance all define a quotient geometry, they all lead to orbit selection criteria. 
+
+To solve (11), a practical approach is to adopt a greedy k-center algorithm (farthest-first traversal) using one of the afore-mentioned quotient metrics, such as dG,h (or ˜dG if tractable) as the distance function. This procedure, which we refer to as Orbit-k-center , iteratively selects the orbit maximizing the minimum quotient distance to the current coreset. PREPRINT 7
+
+Importantly, downstream machine learning methods (clas-sifier, regressor or clustering routine) should be made G-invariant as well to fully benefit from an invariant coreset. This will be discussed in the context of AL in the following. Otherwise, the model cannot distinguish which discarded samples were redundant under G.
+
+B. Efficient AL with group invariant coresets 1) Active learning with GRINCO: Let us denote the full dataset by Dfull “ tp xn, y nqu Nn“1, containing the labels yn for all samples. The action of G partitions the observed indices into tIiuMi“1, Ii Ă t 1, . . . , N u, where M is the number of distinct orbits in the dataset. In particular, Oi denotes the orbit containing the samples indexed in Ii such that xn and xn1 lie in the same orbit Oi if and only if n, n 1 P Ii. We also denote by ¯xi :“ σpOiq the canonical representative of orbit Oi. In this case, Dfull can be partitioned over orbits as: 
+
+Dfull “
+
+> M
+
+ğ
+
+> i“1
+
+␣pxn, y nq( 
+
+> nPIi
+
+. (12) We can define a measure of the orbit size in the dataset by introducing αi :“ | Ii|{ řMj“1 |Ij | which represents the proportion of samples in orbit Oi, with řMj“1 αj “ 1. If we retain one representative for each measured orbit and attach to it a queried label yi, we obtain the orbit summarized dataset 
+
+Dorbit “ ␣ p¯xi, y i, α iq (Mi“1 . (13) Based on a set of representative samples t¯xiuKi“1 selected by GRINCO 2 according to (11), we also consider a more general 
+
+weighted representative coreset 
+
+C “ ␣ p¯xi, y i, w iq (Ki“1 , (14) where K is the coreset size and wi ą 0 is the weight of its i-th element. Different approaches can be used to define 
+
+wi; we compute it as wi “ nno p¯xiq{ N , where nno p¯xiq
+
+denotes the number of samples in Dfull whose closest orbit is r¯xisG. This gives a measure of the contribution of r¯xisG
+
+in the full dataset. Note that in the special case K “ M
+
+in which one representative is retained for every measured orbit, we have that wi “ αi “ | Ii|{ N . It is instructive to first consider the ideal case of deterministic invariance, where all transformed versions of a given input share the same label. In that case, training could be performed on the orbit summarized dataset with one label per orbit without changing the empirical objective, as illustrated in the following. 
+
+Example 1 (Deterministic invariance) . Suppose that all sam-ples in each orbit share the same label, that is, yn “ yn1
+
+whenever n, n 1 P Ii. If fw is G-invariant by construction, i.e., 
+
+fwpg ¨ xq “ fwpxq for all g P G, then 
+
+1
+
+N
+
+ÿ
+
+> pxn,y nqP Dfull
+
+L`fwpxnq, y n
+
+˘ “ 1
+
+N
+
+> M
+
+ÿ
+
+> i“1
+
+ÿ
+
+> nPIi
+
+L`fwpxnq, y i
+
+˘
+
+“ ÿ
+
+> p¯xi,y i,α iqP Dorbit
+
+αi L`fwp¯xiq, y i
+
+˘    
+
+> 2With a slight abuse of notation, we use the same notation to index the representatives ¯xiin the orbit summarized dataset Dorbit and in the coreset.
+
+where we used the fact that fwpxnq “ fwp¯xiq for all 
+
+n P Ii. This shows that minimizing the empirical risk over the full dataset Dfull is equivalent to minimizing a weighted risk over the canonical representatives contained in the orbit summarized dataset Dorbit with a single representative per orbit. 
+
+Note that Example 1 assumes that all samples in each orbit share the same label, which may not hold in practice due to label noise or imperfect invariance. To address this limitation, we will consider a more general probabilistic invariance frame-work based on Definition 1, leveraging orbit-averaged losses (as in (5)) to accommodate stochastic labels within orbits while still enabling efficient learning with weighted representative coresets produced by GRINCO. 
+
+2) A statistical invariance-aware learning objective: We now cast the invariance-aware objective in a statistical frame-work. Let Q denote a probability measure on G, which will be used to promote invariance during training (e.g., by using data augmentation with random transformations sampled from 
+
+Q [23]), in such a way as to promote G-invariance in both the quotient-space coreset selection metric dG,h and the classifica-tion model fw3. Coupling the G-invariance assumptions used in coreset selection and in AL model training is important to achieve the desired performance. We define the orbit-averaged population risk as the expecta-tion (with respect to ppX, Y q) of the per-sample orbit-averaged loss LQpx, y, f wq as 
+
+RQpfwq :“ EppX,Y q
+
+“LQpX, Y, f wq‰
+
+“ EppX,Y q EQpgq
+
+“L`fwpg ¨ Xq, Y ˘‰ . (15) 
+
+Remark 5. If fw is G-invariant by construction, the orbit-averaged loss reduces to the standard loss: LQpx, y, f wq “ 
+
+Lpfwpxq, y q, and so does the risk, RQpfwq “ Rpfwq.
+
+The outer expectation in the orbit-averaged risk in (15) can be approximated empirically using the samples in the weighted coreset C as follows: 
+
+ˆRQ 
+
+> C
+
+pfwq :“
+
+> K
+
+ÿ
+
+> i“1
+
+wi EQpgqL`fwpg ¨ ¯xiq, y i
+
+˘. (16) The orbit-averaged loss in (16) along with the weighted representative coreset will then be used in a batch AL iteration pipeline, which is described in more detail in Section III-D. In practice, the minimization of ˆRQ 
+
+> C
+
+pfwq can be performed with a Monte Carlo approximation for the expectation EQpgq,using data augmentation with random transforms drawn from 
+
+Q during training [23]. Other approaches include the use of constrained optimization with penalties [53] that promote invariance. Note that for the empirical orbit-averaged risk (16), equiv-alence between training on the full dataset and training on the weighted coreset does not hold as in Example 1 due to stochasticity in the labels or inexact invariance. The next sub-section addresses this difficulty through a theoretical analysis that formalizes how coverage in a quotient metric controls the generalization error when training on the weighted coreset C. 
+
+> 3When available, a classifier with an architecture that is group invariant by design can be equivalently used to the same effect. PREPRINT 8
+
+C. Generalization 
+
+We now analyze the excess risk incurred by selecting a group-invariant weighted representative coreset C with cover-age radius ε and training with the orbit-averaged loss under the probabilistic invariance from (4), compared to the empirical risk that would be obtained by training on the full dataset, which is defined by 
+
+ˆRQ
+
+> full
+
+pfwq “ 1
+
+N
+
+> N
+
+ÿ
+
+> n“1
+
+Eg„QL`fwpg ¨ xnq, y n
+
+˘ . (17) The result separates the generalization error into concentration effects, and coreset-specific approximation errors driven by label uncertainty and coverage in the quotient space under 
+
+dG. It is formalized in the following theorem. 
+
+Theorem 1 (G-invariant coreset generalization) . Let Dfull “tp xn, y nqu Nn“1 be the full dataset and C “ tp ¯xi, y i, w iqu Ki“1 agroup-invariant weighted representative coreset. Consider the orbit-averaged empirical risk ˆRQ 
+
+> C
+
+defined analogously to (16) ,and suppose that: A1: The conditional label distribution is G-invariant, i.e., 
+
+ppY |Xq “ ppY |g ¨ Xq for all X.A2: The loss is bounded, i.e., sup pP∆C , y PY Lpp, y q ď
+
+Lmax , and both the labeling function and loss func-tion are Lipschitz continuous with respect to the quo-tient pseudo-metric dG,h , that is, there exist constants 
+
+Lp, L L such that for any c P Y and x, x1 P X :
+
+|ppY “ c|xq ´ ppY “ c|x1q| ď LpdG,h px, x1q (18) 
+
+ˇˇEQpgq
+
+␣Lpfwpg ¨ xq, c q ´ Lpfwpg ¨ x1q, c q(ˇ ˇ ď LLdG,h px, x1q
+
+(19) 
+
+A3: The representative coreset C is an ε-cover of Dfull in the quotient metric, i.e., max nPr N s min iPr Ks dG,h pxn, ¯xiq ď 
+
+ε. 
+
+Then, with probability at least 1´γ over the draw of Dfull , the generalization error of the representative coreset C satisfies 
+
+ˇˇ ˆRQ 
+
+> C
+
+pfwq ´ Rpfwqˇˇlooooooooooomooooooooooon 
+
+> coreset generalization error
+
+ď ˇˇ ˆRQ
+
+> full
+
+pfwq ´ Rpfwqˇˇloooooooooooomoooooooooooon 
+
+> full dataset generalization term
+
+`
+
+c 2 ln p2{γq
+
+N V pQq
+
+looooooooomooooooooon 
+
+> I
+
+` 2 Lmax ln p2{γq
+
+3Nloooooooomoooooooon 
+
+> II
+
+` 2Lmax 
+
+> K
+
+ÿ
+
+> i“1
+
+wiηi
+
+looooooomooooooon 
+
+> III
+
+` p LL ` CL pLmax qεloooooooooomoooooooooon 
+
+> IV
+
+(20) 
+
+where Rpfwq “ EppX,Y q
+
+“LpfwpXq, Y q‰ is the population risk, ηi “ 1 ´ ppY “ yi|¯xiq is the labeling uncertainty in the 
+
+i-th representative, and V pQq is the variance-related term: 
+
+V pQq “ EppXqtEQpgqtrξpg ¨ Xquu ` Var ppXqprζpXqq ´ EppXqtVar Qpgqprζpg ¨ Xqqu . (21) The proof of Theorem 1 appears in Appendix A, where the auxiliary quantities rξ and rζ are also defined. The bound in (20) clarifies the behavior of the proposed AL strategy by separating finite-sample effects from coreset approximation effects. The first term on the right-hand side is the standard generalization gap for the full dataset under the orbit-averaged objective. It measures the deviation between the population risk and the empirical orbit-averaged loss when all 
+
+N samples are used, so it is independent of coreset selection. Terms I and II quantify the concentration of the empirical full-dataset loss around its conditional expected-label coun-terpart that appears in the proof. Term I is the dominant variance-driven component that scales like Op1{?N q. The variance constant V pQq aggregates within-orbit and across-orbit variability through a law-of-total-variance decomposition and includes a negative correction that reduces variance when averaging over Q (in general, the larger the variance of Q, the more significant the reduction will be). Term II is a bound-edness correction from Bernstein’s inequality [54], [55] and scales like Op1{N q, thus this term tends to be comparatively very small for practical values of N .The third and fourth terms (III and IV) capture coreset-specific effects. Term III measures the expected label uncer-tainty at the selected representatives, weighted by the coreset weights wi. It becomes zero when the oracle provides exact (deterministic) labels, and it can be large when the labeling uncertainty is significant and the size of the coreset K is small. Term IV is the approximation error induced by approximating the loss over the coreset. It scales with the covering radius ε
+
+and with the Lipschitz constants of the labeling function and the orbit-averaged loss. Coverage is measured in the quotient space X {G using the orbit-separating pseudo-distance dG,h ,so redundant within-orbit variations do not inflate the radius. 
+
+D. Active learning pipeline with GRINCO 
+
+We complete the proposed group-invariant coreset AL framework by integrating it into a pool-based loop: at each round, we compute a quotient-space coreset, query one rep-resentative per orbit, and retrain with an invariant or orbit-averaged loss (Algorithm 1). The acquisition rule AG selects orbits in DU by quotient-space coverage relative to the current labeled set DL, represented by the weighted representative coreset C (Section III-B), using ˜dG or dG,h . In the orbit-k-centers instantiation, this is implemented by greedy farthest-first selection in the quotient space. IV. E XPERIMENTS 
+
+We evaluate the proposed group-invariant coreset framework in pool-based AL. Each experiment starts from an initial labeled set and a large unlabeled pool, then alternates training and batch acquisition until reaching a fixed label budget B,as in Algorithm 1. We first study a controlled scale-invariant synthetic dataset (Section IV-A), then image benchmarks with rotation invariance on CIFAR-10, STL-10, and MNIST (Section IV-B). We compare GRINCO with baseline methods in terms of classification accuracy and orbit efficiency on the selected coreset. All experiments were implemented in PyTorch and run on an NVIDIA RTX A4500 GPU with 16GB VRAM. PREPRINT 9
+
+Algorithm 1 GRINCO-Based AL Pipeline 
+
+Require: Unlabeled pool DU , initial labeled set DL, group G,group measure Q, acquisition rule AG, quotient distance 
+
+˜dG or dG,h , batch size b, label budget B. 
+
+> 1:
+
+Initialize classifier fw on DL and decompose DL as described in (12)–(13) to obtain the initial weighted rep-resentative coreset C 
+
+> 2:
+
+while budget is not exhausted and classification accuracy is not met do  
+
+> 3:
+
+Select b new orbits tOiubi“1 from DU based on the GRINCO criterion in Section III-A3 (e.g., top-b
+
+farthest-first traversal in the quotient space)  
+
+> 4:
+
+For each selected orbit Oi, choose a representative ¯xi P
+
+DU and query the oracle O for its label yi 
+
+> 5:
+
+For every sample xn in DU such that xn belongs to a selected orbit Oi, remove xn from DU and add pxn, y iq
+
+to DL 
+
+> 6:
+
+Compute the weights wi as described in Section III-B and update the weighted representative coreset C Ð
+
+C Ťtp ¯xi, y i, w iqu bi“1 
+
+> 7:
+
+Retrain the model fw on C using an invariant or orbit-averaged loss such as (16)  
+
+> 8:
+
+end while  
+
+> 9:
+
+return fw and the weighted representative coreset C.
+
+A. Synthetic 2D scale-invariant rays dataset 
+
+We first consider a synthetic dataset with positive-rescaling invariance, so that each orbit is a ray from the origin. Labels depend only on the ray direction, not on the radius. This illus-trative experiment compares random sampling, a Euclidean k-centers baseline, and GRINCO, showing reduced redundancy and improved label efficiency. 
+
+1) Positive rescalings invariance model : Let X :“ R2zt 0u
+
+and G :“ R` act by positive rescaling, g ¨ x “ gx for g P R`.The orbit of x is the ray OGpxq “ t g ¨ x : g P R`u. A canonical orbit-separating map is the unit-norm projection 
+
+hpxq :“ x
+
+}x}2
+
+P S1, (22) where S1 :“ t x P R2 : }x}2 “ 1u and hpg ¨ xq “ hpxq for all g P R`. The quotient distance is dG,h px, x1q “ } hpxq ´ 
+
+hpx1q} 2, which is zero when x and x1 lie on the same ray. We sample M distinct rays by drawing angles tθiuMi“1 Ăr0, 2πq and defining ui :“ p cos θi, sin θiq P S1, with orbit 
+
+Oi “ trui : r P R`u. For each orbit i, radii trij uμi
+
+> j“1
+
+are drawn i.i.d. from a log-uniform law, i.e., log rij „
+
+Unif plog rmin , log rmax q, and samples are xij :“ rij ui. The unlabeled pool is DU “ tt xij uμi
+
+> j“1
+
+uMi“1 with N :“ | DU | “ 
+
+řMi“1 μi, so large μi induce orbit redundancy. Labels are chosen to be scale-invariant (i.e., ypg ¨ xq “ ypxq), and depend only on the orbit index (direction), not on radius: 
+
+yij :“ yi, @j P t 1, . . . , μ iu. (23) For a 4-class demonstration, we use M “ C “ 4 with rays separated by 90 ˝ as θi “ π{4 ` p i ´ 1qπ{2, and yi “ i.Note that in this setting, DU can be partitioned into orbits indexed by Ii “ tp i, j q : j “ 1, . . . , μ iu as in (12), and each orbit can be summarized by a single representative ¯xi “ ui “
+
+hpxij q with label yi and weight wi “ μi{N as in (13). Since the labels are scale-invariant, any invariant classifier fwpg ¨
+
+xq “ fwpxq satisfies the identity ˆRfull pfwq “ ˆRC pfwq as in Example 1. Thus, one single representative per ray is sufficient to recover the same empirical risk as the full dataset under the GRINCO framework. 
+
+2) Orbit coverage and redundancy evaluation : We can quantify the expected orbit redundancy under a random coreset acquisition. Let pi :“ μi{N be the probability that a uniformly sampled point from DU lies in orbit i, and let UB be the number of distinct orbits observed in the coreset after B
+
+random queries. Then, assuming a sampling with replacement approximation for large N , the expected number of redundant queries (i.e., queries that do not introduce a new orbit) is 
+
+ErRedundancy s :“ B ´ ErUB s “ B ´
+
+> M
+
+ÿ
+
+> i“1
+
+´
+
+1 ´ p 1 ´ piqB
+
+¯
+
+.
+
+Assuming that the orbits are balanced ( μi “ μ for all i, and 
+
+pi “ 1{M ) gives 
+
+ErRedundancy s “ B ´ M
+
+´
+
+1 ´ `1 ´ 1
+
+> M
+
+˘B ¯
+
+.
+
+Thus, in the case M “ B “ 4, Pr pno redundancy q « 0.094 ,so over 90% of random batches contain at least one redundant sample. For unbalanced tμiu, large orbits dominate random draws and redundancy is typically even higher. 
+
+3) Experimental configuration : At budget B, we compare three coreset rules. (a) Random uniformly samples B points from DU , often yielding multiple samples from the same orbit. (b) The Euclidean baseline applies farthest-first k-center selection in the raw input space X by the update 
+
+S Ð S Y t x‹u, with x‹ being the farthest point from the existing coreset S at each iteration. (c) GRINCO runs greedy 
+
+k-center in the quotient space X {G using the pseudo-distance 
+
+dG,h px, x1q “ } hpxq ´ hpx1q} 2 with h from (22). It iteratively selects a point x‹ that maximizes the smallest quotient distance (which is invariant along rays) to the existing coreset S as 
+
+x‹ P arg max xPDU min x1PS dG,h px, x1q.We implement this synthetic experiment with M “ C “ 4
+
+rays (classes), with scale-invariant labels yi “ i and orbit sizes pμ1, μ 2, μ 3, μ 4q “ p 400 , 200 , 100 , 100 q, yielding a pool of N “ 800 unlabeled samples. Along each ray, radii are sampled log-uniformly with prmin , r max q “ p0.1, 10 q. We evaluate the coreset redundancy for different acquisition bud-gets B P t 1, 2, 3, 4, 5, 6, 8, 10 u. Classification performance is evaluated with a 1-NN classifier (using the Euclidean metric in 
+
+X for the Uniform and Euclidean baselines, and the quotient distance dG,h for GRINCO). In addition to the overall test accuracy (OA), we report the orbit efficiency , defined as the ratio of the number of distinct orbits represented in the coreset 
+
+UB to the total number of selected samples B:
+
+ηpBq :“ UB
+
+B P p 0, 1s . (24) 
+
+4) Results and discussion : Figure 4 shows a sample of coreset acquisition at B “ 4 and the unlabeled pool. The 
+
+random acquisition often selects multiple points on the same PREPRINT 10 10 0 0 10 0Feature 1 10 0010 0Feature 2      
+
+> Class A Class B Class C Class D Unit Circle
+> 101101/G
+> Quotient Space random coreset GRINCO
+
+Figure 4. Selected coresets for the rays dataset at budget B “ 4
+
+using random , Euclidean coreset , and GRINCO. Points are colored by class, and marker type indicates the selected samples. Class-wise counts are random p2, 0, 0, 2q, Euclidean coreset p2, 1, 0, 1q, and GRINCO p1, 1, 1, 1q for classes pA, B, C, D q.
+
+ray while missing some rays entirely. The Euclidean coreset 
+
+baseline improves coverage, but it can still select multiple samples from the same orbit (leading to coreset redundancy). Samples along a ray at different radii might appear to be far apart in R2. In contrast, the proposed GRINCO (operating in the quotient space with the distance dG,h ) selects at most one sample per orbit when B does not exceed the number of distinct orbits M .Figure 5 shows orbit efficiency ηpBq as a function of budget, averaged over 30 Monte Carlo runs. As expected, GRINCO achieves ηpBq “ 1 for B ď 4, with one representative per orbit, while random yields redundant selections even at very low budgets. The Euclidean coreset baseline achieves intermediate performance at B “ 3, 4. For B ą 4, orbit efficiency decreases for all methods as the budget exceeds the number of distinct orbits M “ 4.The improvement in orbit efficiency translates directly into higher classification accuracy at low budgets. At B “ 4,
+
+random attains η “ 0.65 ˘ 0.15 with 79 .2% ˘ 9.9% accuracy, while Euclidean coreset improves to η “ 0.88 ˘ 0.13 and 
+
+93 .8% ˘ 6.2% accuracy (mean ˘ std). GRINCO achieves perfect orbit efficiency η “ 1.0 ˘ 0.0 and 100 .0% ˘ 0.0% 
+
+accuracy, which is consistent with the orbit-invariant labeling model. Figure 4 explains this behavior: random can spend the budget on a subset of the rays (especially on orbits that contain more samples in the unbalanced pool), reducing UB and leaving classes unlabeled; Euclidean coreset spreads points in ambient space but can still pick points at multiple radii on the same ray; GRINCO enforces orbit diversity because dG,h is invariant to changes along the same ray, which guarantees the 2 4 6 8 10 Budget (B) 0.4 0.6 0.8 1.0 Orbit Efficiency 
+
+> random Euclidean GRINCO Perfect e ffi ciency
+
+Figure 5. Orbit efficiency η on the rays dataset (mean over 30 runs) for random sampling, Euclidean coreset , and GRINCO. GRINCO achieves η “ 1 for B ď M “ 4.
+
+selection of at most one point per orbit when B ď M . This behavior persists across budgets. GRINCO maintains perfect orbit efficiency up to B “ 4; for B ě 5 both GRINCO and 
+
+Euclidean coreset consistently achieved full orbit coverage (UB “ 4), leading to ηpBq “ 4{B. Random remained below this ceiling even at B “ 10 , showing sustained redundancy, which is exacerbated by imbalanced orbits. This experiment shows that quotient-space orbit-aware selection (GRINCO) avoids redundancy and achieves maximal orbit coverage per label, unlike random and Euclidean baselines. 
+
+B. Image classification with rotation invariance 
+
+We evaluate GRINCO on image datasets to assess the impact of quotient-space coreset selection on label efficiency in AL under rotation invariance. This section defines the dataset construction, quotient-space distance, classifier, and AL protocol, and then compares GRINCO with several base-lines in terms of classification accuracy and orbit efficiency. 
+
+1) Experimental setup :Datasets: We consider the CIFAR-10 [56], STL-10 [57] and MNIST [58] datasets and their rotated variants, which are constructed by adding explicit rotation-induced symmetry. We use a standard train/test split of the datasets. For each dataset we select a class-balanced set of source images t˜xiuNsrc  
+
+> i“1
+
+from the training split (which will be the raw dataset). Then, for the 
+
+rotated dataset variants (i.e., rotated CIFAR-10, rotated STL-10 and rotated MNIST), for each datum ˜xi we sample an orbit size μi „ Unif t6, . . . , 10 u and generate variants xij :“
+
+gij ¨ ˜xi, with gij „ Q and Q being the Haar measure on G.We attribute to xij the same label as ˜xi. Here G “ C4 “t0˝, 90 ˝, 180 ˝, 270 ˝u for CIFAR-10 and STL-10, and G “
+
+GMNIST “ t 0˝, ˘10 ˝, ˘20 ˝, ˘30 ˝u for MNIST. This yields orbits of variable size and a controlled level of redundancy. The values of Nsrc for each dataset will be reported below. We always evaluate on the standard test split for each dataset. 
+
+Embedders and classifier: We decompose the full clas-sifier as fw “ cθ ˝ qφ with parameters w “ p φ, θ q, where cθ
+
+represents the classifier head and qφ denotes a feature extrac-tor. We use pretrained SimCLR backbones [26] (discarding the projection head) to construct both the function h in GRINCO’s quotient distance in (10) as well as a feature extractor qϕ. More precisely, let ϕφpxq P RCˆHˆW be the final convolutional PREPRINT 11 
+
+feature map of SimCLR and let ν denote global average pooling. The baseline embedding is qφpxq “ νpϕφpxqq . For GRINCO, we additionally include an explicit orbit averaging to ensure fw is exactly G-invariant: 
+
+qφpxq “ 1
+
+|G|
+
+ÿ
+
+> gPG
+
+νpϕφpg ¨ xqq . (25) During AL, we keep qφ frozen for all methods, and construct a linear classifier head cθ pzq on top of the frozen embedding 
+
+z “ qφpxq by first performing PCA to improve efficiency, followed by a softmax layer that is trained on the labeled set at every AL iteration, yielding fwpxq “ softmax pWz ` bq.
+
+Acquisition and coupling: GRINCO computes dG,h from (10) with h “ qφ from (25) and selects a batch by greedy 
+
+k-center in this quotient space pseudo-distance, and model training is performed using the orbit-averaged objective in (16) with Q being the Haar measure on G. Since the number of samples closest to each orbit in the GRINCO coreset is not known, we use uniform weights wi “ 1{K for the labeled orbits. This is a practical approximation of the coreset weights used in the theoretical analysis. We compare GRINCO against uniform random sampling, entropy and margin [6] (which are uncertainty-based), Euclidean k-centers [9], and BADGE [59]. We also include a simple variant of the proposed approach, which we call GRINCO-b, by replacing k-centers with the k-means objective in the quotient metric (i.e., the coreset is constructed from the cluster centers). The k-means criterion encourages a more balanced coverage compared to k-centers, and also serves to illustrate how our orbit-level coreset formulation can be coupled with different coverage criteria. Each run starts from an initial labeled set of size F0, acquires 
+
+b new labels per round for T rounds, reaching a total budget of B “ F0 ` T b . We report the dataset-specific F0, b, and T
+
+below. 
+
+Metrics, runs, and dataset versions: We report overall test classification accuracy, label-efficiency curves (accuracy versus amount of queried labels), and orbit efficiency η (pro-portion of unique orbits in the coreset). Each simulation is repeated for R “ 5 Monte Carlo runs. For the rotated datasets, which include additional rotated samples, we additionally evaluate the methods on five different random realizations of the dataset (indexed by v P t 0, 1, 2, 3, 4u), yielding a total of 
+
+25 experiments per configuration. For standard datasets, we report mean ˘ std over the R runs. For rotated variants, we first average over the R runs for each dataset version, and then report mean ˘ std across the v dataset versions to capture the variability across different random realizations of the pool. 
+
+2) Parameter settings : The parameters for each dataset and budget settings pF0, b, T, B q are as follows. 
+
+CIFAR-10: 50k train and 10k test images, of size 32 ˆ
+
+32 ˆ 3. Pools with explicit redundancy use Nsrc “ 2000 
+
+class-balanced initial images ˜xi with C4 rotations, from which the different samples are generated as described previously. Backbone: SimCLR-pretrained ResNet-18 for CIFAR-10 ( 3ˆ3
+
+conv1, no max pooling), final feature map 512 ˆ 4 ˆ 4,embedding dimension 512 , PCA dimension 64 . AL setting: 
+
+p100 , 100 , 49 , 5000 q.                                                   
+
+> Table I LABELING -EFFICIENCY RESULTS ON ROTATED CIFAR-10: ORBIT COVERAGE AND OVERALL ACCURACY (OA) OVER R“5RUNS .Labels Strategy # unique orbits η(%) Test OA (%) 500 GRINCO 497 ˘299 .4˘0.375 .57 ˘0.27
+> Random 443 ˘388 .7˘0.675 .01 ˘0.29
+> 2000 GRINCO 1997 ˘299 .9˘0.178 .43 ˘0.21
+> Random 1302 ˘13 65 .1˘0.677 .44 ˘0.16
+
+STL-10: 5k labeled train, 8k test, and 100k unlabeled images, all 96 ˆ 96 ˆ 3. Pools with explicit redundancy use Nsrc “ 1000 class-balanced initial images ˜xi with C4
+
+rotations, from which the different samples are generated as described previously. Backbone: SimCLR-pretrained ResNet-18 for 96 ˆ96 , final feature map 512 ˆ3ˆ3, embedding dimen-sion 512 , PCA dimension 64 . AL setting: p50 , 50 , 29 , 1500 q.
+
+MNIST: 60k train and 10k test images, 28 ˆ 28 ˆ
+
+1. To preserve digit semantics, we use GMNIST “t0˝, ˘10 ˝, ˘20 ˝, ˘30 ˝u instead of C4. These rotations use bilinear interpolation with zero-padding and center-cropping. Pools for the rotated MNIST variations use Nsrc “ 2000 class-balanced initial images ˜xi with GMNIST rotations, from which the different samples are generated as described previously. Backbone: SimCLR-pretrained ConvNet with two 5ˆ5 convo-lutional blocks plus max pooling, final feature map 64 ˆ 4 ˆ 4,embedding dimension 128 , and PCA dimension 8. AL setting: 
+
+p10 , 10 , 49 , 500 q.
+
+3) Results: Labeling efficiency under rotation-induced symmetry : Before presenting the main AL results, we first show a simpler simulation that shows the impact of orbit-level coreset selection in classification performance, without the effect of the iterative AL pipeline. To this end, we consider a sample of the rotated CIFAR-10 dataset variant (v “ 0) described earlier (with Nsrc “ 2000 and N “ 18012 
+
+total samples), and compare classification accuracy between GRINCO and uniform random sampling, for coreset sizes of 
+
+500 and 2000 labels. Note that Nsrc is the maximum number of samples from unique orbits in the dataset. Results are reported in Table I. It can be seen that GRINCO achieves nearly 100% orbit efficiency, meaning that almost all selected labels correspond to unique orbits, while random sampling achieves 88.7% orbit efficiency at 500 labels and about 65.1% at 2000 labels. This translates into a higher overall classification accuracy (OA) for GRINCO, with 0.56% improvement at 500 labels and 0.99% improvement at 2000 labels, compared to random sampling. This shows how the proposed method can take into account symmetries in the dataset to improve the selection of samples and the use of labeling budget. Figure 6 shows OA and orbit efficiency η as a function of the number of labels for the same simulation setting, from which it can be seen that the proposed strategy yields consistently higher OA and orbit efficiency across the range of labels. Moreover, the orbit efficiency of GRINCO only starts to decrease after 2000 labels, when the number of unique orbits in the dataset is exhausted. 
+
+4) Results: Full Active Learning pipeline : This section reports the results of the experiments with the full AL PREPRINT 12 0 500 1000 1500 2000 
+
+> Number of labeled samples
+> 67.5
+> 70.0
+> 72.5
+> 75.0
+> 77.5
+> Accuracy (%)
+> Max. theoretical
+> unique samples
+> GRINCO
+> Random
+
+(a) 0 500 1000 1500 2000 
+
+> Number of labeled samples
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> Orbit Efficiency
+> GRINCO
+> Random
+> Perfect efficiency
+
+(b)     
+
+> Figure 6. Labeling-efficiency results on rotated CIFAR-10 ( v“0)for GRINCO and random sampling. (a) Test overall accuracy (OA) as the labeling budget increases. (b) Orbit efficiency η, showing the fraction of queried labels that correspond to unique orbits.
+
+pipeline described above on the CIFAR-10, STL-10, and MNIST datasets, as well as their rotated variants. We compare GRINCO and GRINCO-b to the baselines in terms of overall accuracy and orbit efficiency at a given budget, as well as their trajectories across AL iterations. Table II reports results for all datasets and methods for budgets of B “ 2000 , 1500 , and 500 
+
+labels for CIFAR-10, STL-10, and MNIST, respectively, while Figure 7 shows the accuracy and orbit efficiency trajectories for the rotated CIFAR-10 dataset (STL-10 follows similar trends, and MNIST is discussed below). On the standard CIFAR-10 and STL-10 datasets, the uncer-tainty baselines achieve slightly stronger performance com-pared to the coreset approaches at the budgets reported in Table II. However, GRINCO and GRINCO-b are still com-petitive and consistently improve over the Euclidean k-centers coreset approach. On CIFAR-10, GRINCO-b improves OA by about 2.9% relative to Euclidean , and it stays within about 
+
+1.6% relative to margin , while on STL-10 it improves OA by about 2.8% relative to Euclidean and achieves performance that is within one standard deviation of margin ’s results. For the rotated variants of the datasets, the performance of the proposed GRINCO and GRINCO-b methods is significantly stronger than the baselines. On rotated CIFAR-10, GRINCO improves OA by about 1.3% relative to Euclidean and by about 2.6% relative to BADGE, and GRINCO-b performs similarly. On rotated STL-10, GRINCO improves OA by about 2.3% relative to Euclidean and by about 7.4% relative to BADGE. Orbit efficiency follows the same trend, with GRINCO reaching nearly 100% samples coming from unique orbits, which is higher than Euclidean , and considerably higher than BADGE, margin , entropy and random , all of which have orbit efficiency below 66% . This illustrates the benefits of the proposed orbit-based coreset selection on datasets with explicit rotation-induced symmetry. The results on MNIST presented in Table II illustrate the behavior of GRINCO on image data with the smaller-angle rotation group GMNIST , instead of C4. On standard MNIST, all methods achieve similar OA, with margin and GRINCO-b (the top performing methods) within one standard deviation of each other. On the rotated MNIST variant, OA is again tightly clustered, with GRINCO-b at 96 .5%, BADGE at 96 .4%, 
+
+margin at 96 .3%, and GRINCO at 95 .8%, which perform significantly better than the Euclidean k-centers. Orbit effi-ciency ( η) is very high for the coreset approaches, as GRINCO reaches 97 .1%, GRINCO-b 96 .5%, and Euclidean 95 .4%, while BADGE, margin , and entropy fall to 75 .1%, 44 .3%, and 
+
+32 .8%, respectively. These results show that quotient space coreset selection is most useful when redundancy in the dataset is high, where it achieves very high orbit coverage. The overall results indicate that uncertainty-based acquisi-tion is very strong in low-redundancy regimes, however, orbit-aware methods remain very competitive despite being based on a different, purely geometric principle that does not take into account any information about the data labels, the classifier output, or its uncertainty. This emphasizes the generality of the coreset approach which, as a data summarization technique, is not restricted to a classification task. This behavior is consistent with the quotient-space perspective developed in the theoretical formulation. When the pool contains many samples within the same orbit, methods that do not operate on the quotient space can repeatedly query points with the same semantic content, wasting labeling budget and reducing coverage. Instead, GRINCO and GRINCO-b use a quotient metric that collapses each orbit to a single point. Thus, their most important improvements appear in datasets with rotation-induced symmetry from a known group G, thereby improving orbit efficiency and yielding strong OA. The baselines show complementary behavior across regimes. Random sampling is competitive only when the dataset does not have redundancy, while entropy and margin 
+
+show strong performance on standard datasets but do not explicitly control orbit coverage, as they are based on different operating principles that target AL classification. BADGE and Euclidean k-centers have better orbit coverage, yet both still allocate labels to redundant samples. Both GRINCO and GRINCO-b achieve high OA and very high orbit efficiency. However, GRINCO-b’s use of the k-means criterion promotes balanced coverage across orbits, which was shown to be beneficial in the CIFAR-10 and MNIST datasets. Further refining the quotient space selection criterion to take into account uncertainty or other task-specific information is a promising direction for future work, as it could leverage the complementary advantages of both approaches. PREPRINT 13 
+
+Table II ACTIVE LEARNING RESULTS FOR ALL DATASETS AND METHODS . W E REPORT MEAN ˘ STD TEST OA (%) AND , FOR ROTATED VARIANTS , ORBIT EFFICIENCY η (%). T HE NUMBERS OF LABELED SAMPLES ARE 2000 FOR CIFAR-10, 1000 FOR STL-10, AND 500 FOR MNIST. B EST RESULTS ARE MARKED IN BOLD .Method CIFAR-10 Rotated CIFAR-10 STL-10 Rotated STL-10 MNIST Rotated MNIST OA (%) OA (%) η (%) OA (%) OA (%) η (%) OA (%) OA (%) η (%) Random 78 .4 ˘ 0.4 76 .8 ˘ 0.1 65 .0 ˘ 0.1 61 .8 ˘ 0.6 57 .8 ˘ 0.8 65 .3 ˘ 0.2 95 .9 ˘ 0.2 95 .5 ˘ 0.1 89 .5 ˘ 0.4
+
+Entropy 79 .4 ˘ 0.4 74 .4 ˘ 0.4 23 .9 ˘ 0.2 62 .9 ˘ 0.4 53 .5 ˘ 0.8 31 .4 ˘ 0.7 95 .1 ˘ 0.5 94 .4 ˘ 1.0 32 .8 ˘ 0.7
+
+Margin 80 .5 ˘ 0.1 76 .1 ˘ 0.2 31 .6 ˘ 0.2 63 .3 ˘ 0.5 54 .8 ˘ 1.2 37 .8 ˘ 0.6 96 .9 ˘ 0.1 96 .3 ˘ 0.2 44 .3 ˘ 0.6
+
+BADGE 80 .2 ˘ 0.2 77 .7 ˘ 0.2 48 .6 ˘ 0.6 63 .1 ˘ 0.3 58 .3 ˘ 1.1 60 .5 ˘ 0.8 96 .6 ˘ 0.1 96 .4 ˘ 0.2 75 .1 ˘ 0.6
+
+Euclidean 77 .0 ˘ 0.5 78 .7 ˘ 0.2 97 .1 ˘ 0.3 61 .3 ˘ 0.3 61 .2 ˘ 1.0 99 .4 ˘ 0.2 93 .0 ˘ 2.0 94 .4 ˘ 1.7 95 .4 ˘ 0.5
+
+GRINCO 78 .2 ˘ 0.7 79 .7 ˘ 0.3 99 .9 ˘ 0.0 62 .4 ˘ 0.5 62 .6 ˘ 1.0 99 .9 ˘ 0.0 96 .2 ˘ 0.5 95 .8 ˘ 1.0 97 .1 ˘ 0.4
+
+GRINCO-b 79 .2 ˘ 0.4 79 .6 ˘ 0.3 99 .1 ˘ 0.0 63 .0 ˘ 0.6 62 .4 ˘ 0.9 99 .1 ˘ 0.0 96 .8 ˘ 0.1 96 .5 ˘ 0.2 96 .5 ˘ 0.30 500 1000 1500 2000 2500 3000 
+
+Number of labeled samples    
+
+> 55
+> 60
+> 65
+> 70
+> 75
+> 80
+> Accuracy (%)  Max. theoretical
+> unique samples
+> random
+> entropy
+> margin
+> BADGE
+> coreset
+> GRINCO
+> GRINCO-b
+> 500 1000 1500 2000
+> 70
+> 75
+> 80
+
+(a) 0 500 1000 1500 2000 2500 3000 
+
+Number of labeled samples 
+
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> Orbit Efficiency
+> random
+> entropy
+> margin
+> BADGE
+> coreset
+> GRINCO
+> GRINCO-b
+
+(b) 
+
+Figure 7. Full active-learning trajectories on rotated CIFAR-10. (a) Test overall accuracy (OA) for the acquisition strategies as the number of labeled samples increases. (b) Orbit efficiency η for the same strategies, showing how much of the labeling budget is allocated to unique orbits. 
+
+V. C ONCLUSION 
+
+We introduced a group-invariant coreset framework for AL that formulates a coverage criterion on the quotient space induced by the action of a transformation group. The method performs sample selection at the level of orbits rather than raw samples, exploiting appropriate metrics constructed from orbit-separating invariants. Model training in AL is performed using an orbit-averaged classification objective. This yields a representative coreset that avoids selecting and labeling samples which are redundant under the group symmetry. We provided theoretical analysis linking coreset coverage in the quotient space to excess risk in AL, and experimentally evaluated the approach on a synthetic rays dataset as well as in real image benchmarks with rotation-induced symmetry. The results show that the proposed GRINCO reduces redundancy in the selected coreset and can significantly improve labeling efficiency when invariances are present in the data. This work assumes knowledge of a group action and access to a quotient space distance or orbit-separating map. Extending the approach to settings with unknown or approximate data symmetries is an important direction for future work. ACKNOWLEDGMENT This work was supported in part by Coordenação de Aperfeiçoamento de Pessoal de Nível Superior (CAPES), Brazil, Finance Code 001; the French National Research Agency (ANR) under Grants ANR-23-CE23-0024, ANR-23-CE94-0001, and ANR-25-CE23-0949; and the Brazilian Research Council under Grant 304597/2023-6. 
+
+REFERENCES 
+
+[1] L. Zhang, R. Tanno, M. Xu, Y. Huang, K. Bronik, C. Jin, J. Jacob, Y. Zheng, L. Shao, O. Ciccarelli et al. , “Learning from multiple annotators for medical image segmentation,” Pattern Recognition , vol. 138, p. 109400, 2023. [2] J. Li, D. Chen, X. Qi, Z. Li, Y. Huang, D. Morris, and X. Tan, “Label-efficient learning in agriculture: A comprehensive review,” Computers and Electronics in Agriculture , vol. 215, p. 108412, 2023. [3] U. Patel and V. Patel, “A comprehensive review: Active learning for hyper-spectral image classifications,” Earth Science Informatics , vol. 16, no. 3, pp. 1975–1991, 2023. [4] J. Gui, T. Chen, J. Zhang, Q. Cao, Z. Sun, H. Luo, and D. Tao, “A survey on self-supervised learning: Algorithms, applications, and future trends,” IEEE Trans. Patt. Anal. Mach. Intell. , 2024. [5] J. Lin, Z. Yang, Q. Liu, Y. Yan, P. Ghamisi, W. Xie, and L. Fang, “Hslabeling: Towards efficient labeling for large-scale remote sensing image segmentation with hybrid sparse labeling,” IEEE Transactions on Image Processing , 2025. [6] B. Settles, “Active learning literature survey,” University of Wisconsin– Madison, Computer Sciences Technical Report 1648, 2009. [7] D. Li, Z. Wang, Y. Chen, R. Jiang, W. Ding, and M. Okumura, “A survey on deep active learning: Recent advances and new frontiers,” IEEE Transactions on Neural Networks and Learning Systems , vol. 36, no. 4, pp. 5879–5899, 2024. PREPRINT 14 
+
+[8] P. K. Agarwal, S. Har-Peled, K. R. Varadarajan et al. , “Geometric approxi-mation via coresets,” Combinatorial and Computational Geometry , vol. 52, no. 1, pp. 1–30, 2005. [9] O. Sener and S. Savarese, “Active learning for convolutional neural networks: A core-set approach,” in Int. Conf. on Learning Representations (ICLR) , 2018. [10] B. B. Moser, A. S. Shanbhag, S. Frolov, F. Raue, J. Folz, and A. Dengel, “A coreset selection of coreset selection literature: Introduction and recent advances,” arXiv preprint arXiv:2505.17799 , 2025. [11] Y. Kim and B. Shin, “In defense of core-set: A density-aware core-set selec-tion for active learning,” in Proc. 28th ACM SIGKDD Conf. on Knowledge Discovery and Data Mining (KDD) , 2022, pp. 804–812. [12] O. Yehuda, A. Dekel, G. Hacohen, and D. Weinshall, “Active learning through a covering lens,” in Advances in Neural Information Processing Systems 35 (NeurIPS 2022) , 2022. [13] W. Bae, J. Noh, and D. J. Sutherland, “Generalized coverage for more robust low-budget active learning,” in Computer Vision – ECCV 2024 , ser. Lecture Notes in Computer Science, vol. 15141. Springer, 2024, pp. 318–334. [14] Z. Xiong, N. Dalmasso, S. Sharma, F. Lecue, D. Magazzeni, V. K. Potluru, T. Balch, and M. Veloso, “Fair wasserstein coresets,” arXiv preprint arXiv:2311.05436 , 2024. [15] A. Acharya, S. Sanghavi, A. G. Dimakis, and I. S. Dhillon, “Geometric me-dian matching for robust k-subset selection from noisy data,” arXiv preprint arXiv:2504.00564 , 2025. [16] R. Bardenet, S. Ghosh, H. Simon-Onfroy, and H.-S. Tran, “Small coresets via negative dependence: Dpps, linear statistics, and concentration,” arXiv preprint arXiv:2411.00611 , 2024. [17] M. Weiler, “Equivariant and coordinate independent convolutional networks: A gauge field theory of neural networks,” Ph.D. dissertation, University of Amsterdam, Mar. 2024, phD thesis. [18] T. S. Cohen and M. Welling, “Group equivariant convolutional networks,” in 
+
+Proc. of the 33rd Int. Conf. on Machine Learning (ICML) , vol. 48. PMLR, 2016, pp. 2990–2999. [19] D. E. Worrall, S. J. Garbin, D. Turmukhambetov, and G. J. Brostow, “Har-monic networks: Deep translation and rotation equivariance,” in Proc. of the IEEE conference on computer vision and pattern recognition , 2017, pp. 5028– 5037. [20] M. Finzi, S. Stanton, P. Izmailov, and A. G. Wilson, “Generalizing convolu-tional neural networks for equivariance to lie groups on arbitrary continuous data,” in Proc. 37th Int. Conf. on Machine Learning , vol. 119. PMLR, 13–18 Jul 2020, pp. 3165–3176. [21] M. Zaheer, S. Kottur, S. Ravanbakhsh, B. Poczos, R. Salakhutdinov, and A. J. Smola, “Deep sets,” in Advances in Neural Information Processing Systems ,vol. 30, 2017. [22] M. M. Bronstein, J. Bruna, T. Cohen, and P. Veliˇ ckovi´ c, “Geometric deep learning: Grids, groups, graphs, geodesics, and gauges,” arXiv preprint arXiv:2104.13478 , 2021. [23] S. Chen, E. Dobriban, and J. H. Lee, “A group-theoretic framework for data augmentation,” Journal of Machine Learning Research , vol. 21, no. 245, pp. 1–71, 2020. [24] B. Aslan, D. Platt, and D. Sheard, “Group invariant machine learning by fundamental domain projections,” in NeurIPS Workshop on Symmetry and Geometry in Neural Representations , 2023, pp. 181–218. [25] S. Gidaris, P. Singh, and N. Komodakis, “Unsupervised representation learn-ing by predicting image rotations,” in Proc. of the Int. Conf. on Learning Representations (ICLR) , Vancouver, Canada, April 2018. [26] T. Chen, S. Kornblith, M. Norouzi, and G. Hinton, “A simple framework for contrastive learning of visual representations,” in Proc. of the 37th Int. Conf. on Machine Learning , ser. ICML’20. JMLR.org, 2020. [27] M. Caron, H. Touvron, I. Misra, H. Jegou, J. Mairal, P. Bojanowski, and A. Joulin, “Emerging properties in self-supervised vision transformers,” in 
+
+2021 IEEE/CVF Int. Conf. on Computer Vision (ICCV) , 2021, pp. 9630–9640. [28] G. Benton, M. Finzi, P. Izmailov, and A. G. Wilson, “Learning invariances in neural networks from training data,” in Advances in Neural Information Processing Systems , H. Larochelle, M. Ranzato, R. Hadsell, M. Balcan, and H. Lin, Eds., vol. 33. Curran Associates, Inc., 2020, pp. 17 605–17 616. [29] J. Z. Bengar, J. van de Weijer, B. Twardowski, and B. Raducanu, “Reducing label effort: Self-supervised meets active learning,” in Proc. of the IEEE/CVF Int. Conf. on Computer Vision Workshops (ICCVW) , 2021. [30] P. Doucet, B. Estermann, T. Aczel, and R. Wattenhofer, “Bridging diver-sity and uncertainty in active learning with self-supervised pre-training,” in 5th Workshop on Practical ML for Limited/Low Resource Settings (PML4LRS@ICLR) , 2024. [31] A. Vepa, Z. Yang, A. Choi, J. Joo, F. Scalzo, and Y. Sun, “Integrating deep metric learning with coreset for active learning in 3d segmentation,” in Advances in Neural Information Processing Systems 38 (NeurIPS 2024) ,2024. [32] R. Subedi, L. Wei, W. Gao, S. Chakraborty, and Y. Liu, “Empowering active learning for 3d molecular graphs with geometric graph isomorphism,” in 
+
+Advances in Neural Information Processing Systems 38 (NeurIPS 2024) ,2024. [33] M. A. Armstrong, Groups and symmetry . Springer Science & Business Media, 1997. [34] D. T. Nguyen, J. Kim, H. Yang, and S. Hong, “Learning symmetrization for equivariance with orbit distance minimization,” in NeurIPS Workshop on Symmetry and Geometry in Neural Representations , 2023. [35] N. Dym and S. J. Gortler, “Low-dimensional invariant embeddings for uni-versal geometric learning,” Foundations of Computational Mathematics , pp. 1–41, 2024. [36] J. Zhao, W. Zhao, B. Deng, Z. Wang, F. Zhang, W. Zheng, W. Cao, J. Nan, Y. Lian, and A. F. Burke, “Autonomous driving system: A comprehensive survey,” Expert Systems with Applications , p. 122836, 2023. [37] D. Cohn, L. Atlas, and R. Ladner, “Improving generalization with active learning,” Machine learning , vol. 15, pp. 201–221, 1994. [38] L.-L. Sun and X.-Z. Wang, “A survey on active learning strategy,” in 2010 Int. Conf. on Machine Learning and Cybernetics , vol. 1. IEEE, 2010, pp. 161–166. [39] P. Ren, Y. Xiao, X. Chang, P.-Y. Huang, Z. Li, B. B. Gupta, X. Chen, and X. Wang, “A survey of deep active learning,” ACM computing surveys (CSUR) , vol. 54, no. 9, pp. 1–40, 2021. [40] P. Kumar and A. Gupta, “Active learning query strategies for classification, regression, and clustering: A survey,” Journal of Computer Science and Technology , vol. 35, pp. 913–945, 2020. [41] A. Tharwat and W. Schenck, “A survey on active learning: State-of-the-art, practical challenges and research directions,” Mathematics , vol. 11, no. 4, p. 820, 2023. [42] D. Feldman, “Core-sets: Updated survey,” Sampling Techniques for Super-vised or Unsupervised Tasks , pp. 23–44, 2020. [43] T. Gonzalez, “Clustering to minimize the maximum intercluster distance,” 
+
+Theoretical Computer Science , vol. 38, pp. 293–306, 1985. [44] B. Bloem-Reddy and Y. W. Teh, “Probabilistic symmetries and invariant neural networks,” Journal of Machine Learning Research , vol. 21, no. 90, pp. 1–61, 2020. [45] C. Shorten and T. M. Khoshgoftaar, “A survey on image data augmentation for deep learning,” Journal of Big Data , vol. 6, no. 1, p. 60, 2019. [46] G. L. Marchetti, G. Tegnér, A. Varava, and D. Kragic, “Equivariant repre-sentation learning via class-pose decomposition,” in Int. Conf. on Artificial Intelligence and Statistics . PMLR, 2023, pp. 4745–4756. [47] F. Anselmi, G. Evangelopoulos, L. Rosasco, and T. Poggio, “Symmetry-adapted representation learning,” Pattern Recognition , vol. 86, pp. 201–208, 2019. [48] M. Shakerinava, A. K. Mondal, and S. Ravanbakhsh, “Structuring represen-tations using group invariants,” Advances in Neural Information Processing Systems , vol. 35, pp. 34 162–34 174, 2022. [49] A. S. Bandeira, B. Blum-Smith, J. Kileel, J. Niles-Weed, A. Perry, and A. S. Wein, “Estimation under group actions: recovering orbits from invariants,” 
+
+Applied and Computational Harmonic Analysis , vol. 66, pp. 236–319, 2023. [50] P. Hoyos and J. Kileel, “Diffusion maps for group-invariant manifolds,” arXiv preprint arXiv:2303.16169 , 2023. [51] D. Burago, Y. Burago, and S. Ivanov, A Course in Metric Geometry . Amer-ican Mathematical Society, 2022, vol. 33. [52] R. Winter, M. Bertolini, T. Le, F. Noe, and D.-A. Clevert, “Unsupervised learning of group invariant and equivariant representations,” Advances in Neural Information Processing Systems , vol. 35, pp. 31 942–31 956, 2022. [53] A. Manolache, L. F. O. Chamon, and M. Niepert, “Learning (approxi-mately) equivariant networks via constrained optimization,” arXiv preprint arXiv:2505.13631 , 2025. [54] A. Maurer, “A bernstein-type inequality for functions of bounded interaction,” 
+
+arXiv preprint arXiv:1701.06191 , 2017. [55] K. Sridharan, “A gentle introduction to concentration inequalities,” Dept. Comput. Sci., Cornell Univ., Tech. Rep , pp. 1–21, 2002. [56] A. Krizhevsky, G. Hinton et al. , “Learning multiple layers of features from tiny images,” 2009. [57] A. Coates, A. Ng, and H. Lee, “An analysis of single-layer networks in unsu-pervised feature learning,” in Proc. of the fourteenth international conference on artificial intelligence and statistics . JMLR Workshop and Conf. Proc., 2011, pp. 215–223. [58] Y. LeCun, L. Bottou, Y. Bengio, and P. Haffner, “Gradient-based learning applied to document recognition,” Proc. of the IEEE , vol. 86, no. 11, pp. 2278–2324, 2002. [59] J. T. Ash, C. Zhang, A. Krishnamurthy, J. Langford, and A. Agarwal, “Deep batch active learning by diverse, uncertain gradient lower bounds,” in Int. Conf. on Learning Representations (ICLR) , 2020. PREPRINT 15 
+
+APPENDIX 
+
+PROOF OF THE GENERALIZATION THEOREM 
+
+This proof of Theorem 1 complements Subsection III-C by bounding the generalization gap via a decomposition into a full-dataset term and an invariant-coreset term. 
+
+Proof. We can decompose the generalization error as 
+
+ˇˇ ˆRQ 
+
+> C
+
+pfwq ´ Rpfwqˇˇlooooooooooomooooooooooon 
+
+> coreset generalization error
+
+ď ˇˇ ˆRQ
+
+> full
+
+pfwq ´ Rpfwqˇˇloooooooooooomoooooooooooon 
+
+> full dataset generalization term
+
+` ˇˇ ˆRQ 
+
+> C
+
+pfwq ´ ˆRQ
+
+> full
+
+pfwqˇˇloooooooooooomoooooooooooon 
+
+> invariant coreset excess risk
+
+. (A.1) Thus, we see that the generalization error includes an excess risk due to the use of the representative coreset C compared to the full dataset, given by | ˆRQ 
+
+> C
+
+pfwq ´ ˆRQ
+
+> full
+
+pfwq| . Expanding the last term, without assuming a constant label per orbit: 
+
+| ˆRQ 
+
+> C
+
+pfwq ´ ˆRQ
+
+> full
+
+pfwq| “
+
+ˇˇˇ 1
+
+N
+
+> N
+
+ÿ
+
+> n“1
+
+EQpgqtLpfwpg ¨ xnq, y nqu ´ 
+
+> K
+
+ÿ
+
+> i“1
+
+wiEQpgqtLpfwpg ¨ ¯xiq, y iqu 
+
+ˇˇˇ
+
+ď
+
+ˇˇˇ 1
+
+N
+
+> N
+
+ÿ
+
+> n“1
+
+EQpgqtLpfwpg ¨ xnq, y nqu ´ 1
+
+N
+
+> N
+
+ÿ
+
+> n“1
+
+EppY |g¨xnqQpgqtLpfwpg ¨ xnq, Y qu 
+
+ˇˇˇ
+
+`
+
+ˇˇˇ
+
+> K
+
+ÿ
+
+> i“1
+
+wiEQpgqtLpfwpg ¨ ¯xiq, y iqu ´ 1
+
+N
+
+> N
+
+ÿ
+
+> n“1
+
+EppY |g¨xnqQpgqtLpfwpg ¨ xnq, Y qu 
+
+ˇˇˇ (A.2) We now have to bound each of the terms in the above equation. 
+
+First term: To upper bound the first term in (A.2), we make use of Bernstein’s inequality and the boundedness of the loss, i.e., the fact that 
+
+|EQpgqtLpfwpg ¨ xnq, y nqu ´ EppY |g¨xnqQpgqtLpfwpg ¨ xnq, Y qu| ď max   
+
+> yPY, n Pt 1,...,N u
+
+EQpgqtLpfwpg ¨ xnq, y qu ď Lmax .
+
+Since pxn, y nq are i.i.d., we can define the random variable Z and its i.i.d. realizations Zn as 
+
+Z “ EQpgqtLpfwpg ¨ Xq, Y qu ´ EppY 1|g¨XqQpgqtLpfwpg ¨ Xq, Y 1qu (A.3) 
+
+Zn “ EQpgqtLpfwpg ¨ xnq, y nqu ´ EppY |g¨xnqQpgqtLpfwpg ¨ xnq, Y qu (A.4) Note that Z ” ZpX, Y q is a function of X and Y , and can also be written as the orbit-average of a random variable rZpX, Y q
+
+as 
+
+Z “ EQpgqt rZpg ¨ X, Y qu , where rZpX, Y q “ LpfwpXq, Y q ´ EppY 1|XqtLpfwpXq, Y 1qu .
+
+One can verify that Z is zero mean due to the group invariance property of ppY |Xq, that is, 
+
+EppY |XqppXqtZu“ EppY |XqppXq
+
+!
+
+EQpgqtLpfwpg ¨ Xq, Y qu ´ EppY 1|g¨XqQpgqtLpfwpg ¨ Xq, Y 1qu 
+
+)
+
+“ EppXq
+
+!
+
+EppY |Xq
+
+!
+
+EQpgqtLpfwpg ¨ Xq, Y qu 
+
+)
+
+´ EppY 1|XqQpgqtLpfwpg ¨ Xq, Y 1qu 
+
+)
+
+“ 0 .
+
+Applying Bernstein’s inequality [54], [55] to bound 1
+
+> N
+
+řNn“1 Zn gives, with probability at least 1 ´ γ,
+
+ˇˇˇ 1
+
+N
+
+> N
+
+ÿ
+
+> n“1
+
+EQpgqtLpfwpg ¨ xnq, y nqu ´ 1
+
+N
+
+> N
+
+ÿ
+
+> n“1
+
+EppY |g¨xnqQpgqtLpfwpg ¨ xnq, Y qu 
+
+ˇˇˇ
+
+ď
+
+c 2σ2 
+
+> Z
+
+ln p2{γq
+
+N ` 2 Lmax ln p2{γq
+
+3N . (A.5) where σ2 
+
+> Z
+
+:“ Var pZq is the variance of Z. Since Z ” ZpX, Y q is a function of X and Y , it can be expressed using the law of total variance as 
+
+Var ppY, XqpZpX, Y qq “ Var ppY, XqpEQpgqt rZpg ¨ X, Y quq “ EppXqtVar ppY |XqpZpX, Y q| Xqu ` Var ppXqpEppY |XqtZpX, Y quq . (A.6) PREPRINT 16 
+
+Denote the following functions to lighten the notation: 
+
+ζpXq “ EQpgqtEppY |Xqt rZpg ¨ X, Y quu (A.7) 
+
+rζpXq “ EppY |Xqt rZpX, Y qu (A.8) 
+
+ξ “ EppXqtVar ppY |XqpZpX, Y q| Xqu (A.9) First, for the term ξ (which is the first term in (A.6)), using Jensen’s inequality in measure-theoretic form, and the fact that Z
+
+is (conditionally) zero mean (i.e., EppY 1|g¨XqtZu “ 0 for any g) which makes the map Z Þ Ñ Var ppY |XqpZ|Xq convex, we can write 
+
+0 ď ξ “ EppXqtVar ppY |XqpZpX, Y q| Xqu “ EppXqtVar ppY |Xq
+
+`EQpgqt rZpg ¨ X, Y qu| X˘uď EppXqtEQpgqtVar ppY |Xq
+
+` rZpg ¨ X, Y q| X˘uu 
+
+:“ EppXqtEQpgqtrξpg ¨ Xquu (A.10) where we used the group invariance property ppY |Xq “ ppY |g ¨ Xq, and rξ is given by 
+
+rξpXq “ Var ppY |Xq
+
+` rZpX, Y q| X˘ .
+
+For the second term in (A.6), using Lemma 1 in [23], we also have 
+
+Var ppXqpEppY |XqtZpX, Y quq “ Var ppXqpEQpgqtEppY |Xqt rZpg ¨ X, Y quuq “ Var ppXqpζpXqq “ Var ppXqprζpXqq ´ EppXqtVar Qpgqprζpg ¨ Xqqu , (A.11) plugging (A.10) and (A.11) back into (A.5), 
+
+ˇˇˇ 1
+
+N
+
+> N
+
+ÿ
+
+> n“1
+
+EQpgqtLpfwpg ¨ xnq, y nqu ´ 1
+
+N
+
+> N
+
+ÿ
+
+> n“1
+
+EppY |g¨xnqQpgqtLpfwpg ¨ xnq, Y qu 
+
+ˇˇˇ
+
+ď
+
+c 2 ln p2{γq
+
+N V pQq ` 2 Lmax ln p2{γq
+
+3N . (A.12) where 
+
+V pQq “ EppXqtEQpgqtrξpg ¨ Xquu ` Var ppXqprζpXqq ´ EppXqtVar Qpgqprζpg ¨ Xqqu 
+
+is the variance term as defined in (21). Note that for large N the first term dominates the convergence speed. 
+
+Second term: For the second term, we note that for every point xn there is a representative in the coreset that is ε-close. Thus, assuming without loss of generality that each xn has a unique nearest neighbor in the coreset (consistent with the construction of the representative coreset, where the selected samples belong to disjoint orbits), we can write: 
+
+ˇˇˇ
+
+> K
+
+ÿ
+
+> i“1
+
+wiEQpgqtLpfwpg ¨ ¯xiq, y iqu ´ 1
+
+N
+
+> N
+
+ÿ
+
+> n“1
+
+EppY |g¨xnqQpgqtLpfwpg ¨ xnq, Y qu 
+
+ˇˇˇ
+
+“
+
+ˇˇˇ
+
+> K
+
+ÿ
+
+> i“1
+
+´
+
+wiEQpgqtLpfwpg ¨ ¯xiq, y iqu ´ 1
+
+N
+
+ÿ   
+
+> j:r¯xisGis closest to rxjsG
+
+EppY |g¨xj qQpgqtLpfwpg ¨ xj q, Y qu 
+
+¯ˇ ˇˇ . (A.13) Using an approach similar to that in [9], we can write, 
+
+EppY |g¨xj qQpgqtLpfwpg ¨ xj q, Y qu “ EQpgq
+
+! ÿ 
+
+> cPY
+
+ppY “ c|g ¨ ¯xiqLpfwpg ¨ ¯xiq, c q` ppY “ c|g ¨ ¯xiq`Lpfwpg ¨ xj q, c q ´ Lpfwpg ¨ ¯xiq, c q˘
+
+` `ppY “ c|g ¨ xj q ´ ppY “ c|g ¨ ¯xiq˘Lpfwpg ¨ xj q, c q
+
+)
+
+(A.14) We now use the fact that the labeling function and loss function are Lipschitz continuous with respect to the quotient pseudo-distance in (18) and (19), that is, 
+
+|ppY “ c|xj q ´ ppY “ c|¯xiq| ď LpdG,h pxj , ¯xiq (A.15) 
+
+|EQpgq
+
+␣Lpfwpg ¨ xj q, Y q( ´ EQpgq
+
+␣Lpfwpg ¨ ¯xiq, Y q(| ď LLdG,h pxj , ¯xiq (A.16) PREPRINT 17 
+
+and that the loss is bounded as Lpy, ˆyq ď Lmax over the domain. Using the per-class bound and summing over c gives ř 
+
+> cPY
+
+|ppY “ c|xj q ´ ppY “ c|¯xiq| ď CL pdG,h pxj , ¯xiq. Thus, the triangle inequality gives us 
+
+ˇˇˇ
+
+> K
+
+ÿ
+
+> i“1
+
+´
+
+wiEQpgqtLpfwpg ¨ ¯xiq, y iqu ´ 1
+
+N
+
+ÿ   
+
+> j:r¯xisGis closest to rxjsG
+
+EppY |g¨xj qQpgqtLpfwpg ¨ xj q, Y qu 
+
+¯ˇ ˇˇ
+
+ď
+
+ˇˇˇ
+
+> K
+
+ÿ
+
+> i“1
+
+´
+
+wiEQpgqtLpfwpg ¨ ¯xiq, y iqu ´ Ni
+
+N EppY |g¨¯xiqQpgqtLpfwpg ¨ ¯xiq, Y qu 
+
+¯ˇ ˇˇ
+
+`
+
+ˇˇˇ 1
+
+N
+
+> K
+
+ÿ
+
+> i“1
+
+ÿ   
+
+> j:r¯xisGis closest to rxjsG
+
+EQpgq
+
+! ÿ 
+
+> cPY
+
+ppY “ c|g ¨ ¯xiq`Lpfwpg ¨ xj q, c q ´ Lpfwpg ¨ ¯xiq, c q˘
+
+` `ppY “ c|g ¨ xj q ´ ppY “ c|g ¨ ¯xiq˘Lpfwpg ¨ xj q, c q
+
+)ˇ ˇˇ
+
+ď
+
+ˇˇˇ
+
+> K
+
+ÿ
+
+> i“1
+
+´
+
+wiEQpgqtLpfwpg ¨ ¯xiq, y iqu ´ Ni
+
+N EppY |g¨¯xiqQpgqtLpfwpg ¨ ¯xiq, Y qu 
+
+¯ˇ ˇˇ
+
+` 1
+
+N
+
+> K
+
+ÿ
+
+> i“1
+
+ÿ   
+
+> j:r¯xisGis closest to rxjsG
+
+EQpgq
+
+!
+
+LLdG,h pxj , ¯xiq ` CL pLmax dG,h pxj , ¯xiq
+
+)
+
+ď
+
+ˇˇˇ
+
+> K
+
+ÿ
+
+> i“1
+
+´
+
+wiEQpgqtLpfwpg ¨ ¯xiq, y iqu ´ Ni
+
+N EppY |g¨¯xiqQpgqtLpfwpg ¨ ¯xiq, Y qu 
+
+¯ˇ ˇˇ
+
+` p LL ` CL pLmax qε (A.17) where Ni “ #tj : r¯xisG is closest to rxj sGu, and the last step comes from the coreset coverage condition. From the representative coreset definition in Subsection III-B1, the coreset weights can be expressed in terms of Ni as 
+
+wi “ Ni{N . This allows us to bound the first term in (A.17) as 
+
+EQpgqtLpfwpg ¨ ¯xiq, y iqu ´ EppY |g¨¯xiqQpgqtLpfwpg ¨ ¯xiq, Y qu “ EQpgq
+
+! ÿ 
+
+> cPY
+
+`δc´yi ´ ppY “ c|g ¨ ¯xiq˘Lpfwpg ¨ ¯xiq, c q
+
+)
+
+“ EQpgq
+
+! ÿ 
+
+> cPY
+
+ppY “ c|g ¨ ¯xiq`Lpfwpg ¨ ¯xiq, y iq ´ Lpfwpg ¨ ¯xiq, c q˘)
+
+ď Lmax EQpgqt ÿ
+
+> cPY
+
+|δc´yi ´ ppY “ c|g ¨ ¯xiq|u (A.18) 
+
+“ 2p1 ´ ppY “ yi|¯xiqq Lmax 
+
+“ 2Lmax ηi (A.19) where ηi :“ 1 ´ ppY “ yi|¯xiq is the label uncertainty in the i-th coreset sample. Thus, we can bound (A.17) by 
+
+ď 2Lmax 
+
+> K
+
+ÿ
+
+> i“1
+
+wiηi ` p LL ` CL pLmax qε . (A.20) 
+
+Concluding: By combining the bounds in (A.12) and (A.20) we obtain the desired result.
