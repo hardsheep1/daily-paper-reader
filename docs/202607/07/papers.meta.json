@@ -1,0 +1,39 @@
+{
+  "label": "2026-07-07",
+  "date": "2026-07-07",
+  "generated_at": "2026-07-07T20:56:24",
+  "count": 2,
+  "papers": [
+    {
+      "paper_id": "202607/07/2607.00448v2-real-time-hard-negative-sampling-via-llm-based-clustering-for-large-scale-two-tower-retrieval",
+      "section": "quick",
+      "title_en": "Real-Time Hard Negative Sampling via LLM-based Clustering for Large-Scale Two-Tower Retrieval",
+      "authors": "Ivan Ji, Liuyi Hu, Harrison, Zhao, Lei Huang, Qunshu Zhang, Max, Fan, Aameek Singh",
+      "date": "2026-07-01",
+      "pdf": "https://arxiv.org/pdf/2607.00448v2",
+      "score": "7.0",
+      "evidence": "基于大语言模型的聚类用于硬负采样",
+      "tldr": "大规模推荐系统检索阶段常用双塔模型，但传统负采样易产生简单负例，难以提升模型区分能力。提出基于大语言模型(LLM)的聚类实时硬负采样方法，利用LLM学习媒体表示，从同一聚类中生成更具挑战性的负样本，支持数十亿数据高效训练。实验与线上部署表明该方法优于工业标准方案，能打破反馈循环并降低流行度偏差。",
+      "tags": "query:ac",
+      "abstract_en": "The two-tower model has been widely used for large-scale recommendation systems, particularly in the retrieval stage. Industry standards for training two-tower models typically involve in-batch and/or out-of-batch negative sampling. However, these methods often produce easy negatives that models can quickly learn, failing to sufficiently challenge the model. To address this issue, a novel self-supervised hard negative sampling technique is proposed that leverages a large language model (LLM) to generate hard negatives from the same cluster during model training. By utilizing the LLM to learn media representations, the proposed approach ensures that the generated negatives are more challenging and informative. This real-time sampling framework is designed for seamless integration into production models, capable of handling billions of training data points with minimal computational complexity. Experiments on public datasets, along with deployment to a large-scale online system, demonstrate that the proposed negative sampling technique outperforms widely used industry methods. Furthermore, analysis in industrial applications reveals that this sampling method can help break inherent feedback loops in recommendations and significantly reduce popularity bias.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202607/07/2607.04548v1-explainable-novel-category-discovery-in-semantic-concept-space",
+      "section": "quick",
+      "title_en": "Explainable Novel Category Discovery in Semantic Concept Space",
+      "authors": "Ifrat Ikhtear Uddin, Yang Zhou, KC Santosh, Longwei Wang",
+      "date": "2026-07-05",
+      "pdf": "https://arxiv.org/pdf/2607.04548v1",
+      "score": "7.0",
+      "evidence": "使用视觉-语言大模型进行聚类（新类别发现）",
+      "tldr": "现有新类别发现方法在隐式特征空间中进行，缺乏可解释性。本文提出xNCD框架，在结构化语义概念空间中同时完成表示学习和伪标签分配，通过视觉-语言先验对齐和自标签目标，使每个发现类别具有概念签名和实例级概念证据。理论证明概念瓶颈能约束假设类。实验在CIFAR-10上达92.63%准确率，CIFAR-100提升至76.45%，且是唯一提供人类可读解释的方法。",
+      "tags": "query:ac",
+      "abstract_en": "Novel category discovery aims to identify unseen classes from unlabeled data by transferring knowledge from labeled categories, but most existing methods perform discovery in opaque latent feature spaces. As a result, they may separate novel categories accurately while providing little insight into what semantic evidence defines each discovered group. We propose xNCD, an explainable novel category discovery framework that performs both representation-based discovery and pseudo-label assignment directly in a structured semantic concept space. Instead of clustering arbitrary deep features, xNCD learns a label-free concept representation by aligning visual features with vision-language similarity priors from pretrained multimodal models, and then applies a unified labeled-and-unlabeled self-labeling objective over concept-space logits. This design makes each discovered category explainable by construction through stable concept signatures and instance-level concept evidence. Theoretically, we show that routing discovery through a semantic concept bottleneck induces a strict restriction of the feature-space hypothesis class, excluding a large family of unconstrained decision rules and biasing induced partitions toward semantically interpretable concept coordinates. Experiments on CIFAR-10, CIFAR-100, and CUB-200 demonstrate that xNCD preserves strong discovery performance while providing intrinsic explanations. Under task-agnostic evaluation, xNCD achieves 92.63% overall accuracy on CIFAR-10, close to UNO's 93.4%, and improves CIFAR-100 overall accuracy from 73.2% to 76.45%, while being the only compared method that provides human-readable cluster- and instance-level explanations.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}
