@@ -1,0 +1,230 @@
+Title: Structured Data Extraction from Real Estate Documents using Clustering, Classification, and Large Language Models
+
+URL Source: https://arxiv.org/pdf/2607.06012v1
+
+Published Time: Wed, 08 Jul 2026 00:43:24 GMT
+
+Number of Pages: 17
+
+Markdown Content:
+# Structured Data Extraction from Real Estate Documents using Clustering, Classification, and Large Language Models 
+
+Muhammad Assad Shehbaz and Carlos Francisco Moreno-García  
+
+> 1
+
+Robert Gordon University, Garthdee Rd, Aberdeen, UK  
+
+> 2
+
+m.shehbaz,c.moreno-garcia@rgu.ac.uk https://www.rgu.ac.uk 
+
+Abstract. Real estate property listings expose structured metadata through the API. Still, the richest property-level information (i.e., le-gal status, structural condition, utility supplies, heating systems) sits in attached questionnaire documents that no automated system currently processes at scale. These documents are heterogeneous. Some are digi-tally generated with selectable text, others are scanned physical forms. There are even more complex layouts that contain checkbox annotations that defeat conventional text extraction. In this paper, we present an end-to-end pipeline for acquiring, classifying, and extracting structured data from selectable text documents. The pipeline was applied to 3, 965 ques-tionnaire documents collected from a live property platform via reverse-engineered REST APIs. First, we classified each document into one of three structural categories ( text_only , scanned , and special_char ), then extracted 35 predefined property attributes from eligible documents using DeepSeek R1 as the Large Language Model, prompted to return a structured JSON object. All 2, 781 submitted documents were pro-cessed successfully, producing a final dataset of 2, 766 unique property records. Downstream validation confirmed the data quality. Cosine sim-ilarity matching achieves a Jaccard consistency score of 0.82 , and K-Means clustering produces interpretable market segments with a silhou-ette score of 0.2088 . Results show that the proposed extraction from each property document is both feasible and reliable at this scale. 
+
+Keywords: Data Extraction · Document Clustering · Document Intelligence ·
+
+Real Estate · Large Language Models 
+
+# 1 Introduction 
+
+When a property is listed for sale in the United Kingdom (UK), the seller is re-quired to complete a detailed questionnaire covering everything from the central heating system to the presence of asbestos, legal disputes affecting the title, and the names of utility suppliers [1]. This information is usually captured in a docu-ment in Portable Document Format (PDF). These documents are neither stored arXiv:2607.06012v1 [cs.CV] 7 Jul 2026 2 Shehbaz et al. 
+
+in any database nor accessible through any Application Programming Interface (API), nor indexed by any search engine. They exist as unstructured, variably formatted documents and are largely ignored by automated systems. Most real estate platforms expose basic structured listing data through some kind of proprietary APIs, such as price, number of bedrooms, floor area, and geo-graphic coordinates [2]. That data is clean and easy to work with. The question-naire PDFs attached to each listing contain a second, richer layer of information that never makes it into any structured pipeline. For instance, a seller may de-scribe central heating as gas central heating , GCH , mains gas , or combine boiler system , which can confuse a potential buyer. Traditional parsing approaches fail on free-form variation. Regular expressions, template matching, and rule-based extractors all depend on fixed patterns and predefined vocabularies. A rule writ-ten for one form will silently miss the others, and extending the rule set to cover every variant is neither scalable nor reliable against phrasings not seen at design time. No hand-crafted rule set survives contact with real data. However, recent work shows that LLMs can extract structured fields from free-form text without any document-specific rules [3]. Given a page of property disclosure text, a well-prompted model can identify the relevant attributes and return them as a valid JSON object. Whether this holds reliably across thousands of real documents from a live platform, and whether the output is useful downstream, is what we set out to test. In this paper, we present an end-to-end pipeline for acquiring, classifying, and extracting structured information from real estate questionnaire PDFs at scale, applied to 3, 965 documents. The pipeline makes the following contributions: 1. A data acquisition system built on reverse-engineered REST, yielding 3, 965 
+
+questionnaire PDFs alongside structured listing metadata. 2. A model that classifies questionnaire documents into three categories scanned ,
+
+text_only , and special_char , routing each to an appropriate processing pathway. 3. An LLM-based extraction pipeline using DeepSeek R1 model [4] via the Groq inference API [5], extracting 35 predefined property attributes per document as structured JSON, with a 100% success rate across the 2, 781 
+
+eligible documents. 4. A downstream validation study confirming that the extracted features sup-port similarity matching, market segmentation, and multi-criteria ranking, providing empirical evidence of data quality. The remainder of the paper is organised as follows. Section 2 reviews related work on PDF extraction, LLMs for document understanding, and real estate document analysis. Section 3 describes the data acquisition pipeline. Section 4 presents the document processing pipeline in detail. Section 5 reports the val-idation experiments. Section 6 discusses the results. Section 7 concludes with directions for future work. Real Estate Clustering 3
+
+# 2 Background 
+
+2.1 PDF Document Processing and Information Extraction 
+
+Extracting structured information from PDF documents is a long-standing chal-lenge in document analysis. The difficulty is not any single technical limitation but from the fundamental heterogeneity of the format itself. A PDF may contain digitally typeset text with a selectable layer, a scanned page image with no text layer, or a hybrid of both within the same file. Property questionnaire docu-ments add a further complication, with form fields, checkbox annotations, and non-standard character encodings being common, and each breaks conventional parsing differently. Traditional approaches rely on rule-based text extraction libraries such as pdfplumber [6] and PyMuPDF [7]. These work well on clean, digitally gener-ated PDFs. They fail systematically on documents with inconsistent layouts or encoded form fields, a limitation well established in the PDF extraction litera-ture [8,9]. For scanned documents, OCR provides a means to extract text, but introduces its own error profile. Blurred stamps, skewed pages, and handwritten annotations all degrade output quality, and modern deep learning OCR ap-proaches have been shown to substantially outperform classical engines on noisy real-world documents [9]. Any pipeline operating over a real-world corpus must therefore classify documents by type before attempting extraction. Layout-aware models such as LayoutLM [11] and LayoutLMv3 [12] address some of these limitations by jointly modelling text content and spatial position. LayoutLMv3 achieves strong results on key information extraction benchmarks by treating document layout as a first-class input signal. These models require fine-tuning on labelled datasets, however, which limits their use in domains, like property questionnaires, where no labelled training data exists. 
+
+2.2 Large Language Models for Document Understanding 
+
+The emergence of instruction-following large language models has changed what is possible in document information extraction. Rather than training a task-specific model on labelled examples, a well-designed prompt can instruct a general-purpose LLM to identify target fields, handle terminological variation, and return output in a specified schema without any document-specific fine-tuning. Dunn et al. [3] demonstrated this on scientific corpora, showing that LLMs extract structured records from free-form documents and return them reliably as JSON objects. Results generalise across domains. The central challenge in applying LLMs to batch extraction is output consis-tency. Left unconstrained, a model may return the same date as 2024-06-03 in one response and 3rd June 2024 in another. Schema enforcement, requiring the model to return a fixed set of named fields as strings, with null for absent val-ues, addresses this directly and is now standard practice in production document extraction pipelines [13]. At low temperature settings, modern models produce stable outputs across structurally similar documents. Hallucination is mitigated 4 Shehbaz et al. 
+
+by prompting for null rather than inference, and by validating output before database insertion. Evaluations across domains, including health records [14], confirm that well-constrained prompts achieve high consistency, though perfor-mance degrades on very short or poorly formatted documents. 
+
+2.3 Document Analysis in Real Estate 
+
+Automated extraction from real estate documents has received limited attention in the document analysis literature. The ICDAR 2023 competition on structured text extraction from visually-rich documents [15] highlighted the broader diffi-culty. Even on constrained enterprise document benchmarks, end-to-end systems struggle with format variability and zero-shot generalisation. Property question-naires are a specific instance of this challenge. They are semi-structured forms with consistent field semantics but highly variable surface presentation across sellers, agents, and time periods. No published pipeline addresses this document type directly. The closest related work is Zhao et al. [16], who apply transformer-based LLMs to information extraction from real estate transaction contracts. They found that general-purpose LLMs handle domain-specific legal and financial lan-guage without fine-tuning. Terminological variation is identified as the primary failure mode for rule-based approaches, consistent with our observations across the ASPC questionnaire corpus. Their work targets contract documents rather than seller questionnaires, and does not address the document classification prob-lem or extraction at the scale considered here. 
+
+2.4 Gaps and Challenges 
+
+Several gaps remain unaddressed in the existing literature. First, no published work tackles seller questionnaire PDFs as a document type. Prior work on real estate documents focuses on contracts [16] and transaction records, which have a predictable structure and professional authorship. Seller questionnaires differ on both counts. They are completed by non-expert individuals, producing in-consistent terminology, irregular phrasing, and variable layout across thousands of documents. Second, document heterogeneity has not been addressed at the pipeline level in this domain. Real-world property questionnaire corpora contain digitally gen-erated text, scanned physical forms, and checkbox-annotated layouts in the same collection. The ICDAR 2023 competition on heterogeneous document under-standing [15] confirms that mixed-type corpora remain an open challenge: exist-ing systems apply a single extraction strategy without first classifying documents by type, which fails silently on anything other than clean, digitally generated text [8]. Third, the extraction scale has not been demonstrated on this document type. Zhao et al. [16] operate on small curated contract sets. The ICDAR 2023 benchmarks [15] use controlled document collections. Neither addresses batch extraction across thousands of heterogeneous documents from a live platform. Real Estate Clustering 5
+
+# 3 Data Acquisition 
+
+This section describes the data acquisition pipeline, from API access and itera-tive request handling through to PDF downloading and initial corpus statistics. This is a reproducible pipeline, operating against the Aberdeen Solicitors Prop-erty Centre (ASPC) platform 3.
+
+3.1 Data Source: ASPC Real Estate Platform 
+
+ASPC is a regional property listing platform operated by a consortium of so-licitors from the city of Aberdeen, Scotland, UK, providing public access to residential property listings across the area. It was selected as the data source for this study because it serves a geographically coherent market suitable for regional analysis, and its property listings include downloadable questionnaire PDFs containing rich, unstructured property information not exposed through standard listing views. Unlike major national platforms such as Rightmove 4 or Zoopla 5, ASPC does not publish an official public API. Data acquisition, therefore, required reverse-engineering the platform’s internal REST API endpoints, described below. 
+
+3.2 REST API Reverse Engineering and Endpoint Discovery 
+
+Chrome DevTools Network Inspector [17] was used to monitor HTTP traffic during manual browsing sessions on the ASPC platform. This analysis revealed a set of undocumented internal REST API endpoints returning structured JSON responses. Three endpoints were identified as relevant and are summarised in Table 1.        
+
+> Table 1. ASPC REST APIs used for data acquisition
+> Endpoint Response Format
+> Search Paginated listing summaries across search results JSON Detail Extended property attributes beyond search results JSON Document URLs to downloadable PDF documents per listing PDF
+
+The Property Search API supported server-side pagination, enabling sys-tematic retrieval of all available listings. For each page, a GET request was issued using Python’s requests library [18] and the JSON response was parsed to extract per-property metadata. The Property Detail API was subsequently called for each property ID to retrieve supplementary attributes not included in search result summaries. The Property Document API was called to download the property questionnaire PDFs associated with each listing.     
+
+> 3http://aspc.co.uk
+> 4https://www.rightmove.co.uk/
+> 5https://www.zoopla.co.uk/ 6Shehbaz et al.
+
+3.3 Request Strategy, Metadata Extraction and PDF Acquisition 
+
+The ASPC platform requires an authenticated session to access the property PDF reports. Therefore, data acquisition proceeded in three steps within a single authenticated session. First, a requests.Session() object was used to submit a POST request to the ASPC login endpoint, returning a persistent authentication cookie ( aspc.live.auth.cookie ) that authorised all subsequent API calls and PDF downloads. Second, the Property Search API was called iteratively with a page size of 100 listings per request. For each result, the Property Detail API was called individually to retrieve the full attribute set, including price, floor area, bedroom and bathroom counts, and council tax band. Also, 35 boolean property attributes were inserted directly into a Microsoft SQL Server database. Failed detail requests were skipped via a continue statement without interrupting the batch. Third, each property detail response was queried for property ques-tionnaire PDFs. Documents were downloaded via authenticated streaming GET requests and saved to subdirectories, named by their SQL database identifier to maintain a traceable link between each PDF and its corresponding property record.  
+
+> Fig. 1. Web scraping and PDF acquisition pipeline
+
+The complete acquisition process yielded 3, 965 unique property listings and associated PDF reports. Some listings included multiple document types (e.g., property questionnaire, energy performance certificate, floor plan), while others had a single questionnaire PDF. Non-questionnaire PDFs were filtered out during the classification stage described in Section 4. Acquisition was conducted for non-commercial academic research purposes only. No personally identifiable information beyond property addresses (publicly listed on the platform) was collected or retained [19]. Real Estate Clustering 7
+
+# 4 Document Processing Pipeline 
+
+The document processing pipeline comprises two sequential stages. PDF clas-sification and LLM-based structured feature extraction. Designed to transform heterogeneous, unstructured property questionnaire PDFs into a clean, machine-readable feature dataset. 
+
+4.1 Stage 1: PDF Classification 
+
+Before extraction, each questionnaire PDF was classified into one of three struc-tural categories. The classifier first measured the average extractable text length per page using pdfplumber [6]. Documents with an average below 50 characters were classified as scanned , indicating image-rendered pages with no selectable text layer. Next, PyMuPDF [7] inspected the text layer for the presence of check-box or tick marks. As a back-up, pages 2–4 of ambiguous documents were con-verted to images using pdf2image and scanned with Tesseract OCR [10], only to detect these same symbols, not to extract content. Documents containing such patterns were classified as special_char . All remaining text-bearing documents were classified as text_only .Of the 3, 965 questionnaire PDFs processed, 2, 781 (70 .1% ) were classified as text_only and forwarded to the extraction stage. The remaining document types were excluded from extraction in this study.   
+
+> Fig. 2. Questionnaire PDF classification 8Shehbaz et al.
+
+4.2 Stage 2: LLM-Based Structured Feature Extraction 
+
+All text_only PDFs were processed using pdfplumber to extract their full raw text. No preprocessing or page selection was applied at this stage. The complete document text was passed directly to the LLM, allowing the model to handle terminological variation and layout inconsistency without rule-based normalisa-tion. This approach was chosen after rule-based parsing was found inadequate due to high variability in how sellers described the same property attributes. For example, central heating appeared variously as gas central heating , GCH , mains gas , and combine boiler system across documents. 
+
+Model Selection and Configuration The DeepSeek R1 model [4] ( deepseek −
+
+r1 − distill − llama − 70 b), accessed via the Groq inference API, was selected for its strong instruction-following capability and low-latency throughput [5]. The model was configured with a temperature of 0.3, top-p of 0.95 , and a maximum of 1, 024 output tokens per request. 
+
+Prompt Design A structured prompt instructed the model to extract 35 pre-defined property attributes and return them as a single valid JSON object. The prompt enforced three constraints. Return only a valid JSON object with no preamble, represent all values as strings, and include all 35 fields in every re-sponse, using null for absent values. This produced a consistent schema across all outputs. The target attributes span six categories. Legal and ownership sta-tus, structural condition, heating and energy, utility supplies, utility suppliers, and shared charges. The low-temperature setting (0.3) reduced output variance among structurally similar documents, improving consistency for features that appeared frequently across the corpus. 
+
+Extraction Pipeline and Error Handling For each document, the extracted text was embedded in the prompt and submitted to the Groq API. The JSON ob-ject was isolated from the response using a regular expression (re.search(r’\{.*\}’, response, re.DOTALL)) and parsed with json.loads() . The property_id , match-ing the SQL database ID used during data acquisition, was appended to each record before insertion into property_questionnaire_info . On successful in-sertion, the source PDF was moved to an extracted folder. On any exception, including JSON parse failures, database errors, or a rollback was triggered, the file was moved to an error folder. This preserved full traceability without inter-rupting the batch. All 2, 781 submitted documents were successfully processed and inserted into the database. Following deduplication based on exact address matches, the final consolidated dataset comprised 2, 766 unique property listings, enriched with both API-sourced metadata and PDF-extracted features. 
+
+4.3 Feature Enrichment and Dataset Consolidation 
+
+The API-sourced property metadata and PDF-extracted features were merged into a unified data frame. Duplicate listings were removed by exact full_address Real Estate Clustering 9 
+
+> Fig. 3. Structured data extraction workflow using DeepSeek-R1 LLM
+
+match. Remaining missing values were imputed uniformly with ‘No’ , treating absence of disclosure as a negative response consistent with the questionnaire format. The council_tax field was one-hot encoded to convert it into binary indicator columns. Two composite features were derived. A price_per_m 2 feature was calcu-lated for records with valid area values, with zero-area entries imputed using the overall average price-per-metre ratio. An amenity_score was constructed as the integer sum of 14 binary property attributes drawn from both API and PDF-extracted sources, producing a value in the range [0, 14]. The numerical features were normalised using StandardScaler , and amenity and preference-weighted features were scaled using MinMaxScaler before model input. 
+
+# 5 Validation 
+
+To assess the practical utility of the features extracted by the document pro-cessing pipeline described in Section 4, a series of downstream machine-learning experiments was conducted. These experiments employ a hybrid property recom-mendation framework as an application testbed. Thus, the recommender system serves as a validation instrument for the extraction pipeline. Three complementary validation approaches were applied: similarity-based property matching, unsupervised clustering-based segmentation, and Multi-Criteria Decision-Making (MCDM) ranking. Each approaches the feature set from a dif-ferent analytical angle, covering the range from low-level vector consistency to high-level semantic interpretability. 10 Shehbaz et al. 
+
+5.1 Experimental Setup 
+
+The consolidated dataset of 2, 766 property listings was used as the basis for all validation experiments. Before model training, standard preprocessing was applied. Numerical features (price, area, price_per_m 2, amenity_score, bed-room count, bathroom count) were normalised using StandardScaler . Boolean features were already encoded as binary 0/1 values during the consolidation stage, and the council_tax (i.e., a tax charged in the UK to property occupiers based on the properties’ value) categorical feature was transformed via one-hot encoding. The final feature matrix comprised both API-sourced attributes and PDF-extracted features, the latter contributing to the 35 -field structured schema detailed in Section 4.  
+
+> Fig. 4. Validation pipeline for LLM-based feature extraction
+
+5.2 Feature Coherence: Similarity-Based Analysis 
+
+To assess whether the PDF-extracted features produce coherent property rep-resentations, cosine similarity was computed pairwise across the full feature matrix, and Top-5 recommendations were generated for a random sample of 50 query properties. Consistency across three similarity metrics, Cosine Simi-larity, Euclidean Distance, and Manhattan Distance, was evaluated using Jac-card similarity over the Top-5 result sets. Cosine Similarity and Euclidean Dis-tance produced the strongest pairwise agreement ( Jaccard ≈ 0.82 ), indicating that the feature vectors capture genuine relational structure between proper-ties. The lower agreement between Cosine Similarity and Manhattan Distance (Jaccard ≈ 0.63 ) is expected, given the latter’s stepwise sensitivity to individ-ual feature magnitudes, and reflects feature diversity rather than noise. These consistency scores would not be achievable if the PDF-extracted features intro-duced systematic extraction errors or incoherent values. A flat or noisy feature set would produce near-identical or near-random recommendations regardless of the metric applied. Real Estate Clustering 11  
+
+> Fig. 5. Jaccard similarity scores of Top-N recommendations
+
+5.3 Feature Semantic Quality: Cluster Segmentation 
+
+Unsupervised K-Means clustering was applied to the enriched feature matrix to evaluate whether the PDF-extracted features support coherent, interpretable property segmentation. A task that requires semantically meaningful feature values rather than merely structurally valid ones. The optimal cluster count was determined using the Elbow Method on Within-Cluster Sum of Squares (WCSS) and confirmed via Silhouette Score analysis, which peaked at k = 2 with a score of 0.2088 .          
+
+> Table 2. K-Means cluster profiles ( k= 2 ) — mean feature values per cluster
+> Cluster Price (£) Area (m 2) Amenity Score Market Segment
+> 0199,638 97.9 4.0 Affordable / smaller properties 1229,001 115.8 3.4 Premium / larger properties
+
+The resulting segmentation produced two interpretable property-market cat-egories. Cluster 0 captured smaller, more affordably priced properties with mod-erate amenity profiles. Cluster 1 grouped larger, higher-value properties with higher amenity scores. Table 2 presents the mean feature values per cluster. A silhouette score of 0.2088 peaked at k = 2 . Forcing three or four clusters on this data would produce groupings without meaningful real-world distinction, as 12 Shehbaz et al. 
+
+the underlying market does not segment cleanly beyond two categories at this scale. The alignment of the two clusters with recognisable market segments, rather than arbitrary statistical groupings, provides evidence that the extracted features carry genuine semantic content. A dataset composed of extraction noise or hallucinated values is unlikely to yield spatially separable, semantically co-herent clusters in PCA space.  
+
+> Fig. 6. PCA visualisation of K-Means clustering (k=2) showing separation between property market segments.
+
+5.4 Feature Richness: Multi-Criteria Ranking 
+
+The third validation asks a different question from the first two, not whether the data is consistent or coherent, but whether it is rich enough to support dif-ferentiated outcomes under distinct ranking objectives. If the extracted features contributed little beyond noise, any two ranking methods applied to the same dataset would produce near-identical results. There would simply not be enough signal for the methods to disagree. Two MCDM approaches were applied to the same three features (price, floor area, and amenity score) derived from both API and PDF-extracted sources. Weighted Scoring computed a linear combination of MinMax-normalised feature values using user-defined weights, price (30%), area (40%), and amenity score (30%). TOPSIS computed each property’s relative closeness to an ideal solution using the formula si = D− 
+
+> i
+
+/(D+ 
+
+> i
+
++ D− 
+
+> i
+
+), where D+ and D− are the Euclidean distances to the ideal and anti-ideal solutions, respectively, with price set as a minimisation objective and area and amenity score as maximisation objectives. Real Estate Clustering 13 
+
+The Top-5 lists produced by the two methods shared only 3 properties (Jac-card ≈ 0.18). This low overlap is not a weakness. It is evidence that the feature set contains enough variation and structure for two methods with different optimisa-tion logic to reach genuinely different conclusions. A flat or noisy dataset would force both methods to converge on the same handful of extreme outliers. The divergence here shows the data supports nuanced, objective-dependent ranking. 
+
+# 6 Results 
+
+Table 3 presents the end-to-end performance of the document processing pipeline across all stages. All 2, 781 documents submitted to the DeepSeek R1 model at the extraction stage produced valid structured JSON output and were suc-cessfully inserted into the database. Following deduplication by exact address match, the final data set comprised 2, 766 unique property records enriched with 
+
+35 PDF-extracted features per listing.                                    
+
+> Table 3. End-to-end pipeline performance summary
+> Stage Input Output Success Rate
+> Data acquisition (API) REST endpoints 3,965 properties with PDF URLs 100% PDF download URLs Files 100% PDF classification 3,965 PDFs 2,781 text_only 70 .1% eligible LLM extraction (DeepSeek R1) 2,781 text_only PDFs
+> 2,781 valid JSON records 100% Deduplication 2,781 records 2,766 unique list-ings -Final dataset -2,766 records ·
+> ∼50 features -
+
+Extraction succeeded on every submitted document, confirming that LLM-based text extraction is viable. The primary bottleneck in the pipeline is the clas-sification stage. 29 .9% of documents ( scanned and special_char classes) could not be processed in the current implementation, representing a meaningful op-portunity for pipeline extension through OCR integration and special-character normalisation, as discussed in Section 7. 
+
+6.1 Validation Summary 
+
+Table 4 consolidates the key quantitative results from all the validation experi-ments. The results collectively demonstrate that the PDF-extracted feature set supports coherent and consistent ML behaviour across three independent ana-lytical tasks, similarity matching, clustering, and MCDM ranking, providing em-pirical evidence that the pipeline produces semantically meaningful, ML-ready data. 14 Shehbaz et al.                     
+
+> Table 4. Downstream validation results summary
+> Experiment Metric Result Pipeline Interpre-tation
+> Cosine vs Euclidean similarity Jaccard (Top-5, n=50)
+> 0.82 Strong feature coher-ence Cosine vs Manhat-tan similarity Jaccard (Top-5, n=50)
+> 0.63 Expected divergence K-Means clustering (k= 2 )Silhouette Score 0.2088 Coherent segmenta-tion K-Means cluster pro-files Semantic alignment Affordable vs Pre-mium Extracted features carry real-world semantic meaning
+
+6.2 Discussion 
+
+The cosine-Euclidean Jaccard score of 0.82 shows that the feature vectors are internally consistent. Properties similar under one metric are similar under an-other, which would not hold if extracted values were noisy or hallucinated. The K-Means silhouette score of 0.2088 and the cluster profiles, which separate af-fordable from premium listings along plausible attribute boundaries, suggest the extracted features reflect real distinctions in the property market rather than artefacts of the extraction process. 
+
+6.3 Limitations 
+
+Three limitations of the current study are acknowledged. First, 29 .9% of the PDF documents were excluded from extraction due to scanned or special_char 
+
+encoding, introducing potential selection bias in the final dataset. Second, no formal ablation study was conducted comparing downstream model performance with and without PDF-extracted features. Such a comparison would provide the most direct quantitative evidence of the pipeline’s additive value over API-only data, and is identified as the primary direction for future work. Third, the validation is entirely quantitative. No user study was conducted to evaluate the perceptual quality of the property representations produced by the enriched dataset. 
+
+# 7 Conclusion and Future Work 
+
+7.1 Conclusions 
+
+This paper presents an end-to-end document intelligence pipeline for the acqui-sition, classification, and structured extraction of information from real estate listings and questionnaire PDFs. The pipeline comprises three sequential stages. In stage one, 3, 965 PDF docu-ments acquired from the ASPC platform via reverse-engineered REST endpoints Real Estate Clustering 15 
+
+were classified into structural categories. Documents classified as text_only ac-counted for 70 .1% of the corpus and were forwarded to the extraction stage. In the second stage, raw text was extracted from the 2, 781 eligible text_only documents using pdfplumber . Lastly, the DeepSeek R1 model, accessed via the Groq inference API, was prompted to extract 35 predefined property attributes from each document and return them as a structured JSON object. All 2, 781 
+
+submissions were processed successfully, yielding a consolidated dataset of 2, 766 
+
+unique property records. Downstream validation experiments, spanning cosine similarity-based prop-erty matching (Jaccard ≈ 0.82 ), K-Means clustering (silhouette = 0.2088 ), and MCDM-based ranking, provide empirical evidence of the quality of pipeline data. The work demonstrates that LLM-based text extraction is feasible and practi-cally viable. 
+
+7.2 Future Work 
+
+Currently, the pipeline excludes scanned and special_char documents, which together account for approximately 29 .9% of the acquired properties. Extending the pipeline to handle scanned PDFs through integrated OCR preprocessing with noise reduction, deskewing, and adaptive thresholding would reduce the selection bias introduced by restricting extraction to text-only PDFs. A formal ablation study comparing model performance on API-only features versus the full PDF-enriched feature set would provide the most direct quan-titative evidence of the pipeline’s additive value, and is identified as the most important immediate extension of this work. Finally, the pipeline architecture is designed to be domain-agnostic. Future work will evaluate its applicability to other document-rich real estate markets (including commercial and rental property sectors) and to other domains where critical information is similarly trapped in unstructured documents, such as legal case files, medical records, and insurance claim forms. 
+
+Disclosure of Interests The author has no competing interests to declare. 16 Shehbaz et al. 
+
+# References 
+
+1. The Law Society: Transaction (TA) forms – Property Information Form (TA6). https://www.lawsociety.org.uk/topics/property/transaction-forms ,last accessed 2025/04/01 2. Rightmove: Real Time Data Feed – API Web Services Specification, Version 1.3.3, p. 30 (2018) 3. Dunn, A., et al.: Structured information extraction from scientific text with large language models. Nature Communications 15 , 1418 (2024). https://doi.org/10. 1038/s41467-024-45563-x 
+
+4. DeepSeek-AI: DeepSeek-R1: Incentivizing reasoning capability in LLMs via rein-forcement learning. arXiv preprint arXiv:2501.12948 (2025) 5. Groq Inc.: Groq API documentation. https://console.groq.com/docs/ , last ac-cessed 2025/04/01 6. Freedman, J.: pdfplumber: Plumb a PDF for detailed information about each char, rectangle, and line. https://github.com/jsvine/pdfplumber , last accessed 2025/04/01 7. Artifex Software: PyMuPDF – Python bindings for MuPDF. https://pymupdf. readthedocs.io , last accessed 2025/04/01 8. Bast, H., Korzen, C.: A benchmark and evaluation for text extraction from PDF. In: 2017 ACM/IEEE Joint Conference on Digital Libraries (JCDL), pp. 99–108. IEEE, Toronto (2017). https://doi.org/10.1109/JCDL.2017.7991564 
+
+9. Subramani, N., Matton, A., Greaves, M., Lam, A.: A survey of deep learning ap-proaches for OCR and document understanding. arXiv preprint arXiv:2011.13534 (2020) 10. Smith, R.: An overview of the Tesseract OCR engine. In: Ninth International Con-ference on Document Analysis and Recognition (ICDAR 2007), vol. 2, pp. 629–633. IEEE (2007) 11. Xu, Y., Li, M., Cui, L., Huang, S., Wei, F., Zhou, M.: LayoutLM: Pre-training of text and layout for document image understanding. In: Proceedings of the 26th ACM SIGKDD Conference on Knowledge Discovery and Data Mining, pp. 1192– 1200. ACM, New York (2020) 12. Huang, Y., Lv, T., Cui, L., Lu, Y., Wei, F.: LayoutLMv3: Pre-training for docu-ment AI with unified text and image masking. In: Proceedings of the 30th ACM International Conference on Multimedia, pp. 4083–4091. ACM, New York (2022) 13. Hybrid OCR-LLM framework for enterprise-scale document information extrac-tion. arXiv preprint arXiv:2510.10138 (2025) 14. Large language models for data extraction from unstructured and semi-structured electronic health records. BMJ Health & Care Informatics 32 (1), e101139 (2025). 
+
+https://doi.org/10.1136/bmjhci-2024-101139 
+
+15. Yu, W., et al.: ICDAR 2023 competition on structured text extraction from visually-rich document images. In: ICDAR 2023 Workshops, LNCS, vol. 14193, pp. 1–18. Springer, Heidelberg (2023) 16. Zhao, Y., et al.: Utilizing large language models for information extraction from real estate transactions. arXiv preprint arXiv:2404.18043 (2024) 17. Google: Chrome DevTools – Network features reference. https://developer. chrome.com/docs/devtools/network/reference , last accessed 2025/04/01 18. Reitz, K.: Requests: HTTP for Humans. https://docs.python-requests.org ,last accessed 2025/04/01 Real Estate Clustering 17 19. Khder, M.A.: Web scraping or web crawling: State of art, techniques, approaches and application. International Journal of Advances in Soft Computing & Its Ap-plications 13 (3) (2021)

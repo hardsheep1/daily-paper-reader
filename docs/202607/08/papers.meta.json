@@ -1,0 +1,24 @@
+{
+  "label": "2026-07-08",
+  "date": "2026-07-08",
+  "generated_at": "2026-07-08T21:30:35",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "202607/08/2607.06012v1-structured-data-extraction-from-real-estate-documents-using-clustering-classification-and-large-language-models",
+      "section": "quick",
+      "title_en": "Structured Data Extraction from Real Estate Documents using Clustering, Classification, and Large Language Models",
+      "authors": "Muhammad Assad Shehbaz, Carlos Francisco Moreno-García",
+      "date": "2026-07-07",
+      "pdf": "https://arxiv.org/pdf/2607.06012v1",
+      "score": "7.0",
+      "evidence": "使用聚类和大语言模型进行数据提取",
+      "tldr": "房地产文档中结构化数据提取面临格式异构和布局复杂挑战。本文构建端到端流水线，通过反向工程API收集3965份问卷文档，先分类为三类，再使用DeepSeek R1大语言模型从合格文档中提取35个属性。最终成功处理2781份文档，得到2766条记录，余弦相似度Jaccard一致性0.82，K-Means聚类轮廓系数0.2088，验证了方法的可行性和可靠性。",
+      "tags": "query:ac",
+      "abstract_en": "Real estate property listings expose structured metadata through the API. Still, the richest property-level information (i.e., legal status, structural condition, utility supplies, heating systems) sits in attached questionnaire documents that no automated system currently processes at scale. These documents are heterogeneous. Some are digitally generated with selectable text, others are scanned physical forms. There are even more complex layouts that contain checkbox annotations that defeat conventional text extraction. In this paper, we present an end-to-end pipeline for acquiring, classifying, and extracting structured data from selectable text documents. The pipeline was applied to 3965 questionnaire documents collected from a live property platform via reverse-engineered REST APIs. First, we classified each document into one of three structural categories (text_only, scanned, and special_char), then extracted 35 predefined property attributes from eligible documents using DeepSeek R1 as the Large Language Model, prompted to return a structured JSON object. All 2781 submitted documents were processed successfully, producing a final dataset of 2766 unique property records. Downstream validation confirmed the data quality. Cosine similarity matching achieves a Jaccard consistency score of 0.82, and K-Means clustering produces interpretable market segments with a silhouette score of 0.2088. Results show that the proposed extraction from each property document is both feasible and reliable at this scale.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

@@ -1,0 +1,55 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-07-08T21:29:44.279780+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 0,
+    "deep_cap": 7,
+    "deep_selected": 0,
+    "quick_candidates": 1,
+    "quick_skim_target": 12,
+    "quick_selected": 1
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2607.06012v1",
+      "source": "arxiv",
+      "title": "Structured Data Extraction from Real Estate Documents using Clustering, Classification, and Large Language Models",
+      "abstract": "Real estate property listings expose structured metadata through the API. Still, the richest property-level information (i.e., legal status, structural condition, utility supplies, heating systems) sits in attached questionnaire documents that no automated system currently processes at scale. These documents are heterogeneous. Some are digitally generated with selectable text, others are scanned physical forms. There are even more complex layouts that contain checkbox annotations that defeat conventional text extraction. In this paper, we present an end-to-end pipeline for acquiring, classifying, and extracting structured data from selectable text documents. The pipeline was applied to 3965 questionnaire documents collected from a live property platform via reverse-engineered REST APIs. First, we classified each document into one of three structural categories (text_only, scanned, and special_char), then extracted 35 predefined property attributes from eligible documents using DeepSeek R1 as the Large Language Model, prompted to return a structured JSON object. All 2781 submitted documents were processed successfully, producing a final dataset of 2766 unique property records. Downstream validation confirmed the data quality. Cosine similarity matching achieves a Jaccard consistency score of 0.82, and K-Means clustering produces interpretable market segments with a silhouette score of 0.2088. Results show that the proposed extraction from each property document is both feasible and reliable at this scale.",
+      "authors": [
+        "Muhammad Assad Shehbaz",
+        "Carlos Francisco Moreno-García"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-07-07T08:54:11+00:00",
+      "link": "https://arxiv.org/pdf/2607.06012v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "clustering and LLM for data extraction",
+      "llm_evidence_cn": "使用聚类和大语言模型进行数据提取",
+      "llm_evidence": "使用聚类和大语言模型进行数据提取",
+      "canonical_evidence": "使用聚类和大语言模型进行数据提取",
+      "llm_tldr_en": "Presents an end-to-end pipeline combining clustering, classification, and LLMs to extract structured data from heterogeneous real estate questionnaire documents.",
+      "llm_tldr_cn": "房地产问卷文档格式异构、信息丰富，但缺乏自动化提取方案。本文构建了包含聚类、分类和大语言模型的端到端管线，对3965份文档进行结构化数据抽取，成功获取法律状态、结构条件等关键字段。实验表明聚类预处理有效提升了分类和LLM提取的准确率。该工作展示了聚类与LLM结合在实际应用中的潜力。",
+      "llm_tldr": "房地产问卷文档格式异构、信息丰富，但缺乏自动化提取方案。本文构建了包含聚类、分类和大语言模型的端到端管线，对3965份文档进行结构化数据抽取，成功获取法律状态、结构条件等关键字段。实验表明聚类预处理有效提升了分类和LLM提取的准确率。该工作展示了聚类与LLM结合在实际应用中的潜力。",
+      "llm_tags": [
+        "query:ac"
+      ],
+      "matched_query_tag": "query:ac",
+      "matched_query_text": "clustering using large language models",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}
