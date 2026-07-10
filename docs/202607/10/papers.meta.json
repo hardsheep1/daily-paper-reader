@@ -1,0 +1,39 @@
+{
+  "label": "2026-07-10",
+  "date": "2026-07-10",
+  "generated_at": "2026-07-10T21:52:53",
+  "count": 2,
+  "papers": [
+    {
+      "paper_id": "202607/10/2607.03887v1-advanced-topic-modeling-techniques-for-categorizing-software-vulnerabilities",
+      "section": "deep",
+      "title_en": "Advanced Topic Modeling Techniques for Categorizing Software Vulnerabilities",
+      "authors": "Utkarsh Tiwari, Spoorthi M, Anirudh S, Nidhin Prabhakar T.",
+      "date": "2026-07-04",
+      "pdf": "https://arxiv.org/pdf/2607.03887v1",
+      "score": "8.0",
+      "evidence": "使用大语言模型进行主题聚类",
+      "tldr": "软件漏洞的复杂性和频率日益增加，传统方法难以有效处理海量非结构化文本数据。本研究利用大语言模型驱动的先进主题建模技术，如BERTopic、Top2Vec、CombinedTM、Llama2结合BERTopic及Mixtral，并配合UMAP、PCA等降维方法与HDBSCAN、DBSCAN聚类算法，从漏洞数据集的'Threat'特征中提取潜在模式。生成的解释性聚类显著提升了威胁优先级排序与网络安全决策能力，为可扩展的自动化漏洞管理提供了支持。",
+      "tags": "query:ac",
+      "abstract_en": "The increasing complexity and frequency of software vulnerabilities demand efficient methods to analyze and prioritize threats. Traditional approaches often fail to process the vast amount of unstructured textual data effectively, highlighting the need for advanced solutions. This study leverages state-of-the-art topic modeling techniques powered by large language models (LLMs) to extract meaningful insights from the 'Threat' feature of a software vulnerability dataset. Models such as BERTopic, Top2Vec, CombinedTM, Llama2 with BERTopic, and Mixtral are utilized, along with dimensionality reduction and clustering methods like UMAP, PCA, HDBSCAN, and DBSCAN. By uncovering latent patterns and generating interpretable clusters, this research enhances threat prioritization and decision-making in cybersecurity. The findings support scalable and automated solutions for vulnerability management, contributing to improved security practices.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202607/10/2607.08254v1-casl-vae-learning-structured-latent-variables-from-unpaired-data-for-semi-supervised-clustering-and-paired-sample-generation",
+      "section": "quick",
+      "title_en": "CASL-VAE: Learning Structured Latent Variables from Unpaired Data for Semi-supervised Clustering and Paired Sample Generation",
+      "authors": "Sai Spandana Chintapalli, Pratik Chaudhari, Christos Davatzikos",
+      "date": "2026-07-09",
+      "pdf": "https://arxiv.org/pdf/2607.08254v1",
+      "score": "6.0",
+      "evidence": "半监督聚类与深度变分自编码器",
+      "tldr": "现有对比学习模型在处理非成对数据时，难以分离目标人群的多种异质性变异。CASL-VAE构建深度对比潜在变量模型，将变异分解为跨人群共享的连续因子和目标特异的分层因子，并通过变分推断实现非成对数据上的近似联合似然优化。在半合成神经影像数据上，该方法在半监督聚类和成对样本生成中优于VAE和对比VAE等基线。在阿尔茨海默病数据上，揭示了生物合理性的异质性结构，为疾病分析提供可解释框架。",
+      "tags": "query:active-clust",
+      "abstract_en": "Quantifying variability in a target population relative to a reference population is central to many scientific and clinical problems (e.g., diseased vs. healthy). Yet, without paired data and in the presence of heterogeneous target variation, existing methods struggle to separate multiple modes of target-specific variation. We propose \\textit{CASL-VAE}, a deep contrastive latent variable model that learns structured latent generative factors from unpaired data. CASL-VAE factorizes variation into continuous common latent factors shared across populations and hierarchical salient latent factors that model target-specific heterogeneity as discrete subtypes and continuous within-subtype variation. Using variational inference, we show how approximate joint likelihood optimization over reference and target domains can be performed using unpaired data, providing a principled basis for paired-sample generation and cross-domain analysis. We validate CASL-VAE on semi-synthetic neuroimaging data, demonstrating improved subtype recovery and paired-sample generation compared to baseline clustering and generative models. We also validate its ability to reveal biologically plausible heterogeneity in Alzheimer's disease.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

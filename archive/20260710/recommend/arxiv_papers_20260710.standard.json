@@ -1,0 +1,95 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-07-10T21:49:24.530449+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 1,
+    "deep_cap": 7,
+    "deep_selected": 1,
+    "quick_candidates": 1,
+    "quick_skim_target": 12,
+    "quick_selected": 1
+  },
+  "deep_dive": [
+    {
+      "id": "2607.03887v1",
+      "source": "arxiv",
+      "title": "Advanced Topic Modeling Techniques for Categorizing Software Vulnerabilities",
+      "abstract": "The increasing complexity and frequency of software vulnerabilities demand efficient methods to analyze and prioritize threats. Traditional approaches often fail to process the vast amount of unstructured textual data effectively, highlighting the need for advanced solutions. This study leverages state-of-the-art topic modeling techniques powered by large language models (LLMs) to extract meaningful insights from the 'Threat' feature of a software vulnerability dataset. Models such as BERTopic, Top2Vec, CombinedTM, Llama2 with BERTopic, and Mixtral are utilized, along with dimensionality reduction and clustering methods like UMAP, PCA, HDBSCAN, and DBSCAN. By uncovering latent patterns and generating interpretable clusters, this research enhances threat prioritization and decision-making in cybersecurity. The findings support scalable and automated solutions for vulnerability management, contributing to improved security practices.",
+      "authors": [
+        "Utkarsh Tiwari",
+        "Spoorthi M",
+        "Anirudh S",
+        "Nidhin Prabhakar T."
+      ],
+      "primary_category": "cs.CR",
+      "categories": [
+        "cs.CR",
+        "cs.AI",
+        "cs.SE"
+      ],
+      "published": "2026-07-04T14:09:14+00:00",
+      "link": "https://arxiv.org/pdf/2607.03887v1",
+      "tags": [
+        "keyword:ac"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "uses LLMs for topic clustering",
+      "llm_evidence_cn": "使用大语言模型进行主题聚类",
+      "llm_evidence": "使用大语言模型进行主题聚类",
+      "canonical_evidence": "使用大语言模型进行主题聚类",
+      "llm_tldr_en": "Applies LLM-powered topic modeling (BERTopic, Top2Vec, Llama2) and clustering (HDBSCAN, DBSCAN) to categorize software vulnerabilities, generating interpretable clusters.",
+      "llm_tldr_cn": "软件漏洞分析中传统方法难以处理大量非结构化文本。本研究利用基于大语言模型的最新主题建模技术，包括BERTopic、Top2Vec、Llama2等，结合UMAP降维和HDBSCAN聚类，从漏洞数据的'威胁'特征中提取潜在模式并生成可解释的聚类。结果表明该方法能有效辅助漏洞分类和优先级排序，展示了LLM在聚类任务中的应用潜力。",
+      "llm_tldr": "软件漏洞分析中传统方法难以处理大量非结构化文本。本研究利用基于大语言模型的最新主题建模技术，包括BERTopic、Top2Vec、Llama2等，结合UMAP降维和HDBSCAN聚类，从漏洞数据的'威胁'特征中提取潜在模式并生成可解释的聚类。结果表明该方法能有效辅助漏洞分类和优先级排序，展示了LLM在聚类任务中的应用潜力。",
+      "llm_tags": [
+        "query:ac"
+      ],
+      "matched_query_tag": "query:ac",
+      "matched_query_text": "clustering using large language models",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2607.08254v1",
+      "source": "arxiv",
+      "title": "CASL-VAE: Learning Structured Latent Variables from Unpaired Data for Semi-supervised Clustering and Paired Sample Generation",
+      "abstract": "Quantifying variability in a target population relative to a reference population is central to many scientific and clinical problems (e.g., diseased vs. healthy). Yet, without paired data and in the presence of heterogeneous target variation, existing methods struggle to separate multiple modes of target-specific variation. We propose \\textit{CASL-VAE}, a deep contrastive latent variable model that learns structured latent generative factors from unpaired data. CASL-VAE factorizes variation into continuous common latent factors shared across populations and hierarchical salient latent factors that model target-specific heterogeneity as discrete subtypes and continuous within-subtype variation. Using variational inference, we show how approximate joint likelihood optimization over reference and target domains can be performed using unpaired data, providing a principled basis for paired-sample generation and cross-domain analysis. We validate CASL-VAE on semi-synthetic neuroimaging data, demonstrating improved subtype recovery and paired-sample generation compared to baseline clustering and generative models. We also validate its ability to reveal biologically plausible heterogeneity in Alzheimer's disease.",
+      "authors": [
+        "Sai Spandana Chintapalli",
+        "Pratik Chaudhari",
+        "Christos Davatzikos"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-07-09T08:58:44+00:00",
+      "link": "https://arxiv.org/pdf/2607.08254v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "semi-supervised clustering with deep VAE",
+      "llm_evidence_cn": "半监督聚类与深度变分自编码器",
+      "llm_evidence": "半监督聚类与深度变分自编码器",
+      "canonical_evidence": "半监督聚类与深度变分自编码器",
+      "llm_tldr_en": "Proposes CASL-VAE for semi-supervised clustering from unpaired data, learning structured latent factors for discrete subtypes and continuous variation.",
+      "llm_tldr_cn": "现有方法在无配对数据和异质性目标变异下难以分离多种变异模式。本文提出CASL-VAE，一个深度对比潜变量模型，从未配对数据中学习结构化的潜在生成因子，将变异分解为连续共有因子和层次显著性因子，用于建模离散亚型和连续变异。实验表明其在半监督聚类和配对样本生成任务上有效，为生物医学等领域的异质性分析提供了新工具。",
+      "llm_tldr": "现有方法在无配对数据和异质性目标变异下难以分离多种变异模式。本文提出CASL-VAE，一个深度对比潜变量模型，从未配对数据中学习结构化的潜在生成因子，将变异分解为连续共有因子和层次显著性因子，用于建模离散亚型和连续变异。实验表明其在半监督聚类和配对样本生成任务上有效，为生物医学等领域的异质性分析提供了新工具。",
+      "llm_tags": [
+        "query:active-clust"
+      ],
+      "matched_query_tag": "query:active-clust",
+      "matched_query_text": "semi-supervised clustering with active learning",
+      "matched_requirement_id": "req-10",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

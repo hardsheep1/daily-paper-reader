@@ -1,0 +1,819 @@
+Title: 2607.08254v1.pdf
+
+URL Source: https://arxiv.org/pdf/2607.08254v1
+
+Published Time: Fri, 10 Jul 2026 00:39:13 GMT
+
+Number of Pages: 19
+
+Markdown Content:
+# CASL-VAE: Learning Structured Latent Variables from Unpaired Data for Semi-supervised Clustering and Paired Sample Generation Sai Spandana Chintapalli 1 2 Pratik Chaudhari 3 Christos Davatzikos 1 2 4 
+
+# Abstract 
+
+Quantifying variability in a target population rela-tive to a reference population is central to many scienti fi c and clinical problems (e.g., diseased vs. healthy). Yet, without paired data and in the pres-ence of heterogeneous target variation, existing methods struggle to separate multiple modes of target-speci fi c variation. We propose CASL-VAE ,a deep contrastive latent variable model that learns structured latent generative factors from unpaired data. CASL-VAE factorizes variation into contin-uous common latent factors shared across popula-tions and hierarchical salient latent factors that model target-speci fi c heterogeneity as discrete subtypes and continuous within-subtype varia-tion. Using variational inference, we show how approximate joint likelihood optimization over reference and target domains can be performed us-ing unpaired data, providing a principled basis for paired-sample generation and cross-domain anal-ysis. We validate CASL-VAE on semi-synthetic neuroimaging data, demonstrating improved sub-type recovery and paired-sample generation com-pared to baseline clustering and generative mod-els. We also validate its ability to reveal biologi-cally plausible heterogeneity in Alzheimer’s dis-ease. 
+
+# 1. Introduction 
+
+Many scienti fi c and applied problems involve understanding how a target population varies with respect to a reference population. For example, in medicine, researchers analyze pathological patterns in patient data relative to healthy con-trols (Fan et al., 2008). Similar comparative analyses arise 1 Center for AI and Data Science for Integrated Diagnostics, University of Pennsylvania 2 Department of Bioengineering, Uni-versity of Pennsylvania 3 Department of Electrical and Systems Engineering, University of Pennsylvania 4 Department of Radiol-ogy, University of Pennsylvania. Correspondence to: Christos Davatzikos <christos.davatzikos@pennmedicine.upenn.edu >.
+
+> Preprint. July 9, 2026.
+
+in genomics, drug discovery, and socio-economic studies, where contrasts between groups are often more informative than absolute measurements (Romero et al., 2012; Soneson & Robinson, 2018; Akhoon, 2021). In practice, such comparisons are challenging for three rea-sons: (i) variation in the target domain is often entangled with variation present in the reference domain, obscuring subtle target-speci fi c effects (for example, natural biologi-cal variation in healthy individuals could be mistaken for disease-related changes in patients); (ii) target-domain vari-ation is frequently heterogeneous (Nunes et al., 2020), re-
+
+fl ecting latent subtypes or context-dependent factors (for instance, patients with the same diagnosis may have diverse underlying pathologies, or cell populations may respond differently to the same treatment); and (iii) paired observa-tions across domains—where each target sample has a corre-sponding reference sample—are rarely available, preventing direct supervision for learning cross-domain relationships. As a result, existing methods often struggle to disentangle heterogeneous, target-speci fi c variation in unpaired data (Marquand et al., 2016; Feczko et al., 2019). Generative representation learning can help address these challenges by learning latent representations that model the data generation process (Bercea et al., 2025). In princi-ple, such representations can differentiate between domains, capture heterogeneous subpopulations, and support down-stream generative analyses (Kopf & Claassen, 2021). How-ever, standard generative models applied to multi-domain data typically entangle shared and domain-speci fi c factors, leading to unstable or dif fi cult-to-interpret representations (Higgins et al., 2017; Chen et al., 2016). Contrastive Analy-sis (CA) methods aim to explicitly separate common varia-tion shared across reference and target domains from salient variation unique to the target domain (Abid et al., 2018; Severson et al., 2019). Yet existing formulations often lack suf fi cient latent structure to capture multi-modal target het-erogeneity or to preserve sample-level semantics across domains, limiting their ability to support downstream gener-ative tasks such as paired data generation. To address these limitations, we propose CASL-VAE (Con-trastive Analysis with Structured Latents via Variational Au-toencoder) , a generative framework for learning structured 1CASL-VAE: Learning Structured Latent Variables from Unpaired Data 
+
+and disentangled latent representations from unpaired refer-ence–target data (Figure 1(a)). CASL-VAE factorizes the latent space into (i) a continuous common latent that cap-tures variation shared across domains, and (ii) a hierarchi-cal salient latent that models heterogeneous, target-speci fi cvariation via discrete latent subtypes and continuous within-subtype factors. The hierarchical design, regularized using domain-level labels (reference vs target labels) 1 , enables 
+
+unsupervised target subtype discovery . This structured latent decomposition acts as an inductive bias that, together with suf fi cient constraints, enables approximate joint like-lihood learning across domains using only marginal obser-vations. As a result, CASL-VAE supports paired-sample generation and interpretable cross-domain comparisons 
+
+despite the absence of paired training data. We evaluate CASL-VAE on neuroimaging data, where brain measurements exhibit substantial inter-individual variability and heterogeneous pathological patterns are dif fi cult to iso-late. Paired measurements across conditions (e.g., observa-tions of a participant in both healthy and diseased state) are typically unavailable, making unpaired contrastive modeling both practically relevant and technically challenging. While our experiments use neuroimaging-derived regional brain volumes , the proposed framework is broadly applicable to other settings that require unpaired reference–target compar-isons and modeling of heterogeneous target variation. Using data from the iSTAGING consortium (Habes et al., 2021), we validate CASL-VAE on semi-synthetic data with known ground-truth disease patterns and severity, and compare it to representative clustering and generative modeling baselines. We further apply CASL-VAE to a real Alzheimer’s disease cohort to demonstrate the clinical relevance of the learned structured latent variables. Our contributions are threefold: • We introduce CASL-VAE, a contrastive generative framework that learns disentangled shared and target-speci fi c representations from unpaired data using struc-tured latent variables. • We propose a hierarchical salient latent decomposition that enables unsupervised discovery of target subtypes while preserving continuous within-subtype variation. • We demonstrate that this structure enables interpretable downstream capabilities, including paired-sample gen-eration and cross-domain comparison, and validate these properties empirically. 1 In this paper, the term semi-supervised refers to supervision available only at the domain level (reference vs. target), without any annotations for target subtypes or paired samples. 
+
+# 2. Related work Probabilistic latent variable models such as variational autoencoders (VAEs) aim to learn compact representations of complex data (Diederik et al., 2014), while conditional variants model data distributions conditioned on domain labels (Sohn et al., 2015). From a representation learning perspective, these models are primarily optimized for data generation. Without additional modeling assumptions or regularization (Higgins et al., 2017), their latent representa-tions may entangle shared and domain-speci fi c sources of variation, limiting interpretability and downstream utility in comparative analyses. 
+
+Contrastive analysis (CA) methods address this by explic-itly aiming to separate variation that is shared across two datasets from variation that is enriched in a target dataset. Early CA approaches relied on linear factor models (Ge & Zou, 2016; Abid et al., 2018). More recent work extends CA to nonlinear settings using probabilistic latent-variable mod-els (Abid & Zou, 2019; Severson et al., 2019), often with additional regularization to prevent information leakage and preserve the semantic meaning of the learned factors (Wein-berger et al., 2022; Louiset et al., 2024). While this enables separation of shared and target-speci fi c variation, it does not explicitly model heterogeneous structure within the target population. In many real-world applications, however, separating two populations is not suf fi cient: the target population itself often exhibits meaningful heterogeneity that is critical to understand. For example, CA has been applied to single-cell RNA-seq (Weinberger et al., 2023; Jones et al., 2022) and neuroimaging (Aglinskas et al., 2022; Zheng et al., 2024) datasets, where target-speci fi c variation is frequently multi-modal and re fl ects distinct biological subtypes or phe-notypes that need to be identi fi ed. In these settings, het-erogeneity is typically addressed post hoc, for example, by clustering the learned salient representations. However, when target effects are subtle or subtypes are partially en-tangled, such representations may not form well-separated clusters. This issue is further exacerbated in VAE-based CA models, which can be prone to posterior collapse, poten-tially con fl ating or collapsing multi-modal target variation unless additional structure is imposed. 
+
+Clustering-based approaches have also been proposed for capturing target heterogeneity (Gao et al., 2023). Standard clustering methods, however, do not leverage contrastive structure and therefore may produce clusters that are driven by shared variation rather than target-speci fi c effects. Some recent methods cluster based on differences between target and reference populations (Chand et al., 2020; Yang et al., 2021). While effective for unsupervised subtype discov-ery, these approaches typically optimize discrete clustering objectives rather than learning reusable generative latent 2CASL-VAE: Learning Structured Latent Variables from Unpaired Data 
+
+representations and therefore have limited interpretability. 
+
+CASL-VAE addresses these limitations by integrating con-trastive analysis with structured hierarchical latent variables within a single generative framework. Designed for un-paired reference–target data, it enables the modeling of target subtypes and within-subtype variability. The frame-work supports data-driven, unsupervised discovery of target-speci fi c heterogeneity while remaining interpretable, distin-guishing it from many prior contrastive and clustering-based approaches that rely on post-hoc analyses or subtype labels. 
+
+# 3. CASL-VAE 3.1. Problem Setup 
+
+Given unpaired observations from two related domains, a target domain X = x i  N x 
+
+> i=1
+
+, x i ∼ p(x) and a reference do-main Y = y j  N y 
+
+> j=1
+
+, y j ∼ p(y) where no correspondence is assumed between sample i and j . Our goal is to learn latent representation that separates variation shared across these domains from heterogeneous, multi-modal variation speci fi cto the target domain, enabling target-subtype discovery and cross-domain comparisons. 
+
+  ∅ ∅ / 
+
+> Reference
+
+
+
+> Target
+
+  s   
+
+> (a) (b)
+> 
+
+                             
+
+> For y :  =
+>  =
+> ' '
+> Figure 1. (a) CASL-VAE framework. Target ( x) and reference ( y)samples are encoded into a common latent zand a hierarchical salient latent with discrete ( scat ) and continuous ( scont ) components. Decoders reconstruct ˆxor ˆyfrom these latent factors. For reference samples y, the salient latents are set to uninformative preset values
+> s′
+> cat and s′
+> cont . (b) Graphical model showing dependencies between observed data and latent variables. Solid arrows indicate generative paths; dashed arrows indicate inference.
+
+3.2. Contrastive Latent Variables as Generative Factors 
+
+We introduce three latent variables: a continuous common latent variable z ∈ R k , a discrete (categorical) salient latent variable s cat ∈  1, ..., M  , and a continuous salient latent variable s cont ∈ R t conditioned on s cat . The common latent models variation shared across both domains and is assumed to fully encode the variation present in the reference domain. The salient latent variables provide a hierarchical repre-sentation of target-speci fi c variation, where the discrete component captures coarse subtype structure and the contin-uous component models fi ner-grained variation within these subtypes (Figure 1(b)). So, the prior factorizes as 
+
+p(z, s cat , s cont ) = p(z)p(s cat , s cont )= p(z) p(s cat ) p(s cont  s cat ), (1) where p(z) = N (0 , I ) , p(s cat ) = Uniform 1, . . . , M  , and 
+
+p(s cont  s cat ) = N (μ ψ (s cat ), I ) , where μ ψ (s cat ) is a learn-able embedding function that maps each category s cat to a subtype-speci fi c prior mean. 
+
+Remark: In neuroimaging applications, z may encode de-mographic or scanner variability shared between healthy and diseased participants, while s cat and s cont may encode disease-speci fi c pathological patterns of variability. 
+
+3.3. Optimizing the Paired Data Likelihood from Unpaired Data 
+
+Given z and s = ( s cat , s cont ) , the target and reference ob-servations are independent and the conditional joint distri-bution factorizes as p(x, y  z, s ) = p(x  z, s )p(y  z) .Similarly, the approximate posterior distribution factorizes as q(z, s  x, y ) = q(z  x, y )q(s  x) . Using variational inference (Doersch, 2016), the variational lower bound on the joint log-likelihood is 
+
+log p(x, y ) ≥ E q(z|x,y )q(s|x) log p(xz, s )+ E q(z|x,y ) log p(yz) − KL (q(zx, y ) p(z)) 
+
+− KL (q(sx) p(s)) . (2) The derivation is provided in Appendix A.1. Importantly, this bound depends on q(zx, y ) , and therefore requires paired samples. However, if we impose posterior decou-pling, 
+
+q(zx, y ) = q(zx) = q(zy), (3) the common latent becomes domain-invariant and can be inferred from either domain x or y . This constraint can be implemented via regularization (Section 3.6). Under this assumption, Eq. 2 simpli fi es to a variational lower bound that can be optimized using unpaired samples: 
+
+log p(x, y ) ≥ E q(z|x)q(s|x) log p(xz, s )+ E q(z|y) log p(yz) − 12 KL (q(zx) p(z)) 
+
+− 12 KL (q(zy) p(z)) − KL (q(sx) p(s)) . (4) The KL term on the common latent is evenly split between domains to preserve symmetry and avoid over-regularizing the common latent. Therefore, under posterior decoupling, the joint variational lower bound decomposes into separate domain-speci fi c terms corresponding to the target and ref-erence marginals, yielding an objective equivalent in form to those optimized in Contrastive Analysis (Abid & Zou, 2019; Weinberger et al., 2022; Louiset et al., 2024). This 3CASL-VAE: Learning Structured Latent Variables from Unpaired Data 
+
+provides a principled probabilistic justi fi cation for the com-mon/salient latent decomposition, and explains why con-trastive objectives can be viewed as implicitly maximizing a relaxed joint likelihood from unpaired data. 
+
+3.4. Parameterization of the Latent Inference Model and the Generative Model 
+
+The inference model consists of two neural networks: a common encoder network e ϕ z and a salient encoder network 
+
+e ϕ s , which together de fi ne a factorized variational posterior over the latent variables. For a target domain sample x ∈ X ,the variational posterior factorizes as 
+
+q ϕ (z, s cat , s cont  x) = q ϕ z (z  x) q ϕ s (s cat , s cont  x), (5) where q ϕ s (s cat , s cont  x) = q ϕ s (s cont  s cat , x )q ϕ s (s cat  x).
+
+The individual variational factors are parameterized as 
+
+q ϕ z (z  x) = N z  μ z (x), σ 2 
+
+> z
+
+(x)I , (6) 
+
+q ϕ s (s cat  x) = Gumbel -Softmax( α(x), τ ), (7) 
+
+q ϕ s (s cont  s cat , x ) = N (s cont  μ s (s cat , x ), I ) . (8) Here, e ϕ z outputs μ z (x) and σ z (x) , while e ϕ s outputs the logits α(x) and the conditional mean μ s (s cat , x ) . The dis-crete latent is modeled using a Gumbel–Softmax distribu-tion, where the temperature τ controls the relaxation of the categorical variable (Jang et al., 2017). During training, s cat lies on the probability simplex ∆ M −1 , enabling gradient-based optimization. At test time, it is discretized to a hard one-hot vector. 
+
+Note : For reference-domain samples y ∈ Y , only q ϕ z (z  y)
+
+is inferred; the salient latents are fi xed to an uninformative preset state s ′ = ( s ′ 
+
+> cat
+
+, s ′ 
+
+> cont
+
+) with s ′ 
+
+> cat
+
+= 1 (reference cat-egory) and s ′ 
+
+> cont
+
+= 0 . This constraint prevents the salient latent from encoding reference-domain variation and en-courages it to capture target-speci fi c variability (Section 3.6). For the generative model, we parameterize the relation be-tween the latent variables and the observed data with two neural networks: a common decoder d θ z and a salient de-coder d θ s , giving 
+
+p θ (x  z, s cat , s cont ) = N x  d θ z (z) + d θ s (s cat , s cont ), I ),p θ (y  z) = N y  d θ z (z) + d θ s (s ′ 
+
+> cat
+
+, s ′ 
+
+> cont
+
+), I . (9) The additive decoder structure provides interpretability by explicitly separating common and salient contributions in the input space. For reference samples, the salient latent is fi xed to s ′ = ( s ′ 
+
+> cat
+
+, s ′ 
+
+> cont
+
+) ; thus, d θ s (s ′ ) acts as a constant baseline offset in the reference reconstruction. This modeling allows direct interpretation and visualization of prototypical target patterns of variation as 
+
+δ s cat = d θ s (s cat , μ ψ (s cat )) − d θ s (s ′ 
+
+> cat
+
+= 1 , s ′ 
+
+> cont
+
+= 0) , (10) for each s cat ∈  2, . . . , M  . This highlights the target-speci fi c subtype patterns relative to the reference domain. 
+
+Note : We use a Gaussian likelihood for the observations because our application involves continuous brain volumes. However, the model can be adapted to other likelihoods (e.g., Bernoulli) for different data types. 
+
+3.5. Evidence Lower Bound (ELBO) for CASL-VAE 
+
+Expanding eq. 4 (see Appendix A.2 for details), the ELBO for CASL-VAE is 
+
+L ELBO = L x + L y , (11) where 
+
+L x = E q ϕz (z|x)q ϕs (s cat ,s cont |x) log p(x  z, s cat , s cont )
+
+− 12 KL (q ϕ z (z  x) p(z)) − KL (q ϕ s (s cat  x) p(s cat )) 
+
+− E q ϕs (s cat |x) [KL (q ϕ s (s cont  s cat , x ) p(s cont  s cat ))] ,
+
+(12) 
+
+L y = E q ϕz (z|y) log p(y  z) − 12 KL (q ϕ z (z  y) p(z)) .
+
+(13) This decomposition corresponds to the marginal ELBOs for the target and reference domains under the hierarchical latent structure. 
+
+3.6. Regularizations 
+
+To encourage a domain-invariant posterior q ϕ z (z  x) ≈
+
+q ϕ z (z  y) , we apply two complementary regularizers: a global distribution alignment term (MMD) and, under cross-domain transformations, a sample-level consistency term. Additionally, we introduce two more regularization terms to prevent the salient latent space from encoding reference-domain variation. 
+
+Maximum Mean Discrepancy (MMD): This term encour-ages the common latent distributions inferred from the two domains to be aligned (Gretton et al., 2012), Appendix A.3: 
+
+R MMD = MMD 2 (q ϕ z (z  x), q ϕ z (z  y)) . (14) 
+
+Sample-level Latent Consistency: This term enforces that the common latent representation is stable under cross-domain transformation from X to Y , which provides sample-level alignment q ϕ z (z  x) ≈ q ϕ z (z  ˜y):
+
+R LC = E x∼p(x), z ∼q ϕz (z|x) ∥μ z (˜ y) − μ z (x)∥ 1 , (15) where ˜y = d θ z (z) + d θ s (s ′ 
+
+> cat
+
+, s ′ 
+
+> cont
+
+). (16) Here, ˜y is a conditionally generated paired reference sample obtained by decoding z with the salient latent fi xed to the uninformative preset values. 4CASL-VAE: Learning Structured Latent Variables from Unpaired Data Semi-supervised Binary Cross-Entropy Loss: To prevent the discrete salient latent from capturing reference-domain structure, we use domain labels (reference vs. target) as weak supervision. Reference samples are encouraged to map to category s ′ 
+
+> cat
+
+= 1 , while target samples are dis-couraged from this category, leaving the remaining M − 1
+
+categories for unsupervised target subtype discovery: 
+
+R BCE = −E y∼p(y) log q ϕ s (s cat = 1  y)
+
+− E x∼p(x) log 1 − q ϕ s (s cat = 1  x). (17) 
+
+Reference Regularization of the Continuous Salient La-tent: Although R BCE separates reference and target samples in the discrete latent space, the continuous latent s cont could still encode reference-domain variation. To prevent this, we regularize both the posterior and learned prior of s cont for reference samples: 
+
+R ref = KL( q ϕ s (s cont  y, s ′ 
+
+> cat
+
+) ∥ N (0 , I )) + KL( p(s cont  s ′ 
+
+> cat
+
+) ∥ N (0 , I )) ,
+
+= 12
+
+μ s (y, s ′ 
+
+> cat
+
+) 22 + 12
+
+μ ψ (s ′ 
+
+> cat
+
+) 22 . (18) where the fi nal expression follows from both distributions having identity covariance. This penalty drives both poste-rior and prior means toward zero, making s cont uninforma-tive for reference samples. 
+
+Information-Theoretic Interpretation: R BCE and R ref jointly minimize an upper bound on the mutual information be-tween reference domain Y and the salient latent (s cat , s cont )
+
+(see Appendix A.4). The former collapses the discrete salient latent for Y , while the latter suppresses informa-tion in the continuous latent, ensuring that the salient latent variables capture only target-speci fi c variation. 
+
+3.7. Overall Training Objective 
+
+The fi nal training objective minimizes the negative ELBO along with the additional regularizers: 
+
+J = −L ELBO + λ R MMD + η R LC + ζ R BCE + γ R ref ,
+
+(19) where λ , η , ζ , and γ control the strength of each regular-izer. All expectations are approximated via Monte Carlo sampling with the reparameterization trick. 
+
+3.8. Inference and Generation 
+
+Besides providing a rich latent representation of reference-target data, the trained model supports three infer-ence/generation modes: 1. Subtype inference: For each sample, the salient en-coder outputs logits α(·) over the M categories. After softmax, the sample is assigned to the category with the highest probability. Category 1 corresponds to the ref-erence domain, while the remaining M − 1 categories represent target subtypes. 2. Conditional paired-sample generation: Given a real sample, the common encoder infers z ∼ q ϕ z (z  ·) . De-coding z with the preset salient state s ′ = ( s ′ 
+
+> cat
+
+, s ′ 
+
+> cont
+
+)
+
+yields a paired reference-domain sample ˜y , while de-coding with alternative salient values yields paired target-domain samples ˜x.3. Synthetic data generation: Paired samples share the same common latent z , while unpaired samples have independent z . To generate synthetic paired samples, 
+
+fi rst draw z ∼ p(z) , then decode it with the preset state s ′ to obtain a reference sample, and with vary-ing salient values (s cat , s cont ) to obtain corresponding target samples. To generate unpaired samples, draw separate z values for each domain, and repeat. 
+
+# 4. Experiments 
+
+Our experiments on semi-synthetic and real data assess CASL-VAE’s performance in (i) target–subtype discovery, (ii) paired-sample generation, and (iii) real-world clinical utility. For all experiments, we set the common latent dimen-sion to k = 15 , the discrete salient latent to M categories (selected via a cross-validation procedure; see Section 4.2), and the continuous salient latent to t = 2 dimensions, en-abling direct visualization of within-subtype variation in 2-D. All additional implementation and training details are pro-vided in Appendix A.5. 
+
+Data Preparation: For all experiments, we used T1-weighted Magnetic Resonance Imaging (T1w MRI) and clin-ical measurements from the iSTAGING consortium (Habes et al., 2021), which integrates data from multiple aging and neurodegenerative disease cohorts. From baseline T1w MRI scans, brain volumes of 145 regions of interest (ROIs) were extracted using a multi-atlas label fusion method (Doshi et al., 2016), harmonized to remove site effects (Pomponio et al., 2020), and used as input features. Across all experiments, unpaired reference–target samples were used for model training. For each train/test split, all samples were residualized to remove covariate effects of age, sex, and intracranial volume (ICV) using linear regres-sion coef fi cients estimated from the training reference data. Finally, the adjusted features were standardized with respect to the training reference distribution. 5CASL-VAE: Learning Structured Latent Variables from Unpaired Data                                           
+
+> Table 1. ARI clustering performance for semi-synthetic data under mild (10–20%) and typical (10–30%) atrophy rates. Values show mean and 95% con fi dence interval (CI) over 10 repeated cross-validation analysis. ARI ranges from 0 (random clustering) to 1 (perfect clustering). Bold : best. Model ARI ↑(target-only) ARI ↑(target+reference) 10–20% 10–30% 10–20% 10–30% GMM 0.001 ( −0.005, 0.007) 0.232 (0.070, 0.394) 0.001 ( −0.006, 0.008) 0.043 (0.009, 0.076) GMVAE 0.038 (0.006, 0.069) 0.284 (0.129, 0.439) ––K-means −0.002 ( −0.009, 0.004) 0.533 (0.423, 0.643) 0.006 (0.001, 0.012) 0.112 (0.093, 0.130) cVAE 0.183 (0.124, 0.242) 0.654 (0.581, 0.726) 0.009 (0.000, 0.019) 0.041 (0.018, 0.064) SepVAE 0.251 (0.196, 0.306) 0.611 (0.558, 0.664) 0.159 (0.130, 0.188) 0.451 (0.380, 0.523) Smile-GAN 0.183 (0.097, 0.293) 0.657 (0.508, 0.750) ––
+> CASL-VAE 0.468 (0.371, 0.564) 0.620 (0.535, 0.706) ∗0.587 (0.521, 0.653) 0.697 (0.672, 0.722) Note: ∗ARI (target-only) of CASL-VAE is not signi fi cantly different from best (CIs overlap).
+
+4.1. Semi-synthetic Data Experiments 
+
+To have ground-truth disease patterns and severity, we simu-lated disease effects in real cognitively normal (CN) samples. Speci fi cally, we randomly split 988 CN (age 45-79) partici-pants into a CN reference ( N = 494 ) group and a pseudo-target ( N = 494 ) group. The pseudo-target group was then randomly divided into three disease subtypes (S1–S3, Ap-pendix Table 5), each de fi ned by a unique pattern of 14 ROIs (with some overlap across subtypes). Consequently, the discrete salient latent s cat has dimension M = 4 (one ref-erence category and three pseudo-target subtypes). For each pseudo-target sample, subtype-speci fi c ROIs were reduced by a rate uniformly sampled between 10–30%, representing the typical atrophy range. To evaluate model robustness to effect size, additional datasets were created with nar-rower ranges: 0–10% (extremely mild), 10–20% (mild), and 20–30% (moderate). Additionally, to evaluate paired sam-ple generation, we applied the above simulation to held-out CN samples ( N = 496 ) to generate corresponding paired 
+
+pseudo-target samples, creating a semi-synthetic test set with ground-truth pairings. 
+
+Evaluation metrics: Subtype discovery is evaluated using Adjusted Rand Index (ARI) (Hubert & Arabie, 1985). Re-construction quality is measured using mean absolute error (MAE) between input and reconstruction output. For paired sample generation, cosine similarity is used to measure sim-ilarity between generated and ground-truth paired reference samples. 
+
+Baseline model comparisons: We compare CASL-VAE to several baselines: (i) standard clustering (K-means, Gaus-sian mixture modeling (GMM)), (ii) deep clustering (GM-VAE (Shu et al., 2017)), (iii) semi-supervised clustering (Smile-GAN (Yang et al., 2021)), (iv) standard generative modeling (cVAE (Doersch, 2016)), and (v) generative model for contrastive analysis (SepVAE (Louiset et al., 2024)). To evaluate clustering performance of cVAE and SepVAE, we apply K-means to the posterior means of their latent rep-resentations (uni fi ed latent space for cVAE; salient latent space for SepVAE). We detail the experiment procedure in Appendix B.2. 
+
+4.2. Real Data Experiment 
+
+We applied CASL-VAE to the ADNI dataset (Beckett et al., 2015), which includes cognitively normal (CN) individ-uals as well as participants with mild cognitive impair-ment (MCI) or Alzheimer’s disease (AD). CN participants served as the reference domain, while MCI and AD partic-ipants formed the target domain. The model was trained on ADNI2/GO participants (206 reference samples, 660 tar-get samples) and evaluated on held-out ADNI1 participants (227 reference samples, 588 target samples). Details on available clinical variables used for downstream analysis can be found in Appendix B.5. 
+
+Selecting the optimal dimension of s cat ( M ). In real data, the true number of target subtypes is unknown. To select 
+
+M , we assessed clustering stability across repeated hold-out cross-validation. For each candidate M ∈  2, 3, 4, 5, 6 , we performed 10 repetitions of hold-out CV: in each repetition the model was trained on 80% of the training data, and subtype assignments were obtained for the full training set. We computed the ARI between all pairs of clusterings across the 10 repetitions, and used the mean pairwise ARI as the stability score for each M . The value of M with the highest stability score was selected. 
+
+4.3. Results on Semi-synthetic Data Subtype discovery. In addition to target-subtype discov-ery (target-only clustering), we evaluate whether reference samples are correctly separated from target subtypes in a joint (target + reference) clustering setting. Table 1 reports clustering performance under two semi-synthetically mod-eled atrophy regimes: a typical regime (10–30%) and a mild regime (10–20%). While the typical regime corresponds to standard simulated effect sizes, we additionally report 6CASL-VAE: Learning Structured Latent Variables from Unpaired Data                 
+
+> (a) scat = 2 scat = 3 scat = 4
+> S2 S3 S1 (b)
+> δscat δscat δsca t
+
+Figure 2. Results from Semi-synthetic experiment with 10–30% atrophy. a) Prototypical target patterns δ s cat learned by CASL-VAE for 
+
+s cat = 2 , 3, 4 . Negative values (red) indicate volumetric reductions with respect to reference. b) Ground-truth subtype (S2,S3,S1) patterns; yellow = binary mask. results in the mild regime to highlight a more challenging setting with weaker effect sizes. Under the typical atrophy setting, CASL-VAE performs on par with the best baseline (Smile-GAN), suggesting that pronounced disease effects enable multiple methods to re-cover subtype structure. Importantly, CASL-VAE provides an interpretable representation of the learned salient latent structure. Figure 2 shows brain maps of the prototypical tar-get patterns learned by the model alongside the ground-truth subtype masks used in simulation. We observe near-perfect correspondence between the inferred patterns and the sim-ulated masks, providing visual evidence that CASL-VAE recovers meaningful and interpretable subtype factors. In ad-dition to recovering subtype-level patterns, CASL-VAE also captures within-subtype variability through the continuous salient latent space, as shown in Figure 3. In the mild atrophy setting, CASL-VAE signi fi cantly outper-forms all baselines in target-only clustering. It also achieves the highest ARI in the joint target + reference setting in both the typical and mild settings, demonstrating that it can simultaneously discover target subtypes and distinguish them from the reference domain. These gains can be at-tributed to CASL-VAE’s hierarchical salient latent structure. Importantly, this structured latent factorization does not compromise its reconstruction quality (Appendix Tables 6 and 7). 
+
+Table 2. Cosine similarity (mean, 95% CI) between generated and ground-truth paired reference samples in semi-synthetic data under mild (10–20%) and typical (10–30%) atrophy. Bold : best. Model 10–20% 10–30% cVAE 0.5471 (0.5428, 0.5514) 0.5208 (0.5170, 0.5247) SepVAE 0.5287 (0.5188, 0.5387) 0.5409 (0.5326, 0.5493)   
+
+> CASL-VAE 0.5835 (0.5777, 0.5894) 0.5816 (0.5747, 0.5885)
+
+We further performed ablation studies to assess sensitiv-ity to target-speci fi c effect size and robustness to regular-ization hyperparameters, with detailed results reported in Appendix B.3. 
+
+Figure 3. Conditional (continuous) salient 2 - D latent means from held-out CN and pseudo - target samples (simulated with 10-30% atrophy). Each point represents a sample’s posterior mean μ s (·) .The cross - hair marks the preset value s ′ 
+
+> cont
+
+. Color indicates the ground-truth simulated atrophy rate. 
+
+Conditional paired-sample generation. We evaluated paired sample generation on semi-synthetic test datasets with paired reference and target samples. For each target sample, we generated a paired reference ˜y (Eq. 16) and mea-sured its cosine similarity with the ground-truth paired ref-erence sample, assessing their semantic similarity. Across both mild and typical atrophy rate, CASL-VAE achieves the highest cosine similarity compared to baseline generative models (Table 2), indicating better semantic consistency of the generated paired samples. 7CASL-VAE: Learning Structured Latent Variables from Unpaired Data 4.4. Results on Real Disease Data 
+
+On the ADNI dataset, CASL-VAE achieves the highest clus-tering stability when the discrete salient latent has dimension 
+
+M =3 (Appendix Figure 6). Figure 4 illustrates the resulting prototypical target-subtype patterns learned by this model. The fi rst pattern (top, δ s cat =2 ) exhibits diffuse brain atrophy, including in regions like the frontal lobe, entorhinal cortex, and angular gyrus, and appears milder in comparison to the second pattern. The second pattern (bottom, δ s cat =3 ) shows more pronounced volumetric reductions concentrated in the medial temporal lobe (e.g. temporal gyrus and hippocam-pus). We further validated the clinical utility of CASL-VAE by measuring the mean absolute target-speci fi c salient variation inferred in each participant in the held-out ADNI1 dataset. This serves as a deviation index, quantifying each partic-ipant’s overall deviation relative to the reference domain (Appendix B.5). This index showed moderate to strong as-sociations with clinical and biomarker variables for AD (Ap-pendix Table 8), suggesting that the inferred target-speci fi cvariation is clinically relevant.      
+
+> Figure 4. Prototypical target patterns δscat learned in ADNI2/GO MCI and AD participants relative to CN participants; arrows point to some clinically relevant regions. Negative values (red) indicate volumetric reductions with respect to CN group.
+
+# 5. Conclusion 
+
+We introduced CASL-VAE, a contrastive generative frame-work for learning structured latent representations from un-paired reference–target data. The model provides a data-driven, interpretable approach for uncovering how target populations deviate from the reference. By factorizing latent structure into a shared continuous space and a hierarchical salient space that captures discrete subtypes and continuous within-subtype variation, CASL-VAE enables unsupervised target-subtype discovery, inter-pretable cross-domain comparisons, and paired-sample gen-eration. In semi-synthetic neuroimaging experiments, CASL-VAE outperformed clustering, generative modeling, and con-trastive analysis baselines, particularly in regimes with subtle effects where heterogeneity and entanglement chal-lenge standard methods. In real Alzheimer’s disease data, it uncovered biologically plausible patterns of brain vari-ation (Coup ´e et al., 2019), highlighting its potential for exploratory analysis of disease heterogeneity. More broadly, CASL-VAE offers a probabilistically grounded perspective on contrastive analysis, showing how structured latent inductive biases can bridge disentangle-ment, clustering, and generative reasoning in unpaired-data settings. Future work may extend the framework to lon-gitudinal data, richer hierarchical structures, or alternative likelihoods, and explore applications in other domains re-quiring analysis of reference–target variation. 
+
+# Impact Statement 
+
+CASL-VAE is a generative framework that has the poten-tial to support exploratory data analysis in domains where paired observations are dif fi cult or impossible to obtain. In biomedical research, the framework may facilitate the study of disease heterogeneity and subgroup structure, particularly in high-dimensional biological data, supporting hypothesis generation and exploratory analysis. More broadly, the framework is applicable to contrastive population analysis in domains such as genomics, epidemiology, and social sciences. The model is intended for research use rather than clinical decision-making. As with other representation-learning methods, biases in the training data may be re fl ected in the learned latent structure, and improper use without rigorous validation could lead to misleading conclusions. 
+
+# References 
+
+Abid, A. and Zou, J. Contrastive variational autoencoder en-hances salient features. arXiv preprint arXiv:1902.04601 ,2019. Abid, A., Zhang, M. J., Bagaria, V. K., and Zou, J. Exploring patterns enriched in a dataset with contrastive principal component analysis. Nature communications , 9(1):2134, 2018. Aglinskas, A., Hartshorne, J. K., and Anzellotti, S. Con-trastive machine learning reveals the structure of neu-roanatomical variation within autism. Science , 376(6597): 1070–1074, 2022. Akhoon, N. Precision medicine: a new paradigm in thera-8CASL-VAE: Learning Structured Latent Variables from Unpaired Data 
+
+peutics. International journal of preventive medicine , 12 (1):12, 2021. Beckett, L. A., Donohue, M. C., Wang, C., Aisen, P., Har-vey, D. J., Saito, N., Initiative, A. D. N., et al. The alzheimer’s disease neuroimaging initiative phase 2: In-creasing the length, breadth, and depth of our understand-ing. Alzheimer’s & Dementia , 11(7):823–831, 2015. Bercea, C. I., Wiestler, B., Rueckert, D., and Schnabel, J. A. Evaluating normative representation learning in gener-ative ai for robust anomaly detection in brain imaging. 
+
+Nature Communications , 16(1):1624, 2025. Chand, G. B., Dwyer, D. B., Erus, G., Sotiras, A., Varol, E., Srinivasan, D., Doshi, J., Pomponio, R., Pigoni, A., Dazzan, P., et al. Two distinct neuroanatomical subtypes of schizophrenia revealed using machine learning. Brain ,143(3):1027–1038, 2020. Chen, X., Duan, Y., Houthooft, R., Schulman, J., Sutskever, I., and Abbeel, P. Infogan: Interpretable representation learning by information maximizing generative adver-sarial nets. Advances in neural information processing systems , 29, 2016. Coup ´e, P., Manj ´on, J. V., Lanuza, E., and Catheline, G. Lifespan changes of the human brain in alzheimer’s dis-ease. Scienti c reports , 9(1):3998, 2019. Diederik, P. K., Welling, M., et al. Auto-encoding varia-tional bayes. In Proceedings of the International Con-ference on Learning Representations (ICLR) , volume 1, 2014. Doersch, C. Tutorial on variational autoencoders. arXiv preprint arXiv:1606.05908 , 2016. Doshi, J., Erus, G., Ou, Y., Resnick, S. M., Gur, R. C., Gur, R. E., Satterthwaite, T. D., Furth, S., Davatzikos, C., Initiative, A. N., et al. Muse: Multi-atlas region segmen-tation utilizing ensembles of registration algorithms and parameters, and locally optimal atlas selection. Neuroim-age , 127:186–195, 2016. Fan, Y., Batmanghelich, N., Clark, C. M., Davatzikos, C., Initiative, A. D. N., et al. Spatial patterns of brain atrophy in mci patients, identi fi ed via high-dimensional pattern classi fi cation, predict subsequent cognitive decline. Neu-roimage , 39(4):1731–1743, 2008. Feczko, E., Miranda-Dominguez, O., Marr, M., Graham, A. M., Nigg, J. T., and Fair, D. A. The heterogeneity problem: approaches to identify psychiatric subtypes. 
+
+Trends in cognitive sciences , 23(7):584–601, 2019. Gao, C. X., Dwyer, D., Zhu, Y., Smith, C. L., Du, L., Filia, K. M., Bayer, J., Menssink, J. M., Wang, T., Bergmeir, C., et al. An overview of clustering methods with guidelines for application in mental health research. Psychiatry Research , 327:115265, 2023. Ge, R. and Zou, J. Rich component analysis. In Balcan, M. F. and Weinberger, K. Q. (eds.), Proceedings of The 33rd International Conference on Machine Learning , vol-ume 48 of Proceedings of Machine Learning Research ,pp. 1502–1510, New York, New York, USA, 20–22 Jun 2016. PMLR. URL https://proceedings.mlr. press/v48/gea16.html .Gretton, A., Borgwardt, K. M., Rasch, M. J., Sch ¨olkopf, B., and Smola, A. A kernel two-sample test. The journal of machine learning research , 13(1):723–773, 2012. Habes, M., Pomponio, R., Shou, H., Doshi, J., Mamourian, E., Erus, G., Nasrallah, I., Launer, L. J., Rashid, T., Bilgel, M., et al. The brain chart of aging: machine-learning analytics reveals links between brain aging, white matter disease, amyloid burden, and cognition in the istaging consortium of 10,216 harmonized mr scans. Alzheimer’s & Dementia , 17(1):89–102, 2021. Higgins, I., Matthey, L., Pal, A., Burgess, C., Glorot, X., Botvinick, M., Mohamed, S., and Lerchner, A. beta-vae: Learning basic visual concepts with a constrained variational framework. In International conference on learning representations , 2017. Hoffman, M. D. and Johnson, M. J. Elbo surgery: yet another way to carve up the variational evidence lower bound. In Workshop in Advances in Approximate Bayesian Inference, NIPS , volume 1, 2016. Hubert, L. and Arabie, P. Comparing partitions. Journal of classi cation , 2(1):193–218, 1985. Jang, E., Gu, S., and Poole, B. Categorical reparameter-ization with gumbel-softmax. In International Confer-ence on Learning Representations , 2017. URL https: //openreview.net/forum?id=rkE3y85ee .Jones, A., Townes, F. W., Li, D., and Engelhardt, B. E. Contrastive latent variable modeling with application to case-control sequencing experiments. The Annals of Ap-plied Statistics , 16(3):1268–1291, 2022. Kingma, D. P. and Ba, J. Adam: A method for stochastic optimization. In International Conference on Learning Representations (ICLR) , 2015. Kopf, A. and Claassen, M. Latent representation learning in biology and translational medicine. Patterns , 2(3), 2021. Louiset, R., Duchesnay, E., Antoine, G., Dufumier, B., and Gori, P. Sepvae: a contrastive vae to separate pathologi-cal patterns from healthy ones. In Burgos, N., Petitjean, 9CASL-VAE: Learning Structured Latent Variables from Unpaired Data 
+
+C., Vakalopoulou, M., Christodoulidis, S., Coupe, P., Delingette, H., Lartizien, C., and Mateus, D. (eds.), Pro-ceedings of The 7nd International Conference on Medical Imaging with Deep Learning , volume 250 of Proceedings of Machine Learning Research , pp. 918–936. PMLR, 03– 05 Jul 2024. URL https://proceedings.mlr. press/v250/louiset24a.html .Marquand, A. F., Rezek, I., Buitelaar, J., and Beckmann, C. F. Understanding heterogeneity in clinical cohorts using normative models: beyond case-control studies. 
+
+Biological psychiatry , 80(7):552–561, 2016. Nunes, A., Trappenberg, T., and Alda, M. The de fi nition and measurement of heterogeneity. Translational psychiatry ,10(1):299, 2020. Pomponio, R., Erus, G., Habes, M., Doshi, J., Srinivasan, D., Mamourian, E., Bashyam, V., Nasrallah, I. M., Sat-terthwaite, T. D., Fan, Y., et al. Harmonization of large mri datasets for the analysis of brain imaging patterns throughout the lifespan. NeuroImage , 208:116450, 2020. Romero, I. G., Ruvinsky, I., and Gilad, Y. Comparative studies of gene expression and the evolution of gene reg-ulation. Nature Reviews Genetics , 13(7):505–516, 2012. Severson, K. A., Ghosh, S., and Ng, K. Unsupervised learn-ing with contrastive latent variable models. In Proceed-ings of the AAAI Conference on Arti cial Intelligence ,volume 33, pp. 4862–4869, 2019. Shu, R., Brofos, J., and Langlotz, C. A note on deep variational models for unsupervised clustering. 2017. URL https://openreview.net/pdf? id=rydQ6CEKl .Sohn, K., Lee, H., and Yan, X. Learning structured output representation using deep conditional generative models. 
+
+Advances in neural information processing systems , 28, 2015. Soneson, C. and Robinson, M. D. Bias, robustness and scalability in single-cell differential expression analysis. 
+
+Nature Methods , 15(4):255–261, Feb 2018. doi: https: //doi.org/10.1038/nmeth.4612. Weinberger, E., Beebe-Wang, N., and Lee, S.-I. Mo-ment matching deep contrastive latent variable mod-els. In Camps-Valls, G., Ruiz, F. J. R., and Valera, I. (eds.), Proceedings of The 25th Interna-tional Conference on Arti cial Intelligence and Statis-tics , volume 151 of Proceedings of Machine Learn-ing Research , pp. 2354–2371. PMLR, 28–30 Mar 2022. URL https://proceedings.mlr.press/ v151/weinberger22a.html .Weinberger, E., Lin, C., and Lee, S.-I. Isolating salient variations of interest in single-cell data with contrastivevi. 
+
+Nature Methods , 20(9):1336–1345, 2023. Yang, Z., Nasrallah, I. M., Shou, H., Wen, J., Doshi, J., Habes, M., Erus, G., Abdulkadir, A., Resnick, S. M., Albert, M. S., et al. A deep learning framework identi-
+
+fi es dimensional representations of alzheimer’s disease from brain structure. Nature communications , 12(1):7065, 2021. Zheng, L., Zhou, C., Mao, C., Xie, C., You, J., Cheng, W., Liu, C., Huang, P., Guan, X., Guo, T., and et al. Contrastive machine learning reveals parkinson’s disease speci fi c features associated with disease severity and pro-gression. Communications Biology , 7(1), Aug 2024. doi: 10.1038/s42003-024-06648-x. 10 CASL-VAE: Learning Structured Latent Variables from Unpaired Data A. Appendix: Methods A.1. Derivation of the ELBO on the joint log-likelihood 
+
+In the main text we de fi ned the joint generative model p(x, y, z, s ) = p(z)p(s)p(x  z, s )p(y  z), and the variational posterior q(z, s  x, y ) = q(z  x, y )q(s  x). To de fi ne the joint log-likelihood, we introduce the variational posterior 
+
+q(z, s  x, y ) as: 
+
+log p(x, y ) = log 
+
+
+
+p(x, y, z, s ) dz ds = log 
+
+
+
+q(z, s  x, y ) p(x, y, z, s )
+
+q(z, s  x, y ) dz ds = log E q(z,s |x,y )
+
+ p(x, y, z, s )
+
+q(z, s  x, y )
+
+
+
+. (20) Applying Jensen’s inequality yields 
+
+log p(x, y ) ≥ E q(z,s |x,y )
+
+
+
+log p(x, y, z, s )
+
+q(z, s  x, y )
+
+
+
+. (21) Using the conditional independence p(x, y  z, s ) = p(x  z, s )p(y  z) and the posterior factorization q(z, s  x, y ) = q(z 
+
+x, y )q(s  x), we obtain 
+
+log p(x, y ) ≥ E q(z|x,y )q(s|x) [log p(x  z, s )] + E q(z|x,y ) [log p(y  z)] − KL( q(z  x, y )∥p(z)) − KL( q(s  x)∥p(s)) ,
+
+which is the variational lower bound of the joint log marginal likelihood, as given in Eq. (2) in the main text. Assuming posterior decoupling q(z  x, y ) = q(z  x) = q(z  y) 2 , the KL term on the common latent can be split as: 
+
+KL( q(z  x, y )∥p(z)) = 12 KL( q(z  x)∥p(z)) + 12 KL( q(z  y)∥p(z)) (22) Thus, Eq. (2) can be rewritten as Eq. (4). 
+
+A.2. Derivation of the ELBO for CASL-VAE 
+
+Starting from the ELBO in Eq. (4), 
+
+log p(x, y ) ≥E q(z|x)q(s|x) [log p(x  z, s )] + E q(z|y) [log p(y  z)] − 12 KL( q(z  x)∥p(z)) − 12 KL( q(z  y)∥p(z)) 
+
+− KL( q(s  x)∥p(s)) , (23) The salient latent variable is hierarchical, s = ( s cat , s cont ) , with posterior factorization q(s  x) = q(s cat  x) q(s cont  s cat , x ),
+
+and prior factorization p(s) = p(s cat ) p(s cont  s cat ).
+
+The KL divergence for the salient latent is expanded as 
+
+KL( q(s  x)∥p(s)) = E q(s|x)
+
+
+
+log q(s  x)
+
+p(s)
+
+
+
+= E q(s cat |x)q(s cont |s cat ,x )
+
+
+
+log q(s cat  x)q(s cont  s cat , x )
+
+p(s cat )p(s cont  s cat )
+
+
+
+= E q(s cat |x)
+
+
+
+log q(s cat  x)
+
+p(s cat )
+
+
+
++ E q(s cat |x)
+
+
+
+E q(s cont |s cat ,x ) log q(s cont  s cat , x )
+
+p(s cont  s cat )
+
+
+
+= KL( q(s cat  x)∥p(s cat )) + E q(s cat |x) [KL( q(s cont  s cat , x )∥p(s cont  s cat ))] . (24) Substituting Eq. (24) into Eq. (23) gives 
+
+log p(x, y ) ≥ E q(z|x)q(s cat , s cont |x) [log p(x  z, s cat , s cont )] + E q(z|y) [log p(y  z)] − 12 KL( q(z  x)∥p(z)) 
+
+− 12 KL( q(z  y)∥p(z)) − KL( q(s cat  x)∥p(s cat )) − E q(s cat |x) [KL( q(s cont  s cat , x )∥p(s cont  s cat ))] . (25) 2 Posterior decoupling is enforced via regularization using R M M D and R LC as described in Section 3.6, which encourages q(z | x) ≈
+
+q(z | y).11 CASL-VAE: Learning Structured Latent Variables from Unpaired Data 
+
+Finally, separating the domain-speci fi c terms as 
+
+L x = E q(z|x)q(s cat , s cont |x) [log p(x  z, s cat , s cont )] − 12 KL( q(z  x)∥p(z)) 
+
+− KL( q(s cat  x)∥p(s cat )) − E q(s cat |x) [KL( q(s cont  s cat , x )∥p(s cont  s cat ))] , (26) 
+
+L y = E q(z|y) [log p(y  z)] − 12 KL( q(z  y)∥p(z)) , (27) we obtain the ELBO for CASL-VAE, as de fi ned in Eq. (11) (where it is written in terms of parameterized distributions): 
+
+L ELBO = L x + L y .
+
+A.3. MMD Regularization for Posterior Decoupling 
+
+We use maximum mean discrepancy (MMD) as one of the regularizations to align the common latent distributions q(zx)
+
+and q(zy) (Section 3.6): 
+
+R MMD = MMD 2 (q(zx), q (zy)) = E z x ,z ′ 
+
+> x
+
+[k(z x , z ′ 
+
+> x
+
+)] + E z y ,z ′ 
+
+> y
+
+[k(z y , z ′ 
+
+> y
+
+)] − 2E z x ,z y [k(z x , z y )] 
+
+where k(·, ·) is a sum of RBF kernels: k(a, b ) =  
+
+> γ∈Γ
+
+exp( −γ∥a − b∥ 2 ) . We use Γ = 10 −3 , 10 −2 , 10 −1 , 10 0 , 10 1 , 10 2  ,corresponding to γ = 12σ 2
+
+A.4. Information-Theoretic View of Salient Latent Regularization for the Reference Domain 
+
+We analyze how the reference-domain regularizers R BCE and R ref reduce the mutual information between reference samples 
+
+Y and the salient latent (s cat , s cont ).
+
+Mutual information and variational bound: For random variables X and Z, the mutual information is 
+
+I(X; Z) = H(Z) − H(Z  X), (28) where H(·) denotes Shannon entropy. When Z is represented by any choice of variational posterior q(z  x) and prior p(z) ,a standard variational upper bound (Hoffman & Johnson, 2016) is 
+
+I(X; Z) ≤ E p(x) [D KL (q(z  x) ∥ p(z))] . (29) 
+
+Mutual Information between reference domain and hierarchical salient latent. For reference samples y ∈ Y , the hierarchical salient latent posterior and prior decomposes as 
+
+q(s cat , s cont  y) = q(s cat  y) q(s cont  s cat , y ), p(s cat , s cont ) = p(s cat ) p(s cont  s cat ).
+
+By the chain rule, 
+
+I(Y ; s cat , s cont ) = I(Y ; s cat ) + I(Y ; s cont  s cat ). (30) For the continuous part, applying the variational bound yields 
+
+I(Y ; s cont  s cat ) ≤ E p(y) q(s cat |y) [D KL (q(s cont  s cat , y ) ∥ p(s cont  s cat ))] . (31) Thus, 
+
+I(Y ; s cat , s cont ) ≤ I(Y ; s cat ) + E p(y) q(s cat |y) [D KL (q(s cont  s cat , y ) ∥ p(s cont  s cat ))] , (32) which quanti fi es an upper bound on the information encoded in the salient latent variables about the reference samples. 
+
+Effect of regularization terms R BCE and R ref : For reference domain Y,
+
+1. Minimizing R BCE pushes q(s cat  y) toward a point mass at the preset reference category ( s ′ 
+
+> cat
+
+= 1 ). This reduces the conditional entropy H(s cat  Y ) and the marginal entropy H(s cat ), thereby minimizing I(Y ; s cat ).
+
+2. The KL-divergence regularization R ref on continuous salient latent enforces that both the posterior q(s cont  s cat = 1 , y )
+
+and the learned prior p(s cont  s cat = 1) match N (0 , I ) . By the variational upper bound in Eq. 31, minimizing R ref thereby minimizes the upper bound on I(Y ; s cont  s cat ).Therefore, R BCE and R ref jointly minimize an upper bound on I(Y ; s cat , s cont ) (Eq. 30), making the salient latent uninfor-mative about the reference domain and forcing it to encode target-speci fi c variation. 12 CASL-VAE: Learning Structured Latent Variables from Unpaired Data A.5. Implementation Details 
+
+A.5.1. M ODEL A RCHITECTURE The overall architecture of CASL-VAE is illustrated in Fig. 1a. The common encoder e ϕ z maps input data to the parameters of the common latent posterior, producing a mean vector and a log-standard-deviation vector (each of dimension 15). The salient encoder e ϕ s fi rst projects the input into a 36-dimensional embedding. This embedding is then mapped to M -dimensional logits, which parameterize the discrete salient posterior q ϕ s (s cat  x) . The sampled discrete salient variable is concatenated with the 36-dimensional embedding and passed through additional layers to produce the conditional continuous salient posterior mean (dimension 2), corresponding to q ϕ s (s cont  s cat , x ).The common decoder d θ z reconstructs the shared component from the sampled common latent representation, while the salient decoder d θ s reconstructs the target-speci fi c component from the concatenated sampled discrete and continuous salient latents. The outputs of the two decoders are added to form the fi nal reconstruction of the input (dimension 145). Table 3 summarizes the network architectures of the common encoder and decoder e ϕ z and d θ z . Table 4 summarizes the network architectures of the salient encoder and decoder e ϕ s and d θ s , as well as the learned prior mean embedding μ ψ .        
+
+> Table 3. Architecture of common encoder network eϕzand decoder network dθz
+
+Layer Input Size Bias Term Leaky ReLU α Output Size Common Encoder e ϕ z
+
+Linear1 + Leaky-ReLU 145 ×1 Yes 0.2 72 ×1Linear2 + Leaky-ReLU 72 ×1 Yes 0.2 36 ×1Linear3 36 ×1 Yes NA 30 ×1
+
+(e ϕ z output split into 15-dim mean μ z and log-standard-deviation log σ z )
+
+Common Decoder d ϕ z
+
+Linear1 + Leaky-ReLU 15 ×1 Yes 0.2 36 ×1Linear2 + Leaky-ReLU 36 ×1 Yes 0.2 72 ×1Linear3 72 ×1 Yes NA 145 ×1            
+
+> Table 4. Architecture of salient encoder network eϕs, decoder network dθs, and the learned prior mean embedding network μψ.
+
+Layer Input Size Bias Term Leaky ReLU α Output Size Salient Encoder e ϕ s
+
+Input embedding e embed  
+
+> ϕs
+
+Linear1 + Leaky-ReLU 145 ×1 Yes 0.2 72 ×1Linear2 + Leaky-ReLU 72 ×1 Yes 0.2 36 ×1
+
+Discrete salient component e cat  
+
+> ϕs
+
+Linear3 + Leaky-ReLU 36 ×1 Yes 0.2 36 ×1Linear4 36 ×1 Yes NA M ×1
+
+Continuous salient component e cont  
+
+> ϕs
+
+Linear5 + Leaky-ReLU 36 ×1 Yes 0.2 36 ×1Linear6 36 ×1 Yes NA 2×1
+
+(e cat   
+
+> ϕs
+
+outputs M -dim logits, e cont   
+
+> ϕs
+
+outputs 2-dim mean μ s )
+
+Salient prior mean embedding μ ψ
+
+Linear1 + Leaky-ReLU M ×1 Yes 0.2 36 ×1Linear2 36 ×1 Yes NA 2×1
+
+Salient Decoder d ϕ s
+
+Projection of discrete salient latent 
+
+Linear1 M ×1 Yes NA 9×1
+
+Projection of continuous salient latent 
+
+Linear2 2×1 Yes NA 9×1
+
+Concatenate discrete and continuous salient latent and decode 
+
+Linear3 + Leaky-ReLU 18 ×1 Yes 0.2 36 ×1Linear4 + Leaky-ReLU 36 ×1 Yes 0.2 72 ×1Linear5 72 ×1 Yes NA 145 ×113 CASL-VAE: Learning Structured Latent Variables from Unpaired Data 
+
+A.5.2. T RAINING D ETAILS The model was trained using the ADAM optimizer (Kingma & Ba, 2015) with a learning rate of 1 × 10 −3 . The optimizer parameters were set to β 1 = 0 .5 and β 2 = 0 .999 . For all experiments, we used the following regularization hyperparameters: 
+
+λ = 100 , η = 10 , ζ = 1 , and γ = 1 . We found the model to be largely robust to variations in these hyperparameters, as demonstrated in Appendix B.3. Among all regularization weights, λ had the most noticeable effect, since it controls the relative importance of the MMD loss and therefore the strength of posterior decoupling at the distribution level. In our experiments, decreasing λ was the only hyperparameter change that consistently affected performance. The batch size was set to 128, and training was run for a maximum of 500 epochs. The temperature τ was initialized to 1 annealed during training, and early stopping was considered only after τ < 0.5 . After this point, training was terminated when both losses L x and L y stabilized and cluster assignments converged. A.5.3. CASL-VAE A LGORITHM Detailed training procedure of CASL-VAEis disclosed by Algorithm 1. 
+
+Algorithm 1 CASL-VAE training procedure. 1: Input: Target samples X , reference samples Y ; encoders e ϕ z , e ϕ s ; decoders d θ z , d θ s ; batch size B ; initial temperature 
+
+τ 0 ; minimum temperature τ min ; decay rate r; maximum steps S.2: Initialize: τ ← τ 0 , learnable prior mean embedding parameters ψ
+
+3: Learned prior: p(s cont  s cat ) = N (μ ψ (s cat ), I )
+
+4: for step = 1 to S do 
+
+5: if stopping criterion is met then 
+
+6: break 
+
+7: end if 
+
+8: if step mod 100 = 0 then 
+
+9: τ ← max( τ min , τ 0 exp( −r · step )) 
+
+10: end if 
+
+11: Sample minibatches x b  Bb=1 ∼ X and y b  Bb=1 ∼ Y
+
+12: Encode common latent: 
+
+(μ z (x b ), σ z (x b )) = e ϕ z (x b ), z x ∼ N μ z (x b ), σ 2 
+
+> z
+
+(x b )I
+
+(μ z (y b ), σ z (y b )) = e ϕ z (y b ), z y ∼ N μ z (y b ), σ 2 
+
+> z
+
+(y b )I
+
+13: Encode salient latents for target samples: 
+
+proj x = e embed   
+
+> ϕs
+
+(x b )
+
+α(x b ) = e cat   
+
+> ϕs
+
+(proj x ) ⇒ s cat ,x ∼ Gumbel -Softmax( α(x b ), τ )
+
+μ s (s cat ,x , x b ) = e cont  
+
+> ϕs
+
+concat (s cat ,x , proj x ) ⇒ s cont ,x ∼ N μ s (s cat ,x , x b ), I 
+
+14: Fix salient latents for reference samples to preset values: 
+
+s ′ 
+
+> y
+
+= concat (s ′ 
+
+> cat ,y
+
+= 1 , s ′ 
+
+> cont ,y
+
+= 0) 
+
+15: Decode reconstructions: 
+
+ˆx = d θ z (z x ) + d θ s (concat (s cat x , s cont x )) ˆy = d θ z (z y ) + d θ s (s ′ 
+
+> y
+
+)
+
+16: Compute ELBO terms L x , L y (Eqs. 12, 13), using the learned prior p(s cont  s cat )
+
+17: Compute regularizers R MMD , R LC , R BCE , R ref (Section 3.6) 18: De fi ne objective J = −L x − L y + λR MMD + ηR LC + ζR BCE + γR ref 19: Update parameters ϕ z , ϕ s , θ z , θ s , ψ using ADAM by minimizing J
+
+20: end for 
+
+21: Return: trained encoders, decoders, prior mean embedding μ ψ
+
+14 CASL-VAE: Learning Structured Latent Variables from Unpaired Data B. Appendix: Experiments B.1. Brain Regions Included in Target Subtype Patterns for the Semi-synthetic Experiment 
+
+Table 5 lists the brain regions (bilateral left and right components, yielding two ROIs per region) included in the three subtype patterns (S1–S3) used to construct the semi-synthetic datasets.  
+
+> Table 5. Brain regions included in the semi-synthetic disease patterns used in this study. Each subtype (S1–S3) affects 7 bilateral brain regions (left and right hemispheres; 14 ROIs in total), with partial overlap across subtypes. OP: opercular part.
+
+Brain Region (bilateral) S1 S2 S3 Amygdala ✓
+
+Temporal pole ✓ ✓ ✓
+
+Hippocampus ✓ ✓
+
+Angular gyrus ✓
+
+Entorhinal area ✓
+
+Frontal operculum ✓
+
+Inferior temporal gyrus ✓
+
+Lateral orbital gyrus ✓
+
+Medial frontal cortex ✓ ✓
+
+Middle frontal gyrus ✓
+
+Middle occipital gyrus ✓
+
+OP of inferior frontal gyrus ✓
+
+Parahippocampal gyrus ✓
+
+Posterior insula ✓
+
+Parietal operculum ✓ ✓
+
+Supramarginal gyrus ✓
+
+B.2. Experiment Procedure 
+
+For fair comparison in the semi-synthetic experiments, all ROI volume data were fi rst residualized for age, sex, and intracranial volume using only the training reference data. The residuals were then standardized using the mean and standard deviation of the training reference data. The same preprocessing pipeline was applied to all baseline methods (K-means, GMM, GMVAE, cVAE, SepVAE, SmileGAN; refer Section 4.1). CASL-VAE uses a common latent space of dimension k = 15 , a single discrete salient latent with M categories, and a continuous salient latent of dimension t = 2 (Appendix A.5.1). To ensure comparable model capacity across VAE-based methods, we fi xed the total latent dimensionality to 18 for all models. Output layers were linear with Gaussian likelihood. The baselines were con fi gured to match this total capacity while respecting their original design: • cVAE : a single uni fi ed latent space of dimension 18. • SepVAE : common latent dimension 15 and salient latent dimension 3. SepVAE was implemented with a similar encoder–decoder architecture as CASL-VAE, but without a hierarchical salient latent structure. • GMVAE : a single discrete mixture component with M categories and a continuous within-component latent dimension 17. To prevent mixture collapse and ensure subtype separation, we used identity covariance and learned component-speci fi c means conditioned on the discrete mixture variable, following (Shu et al., 2017). 
+
+Model con gurations: We evaluate clustering under two settings: (i) target-only clustering and (ii) target+reference clustering. K-means and GMM were applied to both settings. GMVAE is an unsupervised deep clustering model and was therefore applied only to target-only clustering. Smile-GAN is a semi-supervised deep clustering method that uses a Generative Adversarial Network to identify target subtypes by contrasting against the reference domain; thus it can be used for target-only clustering but not for target+reference clustering. cVAE and SepVAE are generative models trained on both target and reference data, with SepVAE additionally enforcing separation of reference and target samples in its salient latent space. To assess clustering performance for these models, we apply K-means to their inferred latent representations (uni fi ed latent for cVAE, salient latent for SepVAE). 15 CASL-VAE: Learning Structured Latent Variables from Unpaired Data Training and evaluation: All models were trained using the Adam optimizer (Kingma & Ba, 2015) with a learning rate of 
+
+10 −3 and a batch size of 128. Models were trained 10 times using repeated hold-out cross-validation on unpaired reference and target samples. In each repetition, 80% of the data was used for training and the remaining 20% of the data was held out for assessing model performance. Reported results correspond to the mean and standard deviation or 95% con fi dence intervals (computed assuming a Student’s t-distribution) across repetitions. Clustering performance and reconstruction quality were evaluated using the Adjusted Rand Index (ARI) and mean absolute error (MAE), respectively, computed on the held-out validation set for each repetition. For conditional paired-sample generation, we additionally evaluated on a separate semi-synthetic test set containing ground-truth paired reference–target samples. Speci fi cally, for each training repetition, the trained model generated paired reference domain samples for held-out pseudo-target samples, and cosine similarity was computed between the generated and true groud-truth paired reference samples. GMVAE does not support paired sample generation because it was implemented for target-only clustering and does not model the reference domain, so it was excluded from this evaluation. For cVAE, paired samples were generated by encoding pseudo-target samples into the latent representation and decoding them conditioned on the reference domain label. For SepVAE, the common latent was inferred from the pseudo-target samples, while the salient latent was fi xed to an uninformative vector 0 during decoding. CASL-VAE follows the same, except the uninformative vector is set as 
+
+(s ′ 
+
+> cat
+
+= 1 , s ′ 
+
+> cont
+
+= 0) (refer Eq. 16). 
+
+B.3. Ablation Analysis 
+
+To assess model sensitivity to effect size of target-speci fi c variation, we trained CASL-VAE on semi-synthetic unpaired reference-target data where the pseudo-target samples were simulated with extremely mild (0-10%), mild (10-20%), and moderate (20-30%) atrophy rates. We also assessed robustness of model performance to hyperparameter-selection. For transaparency, we also performed this on the dataset simulated with the typical atrophy rate (10-30%). For each semi-synthetic dataset, we trained CASL-VAE with varying hyper-parameters. Speci fi cally, we changed each parameter from 0% (no regularization) to 200% of the preset hyperparameter value (de fi ned in Appendix A.5.2), while keeping all other parameters fi xed to the preset values. For each of these ablations, we trained the model 10 times using repeated hold-out cross-validation analysis described in Appendix B.2, and reported the average model performance on the held-out set per training loop. Figure 5(a) reports the Adjusted Rand Index (ARI) for target-only clustering, while Figure 5(b) reports ARI for joint target+reference clustering. ARI was computed between the predicted cluster assignments and the ground-truth subtype labels in the semi-synthetic experiments. 16 CASL-VAE: Learning Structured Latent Variables from Unpaired Data                        
+
+> Figure 5. Ablation analysis of CASL-VAE clustering performance under varying regularization strengths and atrophy rates. (a) ARI for target-only clustering and (b) ARI for target+reference clustering, evaluated across 10 repeated hold-out validation splits. Curves show mean ±standard deviation across repetitions. Each regularization weight is scaled relative to its default value, with ratios ranging from 0 to 2 in increments of 0.25. Here, λcontrols RMMD ,ηcontrols RLC ,ζcontrols RBCE , and γcontrols Rref .
+
+We observe that CASL-VAE’s ability to recover target subtypes degrades rapidly under extremely mild atrophy (0–10%), with ARI (target) approaching zero, indicating near-random cluster assignment. This suggests that when the effect size of target-speci fi c variation is very small, reliable subtype discovery becomes challenging. This behavior is expected in a contrastive setting: when target-speci fi c effects are very small, the target distribution substantially overlaps with the reference distribution, making reliable subtype discovery inherently challenging. As the effect size increases, target-speci fi cvariation becomes more distinguishable from the reference domain, and clustering performance improves consistently. A similar trend is observed for target+reference clustering, where stronger target-speci fi c effects lead to clearer separation between reference samples and target subtypes. Ablation results further highlight the role of individual regularization terms. Removing the MMD regularization on the common latent space leads to a noticeable drop in ARI, indicating degraded domain-invariant representation learning of the common latent. This suggests that, without MMD, target-speci fi c variation may partially leak into the common latent space, weakening the separation between shared and salient factors. Likewise, removing the BCE loss substantially reduces performance in separating reference samples from target subtypes. Importantly, once the regularization terms are active, CASL-VAE exhibits stable performance across a broad range of hyperparameter strengths. Performance degrades primarily when speci fi c regularization terms are removed entirely, demonstrating both the necessity of these components and robustness to precise hyperparameter tuning. 
+
+B.4. Results from semi-synthetic data analysis 
+
+Additional results from the semi-synthetic experiment measuring reconstruction quality.                         
+
+> Table 6. Reconstruction performance (MAE) on pseudo-PT (target domain) samples in semi-synthetic data. Values show mean ±std with 95% CI. Lower is better. Model MAE ↓
+> 10–20% 10–30% cVAE 0.6355 ±0.0079 (0.6295, 0.6415) 0.6319 ±0.0089 (0.6252, 0.6386) SepVAE 0.6118 ±0.0076 (0.6061, 0.6175) 0.6101 ±0.0081 (0.6040, 0.6162) CASL-VAE (Ours) 0.6094 ±0.0116 (0.6006, 0.6181) 0.6070 ±0.0092 (0.6001, 0.6139)
+
+17 CASL-VAE: Learning Structured Latent Variables from Unpaired Data 
+
+Table 7. Reconstruction performance (MAE) on CN (reference domain) samples in semi-synthetic data. Values show mean ± std with 95% CI. Lower is better. Model MAE ↓
+
+10–20% 10–30% cVAE 0.6394 ± 0.0087 (0.6328, 0.6460) 0.6399 ± 0.0078 (0.6340, 0.6458) SepVAE 0.6146 ± 0.0098 (0.6073, 0.6220) 0.6151 ± 0.0092 (0.6082, 0.6221) 
+
+CASL-VAE (Ours) 0.6240 ± 0.0121 (0.6149, 0.6331) ∗ 0.6219 ± 0.0095 (0.6147, 0.6291) ∗
+
+Note: ∗ MAE of CASL-VAE is not signi fi cantly different from SepVAE (95% CIs overlap). 
+
+B.5. Real-world data analysis and association of target-speci c variation with clinical variables 
+
+For each test sample i , CASL-VAE yields an interpretable latent representation (z i , s cat ,i , s cont ,i ) . Target-speci fi c variation is quanti fi ed by decoding the salient latent and subtracting the reference baseline: 
+
+∆ i = d θ s (s cat ,i , s cont ,i ) − d θ s (s ′ 
+
+> cat
+
+, s ′ 
+
+> cont
+
+). (33) This isolates deviations relative to the reference domain and provides a direct representation of target-speci fi c structure in the input space. To obtain a scalar measure of overall deviation, we compute a deviation index (DI) as the mean absolute value of ∆ i across all dimensions: 
+
+DI i = 1
+
+D
+
+> D
+
+
+
+> d=1
+
+∆ i,d  ,
+
+where D is the dimensionality of the decoded output. Another way of interpreting this is that DI measures the overall magnitude of an individual’s deviation from their paired reference. To evaluate whether CASL-VAE captures meaningful disease-related variation in real data, we correlated the deviation index (DI) with clinical variables and biomarkers re fl ecting AD pathology severity. For each clinical variable, we only selected participants who had the variable available to include in the statistical analysis. The clinical variables used were ADNI-MEM, ADNI-LAN, and ADNI-EF, which are composite scores measuring memory, language, and executive function, respectively (higher values indicate better performance). MMSE is a global cognitive score (higher values indicate better cognition), and ADAS-Cog-13 is another complementary score that measures cognitive performance across 13 tasks, where higher scores indicate worse cognitive performance. APOE E4 carrier status indicates whether the participant carries at least one APOE E4 allele (0 = non-carrier, 1 = carrier), with APOE E4 being a genetic risk factor for AD. We also included cerebrospinal fl uid (CSF) biomarkers: CSF-Abeta (amyloid- β 1–42; lower values indicate greater amyloid pathology), CSF-pTau (phosphorylated tau; higher values indicate greater tau pathology), and CSF-Tau (total tau; higher values indicate greater neurodegeneration). For dichotomous variables (APOE E4 carrier), point-biserial correlation was used; Pearson correlation was used for continuous variables. 
+
+Table 8. Correlation of clinical and biomarker variables with the overall deviation index (DI). DI measures the mean absolute target-speci fi csalient variation in each sample relative to the reference domain. Variables with p < 0.001 are marked accordingly. 
+
+Variable Correlation with DI p-value p < 0.001 
+
+ADNI-MEM −0.469 9.99 × 10 −37 Yes ADNI-LAN −0.348 6.85 × 10 −20 Yes ADNI-EF −0.276 9.26 × 10 −13 Yes ADAS-COG-13 0.473 4.76 × 10 −37 Yes APOE E4 Carrier 0.242 3.81 × 10 −10 Yes MMSE −0.354 1.20 × 10 −20 Yes CSF-Abeta −0.254 3.18 × 10 −6 Yes CSF-PTau 0.146 8.24 × 10 −3 No CSF-Tau 0.115 3.67 × 10 −2 No Table 8 reports the results of this analysis. Higher DI values were associated with lower memory, language, and executive function scores (ADNI-MEM: r = −0.469 , ADNI-LAN: r = −0.348 , ADNI-EF: r = −0.276 ), higher overall cognitive 18 CASL-VAE: Learning Structured Latent Variables from Unpaired Data 
+
+impairment (ADAS-Cog-13: r = 0 .473 ), lower MMSE scores ( r = −0.354 ), and increased likelihood of being an APOE E4 carrier ( r = 0 .242 ). CSF Abeta showed a negative correlation ( r = −0.254 ), while correlations with CSF Tau and pTau were weak and not signi fi cant. These results indicate that the salient latent variables in CASL-VAE capture clinically meaningful target-speci fi c variation across samples.     
+
+> Figure 6. Clustering stability of CASL-VAE on ADNI2/GO training data. Box-plots show pairwise ARI between clusterings from 10 folds of repeated hold-out cross-validation, for M= 2 , . . . , 6.
+
+19

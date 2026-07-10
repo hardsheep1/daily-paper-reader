@@ -1,0 +1,316 @@
+Title: Advanced Topic Modeling Techniques for Categorizing Software Vulnerabilities
+
+URL Source: https://arxiv.org/pdf/2607.03887v1
+
+Published Time: Tue, 07 Jul 2026 01:41:04 GMT
+
+Number of Pages: 8
+
+Markdown Content:
+# Advanced Topic Modeling Techniques for Categorizing Software Vulnerabilities 
+
+Utkarsh Tiwari 1, Spoorthi M 2, Anirudh S 3, and Nidhin Prabhakar T. V. 4* 
+
+Department of Computer Science & Engineering, Amrita School of Computing, Bengaluru, Amrita Vishwa Vidyapeetham, India 
+
+> 1
+
+bl.en.u4cse21212@bl.students.amrita.edu, 2bl.en.u4cse21193@bl.students.amrita.edu, 
+
+> 3
+
+bl.en.u4cse21020@bl.students.amrita.edu, 4* tv nidhin@blr.amrita.edu 
+
+Abstract —The increasing complexity and frequency of software vulnerabilities demand efficient methods to analyze and prioritize threats. Traditional approaches often fail to process the vast amount of unstructured textual data effectively, highlighting the need for advanced solutions. This study leverages state-of-the-art topic modeling techniques powered by large language models (LLMs) to extract meaningful insights from the ’Threat’ feature of a software vulnerability dataset. Models such as BERTopic, Top2Vec, CombinedTM, Llama2 with BERTopic, and Mixtral are utilized, along with dimensionality reduction and clustering methods like UMAP, PCA, HDBSCAN, and DBSCAN. By un-covering latent patterns and generating interpretable clusters, this research enhances threat prioritization and decision-making in cybersecurity. The findings support scalable and automated solutions for vulnerability management, contributing to improved security practices. 
+
+Index Terms —Software Vulnerabilities, Topic Modeling, Large Language Models, Cybersecurity, BERTopic, Top2Vec, Com-binedTM, Llama2 with BERTopic, Mixtral, Dimensionality Re-duction, Clustering 
+
+I. I NTRODUCTION 
+
+Software vulnerabilities pose a threat to the security of var-ious organizations which may lead to financial, reputational, and operational risks. With time, the volume and complexity of vulnerabilities grow, and it is necessary to identify and categorize them effectively. Identifying and categorizing these vulnerabilities effectively has become a major challenge for or-ganizations. This paper addresses this gap by employing state-of-the-art topic modeling techniques to analyze and categorize vulnerabilities. The proposed workflow starts off with preprocessing the dataset to ensure data compatibility. Five advanced topic modeling approaches—BERTopic with multiple configura-tions, CombinedTM, Top2Vec, Llama2 with BERTopic, and mixtral 8x7b—are applied to extract latent topics. Compara-tive analysis evaluates the performance of each model using metrics like topic coherence and clustering quality, supported by visualizations to aid interpretability. This paper benefits various cybersecurity researchers, software developers, and organizations by providing actionable insights into recurring vulnerability themes. The contributions of this paper involve:  
+
+> •
+
+Application of BERTopic with Multiple Configura-tions: The paper explores four unique configurations of BERTopic using UMAP, PCA, DBSCAN, and advanced language embeddings, demonstrating the adaptability of the framework in identifying meaningful patterns.  
+
+> •
+
+Incorporation of CombinedTM and Top2Vec: Com-binedTM aligns Bag-of-Words representations with con-textual embeddings, while Top2Vec efficiently identifies topics by embedding documents and words into a shared semantic space without iterative optimization.  
+
+> •
+
+Integration of Large Language Models (LLMs): Mod-els such as Llama2 with BERTopic and mixtral 8x7b are used for contextual topic labeling and document-specific topic generation, enhancing the interpretability of results. Moving on, the paper is structured in such a way that Sec-tion 2 presents the Literature Survey, Section 3 talks about the proposed methodology, Section 4 discusses Result Analysis and Discussion, which is then followed by the conclusion. II. L ITERATURE REVIEW 
+
+Traditional topic modeling techniques, such as Latent Dirichlet Allocation, are limited by poor interpretability and attractiveness of the results for the end user. The very recent works, like GPTopic [1], introduced a dynamic and interactive way to enhance the interpretability of topics in an easier man-ner for users. Similarly, other approaches in which clustering techniques are integrated with large language models, such as in the work of Petukhova et al. [3], demonstrate a great promise for better embedding into text data of meaningful clusters. Some other methods, such as those proposed by Frei et al. [4] and Zeng et al. [12], in the cybersecurity domain, have concentrated on improving threat detection with machine learning to enable much faster and more accurate identification of vulnerabilities. Integration of ChatGPT for explanation and elaboration of generated topics could allow users to better understand and satisfy them much more. These innovations pave the way for more efficient and interpretable topic modeling in particular, and real-time clustering and vulnerability detection approaches may be foreseen shortly with further improvement in the present research field. The motivation for further research is to enhance the current mod-els by incorporating LLM-driven approaches and automating processes such as summarization of literature reviews [9] and topic evaluation [10], which in turn will enhance the robustness 
+
+> arXiv:2607.03887v1 [cs.CR] 4 Jul 2026
+
+and applicability of these techniques across various domains, including cybersecurity and multilingual data processing. Reuter et al. [1] proposes GPTopic, which represents a dynamic and iterative topic modeling method for finally mak-ing topic representations more interpretable. The proposed model adopts a Gaussian process framework together with iterative user feedback in order to incrementally update topics. Accordingly, this approach improves not only the satisfaction but also the interpretability of the identified topics over the traditional unsupervised topic modeling solutions. Rijcken et al. [2] makes topic modeling more comprehensible by incor-porating ChatGPT into their process. They apply ChatGPT in order to explain topics coming from traditional models in such a way that it does make more sense for a user. Results showed such a method increased the interestingness of topics but also increased users’ comprehension and satisfaction in comparison with a standard output. Petukhova et al.[3] discusses the improvement of text clustering by the use of large language model embeddings and further applying clustering methods like k-means and hierarchical clustering. Regarding future work, they would like to investigate multilingual datasets and real-time clustering. Frei et al. [4] discusses the topic of cy-bersecurity, focusing on the analysis of vulnerability data from software updates and security advisories. The findings have been more effective in the identification of the vulnerabilities in an optimised way, and to automatically adapt threats and integrate some predictive capabilities in the future. Yu et al. [5] presents a hybrid approach for the detection of vulnerabilities in web services, using static code analysis combined with dynamic testing. They intend to extend this approach towards cloud systems and use machine learning to predict emerging vulnerabilities. Akash et al. [6] proposes a system for the enhancement of short-text topic modeling by a combination of LLM-driven context expansion and prefix-tuning of VAEs. This enhances topic coherence, achieving high performances over baseline models. Future enhancements proposed include the optimization of context expansion to domain specificity and further exploration of adaptive prefix tuning. Schneider et. al. [7] develops a bag-of-sentences approach that fine-tunes LLMs and yields subtle sentence embeddings, which improves topic coherence and relevance. Future work will be related to optimizing this method for different languages and applying it to multilingual datasets. Mu et al.[8] proposes a system that generates interpretable topics directly, eliminating the traditional topic modeling and fine-tuning LLMs to. In that way, clustering and probabilistic models can be avoided, while more coherent and relevant topics are obtained. They further intend to refine the fine-tuning process and scale up the approach for real-time applications in the future. Gana et al. [9], focuses on the automation of literature reviews using LLMs. Their contribution synthesizes key themes and findings from academic papers in a much timelier and comprehensive way than could be done otherwise. Yang et al. [10] describe a procedure for the evaluation of topic models using LLMs, which involves scaling of the evaluation, mostly matching, if not outperforming, human judgment. This work needs further refinement to handle more complex topics and its integration with automated workflows. Sandilya et al. [11] presents an overview of topic-agnostic conversation generation with LLMs, providing a method to naturally conduct flexible conversations across diverse domains. The results indicate increased versatility in conversational agents. Zeng et al. [12] reviews deep learning techniques based on neural networks and reinforcement learning for software vulnerability detec-tion. These methods outperform the traditional approaches in terms of accuracy and scalability. Future research will focus on hybrid models and real-time detection in dynamic environ-ments. Williams et al. [13] presents the framework that uses historical data on vulnerabilities using machine learning to predict whether a piece of software may have vulnerabilities. They planned to extend this work in future work by embedding this framework into continuous integration systems with real-time data. III. M ETHODOLOGY 
+
+This paper employs advanced topic modeling techniques to analyze and categorize software vulnerabilities by extracting the latent topics from the ”Threat” feature present in the dataset [14]. The process begins with ensuring the data is compatible with the different modeling techniques used in this paper by performing the necessary preprocessing steps. Multiple topic modeling approaches—BERTopic with mul-tiple configurations, CombinedTM, Top2Vec, Llama2 with BERTopic, and mixtral 8x7b—are applied to the preprocessed data. Each model adopts a unique methodology tailored to its working, resulting in topic clusters or labeled representations of the data. Lastly, a comparative analysis is performed to assess the models’ effectiveness in this use case. 
+
+A. Model-Specific Methodologies 1) BERTopic with Multiple Configurations: BERTopic is a highly flexible framework that integrates dimensionality reduction, clustering, and embedding methods to produce interpretable topics. To test its adaptability, four configu-rations—UMAP, PCA, DBSCAN, and advanced language embeddings—were applied to analyze the ”Threat” feature in the dataset. Each setup combined different approaches to dimensionality reduction and clustering, along with pre-trained embeddings, to identify meaningful patterns in the data. The Preprocessing included:  
+
+> •
+
+Removing duplicate entries and null values.  
+
+> •
+
+Cleaning special characters and punctuations from the text.  
+
+> •
+
+Applying minimal stopword removal to preserve contex-tual richness. The first configuration used UMAP for dimensionality re-duction, preserving both global and local structures in the data. HDBSCAN was then applied to the reduced embeddings to group them into meaningful clusters. The second configuration replaced UMAP with PCA, which reduced the embeddings into 30 components, capturing the maximum variance. HDB-SCAN was again used for clustering. In the third configuration, TABLE I CONFIGURATIONS AND HYPERPARAMETERS FOR BERT OPIC                  
+
+> Configuration Dimensionality Reduction Clustering Method Key Parameters
+> BERTopic with UMAP UMAP HDBSCAN
+> n neighbors = 30 ,
+> n components = 5 ,
+> min cluster size = 10
+> BERTopic with PCA PCA HDBSCAN n components = 30 ,
+> min cluster size = 10
+> BERTopic with DBSCAN UMAP DBSCAN eps = 0 .5,
+> min samples = 5
+> BERTopic with Language Embedding UMAP HDBSCAN
+> n neighbors = 15 ,
+> n components = 5 ,
+> min cluster size = 10
+
+DBSCAN replaced HDBSCAN as the clustering method. This approach focused on identifying dense clusters while treating sparse areas as noise. UMAP remained as the dimensionality reduction technique. The fourth configuration incorporated advanced pre-trained language embeddings, combining Sen-tenceTransformer and StackedEmbeddings (RoBERTa with GloVe) to enhance the contextual understanding of the text. UMAP reduced the dimensionality of these embeddings, and HDBSCAN grouped the reduced data into topics. For all configurations, BERTopic identified top keywords for each topic using term vectorization (CountVectorizer). Vi-sualizations, including heatmaps, hierarchical clustering, and bar charts, were generated to interpret the topics effectively. These outputs provided a clearer understanding of the ”Threat” feature and its underlying patterns. 
+
+2) CombinedTM: CombinedTM is a hybrid topic modeling approach that combines Bag-of-Words (BoW) representations with contextual embeddings from Transformer models, en-abling it to capture necessary statistical and semantic rela-tionships present in the data [15]. The preprocessing steps for CombinedTM are:  
+
+> •
+
+Removed special characters, punctuation, and stopwords.  
+
+> •
+
+Converted text to lowercase for uniformity.  
+
+> •
+
+Generated contextual embeddings using the all-mpnet-base-v2 model.  
+
+> •
+
+Prepared a Bag-of-Words matrix. The CombinedTM utilizes a neural network that aligns BoW and contextual embeddings. The network is trained with an objective function that reduces the alignment error between the two representations: 
+
+L = −
+
+> N
+
+X
+
+> i=1
+
+log P (BoW i|Embedding i)
+
+This alignment ensures the latent topics are consistent across both features, yielding coherent topic-word distributions. 
+
+3) Top2Vec: Top2Vec has the ability to identify topics by embedding documents and words into a shared semantic space, followed by clustering to form the topics. Unlike      
+
+> TABLE II HYPERPARAMETERS OF COMBINED TM
+> Parameter Value
+> Number of topics 20 Contextual embedding size 768 Number of epochs 10
+
+CombinedTM, the model Top2Vec does not require itera-tive optimization, making it resource- and computationally-efficient. The necessary preprocessing steps for Top2Vec are:  
+
+> •
+
+Converted text to lowercase.  
+
+> •
+
+Retained the most words with minimal cleaning to main-tain contextual information. Top2Vec leverages pre-trained embeddings to generate a shared semantic space for documents and words. UMAP reduces the dimensionality of these embeddings, while HDB-SCAN clusters the reduced embeddings into dense topic groups. This approach avoids iterative optimization and trains in a single step, focusing on clustering quality. The hyperpa-rameters for Top2Vec are shown in Table III:      
+
+> TABLE III HYPERPARAMETERS OF TOP 2V EC
+> Parameter Value
+> Speed ”learn” Dimensionality Reduction (UMAP) Applied Clustering Method HDBSCAN
+
+4) Llama2 with BERTopic: Llama2 with BERTopic com-bines embeddings, clustering, and language-based labeling to increase interpretability. It relies on pre-trained embeddings for clusters and uses Llama2 to label topics based on contextual keywords. The preprocessing steps involve:  
+
+> •
+
+Removed special characters and punctuation.  
+
+> •
+
+Eliminated stopwords for cleaner text.  
+
+> •
+
+Generated embeddings using the BAAI/bge-small-en model. The BERTopic framework then reduces the embeddings’ dimensionality using UMAP and clusters those reduced em-beddings into topics with HDBSCAN. Each cluster is labeled by Llama2-7B-chat, which generates concise topic labels based on the top keywords in each cluster. A predefined prompt template ensures the labels generated are consistent and interpretable, as shown below: [INST] I have a topic that contains the following documents: DOCUMENTS The topic is described by the following keywords: ’KEYWORDS’. Based on the information about the topic above, please create a short label of this topic. Make sure you only return the label and nothing more. [/INST] The hyperparameters used for this model are highlighted in Table IV: TABLE IV HYPERPARAMETERS OF LLAMA 2 WITH BERT OPIC         
+
+> Parameter Value
+> UMAP n neighbors 15 UMAP n components 5UMAP Metric ”cosine” HDBSCAN min cluster size 150
+
+5) mixtral 8x7b: The mixtral 8x7b model is a large lan-guage model (LLM) used for generating document-specific topics interactively. Unlike traditional models, it does not require clustering or iterative training [16]. It relies on the LLM’s pre-trained ability to understand and synthesize natural language through a prompt-driven process. The preprocessing steps for mixtral 8x7b were:  
+
+> •
+
+Duplicate entries and null values were removed.  
+
+> •
+
+Minimal text cleaning was applied, as the model can handle raw text effectively. The model processes each document individually with the help of a prompt. The LLM analyzes the document’s contents and identifies the core themes, generating five contextually relevant topics. This eliminates the need for dataset-wide analysis or clustering, focusing instead on each document’s unique context. The following prompt was used to guide the LLM in extracting relevant topics from every document: You are a topic modeling bot who will assign precise topics for the given input document. Given the doc-ument, assign 5 topics for the document. You must respond in the following manner: ’Topic number: Sentence of document that resulted in deriving the following topic’. 
+
+B. Proposed Methodology 
+
+The proposed workflow starts by extracting the ’Threat’ feature, ensuring that only unique entries are retained and null values are removed. Model-specific preprocessing techniques are then applied, where special characters, punctuation, and unnecessary noise are cleaned from the data to ensure smooth compatibility with the various topic modeling approaches. Once preprocessing is completed, five topic modeling approaches—BERTopic with multiple configurations, Com-binedTM, Top2Vec, Llama2 with BERTopic, and mix-tral 8x7b—are applied. Each model processes the data based on its working principles to extract latent topics or generate labeled clusters. After the topics are extracted, the results from all models are evaluated using performance metrics like topic coherence, which measures how interpretable the topics are, and cluster-ing quality, which assesses the compactness and separability of clusters. Visualizations, such as bar charts for top topic words, heatmaps to show topic similarity, and hierarchical cluster trees to reveal relationships between topics, are used to help analyze the outputs. Lastly, a comparative analysis is conducted to identify the strengths and weaknesses of each approach. The goal of this workflow is to identify the best possible approach for categorizing software vulnerabilities.  
+
+> Fig. 1. Proposed Workflow
+
+IV. R ESULT ANALYSIS AND DISCUSSION 
+
+A. Dataset Description and Visualization 
+
+The dataset is collected from Cisco Labs and consists of 69,909 entries and 39 columns. This dataset provides an overview of software vulnerabilities, their vulnerability type and impact, and suggested remediation. It helps identify patterns and trends in vulnerabilities that could be used to enhance security measures and prioritize risks. This paper focuses on the ‘Threat’ feature, which contains detailed textual descriptions of the vulnerabilities. This feature is the target input for topic modeling and clustering in the subsequent analysis.  
+
+> Fig. 2. Word Cloud of ‘Threat’ Descriptions
+
+Figure 2 shows the word cloud generated from the ‘Threat’ 
+
+column, highlighting the top 50 most frequent terms. The visualizations highlight recurring terms such as ”Public Key”, ”SSL Certificate”, ”VMware”, and ”ESXi,” which indicate the prevalence of vulnerabilities related to server configurations, encryption protocols, and virtualization systems. 
+
+B. Model specific results 1) BERTopic: Several experiments were carried out using 
+
+BERTopic , exploring various dimensionality reduction tech-niques, including PCA and UMAP . Additionally, we evaluated different clustering models, such as HDBSCAN and KMeans .Hyperparameter tuning was carried out for the following components:  
+
+> •
+
+Language Embeddings: Improved the quality of textual representation by capturing semantic nuances, thereby impacting topic modeling performance. • Number of Topics: Balanced granularity, with fewer top-ics grouping themes broadly and more topics providing specificity but risking redundancy.  
+
+> •
+
+Top Words: Enhanced topic interpretability by selecting meaningful words to define topics.  
+
+> •
+
+Words Universe: Controlled vocabulary scope, balancing diversity and noise. This tuning optimized model performance , interpretabil-ity , and topic coherence .
+
+BERT Topic: 
+
+The UMAP + HDBSCAN combination effectively identifies meaningful clusters, with hierarchical relationships providing additional insights into broader and more specific topic group-ings. The similarity matrix (Figure 3) provides an overview of the inter-topic relationships. The diagonal elements (similarity of a topic to itself) are understandably the highest, with scores close to 1. Off-diagonal elements indicate how closely related different topics are. Topics with higher similarity scores (darker shades) suggest shared or overlapping features in the underlying text data. For example:  
+
+> •
+
+Topics related to specific operating systems or software vulnerabilities may exhibit strong connections due to shared attributes in threat descriptions.  
+
+> •
+
+Conversely, lighter regions highlight dissimilar topics, reflecting distinct vulnerability features or different con-textual focuses within the dataset.          
+
+> Fig. 3. Similarity Matrix of BertTopic using UMAP and HDBSCAN: Visualizing inter-topic relationships.
+
+Hierarchical clustering (Figure 4) provides a clear represen-tation of the relationships between topics, offering valuable insights into their grouping and hierarchical structure. Closely related topics, such as Topics 0, 1, and 2, are observed to form cohesive clusters. These clusters likely correspond to specific themes, such as vulnerabilities associated with Linux or CentOS systems, as suggested by the distribution of top words within each topic. The height of the dendrogram branches in the hierarchical clustering plot signifies the degree of dissimilarity between clusters:  
+
+> •
+
+Topics with shorter branch connections merge at lower levels of the dendrogram, indicating closer relationships.  
+
+> •
+
+Topics with longer branches reflect more distinct group-ings. This visualization aids in distinguishing between highly simi-lar and more dissimilar topics. The hierarchical arrangement of topics enables the identifi-cation of broader themes, such as operating system vulnera-bilities, and their corresponding sub-themes, such as:  
+
+> •
+
+Linux kernel issues.  
+
+> •
+
+SSL certificate weaknesses. This structured approach provides a deeper understanding of the relationships between topics, highlighting both thematic overlaps and distinctions within the dataset.  
+
+> Fig. 4. Hierarchical Clustering: Visualizing topic relationships through a dendrogram.
+
+The similarity heatmap and hierarchical clustering indicate strong grouping of topics related to similar types of vulnerabilities, such as operating system vulnerabilities (e.g., Linux, VMware) or specific threat types (e.g., SSL certificates). 
+
+Bert Topic with Stacked Embeddings + UMAP: Using the BERTopic model with stacked embeddings, we combine RoBERTa for contextual semantics and GloVe for word-level semantics, enhancing topic granularity and robustness. Dimensionality reduction is achieved using UMAP, which preserves the local structure of high-dimensional embeddings, while HDBSCAN identifies topic groupings without requiring a predefined number of clusters. Referring to the Topic Word Score bar chart (Figure 5), the visualization highlights the most significant words for each topic, indicating their dominance in defining the respective topics. Below are the key observations:  
+
+> •
+
+Topic -1: Words like centos , released , and vulnerabilities 
+
+suggest a focus on CentOS-related security updates and fixes.  
+
+> •
+
+Topic 0: Common words such as the , to , and is indicate general or introductory text without a specific focus.  
+
+> •
+
+Topic 1: Keywords like discovered , handled , and kernel 
+
+emphasize the identification and management of vulner-abilities in system kernels.  
+
+> •
+
+Topic 2: Terms such as red , hat , linux , and enterprise 
+
+demonstrate a strong focus on Red Hat Enterprise Linux vulnerabilities.  
+
+> •
+
+Topic 3: Words like vmware , esxi , and vcenter highlight vulnerabilities associated with VMware technologies.  
+
+> •
+
+Topics 4, 7, and 9: Keywords such as vmware , microsites ,
+
+selfservice , and externalid point to VMware knowledge base articles and support microsites.  
+
+> •
+
+Topic 5: Terms like jira , atlassian , and tracking indicate a focus on Atlassian JIRA versions and issue-tracking systems.  
+
+> •
+
+Topics 6, 8, and 10: These topics consistently highlight CentOS updates and fixes, with representative words such as security , update , released , and fix .These topic representations align with key software and vulnerability clusters, facilitating a better understanding of the thematic areas identified by the model.  
+
+> Fig. 5. Topic Word Score Bar Chart: Visualizing significant words for each topic.
+
+The hierarchical clustering (Figure 6) of this approach reveals the relationships between topics based on similarity:  
+
+> •
+
+Clusters: Topics 0, 1, 2, and 3 form a closely related group, likely sharing overlapping themes, such as Linux or VMware-related vulnerabilities.  
+
+> •
+
+Dissimilarity: Topics such as 6 and 7 merge at higher levels, reflecting distinct thematic focuses, possibly on software updates or other unrelated contexts.  
+
+> •
+
+Branch Height: Shorter branches (e.g., Topics 2 and 3) signify closely related topics, while longer branches (e.g., Topic 0 vs. Topic 7) highlight more distinct themes. This clustering highlights thematic hierarchies, enabling a broader understanding of topic relationships.  
+
+> Fig. 6. Hierarchical Clustering Dendrogram: Visualizing topic relationships and their thematic hierarchies.
+
+The heatmap (Figure 7) provides insights into the relation-ships between topics, revealing thematic overlaps and distinc-tions. For instance, Topics 2 and 3 exhibit strong similarity, likely due to shared references to VMware or Linux systems, while other topics, such as Topic 0 and Topic 7, appear more distinct, reflecting divergent themes. This visualization validates the clustering results, confirming the coherence of closely related topics and the separation of those with minimal overlap. The heatmap effectively supports the hierarchical clustering and topic word scores, highlighting the consistency and robustness of the identified thematic groupings.  
+
+> Fig. 7. Heatmap: Visualizing thematic overlaps and distinctions between identified topics.
+
+2) Mistral AI LLM for topic assignment: Utilising Mistral LLM for topic modeling was a straightforward approach, the model successfully identified the main topics within each document, demonstrating its ability to extract meaningful insights from complex text. This straightforward approach leverages the strengths of large language models to streamline the process of topic modeling, making it a valuable tool for various text analysis tasks. 
+
+3) Combined TM: The results of the Combined Topic Model reveal notable improvements in coherence and inter-pretability of topics through the integration of BoW repre-sentations into the SBERT contextualized embeddings. The document-to-topic heatmap in Figure 8 reveals clear differen-tiation between documents and their correlated topics, showing that the model effectively captures unique thematic clusters. The overall topic distribution in Figure 9 graph reveals that while some topics (e.g., Topic 2 and Topic 7) are more preva-lent across the dataset, others maintain a balanced presence, indicating diversity in topic coverage.   
+
+> Fig. 8. Heatmap: Visualizing thematic overlaps and distinctions between identified topics.
+> Fig. 9. Heatmap: Visualizing thematic overlaps and distinctions between identified topics.
+
+Overall, the CombinedTM approach efficiently enhances topic coherence and clarity, leveraging contextual embeddings to overcome the limitations of traditional methods of topic modeling. This synergy between BoW and contextual rep-resentations ensures robust thematic analysis, allowing this model to be applied to the analysis of highly diversified as well as complex text corpora. 
+
+4) Top2Vec: Figure 10, the UMAP projection colors high-dimensional document embeddings by their topic assignments. Well-separated clusters, such as Topics 2, 6, and 14, are internally coherent, while proximal clusters, such as Topics 5, 7, and 10 reflect partial thematic overlap. Isolated points likely represent outliers or very small topics, such as Topic 1, which only contained one document. Larger topics, in the  
+
+> Fig. 10. UMAP projection of Document Embeddings
+
+sense of Topic 6 and Topic 14, are dominant, although smaller topics, such as Topics 1 and 15, might be niche issues within more general topics. Truly generic topics, like the ones on 4, 8, and 12 featuring terms such as ”vulnerabilities,” should be further honed or combined to better result in a granular composition. Technical topics, going to Topic 12 focusing on SSL/TLS vulnerabilities or even Topic 17, representing DNS and server issues, are logical and representative. Smaller or overlapping topics could be analyzed and com-bined to enhance coherence. Inclusion of domain-specific stopwords during preprocessing might reduce redundancy in ”vulnerability”-centric topics, while document-level analysis may validate thematic consistency. The UMAP visualization aligns well with the topic data; in the data, dominant clusters and scattered points for rare or noisy topics indicate further refinement opportunities. 
+
+5) Llama2 with BERTopic: The integration of Llama2 with BERTopic successfully processed the dataset and identified three distinct topics, summarized in the table below: TABLE V TOPICS GENERATED FOR LLAMA 2 WITH BERT OPIC 
+
+Topic ID Count Name 
+
+-1 287 -1 vmware esxi com http 0 572 0 red hat linux enterprise 1 267 1 discovered incorrectly handled certain 
+
+Topic -1, consisting of 287 documents, primarily represents outliers containing VMware-related keywords and generic HTTP references, which are less cohesive compared to the other clusters. Topic 0 is the largest cluster with 572 doc-uments, demonstrating a strong focus on Red Hat Linux Enterprise, capturing dominant themes and high-frequency topics within the dataset. Topic 1, with 267 documents, represents specific and niche technical issues, such as kernel driver errors and incorrect handling of certain operations, providing valuable insights into critical technical challenges. The overall performance of Llama2 with BERTopic highlights its robustness in efficiently clustering diverse datasets into meaningful groups. It not only identifies central themes but also isolates less relevant or noisy data into distinct outlier clusters. This capability makes the integration particularly suit-able for analyzing technical datasets and deriving actionable insights. The table provides a clear overview of the distribution and significance of the topics extracted, ensuring transparency and interpretability of the results. V. C ONCLUSION AND FUTURE WORK 
+
+This study demonstrates the potential of advanced topic modeling techniques and large language models (LLMs) in addressing the challenges posed by the growing complexity and volume of software vulnerabilities [17]. By focusing on the ’Threat’ feature of a real-world dataset, models such as BERTopic, Top2Vec, CombinedTM, Llama2 with BERTopic, and Mixtral were employed to extract meaningful patterns and generate interpretable clusters. The integration of dimension-ality reduction techniques like UMAP and PCA, along with clustering methods such as HDBSCAN and DBSCAN, signifi-cantly enhanced the granularity and coherence of the identified topics. The comparative analysis of these models revealed their strengths in uncovering latent themes and prioritizing vulnerabilities based on contextual relevance. The proposed approaches not only streamline the process of analyzing large datasets but also provide actionable insights, enabling cyber-security professionals to better allocate resources and mitigate risks. This research contributes to the development of scalable and automated solutions for software vulnerability manage-ment, making it easier to identify and address critical threats. Future work could explore the incorporation of real-time processing capabilities, the adaptation of these techniques to multilingual datasets, and the integration of predictive mod-eling for enhanced threat forecasting. By bridging theoretical advancements in topic modeling with practical cybersecurity applications, this study paves the way for more efficient and robust vulnerability detection systems. REFERENCES [1] Reuter, Arik, et al. ”GPTopic: Dynamic and Interactive Topic Represen-tations.” arXiv preprint arXiv:2403.03628 (2024). [2] Rijcken, Emil, et al. ”Towards interpreting topic models with ChatGPT.” The 20th World Congress of the International Fuzzy Systems Associa-tion. 2023. [3] Petukhova, Alina, Joao P. Matos-Carvalho, and Nuno Fachada. ”Text clustering with LLM embeddings.” arXiv preprint arXiv:2403.15112 (2024). [4] Frei, Stefan, et al. ”Large-scale vulnerability analysis.” Proceedings of the 2006 SIGCOMM workshop on Large-scale attack defense. 2006. [5] Weider, D. Yu, Dhanya Aravind, and Passarawarin Supthaweesuk. ”Soft-ware Vulnerability Analysis for Web Services Software Systems.” iscc. 2006. [6] Akash, Pritom Saha, and Kevin Chen-Chuan Chang. ”Enhancing Short-Text Topic Modeling with LLM-Driven Context Expansion and Prefix-Tuned VAEs.” arXiv preprint arXiv:2410.03071 (2024). [7] Schneider, Johannes. ”Topic Modeling with Fine-tuning LLMs and Bag of Sentences.” arXiv preprint arXiv:2408.03099 (2024). [8] Mu, Yida, et al. ”Large Language Models Offer an Alternative to the Tra-ditional Approach of Topic Modelling.” arXiv preprint arXiv:2403.16248 (2024). [9] Gana, Bady, et al. ”Leveraging LLMs for Efficient Topic Reviews.” Applied Sciences 14.17 (2024): 7675. [10] Yang, Xiaohao, et al. ”LLM Reading Tea Leaves: Automatically Eval-uating Topic Models with Large Language Models.” arXiv preprint arXiv:2406.09008 (2024). [11] Sandilya, Harshit, et al. ”Generating topic-agnostic conversations With LLMs.” IEEE access (2024). [12] Zeng, Peng, et al. ”Software vulnerability analysis and discovery using deep learning techniques: A survey.” IEEE Access 8 (2020): 197158-197172. [13] Williams, Mark A., et al. ”A vulnerability analysis and prediction framework.” Computers & Security 92 (2020): 101751. [14] Niranjan D K, N Rakesh, “Real Time Analysis of Air Pollution Pre-diction using IoT”, in the 2nd International Conference on Inventive Research in Computing Application [ICIRCA 2020], July-2020. [15] Niranjan D K, N Rakesh, “Smart Surveillance System by Face Recog-nition and Tracking using Machine Learning Techniques”, in the 4th International Conference on Computational Vision and Bio Inspired Computing [ICCVBIC 2020], November-2020. [16] Sainadh. K.V., Satwik. K., Ashrith. V., Niranjan. D.K. (2023), “A Real-Time Human Computer Interaction Using Hand Gestures in OpenCV”, in the Information and Communication Technology for Intelligent Sys-tems. ICTIS 2023. Lecture Notes in Networks and Systems, vol 720. Springer, Singa [17] N. .D.K. and Rakesh, N., “Early Building Collapse Detection using IoT”, in International Conference on Inventive Research in Computing Applications [ICIRCA 2020] organized by RVS College of Engineering and Technology, Coimbatore, India, 2020. [18] S. M, R. V. Savant, S. Seshadri, N. Narmada and P. B. Pati, ”Unveiling Hidden Patterns: Clustering Algorithms on C Code em-bedding,” 2024 IEEE 9th International Conference for Conver-gence in Technology (I2CT), Pune, India, 2024, pp. 1-7, doi: 10.1109/I2CT61223.2024.10543306. [19] Rao, S.S., Mishra, S., Akhilesh, S., Balakrishnan, R.M. and Pati, P.B., 2024, June. Automatic Assessment of Quadratic Equation Solutions Using MathBERT and RoBERTa Embeddings. In 2024 15th Inter-national Conference on Computing Communication and Networking Technologies (ICCCNT) (pp. 1-7). IEEE. [20] Anirudh, S., Nishant, P.R., Baitha, S. and Kumar, K.D., 2024. An Ensemble Classification Model for Phishing Mail Detection. Procedia Computer Science, 233, pp.970-978.
