@@ -6,28 +6,22 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-07-10
-- 运行时间：2026-07-10 21:52:45 UTC
+- 最新运行日期：2026-07-11
+- 运行时间：2026-07-11 21:08:24 UTC
 - 运行状态：成功
-- 本次总论文数：2
-- 精读区：1
-- 速读区：1
+- 本次总论文数：0
+- 精读区：0
+- 速读区：0
 
 ### 今日简报（AI）
-今日精读一篇软件漏洞分类的高级主题建模论文（8.0分），速读一篇基于非配对数据的半监督聚类与样本生成方法（6.0分）。  
-最值得看：精读论文展示了如何用主题建模精准归类安全漏洞，速读论文的CASL-VAE框架能从未配对数据中提取结构化潜在变量。  
-建议：可先重点吸收主题建模在安全领域的应用思路，再探索半监督学习处理数据缺失问题的技巧。
-- 详情：[/202607/10/README](/202607/10/README)
+> 今日无新推荐，系统未产出可展示论文。
+- 详情：[/202607/11/README](/202607/11/README)
 
 ### 精读区论文标签
-1. [Advanced Topic Modeling Techniques for Categorizing Software Vulnerabilities](/202607/10/2607.03887v1-advanced-topic-modeling-techniques-for-categorizing-software-vulnerabilities)  
-   标签：评分：8.0/10、query:ac
-   evidence：使用大语言模型进行主题聚类
+- 本次无精读推荐。
 
 ### 速读区论文标签
-1. [CASL-VAE: Learning Structured Latent Variables from Unpaired Data for Semi-supervised Clustering and Paired Sample Generation](/202607/10/2607.08254v1-casl-vae-learning-structured-latent-variables-from-unpaired-data-for-semi-supervised-clustering-and-paired-sample-generation)  
-   标签：评分：6.0/10、query:active-clust
-   evidence：半监督聚类与深度变分自编码器
+- 本次无速读推荐。
 
 
 <div class="dpr-home-promo-card">
