@@ -1,0 +1,60 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-07-12T21:07:09.563644+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 0,
+    "deep_cap": 7,
+    "deep_selected": 0,
+    "quick_candidates": 1,
+    "quick_skim_target": 12,
+    "quick_selected": 1
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2607.03978v1",
+      "source": "arxiv",
+      "title": "Scalable Semantic Steering of Embedding Projections",
+      "abstract": "Low-dimensional projections support interactive visual analysis of high-dimensional data embeddings, but their structure often does not align with analyst-defined semantic relationships. Recent LLM-augmented semantic steering methods address this gap by externalizing analyst intent from user-defined groups of seed examples, but they propagate intent through per-item LLM reasoning, causing LLM calls and cost to grow linearly with collection size. We propose a scalable semantic steering method that shifts semantic computation from individual items to user-defined groups. A single LLM call generates structured profiles for all groups, which are embedded and combined with seed centroids to form hybrid semantic prototypes. The method then propagates intent without retraining, using embedding-space soft assignment, abstention, and alignment-scaled updates before reprojection. On a 5K-document LitCovid corpus, our method achieves global alignment comparable to per-item LLM steering while reducing LLM calls by over three orders of magnitude. An image case study shows that the same prototype-based mechanism extends to multimodal embeddings. These results suggest that group-level representations can make semantic steering more practical for larger embedding collections.",
+      "authors": [
+        "Wei Liu",
+        "Eric Krokos",
+        "Kirsten Whitley",
+        "Rebecca Faust",
+        "Chris North"
+      ],
+      "primary_category": "cs.HC",
+      "categories": [
+        "cs.HC",
+        "cs.AI",
+        "cs.CV"
+      ],
+      "published": "2026-07-04T18:24:00+00:00",
+      "link": "https://arxiv.org/pdf/2607.03978v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "LLM-augmented semantic steering for embedding projections, uses clustering of seed groups",
+      "llm_evidence_cn": "利用大语言模型对嵌入投影进行语义引导，涉及种子组聚类",
+      "llm_evidence": "利用大语言模型对嵌入投影进行语义引导，涉及种子组聚类",
+      "canonical_evidence": "利用大语言模型对嵌入投影进行语义引导，涉及种子组聚类",
+      "llm_tldr_en": "Proposes scalable semantic steering using LLM to generate group profiles, forming hybrid prototypes for clustering-like intent propagation.",
+      "llm_tldr_cn": "该论文提出一种可扩展的语义引导方法，通过单次大语言模型调用为多个用户定义组生成结构化描述，结合种子中心点形成混合语义原型，从而在不需逐项推理的情况下将语义意图传播到整个数据集合。该方法与聚类中利用大语言模型进行分组引导的思路高度相关，可视为一种借助大语言模型进行聚类的方法。",
+      "llm_tldr": "该论文提出一种可扩展的语义引导方法，通过单次大语言模型调用为多个用户定义组生成结构化描述，结合种子中心点形成混合语义原型，从而在不需逐项推理的情况下将语义意图传播到整个数据集合。该方法与聚类中利用大语言模型进行分组引导的思路高度相关，可视为一种借助大语言模型进行聚类的方法。",
+      "llm_tags": [
+        "query:ac"
+      ],
+      "matched_query_tag": "query:ac",
+      "matched_query_text": "clustering using large language models",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}
