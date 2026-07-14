@@ -1,0 +1,1179 @@
+Title: Faster Randomized and Deterministic k-Clustering on Graphs
+
+URL Source: https://arxiv.org/pdf/2607.07615v1
+
+Published Time: Thu, 09 Jul 2026 01:10:19 GMT
+
+Number of Pages: 32
+
+Markdown Content:
+# Faster Randomized and Deterministic k-Clustering on Graphs 
+
+Sebastian Forster ∗1, Yasamin Nazari †2,3 , Rajath Rao K.N. ‡2, and Antonis Skarlatos §4 
+
+> 1
+
+Department of Computer Science, University of Salzburg, Austria 
+
+> 2
+
+Vrije Universiteit Amsterdam, The Netherlands 
+
+> 3
+
+CWI Amsterdam, The Netherlands 
+
+> 4
+
+Department of Computer Science, University of Warwick, Coventry, UK 
+
+July 9, 2026 
+
+Abstract 
+
+In this paper, we study the (k, z )-clustering and k-center problems on graphs, where (k, z )-clustering generalizes the k-median ( z = 1 ) and k-means ( z = 2 ) problems. In this work, we obtain the following main results: 
+
+• Our first contribution is the first deterministic algorithm for k-center on graphs that achieves a (2 + ε)-approximation in ˜O(m) time. This affirmatively resolves an open problem raised by Abboud, Cohen-Addad, Lee, and Manurangsi [ 1]. Our techniques also extend to the k-center with outliers problem, where up to t points may be discarded. 
+
+• Our second contribution is a randomized algorithm for (k, z )-clustering on graphs that achieves an O(1) -approximation in ˜O(m) time, which in particular covers k-median ( z = 1 )and k-means ( z = 2 ). Prior to this work, an ˜O(m)-time randomized algorithm was known for k-median by Thorup [ 52 ]. Moreover, a recent work of Jiang, Jin, Lou, and Lu [ 41 ]achieves ˜O(m1+ o(1) ) time for general z via local search. 
+
+• Finally, we design a deterministic algorithm for (k, z )-clustering on graphs that achieves a O(poly (c)) -approximation in ˜O(m1+1 /c ) time, for a positive parameter c. To obtain this result, we use techniques from the Thorup–Zwick distance oracle [ 55 ]. This technical connection may be of independent interest, considering the wide application of [ 55 ] in various computational settings. We emphasize that most of our algorithms are incremental in the sense that for any given parameter k, they return a sequence of centers such that any prefix of length ℓ ≤ k yields an 
+
+ℓ-clustering solution with a constant-factor approximation. 
+
+> ∗
+
+forster@cs.sbg.ac.at 
+
+> †
+
+y.nazari@vu.nl 
+
+> ‡
+
+r.raokamblanagendra@vu.nl 
+
+> §
+
+antonis.skarlatos@warwick.ac.uk arXiv:2607.07615v1 [cs.DS] 8 Jul 2026 Contents 
+
+1 Introduction 3
+
+1.1 Our Results and the State of the Art . . . . . . . . . . . . . . . . . . . . . . . . . . . 4
+
+2 Technical Overview 73 Deterministic Greedy k-Center and Faster k-Center with Outlier 84 Greedy (k, z )-Clustering Algorithm 11 5 Randomized (k, z )-Clustering Algorithm on Graphs 12 
+
+5.1 Analysis of the Randomized (k, z )-Clustering Algorithm . . . . . . . . . . . . . . . . 14 5.1.1 Approximation Ratio . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 17 
+
+6 Deterministic (k, z )-Clustering Algorithm on Graphs 18 
+
+6.1 Thorup–Zwick distance oracle . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 19 6.2 Approximate Balls via Truncated Bunches and Clusters. . . . . . . . . . . . . . . . . 20 
+
+A Approximation of Value( ·, ·) 27 B k-Center with Outliers 27 
+
+B.1 2-Approximation for Constant k . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 28 B.2 Randomized Bicriteria Approximation for General k . . . . . . . . . . . . . . . . . . 30 
+
+C Cohen’s Algorithm 32 1 Introduction 
+
+Clustering is a fundamental task in data mining and unsupervised learning with numerous applications across various domains [ 37 , 32 , 8, 2]. Intuitively speaking, the goal of a clustering algorithm is to group the input data together, in structures called “clusters”, such that similar data points are contained in the same cluster. A very popular, and arguably also very intuitive, clustering paradigm is partitional clustering in which the clusters are represented by a set of centers of a prespecified size k and each point in the data set is assigned to the cluster of its closest center. The quality of a solution is measured based on an objective on the distances of points to their closest center. Formally, this type of k-clustering can be formulated as an optimization problem in which, for a given metric space M = ( P, dist ) and a given integer k ≥ 1, the goal is to find a set of centers C ⊆ P
+
+with |C| = k minimizing one of the following objective functions fM.
+
+• k-center objective: fM(C) = max p∈P dist (p, C ), where dist (p, C ) = min q∈C dist (p, q ). Here, the goal is to minimize the maximum distance of any point to its closest center. 
+
+• (k, z )-clustering objective: fM(C) = P 
+
+> p∈P
+
+dist (p, C )z for a given constant z ≥ 1, where 
+
+dist (p, C ) = min q∈C dist (p, q ). Here, the goal is to minimize the sum of the distances from each point to its nearest center, each raised to the power z. For z = 1 this is known as the 
+
+k-median objective , and for z = 2 this is known as the k-means objective .Clustering under these objectives is an NP-hard problem [ 57 ] and therefore research has mainly focused on efficient approximation algorithms. There are two main algorithmic research directions: 1. Obtaining polynomial-time algorithms with the smallest possible approximation ratio [ 6, 10 ,13, 12, 40, 39, 38, 48, 31, 15, 45, 9, 3, 21, 29, 19, 20, 11]. 2. Obtaining constant-factor approximation algorithms with the smallest possible running time [ 36 ,30, 5, 49, 53, 16, 22]. In the latter direction, most notably, algorithms with running time ˜O(kn ) have been developed [ 27 ,35 , 49 , 53 ] (assuming constant-time query access to distances between points of the metric space). This matches (up to polylogarithmic factors) distance-query lower bounds of ˜Ω (kn ) [ 30 , 49 , 7] in this setting. Some of these algorithms solve a variant of the problem known as incremental 1 k-clustering [ 48 , 46 ], in which the goal is to output a sequence c1, . . . , c k of centers such that, for every 1 ≤ ℓ ≤ k, the subset c1, . . . , c ℓ is an (approximate) ℓ-clustering solution. Incremental clustering gives an efficiency gain in uncertain situations where only an upper bound on the desired number of clusters is known and the results for smaller values can instantly be retrieved without running the algorithm from scratch each time.   
+
+> 1Note that in this context “incremental” does not refer to the algorithm being dynamic in the sense that data might be added to the input over time. Later in this paper, we will actually employ an algorithm that is incremental in the dynamic-algorithms sense. To avoid confusion, we will avoid the term “incremental” for the latter.
+
+3To obtain faster running times beyond the kn barrier, researchers have studied k-clustering in metric spaces with more structure. Two such examples are Euclidean spaces [ 25 , 33 , 43 , 41 ] (with the Euclidean distance between points) and graphs of low-enough density [ 52 , 1, 43 , 41 ] (with the induced shortest-path distance between vertices). In this paper, we focus on the setting in which the metric is a graph. This is motivated by network structures such as road networks, computer networks, or social networks, which appear naturally in many contexts where clustering is employed to identify structures like communities. Furthermore, techniques for turning metric input data into a graph [ 56 ]are sometimes employed to make large amounts of data amenable to analysis. This paradigm, in the form of first computing a sparse Euclidean spanner [ 4, 34 , 24 , 44 ] and then running a graph algorithm on the spanner, has recently also been applied to obtain the best theoretical guarantees for Euclidean (k, z )-clustering in a certain regime [ 41 ]. In any case, the input to the algorithm is often a massive sparse graph, and even moderately super-linear running times in the number of edges m are quite prohibitive. Thus, it is natural to seek algorithms that are as close as possible to a linear (in number of edges) running time. While this linear-time “gold standard” has been approached for the k-clustering objectives mentioned above [ 52 , 1, 43 , 41 ], there are still gaps concerning (a) how close we can get to linear time and (b) deterministic algorithms achieving such fast running times. The goal of this work is therefore to narrow these gaps in approaching linear running time for variants of k-clustering problems on graphs. On the technical side, our contribution is to utilize ideas from distance approximation algorithms in graphs in the k-clustering context. In particular, we (a) employ a dynamic shortest-path approximation algorithm [ 28 ] and (b) utilize techniques from Thorup–Zwick distance oracles [ 55 ,54 , 50 ]. Dynamic shortest-path algorithms in general have proved to be useful in many algorithmic settings where shortest paths need to be computed repeatedly in an “outer loop” that slightly modifies the graph with each iteration (see [ 51 ] and [ 47 ] for two prominent examples in context of flows and spanner). We identify this behavior for k-center and (k, z )-clustering and leverage the power of dynamic approximate shortest paths to obtain efficiency gains. For the (k, z )-clustering problem, we utilize the data structures used in the distance oracle construction of Thorup and Zwick [ 55 , 54 , 50 ]. By adapting these structures, we can replace a randomized method of estimating sizes of balls (up to a certain radius) around each node [17] by a deterministic one with mild overheads. 
+
+1.1 Our Results and the State of the Art 
+
+The following characterization of running-time statements will facilitate the discussion of our and prior work. We say that the worst-case running time T (n, m ) of a given algorithm on any graph with n nodes and m edges is: 
+
+• Nearly-linear , if T (n, m ) = O(m · (log n)c) for some constant c (“polylogarithmic overhead”). 
+
+• Almost-linear , if T (n, m ) = O(m1+ o(1) ) (“subpolynomial overhead”). 
+
+• Close-to-linear , if T (n, m ) = O(m1+ μ) for any constant μ > 0 (“arbitrarily-small-polynomial overhead”). In the following, we outline our results and how they compare to the state of the art. A quick overview is also summarized in Table 1. 4Table 1: Summary of new results and the most relevant state of the art for k-center and (k, z )-clustering on weighted undirected graphs G = ( V, E, w ) with n = |V |, m = |E|, and aspect ratio ∆ . The ˜O(·) notation hides polylog( n, ∆) factors. Rows highlighted in green are contributions of this paper. 
+
+Problem Approx. Running time Det./Rand. Reference 
+
+k-center 2 ˜O(m) Rand. [52] 
+
+2 + ε ˜O(m/ log( ε)) Rand. [1] 
+
+2 + ε ˜O(m/ε ) Det. Theorem 1.1 
+
+k-center, t outliers (constant k)
+
+3‡ poly( n) Det. [14] 
+
+2† poly( n) Rand. [23] 
+
+2 + ε† ˜O(m/ε ) Rand. Theorem 1.2 
+
+k-center, t outliers (general k)
+
+(2 , O (1 /ε )) ∗ poly( n) Rand. [23] 
+
+(2 + ε, O (1 /ε )) ∗ ˜O( mε ) Rand. Lemma 26 
+
+k-median ( z = 1 ) O(1) ˜O(m) Rand. [52] 
+
+(k, z )-clustering 
+
+O( c6) ˜O(m1+ 1 
+
+> c
+
+) Rand. [43] 
+
+O(1) ˜O(m1+ o(1) ) Rand. [41] 
+
+O(1) ˜O(m) Rand. Theorem 1.3 
+
+O(poly(c) ) ˜O(mn 1 
+
+> c
+
++ mε ) Det. Theorem 1.4         
+
+> †: uses at most O(1 + ε)toutliers ‡:kis not a constant * - These are Bi-criteria Algorithms
+
+k-Center clustering problem. A randomized nearly-linear time 2-approximation algorithm for 
+
+k-center on graphs has been developed by Thorup [ 53 ]. Relaxing the approximation factor to 2 + ε,Abboud, Cohen-Addad, Lee, and Manurangsi [ 1] have obtained (1) a slightly faster randomized nearly-linear time algorithm and (2) a randomized nearly-linear time algorithm for the incremental 
+
+k-center problem. The fastest deterministic algorithms are, to the best of our knowledge, straightforward adaptations of the classic 2-approximation algorithms by Gonzalez [ 27 ] or Hochbaum and Shmoys [ 35 ], which run in time ˜O(km ). The former also solves the incremental k-center problem. In addition, following an observation by Thorup [ 53 ], a deterministic incremental constant-factor approximation algorithm for k-center clustering with running time ˜O(n2) can be obtained by first running the approximate all-pairs shortest paths algorithm of Cohen and Zwick [ 18 ] and then running Gonzalez’s algorithm [ 27 ]with the precomputed approximate distances. Designing a deterministic nearly-linear time k-center algorithm was explicitly stated as an open problem by Abboud et al. [1]. We resolve this open problem and provide a (2 + ε)-approximation algorithm that also works for the incremental version. More formally, we obtain the following theorem, which we prove in Section 3. 5Theorem 1.1. There is a deterministic algorithm for the incremental k-center problem that, given a weighted undirected graph G = ( V, E, w ), an integer k ≥ 1, and an accuracy parameter 0 < ε ≤ 1,computes a (2 + ε)-approximate solution in time ˜O( mε ).
+
+László Kozma [ 42 , Theorem 1.1] proved that no incremental k-center algorithm, regardless of its running time, has approximation ratio strictly below 2 on every prefix, already on weighted path graphs. Hence Theorem 1.1 is optimal for incremental algorithms up to the additive ε.An interesting variant of k-center providing more robustness in real-world data analysis tasks allows the algorithm to specify up to t outliers (that then are not evaluated in the objective function). For this k-center with outliers problem, previous works by Charikar et al. [ 14 ] and Ding et al (only for constant k and having (1 + ε)t outliers). [ 23 ] provided polynomial-time algorithms with approximation factors of 3 (deterministic) and 2 (randomized), respectively. We provide a randomized nearly-linear time (2 + ε)-approximation algorithm for k-center clustering with outliers that essentially is an efficient implementation of the Ding et al.[ 23 ] approach. More formally, we obtain the following theorem that we prove in Section 3. 
+
+Theorem 1.2. For constant k 2, there is a randomized algorithm for the k-center problem with at most t outliers that, given a weighted undirected graph G = ( V, E, w ), integer t ≥ 0, and an accuracy parameter 0 < ε ≤ 1, computes with probability (1 − t/n ) ·
+
+ ε
+
+> ⌈(1+ ε)⌉
+
+k−1
+
+, a (2 + ε)-approximate solution in time ˜O( mε ) with at most (1 + ε)t outliers . 
+
+In Appendix Section B, we also provide an efficient implementation of a bi-criteria approximation for k-center with outliers that achieves constant-factor approximation while allowing O( kε ) centers. 
+
+(k, z )-Clustering problem. A randomized nearly-linear time constant-factor approximation algorithm for k-median ( z = 1 ) was developed by Thorup [ 53 ]. Recently, two independent works have addressed fast (k, z )-clustering on graphs, which in particular includes solutions for k-median (z = 1 ) and k-means ( z = 2 ). First, Jiang, Jin, Lou, and Lu [ 41 ] have presented a randomized almost-linear time algorithm for (k, z )-clustering with constant-factor approximation. Second, Dupré la Tour and Saulpic [ 43 ] have presented a randomized close-to-linear time algorithm for incremental 
+
+(k, z )-clustering with constant-factor approximation. As remarked by [ 43 ], it is conceivable that Thorup’s approach may be extendable to k-means using recent results on the primal-dual method for k-means. However, Thorup’s approach does not readily extend to incremental clustering and it is arguably much more complex than the greedy framework of [43]. We generalize/subsume all of these results by providing a randomized nearly-linear time algorithm for incremental (k, z )-clustering with constant-factor approximation. More formally, we obtain the following theorem that we prove in Section 5. 
+
+Theorem 1.3. There is a randomized algorithm for the incremental 3 (k, z )-clustering problem that, given a weighted undirected graph G = ( V, E, w ), an integer k ≥ 1 aspect ratio ∆ 4, and a constant 
+
+z ≥ 1, computes with high probability an O(1) -approximate solution in ˜O(m log(∆)) time.          
+
+> 2This is the only result in the paper where we assume kis a constant. All other statements hold for any integer k.
+> 3Recall that incremental does not mean the algorithm is dynamic; rather, it means that every prefix of length ℓof the returned (k, z )-clustering solution induces a constant-factor approximate (ℓ, z )-clustering solution.
+> 4The aspect-ratio is the ratio between the largest distance and the smallest non-zero distance.
+
+6To the best of our knowledge, no deterministic algorithm tailored to the graph setting is known. However, again following the observation by Thorup [ 53 ], a deterministic incremental constant-factor approximation algorithm for (k, z )-clustering with running time ˜O(n2) can be obtained by first running the approximate all-pairs shortest paths algorithm of Cohen and Zwick [ 18 ] and then running the metric incremental (k, z )-clustering algorithm of Mettu and Plaxton [ 48 ] with the ρ-metric (obeying the triangle inequality up to a factor ρ = 3 ) given by the approximate shortest-path distances. We resolve this limitation by providing the first deterministic close-to-linear time algorithm for incremental (k, z )-clustering with constant-factor approximation. More formally, we obtain the following theorem, which we prove in Section 6. 
+
+Theorem 1.4. There is a deterministic algorithm for the incremental (k, z )-clustering problem that, given a weighted undirected graph G = ( V, E, w ), an integer k ≥ 1, an integer parameter t ≥ 1, a constant z ≥ 1, and an accuracy parameter 0 < ε ≤ 1, computes an O(poly (t)) -approximate solution in time ˜O t · m · n 1 
+
+> t
+
++ mε
+
+.
+
+# 2 Technical Overview 
+
+All of our algorithms utilize a deterministic Source-Insertion dynamic (1 + ε)-SSSP (single-source shortest paths) algorithm, recently developed by Górkiewicz and Karczmarz [ 28 ]. This data structure achieves ˜O(m) total update time for processing adversarial edge insertions only to the source. 5 Our deterministic k-center and k-center with outlier results are mainly based on a direct application of this data structure in the Gonzalez framework [ 27 ]. Namely, we use a Source-Insertion SSSP to iteratively find the furthest vertex to the current set of centers. Our (k, z )-clustering algorithms are based on the recursive greedy algorithm by Dupré la Tour and Saulpic [ 43 ] that gives an efficient implementation of the Mettu-Plaxton [ 48 ] framework. For a vertex 
+
+v ∈ V and radius r ≥ 0, the ball of radius r around v is defined as B(v, r ) := {u ∈ V | dist (v, u ) ≤ r}.
+
+At a high level, the framework iteratively uses two main primitives: 
+
+• Ball-size estimation : estimating |B(v, r )| for specific (v, r ) pairs, . 
+
+• Computing approximate balls : compute an approximate ball N (v, r ) such that B(v, r ) ⊆
+
+N (v, r ) ⊆ B(v, c · r), where c is a constant. We first explain how using the data structure of [ 28 ] implies an improved randomized result. Then we provide a more technical deterministic algorithm that uses primitives from the Thorup-Zwick distance oracles to efficiently compute and query approximate neighborhood. More specifically: 
+
+Randomized approach. For the ball-size estimation primitive, similar to [ 43 ], we plug in the ball-size estimation data structure by Cohen [ 17 ]. In the recursive greedy framework, we need to repeatedly and greedily select a set of centers and approximate balls. Our novelty in ensuring that all of this iterative process can be done in nearly-linear time is the use of two shortest-path primitives.     
+
+> 5The data structure of [ 28 ] avoids a usual no(1) -factor appearing in partially dynamic (1 + ε)-SSSP data structures by relying on the fact that edge insertions are only incident to the source.
+
+7One primitive uses a truncated Dijkstra from a set of carefully selected centers in such a way that ensures each edge is relaxed at most twice for any fixed radius r. This is repeated for O(log ∆) 
+
+radius scales, leading to O(m log ∆) time. Another primitive is needed to compute approximate balls around the set of chosen centers efficiently. Recomputing the approximate balls for each selected center would be too expensive. Therefore we amortize these computations via the Source-Insertion SSSP of [ 28 ] in total linear time. In the variant of [ 43 ] for graphs, this step uses probabilistic graph decompositions from [ 26 ], which incurs an additional polynomial factor that we manage to avoid. 
+
+Deterministic approach. There are two source of randomness in the algorithm of [ 43 ]: one is Cohen’s ball estimation [ 17 ], and another one is an iterative approximate balls computation. In [ 43 ], this is done via a probabilistic decomposition. We make the second primitive deterministic with the described Source-Insertion data structure and truncated Dijkstra. However, a major challenge is using the ball-size estimation. We need a new approach for making this deterministic as Cohen’s algorithm [17] is inherently randomized. We replace this step with a deterministic ball approximation approach based on the notion of bunch and clusters used in the Thorup-Zwick distance oracle [ 55 ]. Concretely, we define N (v, r ) as the union of the truncated bunch Bunch (v, r ) with the truncated clusters of v’s pivots (Equation (4)). Here additional approximation and running time factors are added compared to our randomized construction, that depend on the balls approximation factors. We have to be careful in how we define the approximate balls, so that each vertex overlaps with a constant number of such neighborhoods. A more naive use of Thorup-Zwick clusters results in each vertex overlapping with n1/c clusters, for some constant c. However, we define the neighborhoods in such a way that they overlap with c such clusters, and this is crucial for our final approximation factor. 
+
+# 3 Deterministic Greedy k-Center and Faster k-Center with Outlier 
+
+In this section, first, we will state the Source-Insertion SSSP Lemma 1, which will be used in the 
+
+k-center Algorithm 1 and also later in (k, z ) clustering Theorem 1.3. Next, we give a brief overview of Gonzalez algorithm and the modification required for our result. Lastly, we will sketch how it can be extended to k-center with outlier. 
+
+Lemma 1 (Source-Insertion SSSP [ 28 ]) . Consider a parameter ε ∈ (0 , 1) . Let G = ( V, E, w )
+
+be a directed graph with edge weights in {0} ∪ [1 , W ], and let s ∈ V be a source vertex. There exists a deterministic data structure that explicitly maintains distance estimates δ : V → R≥0
+
+satisfying dist G(s, v ) ≤ δ(v) ≤ (1 + ε) · dist G(s, v ) for all vertices v ∈ V .The data structure supports only insertions (or weight decreases) of source edges e = sv , with v ∈ V .The total update time is O
+
+ m log(∆) log 2 nε + Λ 
+
+
+
+, where m is the final number of edges in G, and Λ is the total number of updates. 
+
+The classical greedy algorithm for k-center, due to Gonzalez [ 27 ], proceeds as follows. It starts by selecting an arbitrary vertex c1 ∈ V as the first center. Let C1 = {c1}. In each subsequent iteration 8i = 2 , . . . , k , the algorithm selects the vertex ci that is farthest from the current set of centers Ci−1:
+
+ci ← max v∈V dist (v, C i−1), and updates the set of centers as Ci ← Ci−1 ∪ { ci}. This algorithm guaranties a 2-approximation for the k-center problem. Our deterministic algorithm builds on the classical Gonzalez algorithm [ 27 ], but achieves ˜O(m) time complexity through careful use of Source-Insertion Single Source Shortest Path computations. The key insight is that maintaining distances from a super-source vertex connected to all selected centers allows us to efficiently identify the (approximate) farthest vertex from the current set of centers at each iteration. 
+
+Theorem 1.1. There is a deterministic algorithm for the incremental k-center problem that, given a weighted undirected graph G = ( V, E, w ), an integer k ≥ 1, and an accuracy parameter 0 < ε ≤ 1,computes a (2 + ε)-approximate solution in time ˜O( mε ).Proof. Let G = ( V, E, w ) be a graph with nonnegative edge weights. We implement the classical Gonzalez [ 27 ] (see Algorithm 1) using the (1 + ε)-approximate Insert-only Single Source Shortest Path data structure of Lemma 1. Let ˆds(·) denote the maintained distance estimate from s.
+
+Algorithm 1: Deterministic (2 + ε)-Approximate k-Center 
+
+Input: Weighted graph G = ( V, E, w ), integer k
+
+Output: Set of centers C 
+
+> 1
+
+Construct G′ = ( V ∪ { s}, E, w ); 
+
+> 2
+
+Initialize the (1 + ε)-approximate incremental SSSP structure from s; 
+
+> 3
+
+Pick an arbitrary vertex c1 ∈ V ; 
+
+> 4
+
+Insert edge (s, c 1) with weight 0; 
+
+> 5
+
+C ← { c1}; 
+
+> 6
+
+for i = 2 to k do  
+
+> 7
+
+ci ← arg max v∈V ˆds(v); 
+
+> 8
+
+Insert edge (s, c i) with weight 0; 
+
+> 9
+
+C ← C ∪ { ci}; 
+
+> 10
+
+return C;Algorithm 1 is implemented using the Source-Insertion SSSP data structure of Lemma 1 as follows. At each iteration i = 2 . . . k , the algorithm inserts a zero-weight edge (s, c i). This causes the Source-Insertion SSSP structure to update the distance estimates dist (v, C i) ≤ ˆd(v) ≤
+
+(1 + ε) dist( v, {c1, . . . , c i}) for all v ∈ V . More formally, 
+
+Observation 2. After processing center set Ci = {c1, . . . , c i} through the incremental SSSP data structure, the maintained distance estimates satisfy: dist G(v, C i) ≤ ˆd(v) ≤ (1+ ε)·dist G(v, C i) for all v ∈
+
+V, where ˆd(v) is the distance estimate from s to v in the augmented graph G′.
+
+To implement the arg max v∈V ˆds(v) in Line 7 of the Algorithm 1 at each iteration, we maintain the values ˆds(v) in a binary heap (or any other priority queue) keyed by the current distance estimate. Whenever a distance estimate decreases, we perform a corresponding decrease-key operation in the heap. 
+
+Lemma 3.1. Algorithm 1 produces an incremental (2 + ε)-approximation for the k-center problem. 
+
+9Proof. Let Ci = {c1, . . . , c i} be the center set after iteration i and let ˆdi(v) be the distance estimate after processing i centers. Define ck+1 ← arg max v∈V ˆdk(v) as a hypothetical (k + 1) -th center, and let r = ˆdk(ck+1 ). By Observation 2, dist G(v, C ) ≤ ˆdk(v) ≤ r for all v ∈ V , so it suffices to bound r.For each i = 2 , . . . , k + 1 , the algorithm chose ci as the approximate farthest point from Ci−1, so by Observation 2, dist G(ci, C i−1) ≥ ˆdi−1(ci)1+ ε ≥ r 
+
+> 1+ ε
+
+, where the last inequality uses the fact that distance estimates are non-increasing as centers are added, so ˆdi−1(ci) ≥ r. In particular, all k + 1 
+
+points c1, . . . , c k+1 are pairwise at distance greater than r/ (1 + ε).Since the optimal solution has only k centers, two of the k + 1 points ci, c j must share the same optimal center. By the triangle inequality, 
+
+r
+
+1 + ε < dist G(ci, c j ) ≤ 2 · OPT .
+
+Rearranging gives max v∈V dist G(v, C ) ≤ r ≤ 2(1 + ε) · OPT . Running the insert only SSSP structure with ε/ 2 in place of ε yields the claimed (2 + ε)-approximation. The incremental property holds because for any i ≤ k, the sequence c1, . . . , c i is exactly the output of the algorithm run with parameter i instead of k. The same analysis applies to show that Ci is a (2 + ε)-approximation compared to OPT i, where OPT i denotes the optimal radius achievable with i centers.. We will use the below Lemma 3 in the proof of our running time Lemma 3.2. 
+
+Lemma 3 (Vertex -touch reporting [ 28 ]) . The incremental (1 + ε)- approximate SSSP structure of Lemma 1 for any source - edge insertion (s, v ) returns a set Vtouched ⊆ V consisting of exactly the vertices whose distance estimate decreases because of the insertion. Moreover, over any sequence of Λ
+
+such insertions the total running time (and the total size of all returned sets) is O m log (∆) log n/ε +Λ = ˜O(m) when Λ = O(n) and ε = Θ(1) .
+
+Lemma 3.2. The running time of Algorithm 1 is ˜O( mε )
+
+Proof. We account for each component of the algorithm separately. 
+
+Insert only SSSP structure. Over all k iterations, exactly k ≤ n zero-weight edges (s, c i) are inserted into the augmented graph G′. By Lemma 1, the Insert only SSSP structure handles the full sequence of insertions and maintains all distance estimates in total time ˜O( mε ).
+
+Heap operations. Since each inserted edge has weight zero and connects s directly to a center, inserting (s, c i) can only decrease distance estimates — never increase them. Therefore, the heap requires only decrease-key and find-max operations throughout the algorithm. The number of 
+
+decrease-key operations equals the number of distance updates performed by the Insert only SSSP structure, which is ˜O(m) by Lemma 3. Each such operation costs O( log n), contributing ˜O(m) in total. The k ≤ n find-max calls, each cost ˜O(1) .Both components run in at most ˜O( mε ), hence the total running time of Algorithm 1 is ˜O( mε ).10 Remark 4. An alternative approach constructs a maximal distance-d independent set via the same Source-Insertion SSSP structure, then binary-searches over d to achieve a (2 + ε)-approximation. This also runs in ˜O(m) time but does not naturally yield an nested center sequence, so we prefer the Gonzalez approach here. For the k-center with t outliers, in Algorithm 1, at each iteration i, we find a set S of the (1 + ε)t
+
+furthest vertices from the super source and randomly select one vertex from the set S as the next center. We prove Theorem 1.2 in Section B. 
+
+# 4 Greedy (k, z )-Clustering Algorithm 
+
+In this section we review the greedy (k, z )-clustering algorithm of Dupré la Tour and Saulpic [ 43 ], a simplification of the algorithm of Mettu and Plaxton [ 48 ], and we present it as a template . The algorithm is stated in terms of two abstract primitives – ball values and approximate balls (eqs. (1) and (2) below), not on how they are implemented. Both of our (k, z )-clustering results are obtained by instantiating this template. In section 5, we give a randomized implementation – ball values via Cohen’s ball-size estimation [ 17 ], approximate balls via truncated Dijkstra computations, and a forbidding loop driven by a single Source-Insertion SSSP structure – which yields Theorem 1.3. In Section 6, we give a deterministic implementation – ball values via the bunches and clusters of the Thorup–Zwick hierarchy [55] – which yields Theorem 1.4. The pseudo-code of this simplified greedy algorithm is provided in algorithm 2. Similarly to [ 43 ], we use a parameter c ≥ 5 and assume for simplicity that the aspect ratio ∆ is a power of 2c.Let R := 
+
+n ∆(2 c)ℓ | ℓ ∈ { 0, . . . , log 2c(∆) + 7 }
+
+o
+
+be the set of radii. 
+
+The two primitives. The template needs the graph for the following two primitives (both of which tolerate constant-factor slack). (P1) For a parameter ρ ≥ 1 with c ≥ ρ2/2: for every u ∈ V and r ∈ R , the algorithm requires a quantity Value( B(u, r )) satisfying 
+
+rz
+
+ρ · | B(u, r )| ≤ Value( B(u, r )) ≤ ρr z · | B(u, c · r)|. (1) For our randomized (k, z ) clustering (Section 5), we take the value of ρ = 3 and for our deterministic algorithm (Section 6) we take ρ = t + 1 , where t is the number of levels of the Thorup–Zwick distance oracle. The technical justification that any ρ ≥ 1 and c ≥ ρ2 
+
+> 2
+
+suffice is provided in Section A. 
+
+(P2) Approximate balls. For every u ∈ V and radius r, the algorithm requires a set N (u, r ) satisfying 
+
+B(u, r ) ⊆ N (u, r ) ⊆ B(u, c · r). (2) This greedy algorithm maintains a set of candidate balls of various radii and it proceeds in k
+
+iterations, where k ≥ 1 and z ≥ 1 are the parameters of the (k, z )-clustering instance. 11 Algorithm 2: Simplified Recursive Greedy 
+
+Input: A weighted undirected graph G = ( V, E, w ) and an integer k ≥ 1
+
+Output: A set C of at most k centers  
+
+> 1
+
+Define the set of available balls as: B := B u, ∆(2 c)ℓ
+
+ u ∈ V, ℓ ∈ { 0, . . . , log 2c(∆) + 7 } 
+
+> 2
+
+Compute Value( B(u, r )) for all available balls  
+
+> 3
+
+for i = 1 to k do  
+
+> 4
+
+if B is empty then  
+
+> 5
+
+output Ci−1 = {c1, . . . , c i−1} 
+
+> 6
+
+Let B(u, r ) be a ball in B with maximum Value( ·)
+
+// Center-selection loop  
+
+> 7
+
+while r >   12c
+
+7 do  
+
+> 8
+
+Compute an approximate ball N := N (u, 10 c · r) 
+
+> 9
+
+u ← arg max v∈N Value 
+
+
+
+B v, r
+
+> 2c
+
+ 
+
+> 10
+
+r ← r 
+
+> 2c
+> 11
+
+ci ← u
+
+// Forbidding loop  
+
+> 12
+
+foreach r ∈  ∆(2 c)ℓ | ℓ ∈ { 0, . . . , log 2c(∆) + 7 } do  
+
+> 13
+
+foreach u ∈ N (ci, 100 c4 · r) do  
+
+> 14
+
+Remove the ball B(u, r ) from the set B 
+
+> 15
+
+Output Ck := {c1, . . . , c k}
+
+In each iteration, the algorithm selects the ball with the highest “value”—a function of its radius and the number of points it contains. The center-selection loop is then performed, in which the algorithm recursively explores smaller-radius balls within the selected one to choose a precise center ci. Each vertex u in the center selection loop from which we compute N (u, r ) is called candidate center. At the end of each iteration, the forbidding loop is performed, in which the algorithm removes all candidate balls that are “too close” to the newly chosen center ci. Due to the forbidding loop, the center selection loop does not run from every vertex for a specified radius r. Helping us run the algorithm efficiently. The guarantee of this greedy algorithm is that each prefix c1, . . . , c ℓ of the sequence of centers 
+
+c1, . . . , c ℓ, . . . , c k is an O(1) -approximation for the (ℓ, z )-clustering problem, where ℓ ≤ k. In order to efficiently compute each Value (B(u, r )) , the (k, z )-clustering algorithm of Dupré la Tour and Saulpic [43] employs the algorithm of Cohen [17] (see section C in the Appendix). 
+
+# 5 Randomized (k, z )-Clustering Algorithm on Graphs 
+
+In this section, we develop a (k, z )-clustering algorithm in the graph setting that runs in ˜O(m) time, as demonstrated in Theorem 1.3. 12 Theorem 1.3. There is a randomized algorithm for the incremental 6 (k, z )-clustering problem that, given a weighted undirected graph G = ( V, E, w ), an integer k ≥ 1 aspect ratio ∆ 7, and a constant 
+
+z ≥ 1, computes with high probability an O(1) -approximate solution in ˜O(m log(∆)) time. 
+
+Our (k, z )-clustering algorithm is an adaptation of the algorithm by Dupré la Tour and Saulpic [ 43 ]; a pseudocode of the (k, z )-clustering algorithm from [ 43 ] is provided in Algorithm 2. Specifically, we improve the running time by implementing some of its components more efficiently. Consequently, we improve upon the ˜O(m1+ 1 
+
+> c
+
+)-time algorithm (for some constant c ≥ 5) of Dupré la Tour and Saulpic [43], and the m1+ o(1) -time algorithm of Jiang, Jin, Lou, and Lu [41]. Our adapted (k, z )-clustering algorithm consists of the same three components as the algorithm by Dupré la Tour and Saulpic [ 43 ] (Algorithm 2). These three components are: (i) the ball-value estimation, (ii) the center-selection loop, and (iii) the forbidding loop. In the following paragraphs, we describe these components alongside our improvements. 
+
+Ball-value estimation. Consider a parameter c ≥ 5, and let R :=
+
+n ∆(2 c)ℓ | ℓ ∈ { 0, . . . , log 2c(∆) + 7 }
+
+o
+
+be the set of radii considered by the algorithm. For every vertex u ∈ V and every radius r ∈ R ,the algorithm needs access to Value (B(u, r )) (see Equation (1) for the definition of Value (·)). In turn, Value (·) depends on (approximations of) the values b(v, ˜r) := |B(v, ˜r)|, where v ∈ V is a vertex and ˜r ∈ R is a radius. These values b(·, ·) are approximated in the preprocessing phase using the algorithm by Cohen [17]; the guarantees of Cohen’s algorithm appear in Lemma 28. More precisely, for each pair (u, r ) ∈ V × R , Cohen’s algorithm returns a (1 ± ε)-approximate estimate ˜b(u, r ) of b(u, r ) in O(log log n) time. Hence, the (k, z )-clustering algorithm uses the approximate size ˜b(·, ·) to compute Value (·) for all candidate balls; this component is exactly the same as in [43]. 
+
+Center-selection loop. For each candidate center u ∈ V and each radius r ∈ R , the approximate ball N (u, 10 c · r) (in Line 8 of Algorithm 2) is computed by running Dijkstra’s algorithm from u,terminating once all vertices within distance 10 c · r have been scanned. The pseudocode of this computation is provided in Algorithm 3, where the ball N (u, 10 c · r) is the set of all vertices extracted from Qr, N in the Algorithm 3. 8 Subsequently, Line 9 of Algorithm 2 is performed by scanning the entire ball N (u, 10 c · r).Regarding the truncated Dijkstra executions (Algorithm 3), for each vertex v ∈ V and each radius 
+
+r ∈ R , the algorithm maintains a distance label dr[v], where dr[v] is initialized to ∞. For each radius 
+
+r ∈ R , the algorithm maintains a priority queue Qr that sorts the vertices based on dr[·]. These data structures are reused across all center-selection loops for radius r. Each execution restores both to this state before returning: it resets dr[y] ← ∞ for exactly the vertices y it labeled (which are the vertices of its output ball N , at cost O(|N |)), and Qr becomes empty by construction . The shared data structures serve to avoid initializing an array of size n in every execution.                       
+
+> 6Recall that incremental does not mean the algorithm is dynamic; rather, it means that every prefix of length ℓof the returned (k, z )-clustering solution induces a constant-factor approximate (ℓ, z )-clustering solution.
+> 7The aspect-ratio is the ratio between the largest distance and the smallest non-zero distance.
+> 8Notice that in fact B(u, 10 c·r)is computed, which is even stronger than B(u, 10 c2·r)required in the definition of the approximate ball N(u, 10 c·r)(see Section 4).
+
+13 Algorithm 3: Truncated Dijkstra for ball N (u, 10 c · r)
+
+Input: A weighted undirected graph G = ( V, E ) with non-negative weights w(·, ·), a source 
+
+u ∈ V , and a radius r
+
+Output: N = B(u, 10 c · r) 
+
+> 1
+
+dr[u] ← 0 
+
+> 2
+
+Insert u into Qr 
+
+> 3
+
+while Qr̸ = ∅ do  
+
+> 4
+
+Extract v with minimum dr[v] from Qr 
+
+> 5
+
+Add v to N ; 
+
+> 6
+
+for each (v, x ) ∈ E do  
+
+> 7
+
+dst ← dr[v] + w(v, x ) 
+
+> 8
+
+if dst < dr[x] and dst ≤ 10 c · r then  
+
+> 9
+
+dr[x] ← dst  
+
+> 10
+
+Add x to Qr 
+
+> 11
+
+foreach y ∈ N do d[y] ← ∞ // undo all writes ;
+
+Forbidding loop. A single deterministic Source-Insertion SSSP algorithm is employed (from Lemma 1). In particular, a source vertex s / ∈ V is introduced (initially with no incident edges), and the Source-Insertion SSSP algorithm is initialized on the directed version of Gs = ( V ∪ { s}, E, w ).9 Let δs(·)
+
+denote the maintained distance estimates from s. During the forbidding loop for the i-th center ci
+
+(where i ∈ [1 , k ]), a zero-weight edge (s, c i) is inserted into Gs and is passed to the Source-Insertion SSSP algorithm. In turn, the Source-Insertion SSSP algorithm updates the distance estimates such that (where ε ∈ (0 , 1) ): 
+
+dist( v, {c1, . . . , c i}) ≤ δs(v) ≤ (1 + ε) dist( v, {c1, . . . , c i}) for all vertices v ∈ V. 
+
+Based on Lemma 3, the Source-Insertion SSSP algorithm returns a vertex set Vt, consisting of the vertices whose distance estimates decreased due to the edge (s, c i). Next, for every vertex v ∈ Vt
+
+and every radius r ∈ R , if δs(v) ≤ (1 + ε)100 c4 · r then the corresponding ball B(v, r ) is removed (if not already removed) from the set of available balls B.
+
+5.1 Analysis of the Randomized (k, z )-Clustering Algorithm 
+
+In this section, our aim is to prove Theorem 1.3 by analyzing the (k, z )-clustering algorithm described in Section 5. In particular, we analyze the running time of each component and prove that each runs in ˜O(m) time. The approximation ratio analysis is provided in Section 5.1.1, where we also show that our forbidding loop simulates that of Algorithm 2. 
+
+Running Time of the Center-Selection Loop In order to analyze the running time of all center-selection loops, we bound the total time of all truncated Dijkstra executions used to compute the balls N (u, 10 c · r) over all candidate centers u ∈ V and radii r ∈ R . We note that Lemma 3.5 
+
+> 9Since Lemma 1 requires a directed graph as input, each undirected edge is replaced by two oppositely directed edges with the same weight.
+
+14 in [ 43 ] (which appears as Lemma 5) is used to bound the total running time of the center-selection loops in [43]. 
+
+Lemma 5 (Lemma 3.5 in [43]) . For every vertex v ∈ V and radius r ∈ R , the ball B(v, r ) appears at most once in the center-selection loop. 
+
+Since we use Truncated Dijkstra’s algorithm (see Algorithm 3), our aim is to bound the number of times each edge is scanned (in Lemma 8). To achieve this, we adapt the proof of Lemma 5 from [ 43 ]to obtain Lemma 7 and then Lemma 8. Intuitively, we argue that a ball B(v, r ) appears in the center-selection loop if and only if some Dijkstra execution from a candidate center u ∈ V with radius r ∈ R (which computes the ball N (u, 10 c · r)) visits the vertex v. Then based on Lemma 5 (our Lemma 7), for a fixed radius r ∈ R , each vertex v is visited by at most one truncated Dijkstra execution. In turn, each edge is scanned twice—once from each of its endpoints. The formal justification is provided in Lemma 8, and Lemma 9 follows because |R| = O(log ∆) .The next lemma is a variation of Fact 3.4 in [ 43 ]. Essentially, it states that during the i-th center-selection loop, the candidate center chosen for radius r ∈ R is within distance O(r) of any subsequent candidate center during the i-th center-selection loop (assuming c is a positive constant). 
+
+Lemma 6. During the i-th center-selection loop, consider the candidate center u1 ∈ V for the radius r1, and let u2 be another candidate center for the radius r2 ≤ r1 
+
+> 2c
+
+. Then it holds that 
+
+dist( u1, u 2) ≤ 20 c · r1.Proof. The proof is the same as that of Fact 3.4 in [ 43 ]. The additional observation is that in our center-selection loops, Dijkstra’s algorithm (Algorithm 3) computes B(u, 10 c · r), which is even stronger than B(u, 10 c2 · r) required in the definition of the approximate ball N (u, 10 c · r) (for any candidate center u ∈ V and any radius r ∈ R ). 
+
+Lemma 7. Across all center-selection loops for a fixed radius r ∈ R , each vertex v ∈ V is extracted from the priority queue Qr by at most one truncated Dijkstra execution (Algorithm 3). Proof. For a fixed radius r ∈ R , suppose to the contrary that a vertex v ∈ V is extracted from the priority queue Qr by two truncated Dijkstra executions (Algorithm 3), starting from a candidate center u1 ∈ V with radius r ∈ R and from a candidate center u2 ∈ V with radius r ∈ R . In other words, the vertex v is extracted from Qr during the computation of both balls N (u1, 10 c · r) and 
+
+N (u2, 10 c · r). Without loss of generality, assume that v is extracted from Qr first in the execution starting from u1, and later in the execution starting from u2. The two executions belong to distinct center-selection loops, since within a single center-selection loop the radius strictly decreases. Hence we assume the loop of u1 precedes that of u2.Let ci be the center selected after the corresponding center-selection loop for u1, and let ˆu2 and ˆr be the initial candidate center and radius of the corresponding center-selection loop for u2; ˆu2 and ˆr
+
+are defined in Line 6 of Algorithm 2. The contradiction that we argue in the rest of the proof is that the ball B( ˆu2, ˆr) could not be available at the beginning of the center-selection loop for u2 (in Line 6 of Algorithm 2). By the construction of Algorithm 3, it holds that dist (u1, v ) ≤ 10 c · r. Based on Lemma 6, we have 
+
+dist (u1, c i) ≤ 20 c · r (note that ci is the final candidate center of the i-th center-selection loop). 15 Hence, by the triangle inequality it follows that: 
+
+dist( ci, v ) ≤ dist( ci, u 1) + dist( u1, v ) ≤ 20 c · r + 10 c · r = 30 c · r. 
+
+By the construction of Algorithm 3, the second time that v is extracted from Qr due to u2, it should also hold that dist( u2, v ) ≤ 10 c · r. Thus, by the triangle inequality we infer that: 
+
+dist( ci, u 2) ≤ dist( ci, v ) + dist( v, u 2) ≤ 30 c · r + 10 c · r = 40 c · r. 
+
+Notice that then the ball B(u2, r ) is forbidden during the forbidding loop for ci, because 40 c · r ≤
+
+100 c4 · r.Moreover, by Lemma 6 we have dist ( ˆu2, u 2) ≤ 20 c · ˆr, and thus dist (ci, ˆu2) ≤ dist (ci, u 2) + dist( u2, ˆu2) ≤ 40 c · r + 20 c · ˆr. Since r ≤ ˆr 
+
+> 2c
+
+, it follows that: 10 
+
+dist( ci, ˆu2) ≤ 40 c · ˆr
+
+2c + 20 c · ˆr ≤ (20 + 20 c) · ˆr ≤ 40 c · ˆr. 
+
+In turn, the ball B( ˆu2, ˆr) is forbidden during the forbidding loop for ci, because 40 c · ˆr ≤ 100 c4 · ˆr.This contradicts the fact that B( ˆu2, ˆr) was available at the beginning of the center-selection loop for u2. As a consequence, the vertex v cannot be extracted from the priority queue Qr by two truncated Dijkstra executions. 
+
+Lemma 8. Across all center-selection loops for a fixed radius r ∈ R , each edge e ∈ E is scanned at most twice. Proof. Consider an arbitrary edge e = {v1, v 2} ∈ E that is scanned during the truncated Dijkstra execution (Algorithm 3), starting from some candidate center u ∈ V with radius r ∈ R (which computes the ball N (u, 10 c · r)). The edge e is relaxed (in Line 6 of Algorithm 3) only when one of its endpoints is extracted from the priority queue Qr. According to Lemma 7, for the fixed radius 
+
+r ∈ R , each endpoint v1 and v2 is extracted from Qr at most once. As a result, the edge e = {v1, v 2}
+
+can be relaxed at most twice in total, as required. 
+
+Lemma 9. The total running time to compute all balls N (u, 10 c · r) for all candidate centers u ∈ V
+
+and radii r ∈ R in the center-selection loops is ˜O(m).Proof. Based on Lemma 8, across all center-selection loops for a fixed radius r ∈ R , each edge is scanned at most twice. Since |R| = O( log ∆) , each edge is scanned at most O( log ∆) times during all center-selection loops, concluding the claim. 
+
+Running Time of the Ball-Value Estimation and the Forbidding Loop Now we formally show the running time for computing Value (u, r ) for all vertices u ∈ V and all radii r ∈ R using Lemma 28 and the forbidding loop using Source-Insert SSSP. 
+
+Lemma 10. The total running time required to compute Value (u, r ) for all vertices u ∈ V and all radii r ∈ R is O(n · log ∆ · log log n), in addition to the preprocessing time of Lemma 28.          
+
+> 10 Note that if r=ˆrthen ˆu2=u2, and the contradiction already follows since we argued that B(u2, r )has been forbidden.
+
+16 Proof. Recall that R :=
+
+n ∆(2 c)ℓ | ℓ ∈ { 0, . . . , log 2c(∆) + 7 }
+
+o
+
+, which means that |R| = O(log ∆) .Using Lemma 28, the graph can be preprocessed to build a data structure such that for each query pair (u, r ) ∈ V × R , an estimate of |B(u, r )| can be returned in O(log log n) time. Since the total number of such queries is |V | · |R| = O(n log ∆) , the claim follows. 
+
+Lemma 11. The total running time to perform all forbidding loops is ˜O(m).Proof. A single deterministic Source-Insertion SSSP algorithm is employed, to which at most k ≤ n
+
+zero-weight edges are passed. Based on Lemma 1, its total update time is: 
+
+O
+
+ m log(∆) log 2 nε + k
+
+
+
+= ˜O
+
+ mε
+
+
+
+= ˜O(m).
+
+Furthermore based on Lemma 3, scanning the returned vertex set Vt (consisting of vertices whose distance estimates decreased due to the zero-weight edges) takes ˜O(m) total time as well. 
+
+5.1.1 Approximation Ratio 
+
+Our (k, z )-clustering algorithm described in Section 5 is an adaptation of Algorithm 2 by Dupré la Tour and Saulpic [ 43 ]. Since Algorithm 2 yields an O(1) -approximation for the (k, z )-clustering problem, it remains to justify that our (k, z )-clustering algorithm outputs a constant-factor approximate solution as well. Recall that for every vertex u ∈ V and every radius r ∈ R , the value of the ball 
+
+B(u, r ) satisfies: 
+
+rz
+
+3 · | B(u, r )| ≤ Value( B(u, r )) ≤ 3rz · | B(u, c · r)|.
+
+Based on Lemma 28, we have |B(u,r )| 
+
+> 1+ ε
+
+≤ ˜b(u, r ) ≤ (1 + ε)|B(u, r )|. Hence, there is no additional approximation loss in the ball-value estimation procedure compared to [ 43 ]. In the center-selection loops, exact distances are used, so there is no additional approximation loss either. 
+
+Forbidding loop. In the analysis of [ 43 ], for each i-th center ci ∈ Ck (where i ∈ [1 , k ]) and every radius r ∈ R , the approximate balls used in the forbidding loop of Algorithm 2 satisfy: 
+
+B(ci, 100 c4 · r) ⊆ N (ci, 100 c4 · r) ⊆ B(ci, 100 c5 · r).
+
+In our implementation, the Source-Insertion SSSP algorithm from Lemma 1 maintains distance estimates δs(v) such that: 
+
+dist( v, {c1, . . . , c i}) ≤ δs(v) ≤ (1 + ε) dist( v, {c1, . . . , c i}) for all vertices v ∈ V. 
+
+Hence, if dist (ci, v ) ≤ 100 c4 · r then δs(v) ≤ (1 + ε)100 c4 · r. Moreover, since c ≥ 5 and ε ∈ (0 , 1) , it holds that: 
+
+dist( {c1, . . . , c i}, v ) ≤ δs(v) ≤ (1 + ε)100 c4 · r ≤ 100 c5 · r, 
+
+where δs(v) ≤ (1 + ε)100 c4 · r is due to the construction of our forbidding loop. Thus, our implicit approximate ball ˆN := {v ∈ V | δs(v) ≤ (1 + ε)100 c4 · r} via the Source-Insertion SSSP algorithm satisfies: 
+
+B(ci, 100 c4 · r) ⊆ ˆN ⊆ B({c1, . . . , c i}, 100 c4(1 + ε) · r) ⊆ B({c1, . . . , c i}, 100 c5 · r).
+
+17 Therefore, the use of (1 + ε)-approximate distances does not incur any additional approximation cost. For efficiency purposes, observe that in our forbidding loop in Section 5, only the vertex set Vt
+
+is scanned; Vt consists of the vertices whose distance estimates decreased due to the edge (s, c i).However, if some vertex v ∈ ˆN does not belong to Vt (i.e., v / ∈ Vt), then δs(v) has been decreased earlier due to another center cj with j ∈ [1 , i − 1] . In turn, the corresponding ball B(v, r ) has already been forbidden, which concludes the correctness of our forbidding loop. To summarize, since the analysis of [ 43 ] already tolerates constant-factor slack in these internal data structures, our modification preserves the constant-factor approximation. 
+
+Completion of the Proof of Theorem 1.3 Based on our preceding analysis, we can now finish the proof of Theorem 1.3, which we restate for convenience. 
+
+Theorem 1.3. There is a randomized algorithm for the incremental 11 (k, z )-clustering problem that, given a weighted undirected graph G = ( V, E, w ), an integer k ≥ 1 aspect ratio ∆ 12 , and a constant 
+
+z ≥ 1, computes with high probability an O(1) -approximate solution in ˜O(m log(∆)) time. Proof. The time guarantee follows from lemmas 9 to 11 and 28, and the approximation and correctness guarantees follow from Section 5.1.1. 
+
+# 6 Deterministic (k, z )-Clustering Algorithm on Graphs 
+
+In this section we give a deterministic instantiation of the template of Section 4, proving Theorem 1.4. Recall from the randomized algorithm in Section 5 that the only randomized component of our 
+
+(k, z )-clustering algorithm is Cohen’s ball-size estimation [ 17 ], used to implement the ball values ; the truncated Dijkstra computations and the SSSP-based forbidding loop are already deterministic. It therefore suffices to estimate ball sizes deterministically. We do so using the bunches and clusters of the Thorup–Zwick distance oracle [ 55 ](will define bunches and clusters in Section 6.1). First, we give an overview of our proof, then we state Thorup–Zwick distance oracle Section 6.1 and explain how we use it to provide a deterministic algorithm. While distance oracles are typically used to answer distance queries between vertex pairs with stretch 
+
+2t − 1, where t is the number of levels of the oracle (see Section 6.1), we instead use it to obtain, for every vertex v ∈ V and radius r > 0, an approximate neighborhood N (v, r ) as a union of at most 
+
+t + 1 precomputed sets (Equation (4)), whose stored sizes yield a quantity ˆN (v, r ) satisfying 
+
+|B(v, r )| ≤ ˆN (v, r ) ≤ (t + 1) · | B(v, 2αr )| with α = 4 t − 2
+
+(Lemma 15 and Lemma 16). The deterministic estimation comes at a cost in the running time as well: the oracle preprocessing takes ˜O(t · m · n1/t ) time, compared to the near-linear time of the randomized algorithm. The parameter t thus governs a trade-off between solution quality and running time, and we obtain a deterministic O(poly( t)) -approximation in ˜O t · m · n1/t + mε
+
+ time.       
+
+> 11 Recall that incremental does not mean the algorithm is dynamic; rather, it means that every prefix of length ℓof the returned (k, z )-clustering solution induces a constant-factor approximate (ℓ, z )-clustering solution.
+> 12 The aspect-ratio is the ratio between the largest distance and the smallest non-zero distance.
+
+18 Theorem 1.4. There is a deterministic algorithm for the incremental (k, z )-clustering problem that, given a weighted undirected graph G = ( V, E, w ), an integer k ≥ 1, an integer parameter t ≥ 1, a constant z ≥ 1, and an accuracy parameter 0 < ε ≤ 1, computes an O(poly (t)) -approximate solution in time ˜O t · m · n 1 
+
+> t
+
++ mε
+
+.
+
+Before describing the construction, we fix the two template parameters for this section. Recall from Section 4 that the template is governed by two parameters: ρ ≥ 1, the slack allowed in the ball values (Equation (1)), and c ≥ 5, the radius blow-up allowed in the approximate balls (Equation (2)), subject to c ≥ ρ2/2. The ball values that we construct in Equation (6) satisfy Equation (1) with 
+
+ρ = t + 1 , and the underlying approximate neighborhoods satisfy B(v, r ) ⊆ N (v, r ) ⊆ B(v, 2αr )
+
+with α = 4 t − 2 (Lemma 15). Accordingly, we set 
+
+ρ := t + 1 and c := max 
+
+
+
+8t − 4,  (t+1) 2
+
+> 2
+
+, 5
+
+
+
+= Θ( t2). (3) 
+
+6.1 Thorup–Zwick distance oracle 
+
+Given a weighted undirected graph G = ( V, E, w ) and an integer t ≥ 1, the construction is based on a hierarchy V = A0 ⊇ A1 ⊇ · · · ⊇ At = ∅. For v ∈ V and level i ∈ { 0, . . . , t − 1}, the pivot 
+
+pi(v) := arg min w∈Ai dist( v, w ) is the vertex of Ai nearest to v. The bunch of v is 
+
+Bunch( v) := [
+
+> 0≤i≤t−1
+
+w ∈ Ai \ Ai+1 dist( v, w ) < dist( v, A i+1 ) ,
+
+and it contains all pivots of v. The cluster of w ∈ Ai \ Ai+1 is C(w) := {v ∈ V | dist (v, w ) <
+
+dist( v, A i+1 )}.
+
+Theorem 12 (Thorup–Zwick [ 55 ]) . There is a deterministic algorithm that, given G and t ≥ 1,computes in ˜O(t · m · n1/t ) time the hierarchy, all pivots, and all bunches and clusters together with the associated exact distances, each stored as a list sorted by distance. Moreover, |Bunch (v)| = O(t · n1/t )
+
+for every v ∈ V , and the total storage is O(t · n1+1 /t ).
+
+Overview: Ball-size estimation via bunches and clusters. Computing |B(v, r )| exactly for all 
+
+v ∈ V and r ∈ R is too expensive, since a single ball may contain Ω( n) vertices. Instead, we cover each ball by a few of the precomputed sets of Theorem 12 and estimate its size from theirs. The covering property we use is the following: for all u, v ∈ V , either u ∈ Bunch (v), or there exists a level i such that pi(v) ∈ Bunch (u) with dist (v, p i(v)) ≤ (4 t − 3) dist (u, v ) and dist (u, p i(v)) ≤ (4 t − 3) dist (u, v )
+
+(Lemma 14); in the latter case, u ∈ C(pi(v)) by Lemma 13. Hence, with α := 4 t − 2, every ball 
+
+B(v, r ) is contained in the union of Bunch (v) and the clusters C(p0(v)) , . . . , C (pt(v)) , each truncated at radius αr , and conversely this union is contained in B(v, 2αr ) (Lemma 15). Since each of these 
+
+t + 1 sets is stored sorted by distance, the size of each truncation is retrieved in ˜O(1) time, and their total size ˆN (v, r ) satisfies |N (v, r )| ≤ ˆN (v, r ) ≤ (t + 1) |N (v, r )|, since every counted vertex lies in the union and belongs to at most one truncated cluster per level and at most once to the bunch (Lemma 16). 
+
+Lemma 13 (Bunch–Cluster Duality [55]) . For any u, w ∈ V : w ∈ Bunch( v) ⇐⇒ v ∈ C(w).
+
+19 Lemma 14 (Distance Stretch [ 54 ]) . For any u, v ∈ V , let i∗ be the smallest index such that 
+
+pi∗ (u) ∈ Bunch( v). Then 
+
+dist( u, p i∗ (u)) + dist( pi∗ (u), v ) ≤ (4 t − 3) dist( u, v ).
+
+Given G, apply Theorem 12 (Thorup–Zwick– [ 55 ]) to build the approximate distance oracle on G.This yields, for each vertex v ∈ V , an explicitly stored sorted list Bunch (v), and for each pivot w, an explicitly stored list C(w) — both represented as doubly-linked lists, supporting O(1) deletion. All cluster sizes |C(w, αr )| and |Bunch (v, αr )) | are precomputed and stored. The total preprocessing time is O(mn 1/c ) and the total storage is O(mn 1/c ) .
+
+6.2 Approximate Balls via Truncated Bunches and Clusters. 
+
+Fix a constant α ≥ 4t − 2. For a vertex v ∈ V and radius r > 0, define 
+
+N (v, r ) = Bunch( v, αr ) ∪ [   
+
+> i∈[t]
+> d(v, p i(v)) < αr
+
+C(pi(v), αr ) . (4) where Bunch (v, ρ ) = {w ∈ Bunch (v) : dist (v, w ) ≤ ρ} and C(w, ρ ) = {u ∈ C(w) : dist (u, w ) ≤ ρ}
+
+denote the radius-truncated bunch and cluster, respectively. 
+
+Approximate Ball Size We never compute the set N (v, r ) explicitly: the sets in Equation (4) may overlap, so evaluating the cardinality of their union would require enumerating their elements, at a cost proportional to their total size, and this for each of the O(n log ∆) pairs (v, r ) is too expensive. Instead, we only sum the sizes of the t + 1 truncated sets, each of which is available from the sorted lists of Theorem 12. The resulting quantity counts each vertex of N (v, r ) once per set containing it, and hence overcounts |N (v, r )| by at most a factor of t + 1 (Lemma 16): 
+
+ˆN (v, r ) = |Bunch( v, αr )| + X
+
+> i∈[t]
+> d(v,p i(v)) <αr
+
+|C (pi(v), αr )| . (5) Our deterministic ball-value estimation is then, for every v ∈ V and r ∈ R ,
+
+Value( B(v, r )) := rz · ˆN (v, r ). (6) By lemmas 15 and 16 together show that Equation (6) satisfies Equation (1) with ρ := t + 1 :We will show that ˆN (v, r ) is an t approximate for |N (v, r )|, that is |N (v, r )| ≤ ˆN (v, r ) ≤ t|N (v, r )|
+
+(see Lemma 16), also we show that ˆN (v, r ) can be computed in O(t) time in Observation 18, after preprocessing approximate distance oracle. 
+
+Lemma 15. For every v ∈ V and r > 0, B(v, r ) ⊆ N (v, r ) ⊆ B(v, 2αr ), where α ≥ 4t − 2 and t
+
+is the number of levels in the Thorup–Zwick hierarchy. 
+
+20 Proof. We prove the two containments separately. 
+
+Part 1: First containment: B(v, r ) ⊆ N (v, r ). Let u ∈ B(v, r ), so dist (u, v ) ≤ r. We consider two cases: 
+
+Case 1: u ∈ Bunch( v). Since dist( u, v ) ≤ r ≤ αr , we have u ∈ Bunch( v, αr ) ⊆ N (v, r ).
+
+Case 2: u / ∈ Bunch (v). We will show that u appears in C(pi(v), αr ) for some i with d(v, p i(v)) < αr .By Lemma 14, let i∗ be the largest index such that pi∗ (v) ∈ Bunch( u), and set w := pi∗ (v). Then: 
+
+dist( v, w ) ≤ (4 t − 3) dist( u, v ) ≤ α r. (7) Hence d(v, p i∗ ) < αr . Now, we will establish u ∈ C(w, αr ): By Theorem 12, w = pi∗ (v) ∈ Bunch (u).By Lemma 13 (applied with the roles of u and w exchanged), w ∈ Bunch (u) ⇒ u ∈ C(w). Since 
+
+dist( u, w ) ≤ (4 t − 3) r ≤ αr by Observation (7) , we get u ∈ C(w, αr ). Hence u ∈ N (v, r ).
+
+Part 2: Second containment: N (v, r ) ⊆ B(v, 2αr ). Let u ∈ N (v, r ). We consider two cases: 
+
+Case 1: u ∈ Bunch( v, αr ): By definition of Bunch( v, αr ) , dist( v, u ) ≤ αr ≤ 2αr .
+
+Case 2: u ∈ C(pi(v), αr ) for some i ∈ [t] with d(v, p i(v)) < αr : We have d(v, p i(v)) < αr (by the condition in the definition of N (v, r )) and d(u, p i(v)) ≤ αr (since u ∈ C(pi(v), αr )). By the triangle inequality, d(u, v ) ≤ d(u, p i(v)) + d(pi(v), v ) ≤ αr + αr = 2 αr. Hence u ∈ B(v, 2αr ).
+
+Lemma 16. For a fixed v and r, observe that |N (v, r )| ≤ ˆN (v, r ) ≤ (t + 1) · | N (v, αr )| .That is, the sum of precomputed cluster sizes is a (t + 1) -approximation of |N (v, r )|;Proof. The first inequality follows from the union bound. For the second inequality, note that each vertex u ∈ N (v, r ) appears in at most t of the clusters C(pi(v), αr ), i ∈ [t] (one for each level i) and at most once in the Bunch( v, r ).
+
+Lemma 17. For all v ∈ V and all radii r ∈ ∆/(2 c)i : i = 0 , . . . , log 2c ∆ + 7 , the values { ˆN (v, r )}
+
+can be computed in total time O(t · n log ∆) .Proof. There are n vertices and O(log ∆) candidate radii, giving O(n log ∆) queries in total. We will prove below for each (v, r ) takes O(t) time Observation 18, Hence the total time of taken is 
+
+O(t · n log ∆) .
+
+Observation 18. For any vertex v ∈ V and radius r ≥ 0, the quantity ˆN (v, r ) can be computed in 
+
+O(t) time. Proof. The value |Bunch (v, αr )| can be accessed in constant time. The summation involves at most 
+
+t terms, and each cluster size |C(pi(v), αr )| is precomputed and can be retrieved in O(1) time. Thus, the total time to evaluate the expression is O(t).21 References 
+
+[1] Amir Abboud, Vincent Cohen-Addad, Euiwoong Lee, and Pasin Manurangsi. On the fine-grained complexity of approximating k-center in sparse graphs. In Symposium on Simplicity in Algorithms (SOSA) , pages 145–155. SIAM, 2023. [2] Charu C. Aggarwal and Chandan K. Reddy, editors. Data Clustering: Algorithms and Applica-tions . CRC Press, 2014. [3] Sara Ahmadian, Ashkan Norouzi-Fard, Ola Svensson, and Justin Ward. Better guarantees for k-means and euclidean k-median by primal-dual algorithms. SIAM J. Comput. , 49(4), 2020. 
+
+doi:10.1137/18M1171321 .[4] Sunil Arya, Gautam Das, David M Mount, Jeffrey S Salowe, and Michiel Smid. Euclidean spanners: short, thin, and lanky. In Proceedings of the twenty-seventh annual ACM symposium on Theory of computing , pages 489–498, 1995. [5] Mihai Badoiu, Sariel Har-Peled, and Piotr Indyk. Approximate clustering via core-sets. In John H. Reif, editor, Proceedings on 34th Annual ACM Symposium on Theory of Computing, May 19-21, 2002, Montréal, Québec, Canada , pages 250–257. ACM, 2002. doi:10.1145/509907.509947 .[6] Yair Bartal. Probabilistic approximations of metric spaces and its algorithmic applications. In 37th Annual Symposium on Foundations of Computer Science, FOCS 1996, Burlington, Vermont, USA, 14-16 October, 1996 , pages 184–193. IEEE Computer Society, 1996. doi: 10.1109/SFCS.1996.548477 .[7] MohammadHossein Bateni, Hossein Esfandiari, Hendrik Fichtenberger, Monika Henzinger, Rajesh Jayaram, Vahab Mirrokni, and Andreas Wiese. Optimal fully dynamic k -center clustering for adaptive and oblivious adversaries. In Nikhil Bansal and Viswanath Nagarajan, editors, 
+
+Proceedings of the 2023 ACM-SIAM Symposium on Discrete Algorithms, SODA 2023, Florence, Italy, January 22-25, 2023 , pages 2677–2727. SIAM, 2023. URL: https://doi.org/10.1137/ 1.9781611977554.ch101 , doi:10.1137/1.9781611977554.CH101 .[8] Pavel Berkhin. A survey of clustering data mining techniques. In Jacob Kogan, Charles K. Nicholas, and Marc Teboulle, editors, Grouping Multidimensional Data - Recent Advances in Clustering , pages 25–71. Springer, 2006. doi:10.1007/3-540-28349-8\_2 .[9] Jarosław Byrka, Thomas Pensyl, Bartosz Rybicki, Aravind Srinivasan, and Khoa Trinh. An improved approximation for k-median and positive correlation in budgeted optimization. In 
+
+ACM Transactions on Algorithms , volume 13, 2017. [10] Moses Charikar, Chandra Chekuri, Ashish Goel, and Sudipto Guha. Rounding via trees: Deterministic approximation algorithms for group steiner trees and k -median. In Jeffrey Scott Vitter, editor, Proceedings of the Thirtieth Annual ACM Symposium on the Theory of Computing, Dallas, Texas, USA, May 23-26, 1998 , pages 114–123. ACM, 1998. doi:10.1145/276698. 276719 .[11] Moses Charikar, Vincent Cohen-Addad, Ruiquan Gao, Fabrizio Grandoni, Euiwoong Lee, and Ernest van Wijland. An improved greedy approximation for (metric) k-means. In 66th 
+
+22 IEEE Annual Symposium on Foundations of Computer Science, FOCS 2025, Sydney, Australia, December 14-17, 2025 , pages 233–240. IEEE, 2025. doi:10.1109/FOCS63196.2025.00016 .[12] Moses Charikar and Sudipto Guha. Improved combinatorial algorithms for facility location problems. SIAM J. Comput. , 34(4):803–824, 2005. doi:10.1137/S0097539701398594 .[13] Moses Charikar, Sudipto Guha, Éva Tardos, and David B. Shmoys. A constant-factor approxi-mation algorithm for the k-median problem. J. Comput. Syst. Sci. , 65(1):129–149, 2002. URL: 
+
+https://doi.org/10.1006/jcss.2002.1882 , doi:10.1006/JCSS.2002.1882 .[14] Moses Charikar, Samir Khuller, David M. Mount, and Giri Narasimhan. Algorithms for facility location problems with outliers. In SODA , pages 642–651, 2001. [15] Moses Charikar and Shi Li. A dependent lp-rounding approach for the k-median problem. In Artur Czumaj, Kurt Mehlhorn, Andrew M. Pitts, and Roger Wattenhofer, editors, Automata, Languages, and Programming - 39th International Colloquium, ICALP 2012, Warwick, UK, July 9-13, 2012, Proceedings, Part I , Lecture Notes in Computer Science, pages 194–205. Springer, 2012. doi:10.1007/978-3-642-31594-7\_17 .[16] Ke Chen. On coresets for k-median and k-means clustering in metric and euclidean spaces and their applications. SIAM J. Comput. , 39(3):923–947, 2009. doi:10.1137/070699007 .[17] Edith Cohen. Size-estimation framework with applications to transitive closure and reachability. 
+
+Journal of Computer and System Sciences , 55(3):441–453, 1997. [18] Edith Cohen and Uri Zwick. All-pairs small-stretch paths. J. Algorithms , 38(2):335–353, 2001. URL: https://doi.org/10.1006/jagm.2000.1117 , doi:10.1006/JAGM.2000.1117 .[19] Vincent Cohen-Addad, Fabrizio Grandoni, Euiwoong Lee, and Chris Schwiegelshohn. Breach-ing the 2 LMP approximation barrier for facility location with applications to k -median. In Nikhil Bansal and Viswanath Nagarajan, editors, Proceedings of the 2023 ACM-SIAM Symposium on Discrete Algorithms, SODA 2023, Florence, Italy, January 22-25, 2023 ,pages 940–986. SIAM, 2023. URL: https://doi.org/10.1137/1.9781611977554.ch37 , doi: 10.1137/1.9781611977554.CH37 .[20] Vincent Cohen-Addad, Fabrizio Grandoni, Euiwoong Lee, Chris Schwiegelshohn, and Ola Svensson. A ( 2 + ε)-approximation algorithm for metric k-median. In Michal Koucký and Nikhil Bansal, editors, Proceedings of the 57th Annual ACM Symposium on Theory of Computing, STOC 2025, Prague, Czechia, June 23-27, 2025 , pages 615–624. ACM, 2025. doi:10.1145/ 3717823.3718299 .[21] Vincent Cohen-Addad, Anupam Gupta, Lunjia Hu, Hoon Oh, and David Saulpic. An improved local search algorithm for k-median. In Joseph (Seffi) Naor and Niv Buchbinder, editors, 
+
+Proceedings of the 2022 ACM-SIAM Symposium on Discrete Algorithms, SODA 2022, Virtual Conference / Alexandria, VA, USA, January 9 - 12, 2022 , pages 1556–1612. SIAM, 2022. 
+
+doi:10.1137/1.9781611977073.65 .[22] Martín Costa and Ermiya Farokhnejad. Deterministic k-median clustering in near-optimal time. In Keren Censor-Hillel, Fabrizio Grandoni, Joël Ouaknine, and Gabriele Puppis, editors, 23 52nd International Colloquium on Automata, Languages, and Programming, ICALP 2025, Aarhus, Denmark, July 8-11, 2025 , LIPIcs, pages 62:1–62:20. Schloss Dagstuhl - Leibniz-Zentrum für Informatik, 2025. URL: https://doi.org/10.4230/LIPIcs.ICALP.2025.62 , doi: 10.4230/LIPICS.ICALP.2025.62 .[23] Hu Ding, Haikuo Yu, and Zixiu Wang. Greedy Strategy Works for k-Center Clustering with Outliers and Coreset Construction. In Michael A. Bender, Ola Svensson, and Grzegorz Herman, editors, 27th Annual European Symposium on Algorithms (ESA 2019) , volume 144 of Leibniz International Proceedings in Informatics (LIPIcs) , pages 40:1–40:16, Dagstuhl, Germany, 2019. Schloss Dagstuhl – Leibniz-Zentrum für Informatik. URL: https://drops.dagstuhl.de/ entities/document/10.4230/LIPIcs.ESA.2019.40 , doi:10.4230/LIPIcs.ESA.2019.40 .[24] Michael Elkin and Shay Solomon. Optimal euclidean spanners: Really short, thin, and lanky. J. ACM , 62(5):35:1–35:45, 2015. doi:10.1145/2819008 .[25] Tomás Feder and Daniel H. Greene. Optimal algorithms for approximate clustering. In Janos Simon, editor, Proceedings of the 20th Annual ACM Symposium on Theory of Computing, May 2-4, 1988, Chicago, Illinois, USA , pages 434–444. ACM, 1988. doi:10.1145/62212.62255 .[26] Arnold Filtser. On strong diameter padded decompositions. In 22nd International Conference on Approximation Algorithms for Combinatorial Optimization Problems and 23rd International Conference on Randomization and Computation, APPROX/RANDOM 2019 , page 6. Schloss Dagstuhl-Leibniz-Zentrum fur Informatik GmbH, Dagstuhl Publishing, 2019. [27] Teofilo F. González. Clustering to minimize the maximum intercluster distance. In Theoretical Computer Science , volume 38, pages 293–306, 1985. [28] Adam Górkiewicz and Adam Karczmarz. On incremental approximate shortest paths in directed graphs. In 52nd International Colloquium on Automata, Languages, and Programming (ICALP 2025) , pages 93–1. Schloss Dagstuhl–Leibniz-Zentrum für Informatik, 2025. [29] Kishen N. Gowda, Thomas W. Pensyl, Aravind Srinivasan, and Khoa Trinh. Improved bi-point rounding algorithms and a golden barrier for k -median. In Nikhil Bansal and Viswanath Nagarajan, editors, Proceedings of the 2023 ACM-SIAM Symposium on Discrete Algorithms, SODA 2023, Florence, Italy, January 22-25, 2023 , pages 987–1011. SIAM, 2023. URL: https: //doi.org/10.1137/1.9781611977554.ch38 , doi:10.1137/1.9781611977554.CH38 .[30] Sudipto Guha, Nina Mishra, Rajeev Motwani, and Liadan O’Callaghan. Clustering data streams. In 41st Annual Symposium on Foundations of Computer Science, FOCS 2000, Redondo Beach, California, USA, November 12-14, 2000 , pages 359–366. IEEE Computer Society, 2000. 
+
+doi:10.1109/SFCS.2000.892124 .[31] Anupam Gupta and Kanat Tangwongsan. Simpler analyses of local search algorithms for facility location. CoRR , abs/0809.2554, 2008. URL: http://arxiv.org/abs/0809.2554 , arXiv: 0809.2554 .[32] Pierre Hansen and Brigitte Jaumard. Cluster analysis and mathematical programming. Math. Program. , 79:191–215, 1997. doi:10.1007/BF02614317 .24 [33] Sariel Har-Peled. Clustering motion. Discret. Comput. Geom. , 31(4):545–565, 2004. URL: 
+
+https://doi.org/10.1007/s00454-004-2822-7 , doi:10.1007/S00454-004-2822-7 .[34] Sariel Har-Peled, Piotr Indyk, and Anastasios Sidiropoulos. Euclidean spanners in high di-mensions. In Sanjeev Khanna, editor, Proceedings of the Twenty-Fourth Annual ACM-SIAM Symposium on Discrete Algorithms, SODA 2013, New Orleans, Louisiana, USA, January 6-8, 2013 , pages 804–809. SIAM, 2013. doi:10.1137/1.9781611973105.57 .[35] Dorit S. Hochbaum and David B. Shmoys. A best possible heuristic for the k-center problem. In Mathematics of Operations Research , volume 10, pages 180–184, 1985. [36] Piotr Indyk. Sublinear time algorithms for metric space problems. In Jeffrey Scott Vitter, Lawrence L. Larmore, and Frank Thomson Leighton, editors, Proceedings of the Thirty-First Annual ACM Symposium on Theory of Computing, May 1-4, 1999, Atlanta, Georgia, USA ,pages 428–434. ACM, 1999. doi:10.1145/301250.301366 .[37] A. K. Jain, M. N. Murty, and P. J. Flynn. Data clustering: A review. ACM Comput. Surv. ,31(3):264–323, 1999. doi:10.1145/331499.331504 .[38] Kamal Jain, Mohammad Mahdian, Evangelos Markakis, Amin Saberi, and Vijay V. Vazirani. Greedy facility location algorithms analyzed using dual fitting with factor-revealing LP. J. ACM , 50(6):795–824, 2003. doi:10.1145/950620.950621 .[39] Kamal Jain, Mohammad Mahdian, and Amin Saberi. A new greedy approach for facility location problems. In John H. Reif, editor, Proceedings on 34th Annual ACM Symposium on Theory of Computing, May 19-21, 2002, Montréal, Québec, Canada , pages 731–740. ACM, 2002. 
+
+doi:10.1145/509907.510012 .[40] Kamal Jain and Vijay V. Vazirani. Approximation algorithms for metric facility location and k-median problems using the primal-dual schema and lagrangian relaxation. In JACM ,volume 48, pages 274–296, 2001. [41] Shaofeng H-C Jiang, Yaonan Jin, Jianing Lou, and Pinyan Lu. Local search for clustering in almost-linear time. In Proceedings of the 2026 Annual ACM-SIAM Symposium on Discrete Algorithms (SODA) , pages 5960–5977. SIAM, 2026. [42] László Kozma. The price of incrementality in k-center clustering. arXiv preprint arXiv:2606.08713 , 2026. [43] Max Dupré la Tour and David Saulpic. Faster and simpler greedy algorithm for k-median and k-means, 2025. To appear in ICALP 2026. URL: https://arxiv.org/abs/2407.11217 ,
+
+arXiv:2407.11217 .[44] Hung Le and Shay Solomon. Truly optimal euclidean spanners. SIAM Journal on Computing ,54(4):FOCS19–135, 2025. [45] Shi Li and Ola Svensson. Approximating k-median via pseudo-approximation. SIAM J. Comput. ,45(2):530–547, 2016. doi:10.1137/130938645 .25 [46] Guolong Lin, Chandrashekhar Nagarajan, Rajmohan Rajaraman, and David P. Williamson. A general approach for incremental approximation and hierarchical clustering. SIAM J. Comput. ,39(8):3633–3669, 2010. doi:10.1137/070698257 .[47] Aleksander Madry. Faster approximation schemes for fractional multicommodity flow problems via dynamic graph algorithms. In Leonard J. Schulman, editor, Proceedings of the 42nd ACM Symposium on Theory of Computing, STOC 2010, Cambridge, Massachusetts, USA, 5-8 June 2010 , pages 121–130. ACM, 2010. doi:10.1145/1806689.1806708 .[48] Ramgopal R Mettu and C Greg Plaxton. The online median problem. SIAM Journal on Computing , 32(3):816–832, 2003. [49] Ramgopal R. Mettu and C. Greg Plaxton. Optimal time bounds for approximate clustering. 
+
+Mach. Learn. , 56(1-3):35–60, 2004. URL: https://doi.org/10.1023/B:MACH.0000033114. 18632.e0 , doi:10.1023/B:MACH.0000033114.18632.E0 .[50] Liam Roditty, Mikkel Thorup, and Uri Zwick. Deterministic constructions of approximate distance oracles and spanners. In International Colloquium on Automata, Languages, and Programming , pages 261–272. Springer, 2005. [51] Liam Roditty and Uri Zwick. On dynamic shortest paths problems. Algorithmica ,61(2):389–401, 2011. URL: https://doi.org/10.1007/s00453-010-9401-5 , doi:10.1007/ S00453-010-9401-5 .[52] Mikkel Thorup. Quick k-median, k-center, and facility location for sparse graphs. In International Colloquium on Automata, Languages, and Programming , pages 249–260. Springer, 2001. [53] Mikkel Thorup. Quick k-median, k-center, and facility location for sparse graphs. SIAM Journal on Computing , 34(2):405–432, 2005. [54] Mikkel Thorup and Uri Zwick. Compact routing schemes. In Proceedings of the thirteenth annual ACM symposium on Parallel algorithms and architectures , pages 1–10, 2001. [55] Mikkel Thorup and Uri Zwick. Approximate distance oracles. Journal of the ACM (JACM) ,52(1):1–24, 2005. [56] Ulrike von Luxburg. A tutorial on spectral clustering. Stat. Comput. , 17(4):395–416, 2007. URL: https://doi.org/10.1007/s11222-007-9033-z , doi:10.1007/S11222-007-9033-Z .[57] David P. Williamson and David B. Shmoys. The Design of Approximation Algorithms . Cambridge University Press, 2011. 26 Appendix A Approximation of Value( ·, ·)
+
+The static (k, z )-clustering algorithm of Dupre la Tour and Saulpic [ 43 ] defines a function Value (B(u, r )) 
+
+which satisfies the following inequalities: 
+
+rz
+
+3 · | B(u, r )| ≤ Value( B(u, r )) ≤ 3rz · | B(u, c · r)|,
+
+for a vertex u ∈ V , a positive real number r, a constant z ≥ 1, and a constant c ≥ 5. The arguments presented in Appendix A of [ 43 ] can be generalized to work with any constant in the approximation ratio, not just 3. Specifically, it suffices that Value( B(u, r )) satisfy the following inequalities: 
+
+rz
+
+ρ · | B(u, r )| ≤ Value( B(u, r )) ≤ ρr z · | B(u, c · r)|,
+
+for any parameter ρ ≥ 1 and c ≥ ρ2 
+
+> 2
+
+. The approximation ratio of the algorithm is then affected by a factor of ρ2; hence for constant parameter ρ, the approximation ratio remains a constant factor. The same arguments in Appendix A of [ 43 ] can be repeated with ρ instead of 3; for completeness we indicate the lemmas where the necessary adjustments occur: 1. The first lemma that should be adjusted is Lemma A.1 in [ 43 ], where within its proof, the constant 3 can be trivially replaced by the parameter ρ. In turn, the constraint on c becomes 
+
+c ≥ ρ2 
+
+> 2
+
+instead of c ≥ 5.2. The second lemma that should be adjusted is Lemma A.5 in [ 43 ]. When cost (In (Pγ ), C k) is analyzed in the proof of Lemma A.5, the constant 3 can be trivially replaced by ρ, since 
+
+(rγ )z · | B(γ, r γ )| ≤ ρ · Value( B(γ, r γ )) .3. The third lemma that should be adjusted is Lemma A.6 in [ 43 ]. When cost (B(x, c · r), Γ) 
+
+is analyzed in the proof of Lemma A.6, the constant 3 can be trivially replaced by ρ, since 
+
+rz · | B(x, c · r)| ≥ Value( B(x,r ))  
+
+> ρ
+
+.4. Finally, by combining Lemmas A.5 and A.6 at the end of Appendix A in [ 43 ], the extra ρ2
+
+factor arises in the approximation ratio. 
+
+# B k-Center with Outliers 
+
+We now extend the incremental framework developed in Section 3 to the k-center problem with outliers, where up to t points may be discarded. As before, the key primitive is the incremental SSSP structure of Lemma 1. We give two results (i) Theorem 1.2 handles the case of constant k
+
+and achieves an 2 + ε-approximation, ε > 0, while having (1 + ε)t outliers (ii) Lemma 26 handles general k via a randomized bi-criteria guaranty . Both run in ˜O( mε ) time. 27 B.1 2-Approximation for Constant k
+
+Theorem 1.2. For constant k 13 , there is a randomized algorithm for the k-center problem with at most t outliers that, given a weighted undirected graph G = ( V, E, w ), integer t ≥ 0, and an accuracy parameter 0 < ε ≤ 1, computes with probability (1 − t/n ) ·
+
+ ε
+
+> ⌈(1+ ε)⌉
+
+k−1
+
+, a (2 + ε)-approximate solution in time ˜O( mε ) with at most (1 + ε)t outliers . Proof. We adapt the 2-approximation algorithm of Ding, Yu, and Wang [ 23 ] for k-center with (1 + ε)t
+
+outliers. The algorithm proceeds in k rounds. In each round it identifies the ⌈(1 + ε)t⌉ vertices currently farthest from the center set C — these are the candidate outliers — and selects one of them uniformly at random as the next center. Maintaining the farthest vertices requires knowing 
+
+dist (v, C ) for all v ∈ V after each center addition, which we handle incrementally: upon adding center cj to C, we insert the zero-weight edge (s, c j ) into the SSSP structure of Lemma 1. The full procedure is stated as Algorithm 4. Let ˆd(·) denote the current distance estimates from s. All vertices are stored in a max-heap keyed by ˆd(v).
+
+Algorithm 4: 2 + ε-Approximation for k-Center with t Outliers 
+
+Input: Weighted graph G = ( V, E, w ); integers k, t; parameter ε > 0
+
+Output: A set C ⊆ V of k centers  
+
+> 1
+
+Construct G′ = ( V ∪ { s}, E, w ); 
+
+> 2
+
+Initialize the (1 + ε 
+
+> 2
+
+)-approximate incremental SSSP structure from s ( Lemma 1);  
+
+> 3
+
+C ← ∅; 
+
+> 4
+
+Sample c1 ∈ V uniformly at random, set C ← { c1}, and insert edge (s, c 1) with weight 0; 
+
+> 5
+
+for j = 2 to k do  
+
+> 6
+
+Let Qj ⊆ V be the ⌈(1 + ε)t⌉ vertices with the largest values of ˆd(·); 
+
+> 7
+
+Uniformly at random select one vertex cj from Qj ; 
+
+> 8
+
+C ← C ∪ { cj }; 
+
+> 9
+
+Insert edge (s, c j ) with weight 0. 
+
+> 10
+
+return C;
+
+Lemma 19. Let G = ( V, E, w ) be a weighted graph, and let C be the set of centers returned by Algorithm 4. Then, with probability at least probability at least (1 − γ)(1 /(1 + ε)t)k−1, C induces an 
+
+(2 + ε)-approximate solution to the k-center problem with t outliers. Proof. Let C∗ = {o1, . . . , o k} be an optimal solution, inducing clusters O1, . . . , O k, and let T ∗ ⊆ V
+
+denote the set of t optimal outliers. Let OPT be the optimal radius, i.e., ∀i ∈ [k], ∀v ∈ Oi :dist( v, o i) ≤ OPT .
+
+Let Cj = {c1, . . . , c j } be the set of centers chosen after j iterations. At iteration j + 1 , let 
+
+Qj+1 := Top ⌈(1+ ε)t⌉
+
+ { ˆd(v, C j ) : v ∈ V } be the set of the ⌈(1 + ε)t⌉ farthest points from Cj , as stored by ˆd(·).   
+
+> 13 This is the only result in the paper where we assume kis a constant. All other statements hold for any integer k.
+
+28 Inliers and outliers. Let T ∗ ⊆ V denote the set of t outliers in the optimal solution. The remaining points V \ T ∗ are called inliers . Equivalently, the set of inliers is precisely the union of the optimal clusters: Ski=1 Oi = V \ T ∗. Let λj denote the number of covered clusters after round j.
+
+Lemma 20 (Cluster diameter bound) . If {u, v } ∈ Oi, then dist( u, v ) ≤ 2OPT .
+
+Proof. For any {u, v } ∈ Oi, we have dist (v, o i) ≤ OPT and dist (u, o i) ≤ OPT . The claim follows by triangle inequality. 
+
+Covered clusters. We say that a cluster Oi is covered at step j if Cj ∩ Oi̸ = ∅, and uncovered 
+
+otherwise. 
+
+Lemma 21. At step j ≥ 1, either (1) every vertex of Qj+1 is at distance estimate ˆd(·) greater than 
+
+(2 + ε)OPT from Cj ; in this case Qj+1 contains at least ⌈(1 + ε)t⌉ − t ≥ ⌈εt ⌉ ≥ 1 inliers, all of which belong to uncovered clusters (2) min u∈Qj+1 ˆdj (u) ≤ (2 + ε)OPT .Proof. Suppose (2) is false, i.e. ˆdj (u) > (2 + ε)OPT for all u ∈ Qj+1 . If such a u were an inlier of a covered cluster Oi, then picking c ∈ Cj ∩ Oi and using Lemma 20 would give ˆdj (u) ≤
+
+(2 + ε)OPT , a contradiction. Hence Qj+1 contains no inlier of a covered cluster, so Qj+1 ⊆
+
+T ∗ ∪ { inliers of uncovered clusters }, and the number of uncovered-cluster inliers in Qj+1 is at least 
+
+|Qj+1 | − | T ∗| = ⌈(1 + ε)t⌉ − t ≥ ⌈ εt ⌉ ≥ 1 (using t ≥ 1 and that t is an integer). Suppose (1) is false, (2) is trivially true. 
+
+Lemma 22. If condition (2) holds of Lemma 21, then in this case at most ⌈(1 + ε)t⌉ − 1 vertices 
+
+v ∈ V satisfy ˆdj (v) > (2 + ε)OPT , and — since estimates are non-increasing — the same bound holds at every step j′ ≥ j.Proof. Since vertices with estimate exceeding (2 + ε) OPT lie in Qj+1 \ { u}, and there are at most 
+
+⌈(1 + ε)t⌉ − 1 of them. Since each ˆd(v) is non-increasing as centers are inserted, the set of vertices exceeding the threshold can only shrink, so the bound persists for all j′ ≥ j.
+
+Lemma 23 (Progress per iteration) . Conditioned on the event that (1) of Lemma 21 holds for j > 1,the probability that iteration j + 1 selects a vertex from an uncovered cluster is at least ε 
+
+> ⌈(1+ ε)⌉
+
+.
+
+Proof. By (1) of Lemma 21, at least ⌈(1 + ε)t⌉ − t of the ⌈(1 + ε)t⌉ vertices of Qj+1 are inliers of uncovered clusters. Since cj+1 is chosen uniformly at random from Qj+1 , the claim follows. 
+
+Lemma 24. With probability at least (1 − γ)( ε 
+
+> ⌈(1+ ε)⌉
+
+)k−1, the output Ck of Algorithm 4 is a (2 + ε)-approximation Proof. We will prove this by showing that after k iterations, all clusters O1, . . . , O k are covered with probability at least (1 − γ) · ( ε 
+
+> ⌈(1+ ε)⌉
+
+)k−1, Since c1 is sampled uniformly from V , Pr [c1 /∈ T ∗] = 1 − γ;condition on this event, so λ1 = 1 . At each iteration 1 < j ≤ k, if event (1) of Lemma 21 holds, then by Lemma 23, the probability of covering a new cluster is at least p := ε 
+
+> ⌈(1+ ε)⌉
+
+, else by Lemma 22, 29 we already have a (2 + ε) approximate with having (1 + ε)t outliers. As, we run it for at most k − 1
+
+iterations, we get the success probability as ( 1 
+
+> ⌈(1+ ε)t⌉
+
+)k−1. Hence for the Algorithm 4, the success probability is at least (1 − γ) · ( ε 
+
+> ⌈(1+ ε)⌉
+
+)k−1. As, every Oi is covered, by Lemma 20, we get (2 + ε) OPT 
+
+approximation. We have the (1 + ε)t vertices with the largest distance estimate from the centers Ck
+
+as outliers. 
+
+Lemma 25. Algorithm 4 runs in ˜O( mε ) total time. Proof. Exactly k zero-weight edges are inserted into the SSSP structure, one per center. Since k ≤ m
+
+, the total number of SSSP updates is at most ˜O( mε ), and by Lemma 1 guarantees that the total update time is ˜O( mε ). By Lemma 3, the number of vertices whose distance estimate ever changes is 
+
+˜O( mε ), so the total cost of all decrease-key operations on the Heap is ˜O( mε ) time. Identifying Qj at each step uses ⌈(1 + ε)t⌉ extract-max and re-insert operations on heap structure, costing O(t log n)
+
+per iteration. Hence the overall running time is ˜O( mε ).
+
+B.2 Randomized Bicriteria Approximation for General k
+
+We give a bicriteria algorithm with following properties. 
+
+Lemma 26. There exists a randomized algorithm that computes a (2 + ε, O (1 /ε )) -bicriteria approx-imate solution to the k-center problem with t outliers on G = ( V, E, w ) in ˜O( mε ) time, with high probability. Specifically, the returned set C has covering radius at most (2 + ε) · OPT while having at most O( k log 1 
+
+> η
+> ε
+
+) points as centers. Proof. The proof follows similar to Theorem 1.2, but instead of Lemma 23, we have the following Observation 27. Let λj count how many optimal clusters intersect the current center set C at iteration j. Initially, λ1 ≥ 1 with probability 1 − η by random sampling. 
+
+Observation 27. In each iteration j, when random sampling from Qj , with probability at least 
+
+1 − η, the algorithm selects a vertex from uncovered cluster, increasing λj .Proof. Fix an iteration j in which at least one optimal cluster is uncovered. We want to show that with probability at least 1 − η, at least one of the sampled vertices in this iteration belongs to an uncovered cluster. 30 Step 1: Uncovered cluster inliers dominate Qj . Recall that Qj consists of the ⌈(1 + ε)t⌉
+
+vertices with the largest distance estimates ˆd(·) from the current center set. We argue that the points in Qj that do not belong to any uncovered cluster number at most t.Indeed, any inlier of a covered cluster is within 2 · OPT of some current center (by the triangle inequality through its optimal center), so its distance estimate is small and it does not appear in Qj .The only remaining candidates for Qj that are not from uncovered clusters are the t outliers. Hence at most t points in Qj are non-uncovered, and at least ⌈(1 + ε)t⌉ − t ≥ εt points in Qj are inliers of uncovered clusters. 
+
+Step 2: Probability that a single sample misses uncovered clusters. Since at most t out of ⌈(1 + ε)t⌉ points in Qj are non-uncovered, the probability that a single uniform sample from Qj
+
+does not land in an uncovered cluster is at most t 
+
+> ⌈(1+ ε)t⌉
+
+≤ 11+ ε .
+
+Step 3: Probability that all samples miss. In iteration j, the algorithm draws q := 
+
+l 1+ εε ln 
+
+ 1
+
+> η
+
+m 
+
+vertices independently and uniformly from Qj . The probability that all of them miss every uncovered cluster is at most 
+
+ 11+ ε
+
+q
+
+≤
+
+ 11+ ε
+
+ 1+ εε ln(1 /η )
+
+. Pr [all sampled vertices miss uncovered clusters ] ≤
+
+e− ln(1 /η ) = η.Therefore, with probability at least 1 − η, at least one sampled vertex in iteration j belongs to an uncovered cluster, which increases λj by at least one. 
+
+Covering all clusters. Setting η = δ/k for a desired failure probability δ ∈ (0 , 1) , Observation 27 guarantees that in each iteration λj increases by at least one with probability 1 − δ/k . By a union bound over all k iterations, all optimal clusters are covered simultaneously with probability at least 
+
+1 − k · (δ/k ) = 1 − δ. Setting δ = 1 /n gives a high probability guarantee, with the number of samples per iteration increasing only by a log( kn ) factor, which is absorbed into the ˜O notation. The full procedure is stated as Algorithm 5. Let ˆd(·) denote the current distance estimates from s.31 Algorithm 5: Randomized Bicriteria Approximation for k-Center with t Outliers 
+
+Input: Weighted graph G = ( V, E, w ); integers k, t; parameters ε > 0, η ∈ (0 , 12 )
+
+Output: A set C ⊆ V 
+
+> 1
+
+Add a super-source s; initialize the (1+ ε)-approximate incremental SSSP structure from s
+
+( Lemma 1);  
+
+> 2
+
+γ ← t/n ; 
+
+> 3
+
+C ← ∅; 
+
+> 4
+
+Uniformly at random select 
+
+l 11−γ ln 
+
+ 1
+
+> η
+
+m 
+
+vertices from V , add them to C, and insert the corresponding zero-weight edges into the SSSP structure;  
+
+> 5
+
+for j = 1 to k do  
+
+> 6
+
+Let Qj ⊆ V be the ⌈(1 + ε)t⌉ vertices with the largest values of ˆd(·); 
+
+> 7
+
+Uniformly at random select 
+
+l 1+ εε ln 
+
+ 1
+
+> η
+
+m 
+
+vertices from Qj , add them to C, and insert the corresponding zero-weight edges into the SSSP structure;  
+
+> 8
+
+return C;
+
+Running time. Maintaining the max -heap of distance estimates. All vertices are stored in a max -heap keyed by their current estimate bd(v). Whenever the incremental SSSP structure relaxes an edge (u, v ) and consequently lowers bd(v), we perform a decrease -key operation on v (cost 
+
+O(log n)). The total number of such heap updates is bounded by ˜O(m) Lemma 3. 
+
+Extracting the ⌈(1 + ε)t⌉ farthest vertices. At the beginning of each of the k iterations we need the set Qi of the ⌈(1 + ε)t⌉ vertices with the largest current estimate. Using the max -heap we obtain Qi by performing ⌈(1 + ε)t⌉ extract -max operations and immediately reinserting the extracted vertices. Each extraction (or reinsertion) costs O(log n), hence a single iteration costs O(t log n).Hence the overall running time is ˜O(m).
+
+# C Cohen’s Algorithm 
+
+Lemma 28 (Cohen’s ball-size estimation, Theorem 5.2 in [ 17 ]) . There is a randomized algorithm that, given a weighted undirected graph G = ( V, E, w ) and a small constant ε > 0, constructs a data structure with the following properties: 
+
+• The expected preprocessing time is O
+
+ m log 2 n + n log 3 nε2
+
+
+
+.
+
+• For any query pair (v, r ) ∈ V × R+, the data structure returns an estimate ˜b(v, r ) of |B(v, r )|,where B(v, r ) denotes the ball of radius r around v.
+
+• The expected query time is O(log log n).
+
+• With high probability, for all (v, r ) ∈ V × R+ it holds that: 
+
+|B(v, r )| − ˜b(v, r )
+
+|B(v, r )| ≤ ε.
+
+32

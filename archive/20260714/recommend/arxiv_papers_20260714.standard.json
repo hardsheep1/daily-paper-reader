@@ -1,0 +1,57 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-07-14T21:21:03.898416+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 0,
+    "deep_cap": 7,
+    "deep_selected": 0,
+    "quick_candidates": 1,
+    "quick_skim_target": 12,
+    "quick_selected": 1
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2607.07615v1",
+      "source": "arxiv",
+      "title": "Faster Randomized and Deterministic k-Clustering on Graphs",
+      "abstract": "In this paper, we study the $(k,z)$-clustering and $k$-center problems on graphs, where $(k,z)$-clustering generalizes the $k$-median ($z=1$) and $k$-means ($z=2$) problems. We obtain the following main results. Our first contribution is the first deterministic algorithm for $k$-center on graphs that achieves a $(2+\\varepsilon)$-approximation in $\\tilde{O}(m)$ time. This affirmatively resolves an open problem raised by Abboud, Cohen-Addad, Lee, and Manurangsi [SOSA 2023]. Our techniques also extend to the $k$-center with outliers problem, where up to $t$ points may be discarded. Our second contribution is a randomized algorithm for $(k,z)$-clustering on graphs that achieves an $O(1)$-approximation in $\\tilde{O}(m)$ time, which in particular covers $k$-median ($z=1$) and $k$-means ($z=2$). Prior to this work, an $\\tilde{O}(m)$-time randomized algorithm was known for $k$-median by Thorup [SIAM J. Comput. 2005], and a recent work of Jiang, Jin, Lou, and Lu [2026] achieves $m^{1+o(1)}$ time for general $z$ via local search. Finally, we design a deterministic algorithm for $(k,z)$-clustering on graphs that achieves an $O(\\mathrm{poly}(c))$-approximation in $\\tilde{O}(m^{1+1/c})$ time, for a positive parameter $c$. To obtain this result, we use techniques from the Thorup-Zwick distance oracle [JACM 2005]; this technical connection may be of independent interest, considering the wide application of distance oracles in various computational settings. Most of our algorithms are incremental, in the sense that for any given parameter $k$, they return a sequence of centers such that every prefix of length $\\ell \\leq k$ yields a constant-factor approximate solution to the $\\ell$-clustering problem.",
+      "authors": [
+        "Sebastian Forster",
+        "Yasamin Nazari",
+        "Rajath Rao K. N.",
+        "Antonis Skarlatos"
+      ],
+      "primary_category": "cs.DS",
+      "categories": [
+        "cs.DS"
+      ],
+      "published": "2026-07-08T16:30:33+00:00",
+      "link": "https://arxiv.org/pdf/2607.07615v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "provides faster randomized and deterministic k-clustering algorithms on graphs; could be used in active clustering pipelines",
+      "llm_evidence_cn": "提出更快的图上k聚类算法，可作为主动聚类的基础组件",
+      "llm_evidence": "提出更快的图上k聚类算法，可作为主动聚类的基础组件",
+      "canonical_evidence": "提出更快的图上k聚类算法，可作为主动聚类的基础组件",
+      "llm_tldr_en": "Gives first deterministic (2+epsilon)-approximation for k-center on graphs in O(m) time and O(1)-approximation for (k,z)-clustering; useful for efficient clustering in active learning.",
+      "llm_tldr_cn": "论文针对图上的k聚类问题提出了更快的随机化和确定性算法，包括首个在O(m)时间内达到(2+epsilon)近似的确定性k中心算法，以及O(1)近似的(k,z)聚类随机算法。这些高效聚类算法可被集成到主动学习聚类框架中，作为底层聚类模块加速迭代过程。",
+      "llm_tldr": "论文针对图上的k聚类问题提出了更快的随机化和确定性算法，包括首个在O(m)时间内达到(2+epsilon)近似的确定性k中心算法，以及O(1)近似的(k,z)聚类随机算法。这些高效聚类算法可被集成到主动学习聚类框架中，作为底层聚类模块加速迭代过程。",
+      "llm_tags": [
+        "query:active-clust"
+      ],
+      "matched_query_tag": "query:active-clust",
+      "matched_query_text": "active learning clustering methods",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "label": "2026-07-14",
+  "date": "2026-07-14",
+  "generated_at": "2026-07-14T21:22:27",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "202607/14/2607.07615v1-faster-randomized-and-deterministic-k-clustering-on-graphs",
+      "section": "quick",
+      "title_en": "Faster Randomized and Deterministic k-Clustering on Graphs",
+      "authors": "Sebastian Forster, Yasamin Nazari, Rajath Rao K. N., Antonis Skarlatos",
+      "date": "2026-07-08",
+      "pdf": "https://arxiv.org/pdf/2607.07615v1",
+      "score": "6.0",
+      "evidence": "提出更快的图上k聚类算法，可作为主动聚类的基础组件",
+      "tldr": "该研究针对图上的k-中心与(k,z)-聚类问题，提出了首个确定性k-中心算法，实现(2+ε)近似且运行时间为Õ(m)，同时设计了随机算法以O(1)近似解决(k,z)-聚类（包括k-中位数和k-均值）。还给出了一个确定性算法，通过距离预言机技术取得近似比与运行时间的权衡。大多数算法具有增量性质，可为任意前缀长度提供常数因子近似解，解决了长期存在的开放问题，对聚类算法的理论与实践有重要价值。",
+      "tags": "query:active-clust",
+      "abstract_en": "In this paper, we study the $(k,z)$-clustering and $k$-center problems on graphs, where $(k,z)$-clustering generalizes the $k$-median ($z=1$) and $k$-means ($z=2$) problems. We obtain the following main results. Our first contribution is the first deterministic algorithm for $k$-center on graphs that achieves a $(2+\\varepsilon)$-approximation in $\\tilde{O}(m)$ time. This affirmatively resolves an open problem raised by Abboud, Cohen-Addad, Lee, and Manurangsi [SOSA 2023]. Our techniques also extend to the $k$-center with outliers problem, where up to $t$ points may be discarded. Our second contribution is a randomized algorithm for $(k,z)$-clustering on graphs that achieves an $O(1)$-approximation in $\\tilde{O}(m)$ time, which in particular covers $k$-median ($z=1$) and $k$-means ($z=2$). Prior to this work, an $\\tilde{O}(m)$-time randomized algorithm was known for $k$-median by Thorup [SIAM J. Comput. 2005], and a recent work of Jiang, Jin, Lou, and Lu [2026] achieves $m^{1+o(1)}$ time for general $z$ via local search. Finally, we design a deterministic algorithm for $(k,z)$-clustering on graphs that achieves an $O(\\mathrm{poly}(c))$-approximation in $\\tilde{O}(m^{1+1/c})$ time, for a positive parameter $c$. To obtain this result, we use techniques from the Thorup-Zwick distance oracle [JACM 2005]; this technical connection may be of independent interest, considering the wide application of distance oracles in various computational settings. Most of our algorithms are incremental, in the sense that for any given parameter $k$, they return a sequence of centers such that every prefix of length $\\ell \\leq k$ yields a constant-factor approximate solution to the $\\ell$-clustering problem.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}
