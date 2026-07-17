@@ -1,0 +1,52 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-07-17T21:31:08.119976+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 0,
+    "deep_cap": 7,
+    "deep_selected": 0,
+    "quick_candidates": 1,
+    "quick_skim_target": 12,
+    "quick_selected": 1
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "biorxiv-10-64898-2026-07-04-736527-v1",
+      "source": "biorxiv",
+      "title": "BertST: BERT-based Spatial Domain Identification in Patient Data",
+      "abstract": "AO_SCPLOWBSTRACTC_SCPLOWSpatial transcriptomics enables the study of gene expression within its native tissue context, providing critical insights into cellular organization and microenvironment-driven biological processes. A key challenge in this field is spatial domain identification, which aims to partition tissue into coherent regions by jointly leveraging gene expression and spatial information. Existing approaches are predominantly based on Graph Neural Networks (GNNs), and approach based on Transformers particularly, Bidirectional Encoder Reppresentation Transformer (BERT) model for modelling both local and long-range dependencies remains largely unexplored.\n\nIn this work, we propose BERT for Spatial Transcriptomics (BertST), a transformer-based framework that reformulates spatial transcriptomics as a graph-to-text representation learning problem. Building upon the BERTwalk paradigm, we construct a task-specific multi-graph representation integrating spatial adjacency, pruned gene-expression similarity, and a fully connected gene-expression graph. This design enables the modelling of both local spatial structure and global molecular relationships. Random walks over these graphs are treated as sequences, allowing a BERT model to learn contextualised node embeddings.\n\nTo further enhance representation quality, we introduce a hierarchical multi-graph propagation strategy, where embedding refinement is performed sequentially: first on the fully connected graph to capture global structure, followed by the pruned graph to refine molecular relationships, and finally on the spatial graph to enforce local smoothness. This ordering ensures that global information is effectively distributed and progressively constrained by biologically meaningful neighbourhoods.\n\nWe also improve computational efficiency by leveraging PecanPy, a fast and scalable implementation of node2vec, enabling efficient random walk generation on dense graphs. Experimental results on multiple 10x Visium datasets, including DLPFC and Human Breast Cancer, demonstrate that BertST consistently outperforms or matches GNN-based methods such as ConST, CCST, and SpaceFlow in terms of Adjusted Rand Index (ARI) and Adjusted Mutual Information (AMI).\n\nOverall, BertST highlights the potential of transformer-based architectures for spatial omics analysis by effectively capturing both local and long-range spatial-molecular dependencies, offering a promising alternative to traditional graph-based methods.",
+      "authors": [
+        "Nnadi, G. O."
+      ],
+      "primary_category": "bioinformatics",
+      "categories": [
+        "bioinformatics"
+      ],
+      "published": "2026-07-09T00:00:00+00:00",
+      "link": "https://www.biorxiv.org/content/10.64898/2026.07.04.736527v1.full.pdf",
+      "tags": [
+        "keyword:active-clust",
+        "query:active-clust"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "spatial domain identification using BERT, a form of clustering with LLM",
+      "llm_evidence_cn": "利用BERT进行空间域识别，属于大型语言模型的聚类应用",
+      "llm_evidence": "利用BERT进行空间域识别，属于大型语言模型的聚类应用",
+      "canonical_evidence": "利用BERT进行空间域识别，属于大型语言模型的聚类应用",
+      "llm_tldr_en": "Proposes BertST, a BERT-based transformer for spatial domain identification in transcriptomics, clustering tissue regions using gene expression and spatial coordinates.",
+      "llm_tldr_cn": "空间转录组学中，现有方法主要基于图神经网络，而基于Transformer特别是BERT的方法尚未充分探索。本文提出BertST，一种基于BERT的框架，利用基因表达和空间信息进行空间域识别（即聚类）。实验表明，BertST能有效捕捉局部和长程依赖关系，在多个数据集上取得优异性能。该工作展示了BERT在生物医学聚类任务中的潜力。",
+      "llm_tldr": "空间转录组学中，现有方法主要基于图神经网络，而基于Transformer特别是BERT的方法尚未充分探索。本文提出BertST，一种基于BERT的框架，利用基因表达和空间信息进行空间域识别（即聚类）。实验表明，BertST能有效捕捉局部和长程依赖关系，在多个数据集上取得优异性能。该工作展示了BERT在生物医学聚类任务中的潜力。",
+      "llm_tags": [
+        "query:ac"
+      ],
+      "matched_query_tag": "query:ac",
+      "matched_query_text": "clustering using large language models",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}
