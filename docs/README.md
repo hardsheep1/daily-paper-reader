@@ -6,24 +6,24 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-07-17
-- 运行时间：2026-07-17 21:31:41 UTC
+- 最新运行日期：2026-07-18
+- 运行时间：2026-07-18 21:23:14 UTC
 - 运行状态：成功
 - 本次总论文数：1
 - 精读区：0
 - 速读区：1
 
 ### 今日简报（AI）
-今日速读1篇论文，主题为基于BERT的患者数据空间域识别。值得关注的方向：利用预训练语言模型（BERT）处理患者空间域信息，但评分仅6分，方法或效果尚存不足。建议读者后续关注更多空间域识别工作，或对比传统方法与BERT在此任务上的实际表现。
-- 详情：[/202607/17/README](/202607/17/README)
+今日速览：CellPilot框架让小型语言模型也能自主进行单细胞注释，效率与精度兼具。值得关注的是，该工作展示了轻量级AI在生物信息学中的实用潜力，适合对单细胞数据分析感兴趣的读者。建议后续关注该框架在不同数据集上的泛化能力测试。
+- 详情：[/202607/18/README](/202607/18/README)
 
 ### 精读区论文标签
 - 本次无精读推荐。
 
 ### 速读区论文标签
-1. [BertST: BERT-based Spatial Domain Identification in Patient Data](/202607/17/biorxiv-10-64898-2026-07-04-736527-v1-bertst-bert-based-spatial-domain-identification-in-patient-data)  
-   标签：评分：6.0/10、query:ac
-   evidence：利用BERT进行空间域识别，属于大型语言模型的聚类应用
+1. [CellPilot: an agentic framework that pilots small language models through autonomous single-cell annotation](/202607/18/biorxiv-10-64898-2026-07-06-736807-v1-cellpilot-an-agentic-framework-that-pilots-small-language-models-through-autonomous-single-cell-annotation)  
+   标签：评分：7.0/10、query:ac
+   evidence：使用小语言模型进行单细胞分析中的聚类注释
 
 
 <div class="dpr-home-promo-card">

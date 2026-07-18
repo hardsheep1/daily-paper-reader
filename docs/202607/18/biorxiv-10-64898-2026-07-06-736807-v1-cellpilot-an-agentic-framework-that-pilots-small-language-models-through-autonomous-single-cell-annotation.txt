@@ -1,0 +1,4356 @@
+Title: CellPilot: an agentic framework that pilots small language models through autonomous single-cell annotation
+
+URL Source: https://www.biorxiv.org/content/10.64898/2026.07.06.736807v1.full.pdf
+
+Number of Pages: 50
+
+Markdown Content:
+# CellPilot: an agentic framework that pilots small language models through autonomous single-cell annotation 
+
+Siqi Jiang 1†, Cong Qi 1†, Yeqing Chen 1, Xun Song 1, Zhi Wei 1* 
+
+> 1
+
+Computer Science, New Jersey Institute of Technology, 154 Summit Street, Newark, 07102, New Jersey, USA. *Corresponding author(s). E-mail(s): zhi.wei@njit.edu; 
+
+> †
+
+These authors contributed equally to this work. 
+
+Abstract 
+
+Large language models can annotate cell types from marker gene lists, but they typically operate after preprocessing and clustering are complete, treating annotation as a terminal labeling step rather than controlling the analytical decisions that produce the evidence for cell identity. We present CellPilot, an agentic framework that guides a locally deployable small language model through the full single-cell analysis workflow, from raw count matrices to cluster-level annota-tion. CellPilot combines standard single-cell analysis tools with structured workflow control and observation-guided reasoning, allowing the model to plan analyses, execute tools, inspect inter-mediate results and revise decisions within a traceable session. On GTEx, structured workflow orchestration raised the same 8B model from 0.39 in a prompt-only setting to 0.89, closing most of the gap to GPT-4o (0.92) within the same framework; the framework gain was substantially larger for the smaller backbone across datasets (+0.35 versus +0.19). Across GTEx, Tabula Sapi-ens, and Mouse Cell Atlas, CellPilot achieves cluster-level annotation accuracies of 0.891, 0.750, and 0.773, outperforming representative reference-based, marker-based, and LLM-based methods. CellPilot confidence scores were associated with annotation correctness and supported post hoc filtering, while complete execution traces were retained for each analysis. These results suggest that structured workflow orchestration can be a critical determinant of performance in multi-step single-cell analysis, enabling locally deployable small language models to approach larger proprietary models while preserving transparency and practical usability. 
+
+Keywords: Single-cell RNA sequencing, structured workflow orchestration, small language models, cell type annotation, autonomous analysis 
+
+## Introduction 1
+
+Single-cell RNA sequencing (scRNA-seq) has transformed the study of cellular heterogeneity by 2
+
+enabling transcriptome-scale profiling of individual cells across tissues, developmental stages and dis-3
+
+ease contexts [1–3], motivating large-scale efforts to construct comprehensive cellular atlases of human 4
+
+tissues [4]. The analysis of these data is not a single classification step, but a sequence of dependent 5
+
+analytical decisions. Quality control determines which cells are retained; normalization and feature 6
+
+selection shape the representation of transcriptional variation; dimensionality reduction and cluster-7
+
+ing define the cell populations to be interpreted; and marker discovery provides the evidence used for 8
+
+cell type annotation. Because each step conditions the next, choices made early in the workflow can 9
+
+propagate to downstream biological interpretation [5, 6]. Cell type annotation is therefore a central 10 
+
+output of scRNA-seq analysis, and its accuracy depends on the quality of the upstream workflow that 11 
+
+produces the clusters and marker evidence. 12 
+
+1
+
+.CC-BY-NC 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted July 10, 2026. ;https://doi.org/10.64898/2026.07.06.736807 doi: bioRxiv preprint A broad ecosystem of methods has been developed to improve the reproducibility and efficiency of 13 
+
+this final annotation step [7–9]. Marker- and signature-based approaches, including SCINA, scCATCH 14 
+
+and ScType, infer cell identity from curated marker genes or gene sets [10–12]. Reference-based 15 
+
+methods such as SingleR, scmap and Cell BLAST map query profiles onto labeled atlases using 16 
+
+correlation, nearest-neighbor or embedding-based similarity [13–15]. Supervised and deep-learning 17 
+
+methods, including ACTINN, scPred, scDeepSort and transformer-based models, learn decision 18 
+
+boundaries from annotated datasets [16–19]. Large-scale single-cell foundation models such as scGPT, 19 
+
+scFoundation and CellPLM further extend this direction by pre-training on millions of cells across 20 
+
+tissues and conditions, with complementary architectures exploring efficient long-context representa-21 
+
+tion of single-cell profiles [20–22]. More recently, large language models (LLMs) have introduced a 22 
+
+complementary direction by interpreting marker genes and tissue context through natural-language 23 
+
+reasoning. GPTCelltype showed that LLMs can generate biologically plausible cell type labels from 24 
+
+marker lists [23], and CASSIA extended this idea with structured reasoning chains for interpretable 25 
+
+annotation [24]. These methods have advanced automated annotation, but most operate after prepro-26 
+
+cessing and clustering have already been completed. They annotate the output of an existing pipeline 27 
+
+rather than controlling the analytical choices that produce that output. As a result, they cannot 28 
+
+revise upstream decisions when marker evidence is ambiguous, clustering resolution is inappropriate 29 
+
+or intermediate results indicate that the analysis should be adjusted. 30 
+
+This distinction is especially important for LLM-based analysis. Large proprietary models can be 31 
+
+effective at interpreting biological language, but dependence on remote APIs raises concerns about 32 
+
+cost, reproducibility and data governance in settings where genomic data must remain within insti-33 
+
+tutional infrastructure [25, 26]. Open-source small language models, including recent releases of the 34 
+
+Qwen series [27], provide a practical alternative for local deployment, but direct prompting is not 35 
+
+sufficient for long, dependent analytical workflows. A language model asked to label marker genes in 36 
+
+isolation has limited access to the evidence that determines whether those markers are reliable. Agentic 37 
+
+frameworks offer a way to address this limitation by linking language-model reasoning to computa-38 
+
+tional analyses, intermediate observations and the current analytical context, with mechanisms for 39 
+
+tool invocation, chain-of-thought reasoning and verbal self-reflection [28–33]. Such frameworks have 40 
+
+begun to support autonomous research workflows in chemistry [34] and clinical risk prediction [35], 41 
+
+suggesting a similar potential for multi-step single-cell analysis. In single-cell analysis, the relevant 42 
+
+question is therefore not only whether a language model can name a cell type from a gene list, but 43 
+
+whether a structured workflow can guide a small local model through the analytical process that 44 
+
+produces that gene list. We define this strategy as structured workflow orchestration, in which the 45 
+
+current analytical context, established single-cell procedures and intermediate observations jointly 46 
+
+guide decisions from data inspection to final annotation. 47 
+
+Here we present CellPilot, an agentic framework that guides a locally deployable small language 48 
+
+model through the complete scRNA-seq analysis workflow, from raw count matrices to cluster-level 49 
+
+annotation. CellPilot implements structured workflow orchestration by linking a Scanpy-based analyt-50 
+
+ical toolkit with observation-guided reasoning [36]. During each analysis, the model selects analytical 51 
+
+steps, evaluates intermediate results and revises subsequent decisions before producing final annota-52 
+
+tions. We focus on cell type annotation because it integrates the consequences of upstream quality 53 
+
+control, feature selection, dimensionality reduction, clustering and marker discovery into a measur-54 
+
+able biological task. Across GTEx, Tabula Sapiens and Mouse Cell Atlas [37–39], CellPilot achieved 55 
+
+cluster-level annotation accuracies of 0.891, 0.750 and 0.773 under a unified hierarchical evaluation, 56 
+
+exceeding representative reference-based, marker-based and LLM-based annotation methods under 57 
+
+a common reference-cluster scoring protocol. These results show that the workflow produces accu-58 
+
+rate annotations across datasets with different tissue composition, species context and reference-label 59 
+
+structure. In controlled backbone comparisons, the structured workflow substantially reduced depen-60 
+
+dence on model scale: within CellPilot, an open-source 8B model approached GPT-4o performance on 61 
+
+GTEx, whereas the same model performed poorly in a prompt-only annotation setting. CellPilot also 62 
+
+retained complete analytical records and produced confidence scores associated with annotation cor-63 
+
+rectness, supporting prioritization for review. Structured workflow orchestration therefore provides a 64 
+
+practical route for using locally deployable small language models in autonomous cell type annotation 65 
+
+from raw single-cell data. 66 
+
+2
+
+> .CC-BY-NC 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted July 10, 2026. ;https://doi.org/10.64898/2026.07.06.736807 doi: bioRxiv preprint
+
+## Results 67 
+
+CellPilot enables autonomous cell type annotation through structured 68 
+
+workflow orchestration 69 
+
+CellPilot is an agentic framework for autonomous cell type annotation from raw single-cell RNA-70 
+
+sequencing data. Unlike LLM-based annotation approaches that assign labels after preprocessing and 71 
+
+clustering have already been completed, CellPilot treats annotation as a workflow-level task whose 72 
+
+accuracy depends on the analytical decisions that generate the evidence for cell identity. Starting 73 
+
+from a raw count matrix, the agent coordinates quality control, normalization, feature selection, 74 
+
+dimensionality reduction, clustering, marker discovery and final cluster-level cell type assignment 75 
+
+within a single traceable session (Fig. 1). This design allows a small language model to reason over 76 
+
+the same intermediate evidence that a human analyst would inspect when annotating single-cell data. 77 
+
+Given an input expression matrix, CellPilot decomposes the annotation process into a sequence 78 
+
+of state-dependent analytical decisions and executes them through an observation-driven reasoning 79 
+
+loop (Fig. 1a,b). At each iteration, the agent selects an analytical function, specifies its parameters, 80 
+
+executes the operation and incorporates the resulting observations into subsequent decisions. The 81 
+
+function library covers the major stages required for annotation, including data inspection, quality 82 
+
+control, filtering, normalization, highly variable gene selection, dimensionality reduction, clustering, 83 
+
+differential expression, marker query, cell type assignment, visualization and reporting (Fig. 1d). A 84 
+
+self-critic module monitors whether the required stages have been completed and returns control to 85 
+
+the agent when additional steps are needed, reducing the risk of premature or incomplete annotation. 86 
+
+CellPilot was designed to guide a locally deployable small language model through structured 87 
+
+analytical evidence rather than depend on a large proprietary model for direct label generation. In this 88 
+
+study, we used Qwen-8B as the default backbone, allowing the annotation workflow to be executed 89 
+
+within local institutional infrastructure without dependence on remote model APIs (Methods). To 90 
+
+incorporate visual evidence commonly used during manual annotation, CellPilot also includes a vision-91 
+
+language module that summarizes quality-control distributions, cluster layouts and marker-expression 92 
+
+plots as textual observations for the agent context (Fig. 1c). These summaries provide auxiliary 93 
+
+evidence for annotation decisions rather than serving as a separate annotation model. 94 
+
+We evaluated CellPilot across GTEx, Tabula Sapiens and Mouse Cell Atlas to test whether struc-95 
+
+tured agent control enables a small language model to perform accurate cell type annotation from 96 
+
+raw single-cell data. The following analyses examine the effect of the agent framework on backbone 97 
+
+sensitivity, compare CellPilot with reference-based, marker-based and LLM-based annotation meth-98 
+
+ods, and characterize the reliability, confidence and execution behavior of the resulting annotation 99 
+
+workflow. 100 
+
+Structured orchestration reduces dependence on backbone scale 101 
+
+A central question for autonomous cell type annotation is whether accurate performance requires a 102 
+
+large proprietary language model, or whether a smaller locally deployable model can achieve com-103 
+
+parable results when guided by a structured analytical workflow. We therefore compared Qwen3-8B 104 
+
+and GPT-4o in two settings: within CellPilot, where the model reasons over workflow state, tool 105 
+
+outputs and intermediate observations, and in GPTCelltype, where the same models perform anno-106 
+
+tation from marker-gene inputs without the CellPilot orchestration framework. Across GTEx, Tabula 107 
+
+Sapiens and Mouse Cell Atlas, CellPilot showed only modest changes in mean hierarchical agreement 108 
+
+when the backbone was switched from Qwen3-8B to GPT-4o, under both score-based and vote-based 109 
+
+aggregation (Fig. 2a). The mean backbone gap, defined as |GPT-4o − Qwen3-8B |, was 0.056 for both 110 
+
+CellPilot aggregation strategies, compared with 0.162 for GPTCelltype (Fig. 2b). Tissue-level paired 111 
+
+comparisons showed the same pattern: CellPilot produced similar annotation scores across back-112 
+
+bones, whereas GPTCelltype remained more sensitive to model scale, particularly in settings where 113 
+
+Qwen3-8B had limited standalone annotation performance (Fig. 2c). 114 
+
+We next quantified how much performance was attributable to the framework itself by comparing 115 
+
+CellPilot with GPTCelltype under the same backbone. The framework gain was positive across most 116 
+
+tissues and datasets, indicating that structured orchestration improved annotation beyond direct 117 
+
+marker-based prompting (Fig. 2d). This gain was larger for Qwen3-8B than for GPT-4o, with mean 118 
+
+tissue-level improvements of 0.35 and 0.19, respectively (paired Wilcoxon signed-rank test, P < 10 −4;119 
+
+Fig. 2e). Thus, the framework provided the greatest benefit when the underlying model had less 120 
+
+3
+
+> .CC-BY-NC 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted July 10, 2026. ;https://doi.org/10.64898/2026.07.06.736807 doi: bioRxiv preprint
+
+standalone capacity, consistent with the idea that workflow structure can compensate for limitations 121 
+
+in model scale. 122 
+
+Finally, per-tissue agreement between Qwen3-8B and GPT-4o showed that CellPilot narrowed the 123 
+
+performance gap between small and large models while maintaining high annotation scores (Fig. 2f). 124 
+
+These results indicate that CellPilot improves annotation not simply by replacing one language model 125 
+
+with another, but by embedding the model within a constrained analytical process that supplies 126 
+
+executable tools, intermediate biological evidence and explicit workflow state. In this setting, a locally 127 
+
+deployable small model approached GPT-4o performance for cell type annotation. 128 
+
+CellPilot produces accurate cell type annotations across benchmark 129 
+
+datasets 130 
+
+We next evaluated whether CellPilot’s structured annotation workflow produces accurate cell type 131 
+
+assignments across diverse single-cell datasets. Because cell type annotation depends on the preceding 132 
+
+analytical steps that define clusters and marker genes, this comparison was designed to assess the 133 
+
+complete annotation process rather than a single label-assignment prompt. We evaluated GTEx (7 134 
+
+tissues), Tabula Sapiens (24 tissues) and Mouse Cell Atlas (MCA) using the hierarchical scoring 135 
+
+framework of Hou and Ji [23], in which fully correct, partially correct and incorrect predictions receive 136 
+
+scores of 1, 0.5 and 0, respectively (Methods). CellPilot was compared with representative reference-137 
+
+based, marker-based and LLM-based annotation methods, including SingleR, ScType, GPTCelltype4 138 
+
+and CASSIA. These methods differ in their intended input assumptions: cluster-dependent baselines 139 
+
+were evaluated using dataset-provided cluster information, whereas CellPilot started from raw count 140 
+
+matrices and performed preprocessing, clustering, marker discovery and annotation within the same 141 
+
+workflow. To make the comparison consistent, all predictions were scored against the same dataset-142 
+
+defined reference cell types. 143 
+
+CellPilot achieved the highest annotation scores across all three benchmark datasets (Fig. 3a). 144 
+
+Results are reported using majority-vote aggregation (CellPilot-Vote). On GTEx, CellPilot reached 145 
+
+a mean score of 0.891, compared with 0.584 for GPTCelltype4, 0.498 for CASSIA, 0.450 for ScType 146 
+
+and 0.424 for SingleR ( P < 0.001, Wilcoxon rank-sum test). On Tabula Sapiens, CellPilot achieved 147 
+
+0.750, exceeding GPTCelltype4 (0.589), CASSIA (0.569), ScType (0.489) and SingleR (0.446). On 148 
+
+MCA, CellPilot achieved 0.773, compared with 0.508 for GPTCelltype4, 0.476 for CASSIA, 0.383 for 149 
+
+SingleR and 0.273 for ScType. The improvement over reference- and marker-based methods was most 150 
+
+pronounced in MCA, where cross-species annotation and uneven marker coverage pose challenges for 151 
+
+methods that rely more directly on reference mapping or fixed marker dictionaries. 152 
+
+CellPilot’s performance was also consistent across individual tissues rather than being driven by a 153 
+
+small number of favorable cases (Fig. 3b). In GTEx, CellPilot ranked highest across all seven tissues, 154 
+
+maintaining high agreement across tissues with different cellular compositions. In Tabula Sapiens, 155 
+
+CellPilot performed strongly across both immune-rich tissues, such as Blood and Bone Marrow, and 156 
+
+more heterogeneous epithelial tissues, such as Lung and Large Intestine. Competing methods showed 157 
+
+larger tissue-to-tissue variation, particularly in tissues with broader cellular diversity or closely related 158 
+
+cell states. These results indicate that CellPilot’s annotation gains are not restricted to a single atlas 159 
+
+or tissue context, but are preserved across human and mouse datasets with different annotation 160 
+
+granularity, tissue composition and reference-label structure. 161 
+
+CellPilot annotations remain biologically coherent beyond exact agreement 162 
+
+Hierarchical annotation scores provide a standardized measure of agreement, but they do not fully 163 
+
+capture the biological distance between an incorrect prediction and the reference label. This distinc-164 
+
+tion is important in cell type annotation, where labels often differ in granularity even when they refer 165 
+
+to closely related identities within the Cell Ontology hierarchy. We therefore examined whether non-166 
+
+exact CellPilot annotations were biologically close to the reference labels by computing SapBERT 167 
+
+cosine similarity for predictions scored as partial matches or mismatches (Fig. 3c). 168 
+
+Across GTEx, MCA and Tabula Sapiens, CellPilot predictions that did not receive full credit 169 
+
+showed higher semantic similarity to the reference labels than the corresponding predictions from 170 
+
+competing methods. This pattern was observed for both partial matches and complete mismatches, 171 
+
+indicating that CellPilot errors were more often near misses within related cell identities rather than 172 
+
+unrelated label assignments. For example, a prediction of “CD4 + T cells” for a reference label of “T 173 
+
+helper cells” is penalized under exact ontology agreement, but still reflects a closely related immune-174 
+
+cell identity. Similar trends were observed when each baseline method was examined separately 175 
+
+4
+
+> .CC-BY-NC 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted July 10, 2026. ;https://doi.org/10.64898/2026.07.06.736807 doi: bioRxiv preprint
+
+(Supplementary Fig. S1–S3), suggesting that CellPilot’s annotation behavior remains biologically 176 
+
+coherent even when the predicted label does not exactly match the reference term. 177 
+
+We next asked whether CellPilot primarily recovered the same annotations as existing methods 178 
+
+or contributed correct assignments not captured by other approaches. UpSet analysis of fully correct 179 
+
+annotations showed that CellPilot accounted for the largest number of uniquely correct labels across 180 
+
+the three datasets (Fig. 3d). CellPilot produced 409 annotations that were not correctly assigned by 181 
+
+any other method, compared with 226 for GPTCelltype4, 180 for CASSIA, 119 for SingleR and 114 for 182 
+
+ScType. Thus, CellPilot’s performance was not solely driven by agreement with existing annotation 183 
+
+strategies or by partial matches within the scoring scheme. Instead, the method resolved a substantial 184 
+
+set of cell type labels that were missed by reference-based, marker-based and prompt-based LLM 185 
+
+approaches, supporting the value of coordinating annotation with upstream single-cell analysis rather 186 
+
+than treating label assignment as an isolated step. 187 
+
+Cell-level annotation performance varies with annotation granularity and 188 
+
+cluster size 189 
+
+After establishing the overall cluster-level accuracy of CellPilot, we examined how annotation perfor-190 
+
+mance varied across individual cells, label granularity and cluster size, which together determine the 191 
+
+strength and specificity of the evidence available for cell type assignment. Across 694,701 annotated 192 
+
+cells in GTEx and Tabula Sapiens, 79.2% of cells received fully matched annotations, 14.5% received 193 
+
+partially matched annotations and 6.3% were mismatched (Fig. 4a). These results indicate that most 194 
+
+cells were assigned labels that agreed with the reference annotation under the Cell Ontology hierarchy. 195 
+
+Annotation accuracy was influenced by the biological resolution of the reference labels. Major cell 196 
+
+types were annotated with a full-match rate of 83%, compared with 76% for cell subtypes (Fig. 4b), 197 
+
+consistent with the greater marker overlap and narrower transcriptional boundaries that distinguish 198 
+
+closely related subpopulations. To assess whether errors were concentrated within particular lineages, 199 
+
+we further mapped labels to broad cell type categories and examined the ten most frequent cate-200 
+
+gories in human and mouse datasets (Supplementary Note 7, Supplementary Figs. 4–5). Structurally 201 
+
+well-defined lineages, including fibroblasts and endothelial cells, showed consistently high agreement, 202 
+
+whereas more transcriptionally overlapping populations, such as myeloid and macrophage/monocyte 203 
+
+categories, showed higher rates of within-lineage confusion. Thus, most broad-category errors reflected 204 
+
+ambiguity among related cell identities rather than arbitrary reassignment across unrelated lineages. 205 
+
+Cluster size provided an additional source of variation in annotation quality. Large clusters con-206 
+
+taining more than 100 cells achieved an 80% full-match rate, whereas medium clusters containing 207 
+
+10–100 cells and small clusters containing 10 or fewer cells achieved full-match rates of 47% and 35%, 208 
+
+respectively (Fig. 4c). This pattern is expected because small clusters provide weaker differential-209 
+
+expression evidence and less stable marker-gene rankings for annotation. At the tissue level, agreement 210 
+
+proportions also varied across organ systems, with immune-rich tissues such as Bone Marrow and 211 
+
+Lymph Node showing high full-match rates, whereas tissues with more heterogeneous or glandular 212 
+
+compositions showed higher proportions of partial matches (Fig. 4d). Consistent with this interpre-213 
+
+tation, tissue-level cell type diversity was only weakly associated with mean agreement but showed 214 
+
+a stronger negative association with predicted confidence (Supplementary Fig. 6). These analyses 215 
+
+define the operating characteristics of CellPilot: annotation is most reliable when cluster-level marker 216 
+
+evidence is strong, whereas small or compositionally complex cell populations should be prioritized 217 
+
+for review. 218 
+
+Confidence scores and visual evidence support annotation assessment 219 
+
+Because autonomous annotation should indicate which predictions warrant additional inspection, we 220 
+
+next assessed whether CellPilot confidence scores reflected annotation reliability. CellPilot assigns 221 
+
+each cluster annotation a confidence score based on the relative support of marker genes for the 222 
+
+predicted identity (Methods). At the tissue level, mean predicted confidence was positively associated 223 
+
+with mean agreement score in both GTEx ( R2 = 0 .24) and Tabula Sapiens ( R2 = 0 .29; Fig. 4e). 224 
+
+Although these correlations do not imply perfect calibration, they indicate that confidence scores 225 
+
+capture useful variation in annotation quality across tissues. Calibration analysis further showed 226 
+
+a tendency toward underconfidence at intermediate score ranges, with observed full-match rates 227 
+
+often exceeding predicted confidence (Supplementary Fig. 7a). Confidence distributions differed across 228 
+
+datasets, particularly in MCA, where broader and more multimodal scores reflected greater variation 229 
+
+in cluster size and cell type composition (Supplementary Fig. 7b). 230 
+
+5
+
+> .CC-BY-NC 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted July 10, 2026. ;https://doi.org/10.64898/2026.07.06.736807 doi: bioRxiv preprint
+
+We further evaluated the practical use of confidence scores by examining the trade-off between 231 
+
+annotation accuracy and retained coverage across confidence thresholds. Increasing the confidence 232 
+
+threshold enriched the retained annotations for fully matched predictions while reducing the num-233 
+
+ber of clusters retained for automatic acceptance (Supplementary Fig. 7c). This behavior supports 234 
+
+the use of confidence as a triage signal rather than as an absolute probability of correctness: 235 
+
+high-confidence annotations can be accepted with greater assurance, whereas low-confidence or 236 
+
+small-cluster annotations can be directed to manual review or additional validation. 237 
+
+Finally, we assessed whether visual observations contributed additional information during annota-238 
+
+tion. CellPilot uses a vision-language module to summarize diagnostic plots, including quality-control 239 
+
+distributions, cluster layouts and marker-expression visualizations, as textual observations for the 240 
+
+agent context. Ablation analysis showed that the effect of this module was dataset dependent (Fig. 4f). 241 
+
+In GTEx, vote-based accuracy was unchanged, while score-based agreement increased from 0.834 to 242 
+
+0.850. In Tabula Sapiens, vote-based agreement increased from 0.729 to 0.750 and score-based agree-243 
+
+ment from 0.701 to 0.720. The largest improvement occurred in MCA, where vote-based agreement 244 
+
+increased from 0.602 to 0.773 and score-based agreement from 0.573 to 0.729. Tissue-level analyses 245 
+
+showed that visual observations provided gains in several heterogeneous tissues but had little effect, 246 
+
+and occasionally modest negative effects, in tissues with clearer transcriptional separation (Supple-247 
+
+mentary Fig. 8). These results indicate that confidence scores and visual observations are most useful 248 
+
+as supporting signals for annotation review and refinement, particularly when marker evidence or 249 
+
+cluster structure is ambiguous. 250 
+
+CellPilot executes multi-step workflows with traceable and recoverable 251 
+
+behavior 252 
+
+A practical annotation agent must not only produce accurate labels, but also complete the analytical 253 
+
+steps that lead to those labels without requiring manual intervention. We therefore examined whether 254 
+
+CellPilot could execute the full annotation workflow reliably across benchmark sessions, from raw 255 
+
+data inspection to final cell type assignment and reporting. Workflow completion rates were high 256 
+
+across datasets, reaching 98.1% in Tabula Sapiens and 96.9% in MCA, with a lower but still robust 257 
+
+completion rate of 88.1% in GTEx (Fig. 4h). The lower GTEx rate reflected greater heterogeneity 258 
+
+in input formatting and data-quality conventions across tissue contributions, rather than a single 259 
+
+recurrent failure mode. Across all completed sessions, CellPilot required a mean of 17 .0 ± 2.3 tool 260 
+
+calls, indicating that the agent followed a bounded sequence of analytical steps rather than repeatedly 261 
+
+invoking tools without convergence (Fig. 4i). 262 
+
+Step-level analysis showed that most core single-cell operations were executed with high reliabil-263 
+
+ity (Fig. 4g). Deterministic analytical steps, including normalization, highly variable gene selection, 264 
+
+dimensionality reduction, neighborhood graph construction, clustering, visualization and report 265 
+
+generation, succeeded in nearly all sessions. Steps that depend more strongly on dataset-specific prop-266 
+
+erties showed lower success rates. Quality-control filtering was less stable when datasets had unusual 267 
+
+metric distributions that did not match standard filtering heuristics, and marker-query failures were 268 
+
+concentrated in rare or poorly characterized populations with limited marker database coverage. The 269 
+
+LLM annotation step was invoked only for clusters that remained unresolved after marker-based 270 
+
+matching; failures in this step therefore reflected ambiguous marker evidence rather than failure of 271 
+
+the primary annotation path. 272 
+
+Importantly, individual tool failures did not necessarily terminate the annotation workflow. When 273 
+
+a tool call failed, CellPilot received the error as an observation and used it to revise the subse-274 
+
+quent analysis, either by adjusting parameters, returning to an earlier step or selecting an alternative 275 
+
+operation. Clusters that remained unresolved after marker-based and LLM-assisted annotation were 276 
+
+explicitly flagged for review rather than assigned a low-confidence label without indication. This 277 
+
+behavior is central to the design of CellPilot: annotation decisions are accompanied by intermediate 278 
+
+observations, confidence information and recoverable execution traces. Together, these results show 279 
+
+that CellPilot functions as a traceable annotation workflow rather than a single-pass labeling prompt, 280 
+
+allowing both successful assignments and unresolved cases to be inspected after execution. 281 
+
+6
+
+> .CC-BY-NC 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted July 10, 2026. ;https://doi.org/10.64898/2026.07.06.736807 doi: bioRxiv preprint
+
+Case study: annotating a keratinocyte transformation trajectory from 282 
+
+normal skin to actinic keratosis and cutaneous squamous cell carcinoma 283 
+
+Single-cell RNA sequencing has been widely applied to characterize the cellular ecosystems of 284 
+
+cutaneous and head-and-neck squamous tumours, revealing extensive intra-tumoural cell-state het-285 
+
+erogeneity that challenges manual annotation [40, 41]. To evaluate whether autonomous cell-type 286 
+
+annotation can support biologically meaningful interpretation in such settings, we applied CellPilot to 287 
+
+a publicly available single-cell RNA sequencing dataset spanning normal skin (NS), actinic keratosis 288 
+
+(AK), and cutaneous squamous cell carcinoma (SCC) [42]. The dataset comprises nine samples with 289 
+
+three biological replicates per condition and presents a challenging setting with heterogeneous cellular 290 
+
+composition, disease-associated transcriptional remodeling, and no ground-truth annotations. Each 291 
+
+sample was processed independently using our Qwen-8B-powered agent without manual curation, 292 
+
+followed by integration using PCA and Harmony [43] for batch correction in a shared UMAP space. 293 
+
+The integrated embedding revealed coherent epithelial, stromal, vascular, and immune compartments 294 
+
+that were consistently recovered across independently processed samples (Fig. 5a). 295 
+
+Annotation validity was first assessed through canonical marker expression, which showed strong 296 
+
+cell-type specificity with minimal off-target signal (Fig. 5b). Beyond major cell populations, the agent 297 
+
+autonomously identified a rare Langerhans cell population that was not explicitly included in the 298 
+
+provided annotation prior. Importantly, the agent was initialized only with common skin cell markers 299 
+
+and was not supplied with Langerhans-specific marker genes, curated references, or predefined label 300 
+
+vocabularies containing this population. The inferred identity was subsequently validated through 301 
+
+examination of lineage-specific markers, including CD207, which showed mutually exclusive expression 302 
+
+relative to neighboring immune populations such as macrophages and dendritic cells (Fig. 5c). 303 
+
+This result highlights a key limitation of conventional annotation workflows. Most existing 304 
+
+approaches rely on predefined references, curated marker lists, or closed label spaces, and therefore 305 
+
+primarily recover cell identities already represented in prior knowledge. In contrast, the agent was 306 
+
+able to propose a biologically valid but non-obvious population outside the explicitly provided annota-307 
+
+tion space. Notably, Langerhans cells were embedded within a closely related immune transcriptional 308 
+
+neighborhood, making their identification nontrivial even for experienced analysts without domain-309 
+
+specific prior familiarity. Rather than reflecting only increased clustering granularity, this finding 310 
+
+demonstrates that autonomous agentic reasoning can expand the candidate biological hypothesis 311 
+
+space beyond the analyst’s initial assumptions. 312 
+
+We next assessed whether these annotations supported downstream systems-level analysis. 313 
+
+Reconstruction of cell–cell communication networks using CellChat [44] across NS, AK, and SCC 314 
+
+revealed disease-associated interaction remodeling consistent with progressive epithelial transforma-315 
+
+tion (Fig. 5d). Together, these results suggest that agent-derived annotations are biologically coherent, 316 
+
+reproducible across independently processed samples, and sufficiently robust to support downstream 317 
+
+analyses without manual curation. 318 
+
+## Discussion 319 
+
+CellPilot was developed for autonomous cell type annotation from raw single-cell RNA-sequencing 320 
+
+data. Its central premise is that annotation should not be treated as a terminal label-assignment step, 321 
+
+because the evidence used to assign cell identity is shaped by upstream choices in quality control, 322 
+
+normalization, feature selection, clustering and marker discovery. CellPilot links these decisions within 323 
+
+a state-machine-controlled agentic workflow, allowing a locally deployable small language model to 324 
+
+inspect intermediate results, execute single-cell analysis tools and revise subsequent decisions before 325 
+
+producing cluster-level annotations. This design differs from prompt-based annotation methods that 326 
+
+operate on marker lists after preprocessing and clustering have already been completed. 327 
+
+The main methodological finding is that workflow orchestration can substantially reduce depen-328 
+
+dence on backbone model scale in autonomous cell type annotation. Under direct prompt-based 329 
+
+annotation, Qwen3-8B remained markedly behind GPT-4o, whereas within CellPilot the performance 330 
+
+gap between the two models was much smaller across the three benchmark datasets under both score-331 
+
+and vote-based aggregation. The framework gain was also larger for Qwen3-8B than for GPT-4o, 332 
+
+indicating that orchestration is most beneficial when the underlying model has limited standalone 333 
+
+annotation capacity. Accurate annotation, in this setting, does not arise simply from using a larger 334 
+
+language model. It is supported by constraining model reasoning with workflow context, executable 335 
+
+tools and biological observations generated during the analysis. 336 
+
+7
+
+> .CC-BY-NC 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted July 10, 2026. ;https://doi.org/10.64898/2026.07.06.736807 doi: bioRxiv preprint
+
+CellPilot produced accurate annotations across GTEx, Tabula Sapiens and Mouse Cell Atlas, out-337 
+
+performing representative reference-based, marker-based and LLM-based annotation methods under 338 
+
+a unified hierarchical evaluation. These methods represent distinct strategies for automated annota-339 
+
+tion: mapping query profiles to reference atlases, matching marker signatures or using language models 340 
+
+to interpret marker genes. CellPilot addresses the same task from a different angle, by coordinating 341 
+
+the upstream analysis that produces the clusters and marker evidence used for label assignment. Its 342 
+
+advantage was evident not only in aggregate agreement but also in the behavior of non-exact predic-343 
+
+tions. Semantic analysis showed that CellPilot annotations that did not exactly match the reference 344 
+
+labels were often close to the correct identity within the Cell Ontology hierarchy, and UpSet analysis 345 
+
+showed that CellPilot contributed a large number of uniquely correct annotations. Thus, the frame-346 
+
+work improved annotation quality beyond increasing the number of exact matches, yielding errors 347 
+
+that were more biologically coherent and resolving labels missed by existing strategies. 348 
+
+The practical value of CellPilot depends on more than annotation accuracy. Autonomous anno-349 
+
+tation should also expose uncertainty, recover from failures and leave an analytical record that 350 
+
+can be inspected after execution. CellPilot addresses these requirements through confidence scores, 351 
+
+structured observations and recoverable tool execution. The confidence scores were associated with 352 
+
+annotation correctness and supported prioritization of predictions for review, although they should 353 
+
+not be interpreted as perfectly calibrated probabilities. Transparent reporting of uncertainty and 354 
+
+execution traces is consistent with emerging reporting standards for studies that use large language 355 
+
+models in biomedical settings [45]. The vision-language module provided additional visual evidence 356 
+
+in a context-dependent manner, with the largest gains in MCA and smaller or negligible effects in 357 
+
+several human tissues. Confidence estimation and visual interpretation therefore serve as supporting 358 
+
+mechanisms for annotation assessment, rather than independent sources of method novelty. 359 
+
+Several limitations remain. CellPilot performed less well on very small clusters, where differential-360 
+
+expression evidence is unstable and marker-gene rankings are less reliable. This limitation is not 361 
+
+specific to language models, but reflects a broader challenge in annotating rare or sparsely sam-362 
+
+pled populations from weak cluster-level evidence. Pan-cancer analyses have further shown that 363 
+
+intra-tumoural cell-state heterogeneity is a pervasive feature across tumour types [46], motivating 364 
+
+annotation methods that remain robust under such variation. Performance was also lower on MCA 365 
+
+than on the human datasets, consistent with the greater heterogeneity of the mouse atlas and less 366 
+
+complete marker coverage for some mouse cell types. Incorporating species-specific marker resources 367 
+
+and stronger strategies for rare-cell annotation may further improve performance. The contribution 368 
+
+of visual reasoning also varied across tissues, suggesting that future versions should determine when 369 
+
+visual evidence is likely to be informative rather than applying it uniformly. 370 
+
+The skin cancer case study illustrates CellPilot not merely as an automated annotation pipeline, 371 
+
+but as a framework for autonomous biological interpretation. Starting from raw expression profiles, 372 
+
+the agent independently recovered coherent cellular populations, including a rare Langerhans cell 373 
+
+population that was not explicitly represented in the provided annotation prior. Importantly, this 374 
+
+should not be interpreted as a claim of novel biological discovery, but rather as evidence that agen-375 
+
+tic reasoning can recover biologically valid and non-obvious hypotheses beyond the analyst’s initial 376 
+
+assumptions. The resulting annotations further supported downstream analyses of cellular communi-377 
+
+cation, suggesting that the inferred cellular identities were sufficiently coherent to enable systems-level 378 
+
+biological interpretation without manual curation. 379 
+
+## Methods 380 
+
+CellPilot workflow formulation 381 
+
+CellPilot was designed to execute single-cell RNA-sequencing (scRNA-seq) analysis as a sequence of 382 
+
+state-dependent analytical decisions rather than as a terminal cell type labeling step. The input to 383 
+
+CellPilot is a raw or minimally processed gene expression matrix, denoted by X ∈ Rn×p, where n384 
+
+is the number of cells and p is the number of genes. Input files were provided in AnnData ( .h5ad )385 
+
+or numeric matrix ( .csv ) format. A species identifier, tissue context and a marker-gene reference 386 
+
+table could be supplied when available. The output of one CellPilot session consists of cluster-level 387 
+
+cell type annotations, annotation support scores, intermediate analysis objects, diagnostic figures and 388 
+
+structured execution logs. 389 
+
+Let T = {t1, t 2, . . . , t K } denote the set of atomic analytical tools available to the agent. These tools 390 
+
+implement data inspection, quality control, filtering, normalization, feature selection, dimensionality 391 
+
+8
+
+> .CC-BY-NC 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted July 10, 2026. ;https://doi.org/10.64898/2026.07.06.736807 doi: bioRxiv preprint
+
+reduction, neighborhood graph construction, clustering, differential expression, marker matching, 392 
+
+label refinement, visualization and report generation. CellPilot defines a tool-constrained mapping 393 
+
+AT : ( X, M, q ) 7 → (Y, C, L ), (1) where M is the marker reference table, q is the user query or analysis instruction, Y = {ˆyc : c ∈ C} 394 
+
+is the set of predicted labels for clusters C, C = {C(c) : c ∈ C} is the corresponding annotation 395 
+
+support score, and L contains the structured action log, tool outputs, intermediate files and diagnostic 396 
+
+artifacts generated during the session. All files were stored in a session-specific working directory 397 
+
+using deterministic names. 398 
+
+The workflow was formulated as an iterative decision process. At iteration t, the agent maintains 399 
+
+a state 400 
+
+st = ( Xt, h t, e t, r t), (2) where Xt is the current AnnData representation, ht contains intermediate analytical outputs, et401 
+
+records executed tool calls and returned observations, and rt records the completion status of required 402 
+
+workflow stages. At each iteration, the controller selects one action 403 
+
+at ∈ T ∪ { STOP }, (3) executes the corresponding tool when at ∈ T , receives an observation ot, and updates the state 404 
+
+according to 405 
+
+st+1 = f (st, a t, o t). (4) The workflow terminates when the controller emits a valid final response after completion of the 406 
+
+required stages, or when a predefined iteration limit is reached. The required stages were data load-407 
+
+ing, quality-control assessment, filtering when required, normalization, highly variable gene selection, 408 
+
+dimensionality reduction, neighborhood graph construction, clustering, marker detection, cell type 409 
+
+assignment, validation and report generation. 410 
+
+State-machine constrained agent orchestration 411 
+
+CellPilot was implemented as a state-machine controlled agent using LangGraph. The state object 412 
+
+contained the dataset path, session directory, current AnnData file, message history, execution 413 
+
+counter, completed workflow stages, tool-call records and returned observations. The state machine 414 
+
+constrained the agent to select one validated analytical action at a time. 415 
+
+The language model controller generated actions using a restricted XML interface. A tool call was 416 
+
+required to appear inside an <execute> block, and a final response was required to appear inside a 417 
+
+<solution> block. Tool outputs were returned to the controller as structured <observation> blocks. 418 
+
+At each iteration, the generated XML was parsed and checked before execution. Invalid XML, missing 419 
+
+arguments or unsupported tool names were returned as structured error observations, allowing the 420 
+
+agent to revise the next action without terminating the session. 421 
+
+Tool calls were executed through predefined Python wrappers with restricted arguments and 422 
+
+session-local file paths. Each wrapper returned a structured observation containing a textual summary, 423 
+
+output file paths when applicable, and an execution status. Runtime exceptions were captured and 424 
+
+returned as error observations. These errors were not treated as session-level failures unless the agent 425 
+
+reached the iteration limit or failed to produce the required final artifacts. 426 
+
+A self-checking step was applied before accepting a final <solution> block. This step checked 427 
+
+whether all required workflow stages had been completed at least once or had been explicitly skipped 428 
+
+with a valid reason in the action log. If required stages were missing, the final response was rejected 429 
+
+and control returned to the agent. The self-checking step evaluated workflow completeness only; it 430 
+
+did not use reference labels and did not judge biological correctness of the predicted annotations. 431 
+
+Because scRNA-seq workflows can generate long textual and visual outputs, observations were 432 
+
+compressed before being appended to the active model context. The full observations and out-433 
+
+put files were retained in the session directory, whereas the active reasoning context retained only 434 
+
+bounded summaries of recent observations. The maximum observation length and number of retained 435 
+
+observations used in the experiments are reported in Supplementary Note 1. 436 
+
+9
+
+> .CC-BY-NC 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted July 10, 2026. ;https://doi.org/10.64898/2026.07.06.736807 doi: bioRxiv preprint
+
+Language model controllers 437 
+
+Qwen3-8B [27] was used as the default language model controller in CellPilot. The model was deployed 438 
+
+locally through the vLLM inference engine [47]. The controller did not directly manipulate the expres-439 
+
+sion matrix. Instead, it selected from the fixed tool set described in Section 1, interpreted structured 440 
+
+observations and decided whether additional analysis steps were required. 441 
+
+Each session used a fixed prompt template containing the task description, available tool schemas, 442 
+
+XML response rules, required workflow stages and constraints on final output format. The prompt 443 
+
+instructed the controller to inspect data properties, quality-control metrics, dimensionality-reduction 444 
+
+results, clustering structure and marker evidence before producing the final annotation report. To 445 
+
+reduce output variability, inference used a fixed sampling temperature of τ = 0 .1 across experi-446 
+
+ments. The model name, checkpoint, serving configuration, decoding parameters and context limits 447 
+
+are described in Supplementary Note 3. 448 
+
+For backbone comparison experiments, the same CellPilot workflow, tool library, prompt tem-449 
+
+plate and evaluation protocol were used with Qwen3-8B and GPT-4o. For prompt-only comparisons, 450 
+
+GPTCelltype was run using marker-gene inputs without the CellPilot state machine, tool execution 451 
+
+loop or intermediate observations. API-based models were queried with fixed prompts, and the model 452 
+
+version and access date are reported in Supplementary Note 3. 453 
+
+Atomic tool library and workflow stages 454 
+
+CellPilot used a library of atomic tools implemented around Scanpy and AnnData. Each tool read 455 
+
+the current AnnData object, performed one analytical operation, wrote updated objects or figures to 456 
+
+the session directory, and returned a structured observation to the agent. The tool library contained 457 
+
+the following functional groups. 458 
+
+Data inspection and quality control. 459 
+
+The input matrix was loaded into an AnnData object. Cell and gene counts, total counts per cell 460 
+
+and the fraction of mitochondrial transcripts were computed. Mitochondrial genes were detected 461 
+
+using species-specific prefixes. Quality-control plots were generated for gene counts, total counts and 462 
+
+mitochondrial content. Filtering thresholds were selected by predefined quantile-based heuristics with 463 
+
+a conservative retention rule that preserved at least 90% of cells unless the data contained clear 464 
+
+low-quality tails. Exact default thresholds and fallback rules are described in Supplementary Note 2. 465 
+
+Normalization and feature selection. 466 
+
+Filtered count matrices were library-size normalized and log transformed. Highly variable genes were 467 
+
+selected using the default Scanpy procedure. If dispersion-based selection failed or returned an unsta-468 
+
+ble feature set, the workflow invoked a Seurat v3-style fallback [48]. The number of highly variable 469 
+
+genes, normalization target, minimum gene filters and fallback criteria are described in Supplementary 470 
+
+Note 2. 471 
+
+Dimensionality reduction and graph construction. 472 
+
+Principal component analysis was performed on the selected highly variable genes using a fixed 473 
+
+random seed. A neighborhood graph was constructed from the top principal components, followed by 474 
+
+UMAP projection for visualization [49]. The number of principal components, number of neighbors, 475 
+
+distance metric and random seed are described in Supplementary Note 2. 476 
+
+Clustering. 477 
+
+Graph-based clustering was performed using the Leiden algorithm [50]. Cluster labels were stored 478 
+
+in the AnnData object and used for downstream differential expression and annotation. The default 479 
+
+resolution and any agent-selected resolution adjustments were recorded in the session log. The agent 480 
+
+was allowed to repeat clustering with a modified resolution when the returned observations indicated 481 
+
+severe over-clustering, under-clustering or poor separation in the diagnostic plots. 482 
+
+Differential expression and marker extraction. 483 
+
+For each cluster, differentially expressed genes were computed against the remaining cells using rank-484 
+
+based testing as implemented in Scanpy, consistent with established practice in single-cell differential 485 
+
+expression analysis [51, 52]. The top-ranked genes for each cluster were written to the AnnData object 486 
+
+10 
+
+> .CC-BY-NC 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted July 10, 2026. ;https://doi.org/10.64898/2026.07.06.736807 doi: bioRxiv preprint
+
+and to a session-level marker table. These cluster markers were used for marker-database matching 487 
+
+and, when needed, language-model assisted label refinement. The differential expression test, ranking 488 
+
+statistic and number of retained genes are described in Supplementary Note 2. 489 
+
+Marker-based annotation and support scoring 490 
+
+Let C denote the set of clusters produced by CellPilot and let K denote the set of candidate cell 491 
+
+types in the marker reference. For each cluster c ∈ C and candidate cell type k ∈ K , a marker-hit 492 
+
+count h(c, k ) was computed by intersecting the top differentially expressed genes of cluster c with the 493 
+
+marker set of cell type k. The marker-matched label was assigned as 494 
+
+ˆyc = arg max  
+
+> k∈K
+
+h(c, k ). (5) If P 
+
+> k∈K
+
+h(c, k ) > 0, the marker-derived support score was defined as 495 
+
+Cmarker (c) = max k∈K h(c, k )
+
+P 
+
+> k∈K
+
+h(c, k ) . (6) Clusters with no marker hits were marked as unassigned after marker matching. 496 
+
+Unassigned clusters were passed to a label-refinement prompt. The prompt contained the cluster 497 
+
+identifier, top differentially expressed genes, available marker overlaps, tissue context and cluster 498 
+
+metadata. The model returned a JSON object containing a predicted cell type, a support score in [0 , 1] 499 
+
+and a short justification based on marker evidence. The response was accepted only if it conformed to 500 
+
+the predefined JSON schema. Invalid responses were assigned an unassigned label with a conservative 501 
+
+support score. 502 
+
+The final support score for cluster c was 503 
+
+C(c) = 
+
+(
+
+Cmarker (c), if c was assigned by marker matching ,CLLM (c), if c was assigned during label refinement . (7) The support score was used as a triage measure for prioritizing annotations for review. It was not 504 
+
+treated as a calibrated posterior probability of correctness. 505 
+
+Visual observation enrichment 506 
+
+CellPilot optionally used a vision-language module to convert diagnostic figures into textual observa-507 
+
+tions. Vision-language models combine large-language-model reasoning with visual encoders trained 508 
+
+to interpret images alongside textual instructions [53, 54]. The module was applied to figures gener-509 
+
+ated during the workflow, including quality-control violin plots, principal component variance plots, 510 
+
+UMAP embeddings, marker dot plots and feature plots. In the experiments using visual observations, 511 
+
+Qwen3-8B-VL-Thinking was used as the visual summarization model. 512 
+
+For each figure, the module generated a structured textual summary of salient visual patterns. 513 
+
+Quality-control summaries described distributional features such as extreme tails or high mitochon-514 
+
+drial content. Embedding summaries described cluster separation and visually ambiguous regions. 515 
+
+Marker-expression summaries described cluster specificity and co-expression patterns. These sum-516 
+
+maries were appended to the agent state as auxiliary observations. The VLM module did not assign 517 
+
+cell type labels directly and did not modify numerical tool outputs. 518 
+
+Figure summaries were cached by file path and metadata to avoid repeated processing of the same 519 
+
+image. If visual summarization failed or returned invalid text, an empty observation was recorded 520 
+
+and the workflow continued. Ablation experiments disabled this module while keeping all other tool 521 
+
+calls, prompts and evaluation procedures unchanged. 522 
+
+Benchmark datasets 523 
+
+CellPilot was evaluated on three publicly available scRNA-seq benchmarks spanning human and 524 
+
+mouse tissues. For CellPilot, each dataset was analyzed from the raw count matrix or the count layer 525 
+
+provided by the original resource. No manual preprocessing, manual cluster selection or post hoc 526 
+
+correction of CellPilot annotations was applied before evaluation. 527 
+
+11 
+
+> .CC-BY-NC 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted July 10, 2026. ;https://doi.org/10.64898/2026.07.06.736807 doi: bioRxiv preprint
+
+a. GTEx [37]: a human single-cell and single-nucleus benchmark containing seven tissues with 528 
+
+curated cell type annotations. Raw count matrices were used as input. 529 
+
+b. Tabula Sapiens [38]: a multi-organ human cell atlas containing twenty-four tissues with harmo-530 
+
+nized reference labels. Raw count matrices were analyzed directly. 531 
+
+c. Mouse Cell Atlas [39]: a mouse cross-tissue atlas with manually curated cell type labels. Raw 532 
+
+count matrices were used as provided by the source dataset. 533 
+
+Reference labels from the original studies were used only for evaluation. They were not supplied 534 
+
+to CellPilot during workflow execution. Dataset-level statistics, including the number of cells, tissues, 535 
+
+reference clusters and reference cell type labels, are summarized in Supplementary Note 5. 536 
+
+Baseline methods and input assumptions 537 
+
+CellPilot was compared with representative reference-based, marker-based and LLM-based annota-538 
+
+tion methods. Because these methods use different input assumptions, we separated method inputs 539 
+
+from evaluation units. Cluster-dependent baselines were evaluated under their intended pre-defined 540 
+
+cluster settings, whereas CellPilot performed de novo preprocessing, clustering, marker discovery and 541 
+
+annotation from raw count matrices. All predictions were subsequently evaluated against the same 542 
+
+dataset-defined reference annotations. 543 
+
+a. SingleR [13]: SingleR was run as a reference-based cell-level annotation method. It assigned labels 544 
+
+by comparing query profiles with reference expression signatures using correlation-based scoring. 545 
+
+Cell-level predictions were aggregated to the reference-cluster level by majority vote. 546 
+
+b. ScType [12]: ScType was run as a marker-based cluster annotation method using curated marker 547 
+
+gene sets. For datasets where tissue-specific marker references were available, ScType was applied 548 
+
+to the dataset-provided cluster structure. 549 
+
+c. GPTCelltype4 [23]: GPTCelltype4 was run as a prompt-based LLM annotation baseline using 550 
+
+differential gene lists from pre-defined clusters. The marker size parameter was set to 10 following 551 
+
+the original protocol, and tissue context was supplied according to the dataset. 552 
+
+d. CASSIA [24]: CASSIA was run as a structured LLM-based annotation baseline using marker 553 
+
+genes and tissue context. Default parameters were used unless otherwise specified by the original 554 
+
+implementation. 555 
+
+No manual correction, relabeling or post hoc filtering was applied to baseline outputs. The input 556 
+
+data, cluster assumptions, marker sources, model versions and runtime settings for each method are 557 
+
+summarized in Supplementary Note 5. 558 
+
+Evaluation alignment for de novo and reference clusters 559 
+
+CellPilot produces labels on de novo clusters, whereas several baselines operate on dataset-defined 560 
+
+reference clusters. To evaluate all methods on a common unit, we projected method outputs onto the 561 
+
+reference clusters provided by each benchmark dataset. 562 
+
+For CellPilot, every cell inherited the predicted label of its CellPilot cluster. These cell-level labels 563 
+
+were then grouped by the dataset-defined reference cluster. Two aggregation schemes were used. 564 
+
+In the reference-cluster vote scheme, the modal CellPilot label among cells in a reference cluster 565 
+
+was selected as the predicted label for that reference cluster. In the reference-cluster mean-score 566 
+
+scheme, each cell first received an ontology score according to the label of its CellPilot cluster, and 567 
+
+scores were then averaged within each reference cluster. For baselines that directly returned labels 568 
+
+on reference clusters, the returned cluster label was scored directly. For SingleR, cell-level predictions 569 
+
+were aggregated within each reference cluster by majority vote before scoring. 570 
+
+This alignment used reference clusters only for evaluation. CellPilot did not use reference clusters, 571 
+
+reference marker lists or reference labels during workflow execution. 572 
+
+Ontology-based categorical scoring 573 
+
+Annotation performance was evaluated using the hierarchical scoring protocol of Hou and Ji [23], 574 
+
+which compares predicted and reference labels through the structure of the Cell Ontology [55]. Let 575 
+
+ˆyr denote the predicted label for reference cluster r, and let y∗ 
+
+> r
+
+denote the corresponding reference 576 
+
+12 
+
+> .CC-BY-NC 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted July 10, 2026. ;https://doi.org/10.64898/2026.07.06.736807 doi: bioRxiv preprint
+
+label. A categorical score S(r) ∈ { 0, 0.5, 1} was assigned as follows: 577 
+
+S(r) = 
+
+
+
+1, if ˆ yr matched y∗ 
+
+> r
+
+or mapped to the same ontology node ,
+
+0.5, if ˆ yr mapped to a direct parent or child of y∗ 
+
+> r
+
+,
+
+0, otherwise .
+
+(8) For labels with different annotation granularity, a broader parent label was counted as partially correct 578 
+
+when it corresponded to the immediate ontology parent of the reference label. Manual mappings and 579 
+
+unresolved terms were recorded before scoring and applied consistently across all methods. 580 
+
+For a tissue with reference clusters R, the tissue-level score was computed as 581 
+
+Acc tissue = 1
+
+|R| 
+
+X
+
+> r∈R
+
+S(r). (9) Dataset-level scores were computed by averaging tissue-level scores. Unless otherwise specified, sta-582 
+
+tistical comparisons across methods were performed on matched tissue-level scores using two-sided 583 
+
+paired Wilcoxon signed-rank tests. When a dataset yielded only a single dataset-level value for a 584 
+
+comparison, no inferential test was reported for that dataset alone. 585 
+
+Semantic similarity analysis 586 
+
+Semantic similarity between predicted and reference cell type names was computed as a complemen-587 
+
+tary analysis for non-exact annotations. Cell type terms were embedded using SapBERT [56]. For a 588 
+
+predicted term ˆ yr and reference term y∗ 
+
+> r
+
+, cosine similarity was computed as 589 
+
+sim( r) = ⃗ v ˆyr ·⃗v y∗
+
+> r
+
+∥⃗v ˆyr ∥∥ ⃗v y∗ 
+
+> r
+
+∥ , (10) where ⃗v ˆyr and ⃗v y∗ 
+
+> r
+
+are the SapBERT embeddings of the predicted and reference terms. Semantic 590 
+
+similarity was computed for predictions with S(r) = 0 or S(r) = 0 .5 to characterize the biological 591 
+
+proximity of imperfect predictions. Exact matches were excluded from this analysis. 592 
+
+Cell-level and cluster-level stratified analyses 593 
+
+For cell-level summaries, each cell was assigned the score of the reference cluster to which it belonged 594 
+
+after prediction alignment. Cells were then grouped by dataset, tissue, broad cell category, reference-595 
+
+label granularity and cluster size. Cluster size was defined using the number of cells in the dataset-596 
+
+defined reference cluster. Small, medium and large clusters were defined according to the thresholds 597 
+
+defined in Supplementary Note 7. Full-match, partial-match and mismatch proportions were computed 598 
+
+within each group. 599 
+
+Broad cell categories were generated by mapping fine-grained reference labels to manually curated 600 
+
+parent categories. These mappings were used only for stratified analysis and visualization, not for 601 
+
+primary scoring. The broad-category mapping is described in Supplementary Note 7. 602 
+
+Support-score assessment 603 
+
+The relationship between CellPilot support scores and annotation correctness was evaluated after 604 
+
+reference-cluster alignment. For each tissue, mean predicted support was computed across reference 605 
+
+clusters, and compared with the corresponding tissue-level ontology score. Pearson correlation coef-606 
+
+ficients were reported as descriptive measures. Support-score threshold analysis was performed by 607 
+
+retaining predictions with C(c) above a threshold and computing the full-match rate and retained-608 
+
+cluster fraction at each threshold. These analyses were used to evaluate whether support scores 609 
+
+could prioritize annotations for review. They were not used to treat support scores as calibrated 610 
+
+probabilities. 611 
+
+Workflow reliability analysis 612 
+
+Each tool call was logged with the tool name, arguments, execution status, returned observation, 613 
+
+generated files and runtime messages. A tool call was considered successful if it completed without an 614 
+
+13 
+
+> .CC-BY-NC 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted July 10, 2026. ;https://doi.org/10.64898/2026.07.06.736807 doi: bioRxiv preprint
+
+uncaught exception and returned the expected structured output. The tool success rate was computed 615 
+
+as 616 
+
+Rtool = Nsuccess 
+
+Ntotal 
+
+, (11) where Nsuccess is the number of successful tool calls and Ntotal is the total number of attempted tool 617 
+
+calls. 618 
+
+A session was considered complete if it produced a final annotation table, an updated AnnData 619 
+
+object, diagnostic visualizations and an annotation report after executing or explicitly skipping all 620 
+
+required workflow stages. The workflow completion rate was computed as 621 
+
+Rworkflow = Ncomplete 
+
+Nsession 
+
+, (12) where Ncomplete is the number of complete sessions and Nsession is the total number of sessions. 622 
+
+Per-tool failure rates were computed by grouping tools into data inspection, preprocessing, dimen-623 
+
+sionality reduction, clustering, marker detection, marker query, annotation refinement, visualization 624 
+
+and reporting. When a tool failed, the error observation was retained in the action log and made 625 
+
+available to the agent in the next iteration. The number of tool calls per session and the frequency 626 
+
+of validation-triggered refinement were recorded to characterize execution behavior. 627 
+
+Implementation and reproducibility 628 
+
+CellPilot was implemented in Python 3.11. Single-cell preprocessing, dimensionality reduction, clus-629 
+
+tering, differential expression and visualization were implemented using Scanpy 1.10 and AnnData. 630 
+
+Agent orchestration was implemented using LangGraph. Qwen3-8B was served locally using vLLM. 631 
+
+The optional visual summarization module used Qwen3-8B-VL-Thinking. Package versions, model 632 
+
+checkpoints, decoding parameters and hardware configuration are described in Supplementary Notes 633 
+
+1 and 3. 634 
+
+All analyses used fixed random seeds for PCA, neighborhood graph construction, UMAP and 635 
+
+Leiden clustering when the underlying implementation supported seeded execution. Each session 636 
+
+was executed in a dedicated working directory. Intermediate AnnData files, diagnostic plots, marker 637 
+
+tables, annotation tables, action logs and final reports were saved using deterministic filenames. 638 
+
+Prompt templates, tool schemas, marker reference files and evaluation scripts were versioned with 639 
+
+the codebase. 640 
+
+The marker database used by CellPilot was stored as a versioned reference file. The database ver-641 
+
+sion, source, download date, supported species and number of included cell type entries are described 642 
+
+in Supplementary Note 6. API-based baselines were run with the model versions and access dates 643 
+
+listed in Supplementary Note 3. 644 
+
+## Declarations 645 
+
+• Data availability: All datasets used in this study are publicly available and were obtained with-646 
+
+out restriction. The GTEx single-nucleus cross-tissue reference [37] was downloaded from the 647 
+
+Single Cell Portal (study SCP1479) and the GTEx Portal (https://gtexportal.org). The Tab-648 
+
+ula Sapiens multi-organ human atlas [38] was obtained from the Tabula Sapiens data portal 649 
+
+(https://tabula-sapiens-portal.ds.czbiohub.org) and the CELLxGENE collection. The Mouse 650 
+
+Cell Atlas [39] was retrieved from the Gene Expression Omnibus under accession GSE108097 and 651 
+
+the associated Figshare repository. For each dataset, raw count matrices and the original authors’ 652 
+
+curated cell-type annotations were used as input and as ground-truth labels, respectively. 653 
+
+• Author contribution: S.J. and Z.W. conceived and designed the study. S.J. conducted the experi-654 
+
+ments and wrote the manuscript. C.Q. conducted the experiments and contributed to manuscript 655 
+
+writing. X.S. conducted partial experiments. Y.C. analyzed the experimental results and was 656 
+
+responsible for biological validation. Z.W. supervised the overall study. 657 
+
+• Conflict of interest: The authors declare no competing interests. 658 
+
+14 
+
+> .CC-BY-NC 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted July 10, 2026. ;https://doi.org/10.64898/2026.07.06.736807 doi: bioRxiv preprint
+
+CellPilot: Agentic Framework Architecture 
+
+Iteration 
+
+End 
+
+Self -Critic 
+
+Input 
+
+Output 
+
+Codes 
+
+> Observations
+
+Calling 
+
+Analyze the uploaded Human PBMC 
+
+dataset and annotate cell types. 
+
+Reasoning    
+
+> Let me start by creating a plan and then
+> executing it step by step.
+> pStep 1: Inspect data
+> pStep 2: Calculate QC metrics
+> p...
+> Let me start by inspecting the dataset.
+
+tool_inspect_data ("pbmc3k.h5ad" )
+
+Execution     
+
+> Info: Successfully loaded .h5ad file.
+> Shape: (2700, 32738)
+> Tool: tool_inspect_data. Status: OK
+> Summary:
+> Data appears to b: Raw Counts
+> Expression histogram plot saved to…
+
+Observation 
+
+Reasoning  
+
+> üStep 1: Inspect data
+> The data is in raw counts and not scaled. Next,
+> we calculate QC metrics to assess cell quality.
+
+Answer   
+
+> Cell type annotation complete. Identified 6 major
+> cell types with confidence scores:
+> 1. CD4+ T cells (Cluster 0) -423 cells (conf. 0.92)
+> 2. CD8+ T cells (Cluster 1) -312 cells (conf. 0.89)…
+
+# …
+
+Conversational Annotation Workflow 
+
+Single -Cell Analysis Function Library 
+
+# a
+
+Thinking 
+
+How to solve 
+
+the problem 
+
+Action 
+
+Which function 
+
+should be used? 
+
+Action Input 
+
+Function parameter 
+
+definitions 
+
+Execution 
+
+Runing the 
+
+code 
+
+Function Library 
+
+Tool A
+
+Tool B
+
+Tool C
+
+…
+
+VLM -based Visual Interpretation 
+
+VLM 
+
+Interpretor 
+
+# b c
+
+# d       
+
+> Quality Control Filtering HVG Identification Normalization
+> PCA Reductio nDifferential Exp.
+> Data Integration
+> Clustering
+> Marger Gene
+> Identification Reporting Cell Type Assignment
+> Visualization
+
+Fig. 1 CellPilot: an agentic framework for autonomous single-cell annotation. a, Architecture of the CellPi-lot framework. The agent combines reasoning and tool execution through four components: Thinking (planning the strategy), Action (selecting a function), Action Input (specifying parameters), and Execution (running the tool). Results are returned as observations and evaluated by a Self-Critic module verifies that all required steps have been executed before the final output is produced. b, Conversational annotation workflow. Given a user request (eg., anno-tating a human PBMC dataset), the agent generates a stepwise plan, executes tools (for example tool inspect data ), and reasons over observations in a dialogue-like loop to produce final cell-type annotations with confidence scores. c, VLM-based visual interpretation. Visualization outputs are interpreted by a vision–language model (VLM), which summarizes plot patterns and provides semantic descriptions that enrich the agent’s reasoning context. d, Single-cell analysis function library. The modular toolkit supports major stages of single-cell analysis, including quality control, filtering, highly variable gene identification, normalization, dimensionality reduction, clustering, differential expression, visualization, marker gene identification, data integration, cell-type assignment, and reporting. 
+
+15 
+
+.CC-BY-NC 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted July 10, 2026. ;https://doi.org/10.64898/2026.07.06.736807 doi: bioRxiv preprint GPT-4o +59% +23% 0% 25% GTEx TS MCA 
+
+0.0 
+
+0.2 
+
+0.4 
+
+0.6 
+
+0.8 
+
+1.0 Mean hierarchical agreement +0.06 +0.03 +0.18   
+
+> −0.03 −0.02
+> +0.12 +0.02 +0.05 +0.40
+
+CellPilot-Score CellPilot-Vote GPTCellType Qwen3-8B (SLM) GPT-4o (LLM) 
+
+0.00 0.05 0.10 0.15 0.20 0.25 Mean |GPT -4o − Qwen3-8B| 
+
+CellPilot-Score CellPilot-Vote GPTCellType 
+
+0.056 
+
+0.056 
+
+0.162 Backbone sensitivity Qwen3-8B GPT-4o 
+
+0.0 
+
+0.2 
+
+0.4 
+
+0.6 
+
+0.8 
+
+1.0 Agreement score                                
+
+> Skin Heart Breast Skeletal muscle Esophagus Lung Prostate +47% +38% +50% +20% +69% +62% +39% +31% +41% +38% +37% +33% +69% +41%
+> Bladder Kidney Heart Liver Vasculature Salivary Gland Pancreas Mammary Uterus Trachea Skin Thymus Tongue Muscle Small Intestine Lymph Node Lung Spleen Fat Prostate Large Intestine Bone Marrow Blood Eye +30% +23% +7% +21% +75% +42% +42% +12% +11% −7%
+> +33% +35% +30% +0% +39% +4% +18% +14% +5% +12% +8% +3% +36% +19% +54% −4%
+> +37% +8% +33% +43% +16% −2%
+> +16% +15% +35% +4% +38% +12% +17% +19% +48% +30% —+15% —+11% +9% +4%
+
+Qwen3-8B (SLM) GPT-4o (LLM) 
+
+0.0 
+
+0.2 
+
+0.4 
+
+0.6 
+
+0.8 Framework gain 
+
+> (Agent − GPTCell Type)
+
++0.35 +0.19 Paired Wilcoxon: **** 
+
+0.00 0.25 0.50 0.75 1.00 Score with Qwen3-8B (SLM) 
+
+0.00 
+
+0.25 
+
+0.50 
+
+0.75 
+
+1.00 Score with GPT-4o (LLM) GPT-4o > Qwen3-8B y = x 
+
+Dataset GTEx Tabula Sapiens MCA   
+
+> Qwen GPT-4o Mixed +59% +23%
+> 75% 50% 25% 0%
+
+Qwen3-8B GPT-4o Qwen3-8B GPT-4o CellPilot-Score CellPilot-Vote GPTCellType Qwen3-8B GPT-4o Qwen3-8B GPT-4o 
+
+a bcde f
+
+GTEx TS MCA Fig. 2 CellPilot’s agent framework decouples annotation performance from backbone capacity. a , Mean hierarchical agreement across three datasets (GTEx, Tabula Sapiens [TS], MCA) for CellPilot-Score, CellPilot-Vote and the framework-less baseline GPTCellType, each run with Qwen3-8B (hollow bars, SLM) and GPT-4o (filled bars, LLM). Numbers indicate the backbone gap ∆ = GPT-4o − Qwen3-8B. b, Backbone sensitivity, defined as mean |∆|
+
+across all (dataset, tissue) pairs. Error bars: 95% bootstrap CI ( n = 2 ,000). c, Per-tissue slope of agreement score from Qwen3-8B to GPT-4o, by dataset. Thin lines: individual tissues; bold lines: per-method mean. d, Per-tissue structure gain ∆ struct = max(CellPilot) − GPTCellType under each backbone, in percentage points. e, Distribution of tissue-level structure gain by backbone, shown as violin + box + jittered points. Bars: mean. Paired Wilcoxon signed-rank test, P < 10 −4 (∗∗∗∗ ). f, Per-tissue agreement with Qwen3-8B ( x ) versus GPT-4o ( y). Shape: dataset; color: method. Points on y = x indicate identical SLM and LLM performance. 
+
+16 
+
+.CC-BY-NC 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted July 10, 2026. ;https://doi.org/10.64898/2026.07.06.736807 doi: bioRxiv preprint Fig. 3 Benchmarking of CellPilot against baseline annotation methods. a, Average annotation scores for Sin-gleR, ScType, GPTCelltype4, CASSIA, and CellPilot across GTEx, MCA, and Tabula Sapiens. Each point represents one tissue; for MCA only the dataset-level score is shown. Statistical significance was assessed by Wilcoxon rank-sum test (*** p < 0.001). b, Tissue-level accuracy across GTEx and Tabula Sapiens. Bubble size indicates the number of cell types per tissue and color indicates mean agreement score. c, SapBERT cosine similarity between predicted and ground truth labels for partial matches ( S(c) = 0 .5) and mismatches ( S(c) = 0) across all three datasets. Sample sizes (n) are indicated per group. d, UpSet plots of fully correct annotations ( S(c) = 1, partial matches excluded) across GTEx, MCA, and Tabula Sapiens. Colors indicate annotation overlap patterns: CellPilot only (dark red), CellPilot with others (light red), all five methods (dark gray), others only (blue), and none correct (light gray). Horizontal bars show total correct annotations per method. 
+
+17 
+
+.CC-BY-NC 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted July 10, 2026. ;https://doi.org/10.64898/2026.07.06.736807 doi: bioRxiv preprint a79.2% 14.5% 6.3% Overall agreement Fully match Partially match Mismatch 0% 20% 40% 60% 80% 100% Proportion major cell type cell subtype b83% 76% 10% 19% By annotation level 0% 20% 40% 60% 80% 100% Proportion (0,10] (10,100] >100 c35% 47% 80% 32% 27% 14% 33% 26% By cell number 0% 20% 40% 60% 80% 100% 0% 20% 40% 60% 80% 100% Proportion Mammary Kidney Skeletal muscle Muscle Heart Bladder Trachea Breast Uterus Lung Vasculature Small Intestine Large Intestine Fat Salivary Gland Skin Liver Pancreas Prostate Thymus Eye Spleen Blood Esophagus Bone Marrow Lymph Node Tongue dTS GTEx Agreement proportions by tissue Mismatch Partially match Fully match Mean agreement 0.70 0.75 0.80 0.85 0.90 0.95 Mean agreement score 0.2 0.4 0.6 0.8 1.0 Mean predicted confidence eConfidence vs accuracy (per tissue) Dataset : R²=0.24 : R²=0.29 Fully match Partially match Mismatch 0.2 0.4 0.6 0.8 1.0 Confidence fConfidence by agreement 010 20 30 40 50 60 70 80 Number of Calls LLM Annotate Visualize UMAP Inspect Leiden Neighbors PCA Hvg Find DEG Validate Annot. Summarize Clusters Calc QC Query Markers Filter QC Gen. Report Normalize g75% 100% 100% 100% 100% 100% 100% 100% 100% 98% 100% 100% 83% 68% 96% 100% Tool Usage & Success Rate Success Fail GTEx MCA 70 75 80 85 90 95 100 Success Rate (%) h88.1% 96.9% 98.1% Success Rate by Dataset 12.5 15.0 17.5 20.0 22.5 25.0 Tool Calls per Session 0246810 Frequency iμ=17.0 σ=2.3 Distribution of Tool Calls Tissue GTEx TS MCA 0.5 0.6 0.7 0.8 0.9 1.0 Mean Agreement Score Vote Scored Vote Scored Vote Scored 0.891 0.750 0.773 0.891 0.729 0.602 0.850 0.712 0.729 0.834 0.701 0.573 Δ=+0.000 Δ=+0.016 Δ=+0.020 Δ=+0.0 11Δ=+0.171 Δ=+0.155 Vote — w/ VLM Vote — w/o VLM Scored — w/ VLM Scored — w/o VLM GTEx TS TS Ablation Study for VLM 
+
+n=694,701 Fig. 4 Cell-level annotation performance and operational reliability of CellPilot. a, Overall agreement proportions across all annotated cells, showing the fraction of fully matched, partially matched, and mismatched predictions. b, Agreement proportions stratified by annotation granularity, comparing performance on major cell types versus cell subtypes. c, Agreement proportions stratified by cluster size across three categories: small (0 , 10], medium (10 , 100], and large ( >100) cells per cluster. d, Agreement proportions by tissue for Tabula Sapiens and GTEx. Each bar shows the proportion of fully matched, partially matched, and mismatched annotations, with black dots indicating mean agreement score. e, Correlation between mean predicted confidence C(c) and mean agreement score Acc tissue per tissue for GTEx ( R2 = 0 .24) and Tabula Sapiens ( R2 = 0 .29), with 95% confidence intervals shown as shaded regions. f, Distribution of predicted confidence C(c) across fully matched, partially matched, and mismatched predictions. g, Per-tool call frequency and success rate across all sessions, with colors distinguishing successful (orange) and failed (red) executions. h, Overall workflow success rate R by dataset. i, Distribution of tool calls per session ( μ = 17 .0, σ = 2 .3). 
+
+18 
+
+.CC-BY-NC 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted July 10, 2026. ;https://doi.org/10.64898/2026.07.06.736807 doi: bioRxiv preprint −5 
+
+0
+
+5−5 0 5 10 umap_1 umap_2 Keratinocytes Epithelial Cells Proliferating Epithelial Cells Hair Follicle Epithelial Cells Sudoriferous Gland Cells Endothelial Cells Pricytes Smooth Muscle Cells Fibroblasts T Cells NK Cells B Cells Macrophages Langerhans Cells Dendritic Cells Mast Cells Melanocytes 
+
+llm_annotate 
+
+> Keratinocytes Epithelial Cells Proliferating Epithelial Cells Hair Follicle Epithelial Cells Sudoriferous Gland Cells Endothelial Cells Pericytes Smooth Muscle Cells Fibroblasts T Cells NK Cells B Cells Macrophages Langerhans Cells Dendritic Cells Mast Cells Melanocytes
+
+Normal Skin 
+
+> Keratinocytes Epithelial Cells Proliferating Epithelial Cells Hair Follicle Epithelial Cells Sudoriferous Gland Cells Endothelial Cells Pericytes Smooth Muscle Cells Fibroblasts T Cells NK Cells B Cells Macrophages Langerhans Cells Dendritic Cells Mast Cells Melanocytes
+
+Actinic Keratosis 
+
+> Keratinocytes Epithelial Cells Proliferating Epithelial Cells Hair Follicle Epithelial Cells Sudoriferous Gland Cells Endothelial Cells Pericytes Smooth Muscle Cells Fibroblasts T Cells NK Cells B Cells Macrophages Langerhans Cells Dendritic Cells Mast Cells Melanocytes
+
+Squamous Cell Carcinoma Keratinocytes Epithelial Cells Proliferating Epithelial Cells Hair Follicle Epithelial Cells Sudoriferous Gland Cells Endothelial Cells Pericytes Smooth Muscle Cells Fibroblasts T Cells NK Cells B Cells Macrophages Langerhans Cells Dendritic Cells Mast Cells Melanocytes 
+
+0.0 0.2 0.4 0.6 0.8 0.0 0.3 0.6 0.9 1.2 Outgoing interaction strength Incoming interaction strength Count 0
+
+500 
+
+1000 
+
+1500 
+
+Normal Skin Keratinocytes Epithelial Cells Proliferating Epithelial Cells Hair Follicle Epithelial Cells Sudoriferous Gland Cells Endothelial Cells Pericytes Smooth Muscle Cells Fibroblasts T Cells NK Cells B Cells Macrophages Langerhans Cells Dendritic Cells Mast Cells Melanocytes 
+
+0.4 0.8 1.2 1.6 0.4 0.8 1.2 1.6 Outgoing interaction strength Incoming interaction strength Count 0
+
+500 
+
+1000 
+
+1500 
+
+Actinic Keratosis Keratinocytes Epithelial Cells Proliferating Epithelial Cells Hair Follicle Epithelial Cells Sudoriferous Gland Cells Endothelial Cells Pericytes Smooth Muscle Cells Fibroblasts T Cells NK Cells B Cells Macrophages Langerhans Cells Dendritic Cells Mast Cells Melanocytes 
+
+0.0 
+
+0.5 
+
+1.0 
+
+1.5 
+
+2.0 0.0 0.5 1.0 1.5 2.0 Outgoing interaction strength Incoming interaction strength Count 0
+
+500 
+
+1000 
+
+1500 
+
+Squamous Cell Carcinoma 
+
+Keratinocytes Epithelial Cells Proliferating Epithelial Cells Hair Follicle Epithelial Cells Sudoriferous Gland Cells Endothelial Cells Pericytes Smooth Muscle Cells Fibroblasts T Cells NK Cells B Cells Macrophages Langerhans Cells Dendritic Cells Mast Cells Melanocytes KRT1 KRT10 KRT5 KRT14 MKI67 TOP2A KRT15 SFRP1 KRT7 KRT8 PECAM1 VWF RGS5 ACTA2 COL1A1 COL1A2 CD3D TRBC2 NKG7 GZMB MS4A1 CD19 FCGR3A CD68 CD207 CD1A CLEC9A CCR7 FCER1A KIT MITF TYRP1 
+
+Percent Expressed 0 25 50 75 Average Expression −1 0 1 20123Expression Level Macrophages Langerhans Cells Dendritic Cells 
+
+FCGR3A 
+
+0123Expression Level Macrophages Langerhans Cells Dendritic Cells 
+
+CD207 
+
+0123Expression Level Macrophages Langerhans Cells Dendritic Cells 
+
+CLEC9A a bcdeFig. 5 Integrated cell-type annotation and downstream cell–cell communication analysis across normal skin, actinic keratosis, and squamous cell carcinoma. a, UMAP of all cells integrated across nine samples, colored by cell types annotated by CellPilot. b, Dot plot showing the expression of selected canonical marker genes for each annotated cell type. Two representative marker genes are displayed per cell type. Dot size indicates the percentage of cells expressing the gene and color intensity represents average expression level. c, Violin plots showing the expression of representative marker genes for macrophages, Langerhans cells, and dendritic cells, highlighting distinct expression patterns among these closely related immune populations. d, Circle plots depicting cell–cell communication networks inferred by CellChat for each condition. Only the top 20% of interactions ranked by interaction strength are shown. Node colors represent cell types, edge thickness corresponds to interaction strength, and arrow direction indicates the direction of signaling. e, Scatter plots of signaling roles inferred by CellChat showing the relative outgoing and incoming interaction strengths of each cell type per condition. 
+
+19 
+
+.CC-BY-NC 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted July 10, 2026. ;https://doi.org/10.64898/2026.07.06.736807 doi: bioRxiv preprint References 659 
+
+[1] Hwang, B., Lee, J. H. & Bang, D. Single-cell RNA sequencing technologies and bioinformatics 660 
+
+pipelines. Experimental & Molecular Medicine 50 , 1–14 (2018). 661 
+
+[2] Luecken, M. D. & Theis, F. J. Current best practices in single-cell RNA-seq analysis: a tutorial. 662 
+
+Molecular Systems Biology 15 , e8746 (2019). 663 
+
+[3] Macosko, E. Z. et al. Highly parallel genome-wide expression profiling of individual cells using 664 
+
+nanoliter droplets. Cell 161 , 1202–1214 (2015). 665 
+
+[4] Regev, A. et al. The Human Cell Atlas. eLife 6, e27041 (2017). 666 
+
+[5] Stuart, T. & Satija, R. Integrative single-cell analysis. Nature reviews genetics 20 , 257–272 667 
+
+(2019). 668 
+
+[6] Heumos, L. et al. Best practices for single-cell analysis across modalities. Nature Reviews 669 
+
+Genetics 24 , 550–572 (2023). 670 
+
+[7] Abdelaal, T. et al. A comparison of automatic cell identification methods for single-cell rna 671 
+
+sequencing data. Genome biology 20 , 194 (2019). 672 
+
+[8] Pasquini, G., Arias, J. E. R., Sch¨ afer, P. & Busskamp, V. Automated methods for cell type 673 
+
+annotation on scrna-seq data. Computational and Structural Biotechnology Journal 19 , 961–969 674 
+
+(2021). 675 
+
+[9] Li, T. et al. An overview of computational methods in single-cell transcriptomic cell type 676 
+
+annotation. Briefings in Bioinformatics 26 , bbaf207 (2025). 677 
+
+[10] Zhang, Z. et al. Scina: a semi-supervised subtyping algorithm of single cells and bulk samples. 678 
+
+Genes 10 , 531 (2019). 679 
+
+[11] Shao, X. et al. scCATCH: automatic annotation on cell types of clusters from single-cell RNA 680 
+
+sequencing data. iScience 23 , 100882 (2020). 681 
+
+[12] Ianevski, A., Giri, A. K. & Aittokallio, T. Fully-automated and ultra-fast cell-type identification 682 
+
+using specific marker combinations from single-cell transcriptomic data. Nature Communications 683 
+
+13 , 1246 (2022). 684 
+
+[13] Aran, D. et al. Reference-based analysis of lung single-cell sequencing reveals a transitional 685 
+
+profibrotic macrophage. Nature Immunology 20 , 163–172 (2019). 686 
+
+[14] Kiselev, V. Y., Yiu, A. & Hemberg, M. scmap: projection of single-cell rna-seq data across data 687 
+
+sets. Nature methods 15 , 359–362 (2018). 688 
+
+[15] Cao, Z.-J., Wei, L., Lu, S., Yang, D.-C. & Gao, G. Searching large-scale scrna-seq databases via 689 
+
+unbiased cell embedding with cell blast. Nature communications 11 , 3458 (2020). 690 
+
+[16] Ma, F. & Pellegrini, M. Actinn: automated identification of cell types in single cell rna sequencing. 691 
+
+Bioinformatics 36 , 533–538 (2020). 692 
+
+[17] Alquicira-Hernandez, J., Sathe, A., Ji, H. P., Nguyen, Q. & Powell, J. E. scpred: accurate 693 
+
+supervised method for cell-type classification from single-cell rna-seq data. Genome biology 20 ,694 
+
+264 (2019). 695 
+
+[18] Shao, X. et al. scdeepsort: a pre-trained cell-type annotation method for single-cell transcrip-696 
+
+tomics using deep learning with a weighted graph neural network. Nucleic acids research 49 ,697 
+
+e122–e122 (2021). 698 
+
+[19] Yang, F. et al. scBERT as a large-scale pretrained deep language model for cell type annotation 699 
+
+of single-cell RNA-seq data. Nature Machine Intelligence 4, 852–866 (2022). 700 
+
+20 
+
+> .CC-BY-NC 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted July 10, 2026. ;https://doi.org/10.64898/2026.07.06.736807 doi: bioRxiv preprint
+
+[20] Cui, H. et al. scgpt: toward building a foundation model for single-cell multi-omics using 701 
+
+generative ai. Nature methods 21 , 1470–1480 (2024). 702 
+
+[21] Hao, M. et al. Large-scale foundation model on single-cell transcriptomics. Nature methods 21 ,703 
+
+1481–1491 (2024). 704 
+
+[22] Wen, H. et al. Cellplm: pre-training of cell language model beyond single cells. bioRxiv (2023). 705 
+
+[23] Hou, W. & Ji, Z. Assessing gpt-4 for cell type annotation in single-cell rna-seq analysis. Nature 706 
+
+methods 21 , 1462–1465 (2024). 707 
+
+[24] Xie, E. et al. Cassia: a multi-agent large language model for automated and interpretable cell 708 
+
+annotation. Nature Communications (2025). 709 
+
+[25] Liu, J., Xu, S., Wu, Y. & Zhang, J. Single-cell omics arena: evaluation of large language models 710 
+
+for automatic cell-type annotations on single-cell omics data via rna-seq bridging. Briefings in 711 
+
+Bioinformatics 26 , bbaf622 (2025). 712 
+
+[26] Wan, Z. et al. Sociotechnical safeguards for genomic data privacy. Nature Reviews Genetics 23 ,713 
+
+429–445 (2022). 714 
+
+[27] Yang, A. et al. Qwen3 technical report. arXiv preprint arXiv:2505.09388 (2025). 715 
+
+[28] Yao, S. et al. React: Synergizing reasoning and acting in language models. International 716 
+
+Conference on Learning Representations (ICLR) (2023). URL https://arxiv.org/abs/2210. 717 
+
+03629. 718 
+
+[29] Wei, J. et al. Chain-of-thought prompting elicits reasoning in large language models. Advances 719 
+
+in Neural Information Processing Systems 35 , 24824–24837 (2022). 720 
+
+[30] Shinn, N., Cassano, F., Gopinath, A., Narasimhan, K. & Yao, S. Reflexion: Language agents with 721 
+
+verbal reinforcement learning. Advances in Neural Information Processing Systems 36 (2023). 722 
+
+URL https://arxiv.org/abs/2303.11366. 723 
+
+[31] Xi, Z. et al. The rise and potential of large language model based agents: A survey. arXiv 724 
+
+preprint arXiv:2309.07864 (2023). URL https://arxiv.org/abs/2309.07864. 725 
+
+[32] Qi, C. et al. Artificial intelligence agents for biological research: a survey. Briefings in 726 
+
+Bioinformatics 27 , bbag075 (2026). 727 
+
+[33] Schick, T. et al. Toolformer: Language models can teach themselves to use tools. Advances in 728 
+
+neural information processing systems 36 , 68539–68551 (2023). 729 
+
+[34] Boiko, D. A., MacKnight, R., Kline, B. & Gomes, G. Autonomous chemical research with large 730 
+
+language models. Nature 624 , 570–578 (2023). 731 
+
+[35] Jin, Q. et al. Agentmd: Empowering language agents for risk prediction with large-scale clinical 732 
+
+tool learning. Nature Communications 16 , 9377 (2025). 733 
+
+[36] Wolf, F. A., Angerer, P. & Theis, F. J. SCANPY: large-scale single-cell gene expression data 734 
+
+analysis. Genome Biology 19 , 15 (2018). 735 
+
+[37] Eraslan, G. et al. Single-nucleus cross-tissue molecular reference maps toward understanding 736 
+
+disease gene function. Science 376 , eabl4290 (2022). 737 
+
+[38] Consortium*, T. T. S. et al. The tabula sapiens: A multiple-organ, single-cell transcriptomic 738 
+
+atlas of humans. Science 376 , eabl4896 (2022). 739 
+
+[39] Han, X. et al. Mapping the mouse cell atlas by microwell-seq. Cell 172 , 1091–1107 (2018). 740 
+
+21 
+
+> .CC-BY-NC 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted July 10, 2026. ;https://doi.org/10.64898/2026.07.06.736807 doi: bioRxiv preprint
+
+[40] Tirosh, I. et al. Dissecting the multicellular ecosystem of metastatic melanoma by single-cell 741 
+
+RNA-seq. Science 352 , 189–196 (2016). 742 
+
+[41] Puram, S. V. et al. Single-cell transcriptomic analysis of primary and metastatic tumor 743 
+
+ecosystems in head and neck cancer. Cell 171 , 1611–1624.e24 (2017). 744 
+
+[42] Ji, A. L. et al. Multimodal analysis of composition and spatial architecture in human squamous 745 
+
+cell carcinoma. Cell 182 , 497–514.e22 (2020). 746 
+
+[43] Korsunsky, I. et al. Fast, sensitive and accurate integration of single-cell data with Harmony. 747 
+
+Nature Methods 16 , 1289–1296 (2019). 748 
+
+[44] Jin, S. et al. Inference and analysis of cell–cell communication using CellChat. Nature 749 
+
+Communications 12 , 1088 (2021). 750 
+
+[45] Gallifant, J. et al. The TRIPOD-LLM reporting guideline for studies using large language models. 751 
+
+Nature Medicine 31 , 60–69 (2025). 752 
+
+[46] Gavish, A. et al. Hallmarks of transcriptional intratumoural heterogeneity across a thousand 753 
+
+tumours. Nature 618 , 598–606 (2023). 754 
+
+[47] Kwon, W. et al. Efficient memory management for large language model serving with Page-755 
+
+dAttention. Proceedings of the 29th Symposium on Operating Systems Principles (SOSP) 756 
+
+(2023). 757 
+
+[48] Stuart, T. et al. Comprehensive integration of single-cell data. Cell 177 , 1888–1902.e21 (2019). 758 
+
+[49] McInnes, L., Healy, J. & Melville, J. UMAP: Uniform manifold approximation and projection 759 
+
+for dimension reduction. arXiv preprint arXiv:1802.03426 (2018). 760 
+
+[50] Traag, V. A., Waltman, L. & van Eck, N. J. From Louvain to Leiden: guaranteeing well-connected 761 
+
+communities. Scientific Reports 9, 5233 (2019). 762 
+
+[51] Finak, G. et al. MAST: a flexible statistical framework for assessing transcriptional changes and 763 
+
+characterizing heterogeneity in single-cell RNA sequencing data. Genome Biology 16 , 278 (2015). 764 
+
+[52] Squair, J. W. et al. Confronting false discoveries in single-cell differential expression. Nature 765 
+
+Communications 12 , 5692 (2021). 766 
+
+[53] Bai, J. et al. Qwen-VL: A versatile vision-language model for understanding, localization, text 767 
+
+reading, and beyond. arXiv preprint arXiv:2308.12966 (2023). 768 
+
+[54] Liu, H., Li, C., Wu, Q. & Lee, Y. J. Visual instruction tuning. Advances in Neural Information 769 
+
+Processing Systems 36 (2023). URL https://arxiv.org/abs/2304.08485. 770 
+
+[55] Diehl, A. D. et al. The Cell Ontology 2016: enhanced content, modularization, and ontology 771 
+
+interoperability. Journal of Biomedical Semantics 7, 44 (2016). 772 
+
+[56] Liu, F., Shareghi, E., Meng, Z., Basaldella, M. & Collier, N. Self-alignment pretraining for 773 
+
+biomedical entity representations. Proceedings of the 2021 conference of the North American 774 
+
+chapter of the association for computational linguistics: human language technologies 4228–4238 775 
+
+(2021). 776 
+
+22 
+
+> .CC-BY-NC 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted July 10, 2026. ;https://doi.org/10.64898/2026.07.06.736807 doi: bioRxiv preprint
+
+Supplementary information. 777 
+
+## Supplementary Information 778 
+
+CellPilot: an agentic framework that pilots small language models 779 
+
+through autonomous single-cell annotation 780 
+
+Siqi Jiang †, Cong Qi †, Yeqing Chen, Xun Song, Zhi Wei ∗
+
+> 781
+
+New Jersey Institute of Technology, Newark, NJ, USA 782 
+
+> ∗
+
+Corresponding author: zhi.wei@njit.edu 783 
+
+> †
+
+These authors contributed equally to this work. 784 
+
+This Supplementary Information accompanies the manuscript entitled CellPilot: an agentic 785 
+
+framework that pilots small language models through autonomous single-cell annotation . It provides 786 
+
+implementation-level, methodological, and evaluation details that complement the main text and 787 
+
+support reproducibility, technical transparency, and independent assessment of the framework. Specif-788 
+
+ically, the Supplementary Information documents the agent system architecture and implementation 789 
+
+details, complete tool function specifications, prompt engineering and chain-of-thought design, and 790 
+
+the integration of the vision-language model module. It further describes the benchmark design, 791 
+
+dataset preparation procedures, and fairness controls used for comparative evaluation, as well as the 792 
+
+construction and use of the marker database, annotation provenance tracking, and the hierarchical 793 
+
+evaluation rules applied in scoring prediction outcomes. Finally, it presents additional analyses of cell-794 
+
+level annotation performance across annotation granularity, broad cell type categories, cluster size, 795 
+
+and tissue context. Together, these materials are intended to provide a complete technical record of 796 
+
+the CellPilot framework beyond the space constraints of the main manuscript. 797 
+
+23 
+
+> .CC-BY-NC 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted July 10, 2026. ;https://doi.org/10.64898/2026.07.06.736807 doi: bioRxiv preprint
+
+Contents 798 
+
+• Supplementary Note 1: Agent System Architecture and Implementation Details 799 
+
+– 1.1 State Fields Beyond the Core Architecture 800 
+
+– 1.2 LangGraph Implementation and Routing Details 801 
+
+– 1.3 Execution Sandboxing and Path Resolution 802 
+
+– 1.4 Session Directory Structure and Artifact Persistence 803 
+
+– 1.5 Context Window Management: Parameter Specifications 804 
+
+– 1.6 Error Handling: Specific Safeguards 805 
+
+– 1.7 Custom Marker File Injection 806 
+
+– 1.8 Algorithm of State-machine control 807 
+
+• Supplementary Note 2: Tool Function Specifications 808 
+
+– 2.1 Data Ingestion and Inspection 809 
+
+– 2.2 Quality Control 810 
+
+– 2.3 Normalization and Feature Selection 811 
+
+– 2.4 Dimensionality Reduction 812 
+
+– 2.5 Clustering and Differential Expression 813 
+
+– 2.6 Annotation 814 
+
+– 2.7 Reporting 815 
+
+• Supplementary Note 3: Prompt Engineering and Chain-of-Thought Design 816 
+
+– 3.1 System Prompt 817 
+
+– 3.2 Dynamic Prompt Compression 818 
+
+– 3.3 Structured XML Protocol and Interaction Examples 819 
+
+– 3.4 Self-Critic Prompt 820 
+
+– 3.5 Vision-Language Model Prompt 821 
+
+– 3.6 Prompt Design Rationale 822 
+
+• Supplementary Note 4: Vision-Language Model Integration 823 
+
+– 4.1 Module Architecture 824 
+
+– 4.2 Output Constraints and Computational Cost Control 825 
+
+– 4.3 Caching and Failure Handling 826 
+
+– 4.4 Example VLM-Guided Decision Making 827 
+
+• Supplementary Note 5: Benchmark Design, Dataset Preparation, and Fairness Controls 828 
+
+– 5.1 Benchmark Inputs and Per-Tissue Evaluation Units 829 
+
+– 5.2 Shared Dataset Subsets Across Methods 830 
+
+– 5.3 Benchmark Datasets and Format Standardization 831 
+
+– 5.4 Tissue-Level Organization 832 
+
+– 5.5 Baseline-Specific Input Assumptions 833 
+
+– 5.6 Meaning of “Same Preprocessed Clusters” 834 
+
+– 5.7 Cluster-Level Evaluation of CellPilot 835 
+
+– 5.8 Cluster Aggregation Policy and Absence of Majority Thresholding 836 
+
+– 5.9 Ground-Truth Label Harmonization 837 
+
+– 5.10 Marker Gene Lists for GPTCelltype4 Benchmarking 838 
+
+– 5.11 No Manual Intervention 839 
+
+• Supplementary Note 6: Marker Database Construction, Annotation Provenance, and Hierarchical 840 
+
+Evaluation 841 
+
+– 6.1 Marker Source Hierarchy 842 
+
+– 6.2 Marker Query Procedure 843 
+
+– 6.3 Marker-Based Confidence Score 844 
+
+– 6.4 Triggering of Unassigned Labels 845 
+
+– 6.5 Annotation Provenance and LLM Refinement 846 
+
+– 6.6 Scope and Limitations of the Marker Database 847 
+
+– 6.7 Hierarchical Evaluation Rules 848 
+
+– 6.8 Parent–Child Adjudication Examples 849 
+
+24 
+
+> .CC-BY-NC 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted July 10, 2026. ;https://doi.org/10.64898/2026.07.06.736807 doi: bioRxiv preprint
+
+– 6.9 Broad Cell Type Mapping 850 
+
+– 6.10 Semantic Similarity Analysis with SapBERT 851 
+
+• Supplementary Note 7: Cell-level Annotation Performance Across Annotation Granularity, Broad 852 
+
+Cell Types, Cluster Size, and Tissue Context 853 
+
+– 7.1 Annotation Granularity 854 
+
+– 7.2 Broad Cell Type Performance and Misclassification Patterns 855 
+
+– 7.3 Cluster Size Effects 856 
+
+– 7.4 Tissue-Level Performance 857 
+
+25 
+
+.CC-BY-NC 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted July 10, 2026. ;https://doi.org/10.64898/2026.07.06.736807 doi: bioRxiv preprint Supplementary Note 1: Agent System Architecture and Implementation 858 
+
+Details 859 
+
+This note provides implementation-level details that supplement the architectural overview and algo-860 
+
+rithmic description presented in Section 4.2 of the main text. The focus is on engineering decisions, 861 
+
+specific parameter values, and subsystem designs not covered in the main Methods. 862 
+
+1.1 State Fields Beyond the Core Architecture 863 
+
+The AgentState object described in Section 4.2 is implemented as a Python TypedDict containing 864 
+
+seven fields. In addition to the five fields noted in the main text (user query, current dataset path, 865 
+
+session-specific working directory, message history, execution counter, and tools-executed record), two 866 
+
+additional fields support workflow control: plan generated , a boolean flag that distinguishes the 867 
+
+initial planning turn from subsequent execution turns to prevent the routing logic from misinterpreting 868 
+
+a plan-only response as a stalled state; and session id , a UUID-based identifier used to construct 869 
+
+the session directory path and to tag logs for multi-session deployments. 870 
+
+1.2 LangGraph Implementation and Routing Details 871 
+
+The state-machine control loop described in Section 4.2 and Algorithm 1 is compiled via LangGraph’s 872 
+
+StateGraph API into a directed graph with conditional edges. Two routing details not captured by 873 
+
+Algorithm 1 are relevant for reproducibility. First, the execute node is connected back to generate 874 
+
+via a fixed unconditional edge rather than a conditional one, which guarantees that every tool invoca-875 
+
+tion is followed by a new LLM reasoning step. There is no execution path in which two consecutive tool 876 
+
+calls occur without an intervening reasoning iteration. Second, the self-critic node is inserted between 877 
+
+the generate node and the terminal END node only when the critic mechanism is enabled. When dis-878 
+
+abled, the <solution> directive transitions directly to END , reducing latency by one additional LLM 879 
+
+call per session. 880 
+
+1.3 Execution Sandboxing and Path Resolution 881 
+
+Tool calls are executed within a sandboxed environment managed by the ExecutionEngine class, a 882 
+
+subsystem not described in the main text. Before each execution, the working directory is changed 883 
+
+to the session-specific directory via os.chdir , ensuring that all relative file paths resolve within 884 
+
+the session scope. Upon completion or failure, the original working directory is restored. File paths 885 
+
+appearing in generated code are automatically rewritten to absolute paths using a regex-based resolver 886 
+
+that checks for the existence of candidate files first in the session directory and then in the global 887 
+
+working directory. This path rewriting prevents file-not-found errors that would otherwise arise when 888 
+
+the language model generates code referencing filenames without full paths. 889 
+
+Tool outputs are captured by redirecting stdout and stderr into string buffers, intercepting 890 
+
+any generated image files detected either through regex matching of file extensions in output text 891 
+
+or through explicit matplotlib.Figure objects in the execution namespace, copying images into a 892 
+
+figures/ subdirectory under the session directory with UUID-prefixed filenames to avoid collisions, 893 
+
+and returning a standardized result dictionary containing an ok boolean, the captured output text, 894 
+
+a list of image records, and an updated data path if the tool modified the AnnData object. 895 
+
+1.4 Session Directory Structure and Artifact Persistence 896 
+
+The main text notes that each session operates within a dedicated working directory with determin-897 
+
+istic naming conventions (Section 4.10). Here we specify the complete directory layout. Each session 898 
+
+is created under a global sessions root ( sc analysis/sessions/<uuid>/ ). The uploaded dataset 899 
+
+is copied into this directory at session initialization to ensure immutability of the original file. All 900 
+
+intermediate AnnData objects are saved with the following deterministic suffixes: 901 
+
+• <dataset>.qc.h5ad — after QC metric calculation 902 
+
+• <dataset>.qc.filtered.h5ad — after cell filtering 903 
+
+• <dataset>.norm.h5ad — after normalization and log-transformation 904 
+
+• <dataset>.hvg.h5ad — after highly variable gene selection 905 
+
+• <dataset>.norm.hvg.norm.scaled.h5ad — after scaling of HVG-subset data 906 
+
+• <dataset>.pca.h5ad — after PCA computation 907 
+
+• <dataset>.neighbors.h5ad — after neighbor graph construction 908 
+
+26 
+
+> .CC-BY-NC 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted July 10, 2026. ;https://doi.org/10.64898/2026.07.06.736807 doi: bioRxiv preprint
+
+• <dataset>.umap.h5ad — after UMAP embedding 909 
+
+• <dataset>.leiden r X.h5ad — after Leiden clustering at resolution X910 
+
+• <dataset>.deg.h5ad — after differential expression analysis 911 
+
+• <dataset>.annotated.h5ad — final annotated object 912 
+
+In addition, the session directory stores the following log and diagnostic files: 913 
+
+• figures/ — all generated visualizations, with UUID-prefixed filenames 914 
+
+• debug llm requests.log — abbreviated LLM request previews (last 5 messages per call) 915 
+
+• debug llm requests full.log — complete, untruncated LLM request history for each call 916 
+
+• debug llm responses.log — all raw LLM responses 917 
+
+• execution outputs.log — tool execution outputs and observation text 918 
+
+• qwen reasoning.log — full reasoning traces when Qwen thinking mode is enabled 919 
+
+• timing.json — overall session runtime (start time, end time, elapsed seconds, total tool time) 920 
+
+• timing records.json — per-step timing breakdown with timestamps 921 
+
+This logging structure enables post hoc auditing of the analytical trajectory followed in each session. 922 
+
+1.5 Context Window Management: Parameter Specifications 923 
+
+Section 4.2 of the main text describes the general context management strategy, including observation 924 
+
+truncation and bounded retention of recent observations. Here we specify the three-level truncation 925 
+
+hierarchy and its default parameter values as implemented. 926 
+
+At the observation level , individual tool outputs undergo two sequential truncations: first by 927 
+
+line count (default: 150 lines retained from the head, plus the last 5 lines with an inserted skip 928 
+
+marker indicating the number of omitted lines), and subsequently by character count (default: 2,000 929 
+
+characters, with a trailing truncation marker). This dual truncation preserves key summary statistics 930 
+
+at the beginning of tool outputs and tail-end status information while discarding verbose intermediate 931 
+
+content. 932 
+
+At the history level , a category-aware pruning method operates before each LLM invocation, 933 
+
+processing the message history in reverse chronological order and independently limiting three message 934 
+
+categories: observation messages (those containing <observation> tags, capped at the 6 most recent), 935 
+
+AI reasoning messages (capped at the 8 most recent), and user messages (capped at the 3 most recent 936 
+
+turns). The two most recent messages are always retained regardless of category limits. The total 937 
+
+message count is bounded at 40 messages. All parameters are configurable at agent initialization and 938 
+
+can be adjusted for language models with different context window sizes. 939 
+
+At the VLM summary level , image summaries are constrained to 100 words each, enforced by post 940 
+
+hoc word-count truncation even if the VLM exceeds the prompt instruction, with at most 2 image 941 
+
+summaries generated per tool invocation. 942 
+
+1.6 Error Handling: Specific Safeguards 943 
+
+Section 4.2 describes the general error recovery strategy in which failures are returned as structured 944 
+
+observations that allow the model to revise its plan. Here we document three additional safeguards 945 
+
+implemented in the code. 946 
+
+First, a global recursion limit of 100 LangGraph iterations is set via the recursion limit config-947 
+
+uration parameter. This prevents infinite cycling in edge cases where the model repeatedly generates 948 
+
+unparseable or non-progressing outputs. 949 
+
+Second, a secondary safety check within the generate node forces session termination with an 950 
+
+automatic <solution> message if the execution counter exceeds 50 tool invocations, providing a 951 
+
+tighter upper bound than the graph-level recursion limit. 952 
+
+Third, when a <solution> tag is emitted, the agent verifies that all required tools 953 
+
+have been executed by checking the tools executed list against a required set that cur-954 
+
+rently includes tool validate annotation . Because this validation step internally invokes 955 
+
+tool generate annotation report , the final quality check and report generation are coupled. If 956 
+
+the requirement is not satisfied, the proposed solution is intercepted, a reminder is injected into the 957 
+
+conversation history, and control returns to generate .958 
+
+1.7 Custom Marker File Injection 959 
+
+When a user provides a custom marker gene database, the file is saved to the session directory and its 960 
+
+path is recorded in a marker file path.txt sentinel file. During execution, if the agent-generated 961 
+
+27 
+
+> .CC-BY-NC 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted July 10, 2026. ;https://doi.org/10.64898/2026.07.06.736807 doi: bioRxiv preprint
+
+code calls tool query markers without specifying a marker csv path argument, or explicitly sets 962 
+
+marker csv path=None , the execution engine automatically injects the custom marker file path into 963 
+
+the function call before execution. This mechanism allows the language model to generate generic, 964 
+
+path-agnostic tool calls while ensuring that user-provided marker databases are consistently applied 965 
+
+across the session. 966 
+
+1.8 Algorithm of State-machine control loop used by CellPilot 967 
+
+Algorithm 1 State-machine control loop used by CellPilot  
+
+> 1:
+
+Input: user query q, dataset path x, session directory d 
+
+> 2:
+
+Initialize state s ← { q, x, d, history , tools executed , iteration count } 
+
+> 3:
+
+while no valid <solution> emitted and iteration limit not exceeded do  
+
+> 4:
+
+Generate: LLM produces next action a encoded in XML format  
+
+> 5:
+
+Parse and validate a 
+
+> 6:
+
+if a is a valid tool call then  
+
+> 7:
+
+Execute: run tool a in sandboxed environment  
+
+> 8:
+
+if execution succeeds then  
+
+> 9:
+
+Capture outputs and append structured observation to s 
+
+> 10:
+
+else  
+
+> 11:
+
+Append structured error observation to s 
+
+> 12:
+
+end if  
+
+> 13:
+
+else  
+
+> 14:
+
+Return final <solution> and terminate  
+
+> 15:
+
+end if  
+
+> 16:
+
+Update iteration counter  
+
+> 17:
+
+end while 
+
+Supplementary Note 2: Tool Function Specifications 968 
+
+This note documents the complete function signatures, default parameter values, and implementation-969 
+
+specific behaviors of the 16 tools in the CellPilot toolkit. Section 4.5 of the main text describes the 970 
+
+analytical logic and mathematical formulations underlying the preprocessing, clustering, and anno-971 
+
+tation stages. Here we focus on software interfaces and operational behavior relevant to reproduction 972 
+
+and extension of the toolkit. 973 
+
+All tools accept the current AnnData file path as their primary argument, operate on the shared 974 
+
+AnnData object, persist updated objects and generated visualizations to the session directory, and 975 
+
+return a structured ToolResult containing an execution status flag, a textual summary, and references 976 
+
+to any output files. 977 
+
+2.1 Data Ingestion and Inspection 978 
+
+tool inspect data(file path) accepts .h5ad and .csv input formats. For AnnData files, it extracts 979 
+
+matrix dimensions, available annotation fields in obs and var , and summary statistics of the expres-980 
+
+sion values. A heuristic classifier determines whether the data appear to represent raw counts, 981 
+
+log-transformed values, or scaled values by examining the value range, checking for the presence of 982 
+
+negative entries, and inspecting the distribution shape. An expression histogram is saved to the ses-983 
+
+sion directory to allow visual confirmation of the detected preprocessing state. This step informs the 984 
+
+agent’s initial planning decision by indicating whether normalization and transformation should be 985 
+
+executed or skipped. 986 
+
+2.2 Quality Control 987 
+
+tool calculate qc metrics(file path) wraps Scanpy’s sc.pp.calculate qc metrics and auto-988 
+
+matically detects mitochondrial genes by searching gene name prefixes MT-, mt-, and Mt- to 989 
+
+accommodate human, mouse, and mixed-case conventions. The tool computes per-cell total counts, 990 
+
+number of genes detected, and mitochondrial count percentage, and reports quantile distributions at 991 
+
+28 
+
+> .CC-BY-NC 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted July 10, 2026. ;https://doi.org/10.64898/2026.07.06.736807 doi: bioRxiv preprint
+
+the 5th, 25th, 50th, 75th, and 95th percentiles for each metric. A multi-panel violin plot is generated 992 
+
+alongside the numeric output. 993 
+
+tool filter by qc(file path, min genes=200, max genes=None, max mito=20.0) 994 
+
+applies cell-level quality filters with configurable thresholds. The default values are intentionally 995 
+
+conservative: min genes=200 removes only cells with extremely low gene detection, max genes is 996 
+
+left unset by default to avoid removing large cells without evidence of doublet contamination, and 997 
+
+max mito=20.0 accommodates tissues with moderate mitochondrial content. These defaults are 998 
+
+designed to satisfy the ≥90% cell retention guideline described in the main text. The tool reports 999 
+
+the number of cells before and after filtering and the retention percentage. 1000 
+
+2.3 Normalization and Feature Selection 1001 
+
+tool normalize data(file path, normalize=True, log transform=True, scale=False, tar-1002 
+
+get sum=10000) provides fine-grained control over three distinct preprocessing operations through 1003 
+
+independent boolean flags. Library-size normalization scales each cell to a target sum of 10,000 counts 1004 
+
+by default. Log transformation applies log1p . Scaling centers each gene to zero mean and clips val-1005 
+
+ues at ±10 to limit the influence of outlier expression values. Importantly, the scale flag defaults to 1006 
+
+False because scaling must occur after highly variable gene selection to preserve variance informa-1007 
+
+tion. The tool enforces this order internally and raises a warning if scaling is requested on data that 1008 
+
+have not yet undergone HVG selection. 1009 
+
+tool hvg(file path, n top genes=2000, flavor=‘seurat v3’) identifies highly variable genes 1010 
+
+using Scanpy’s sc.pp.highly variable genes . The seurat v3 flavor operates on raw count data and 1011 
+
+is preferred when available. However, if the input matrix contains non-integer values, as occurs after 1012 
+
+log transformation, the tool automatically falls back to the seurat flavor, which is compatible with 1013 
+
+transformed data. Selected genes are flagged in adata.var[‘highly variable’] , and the AnnData 1014 
+
+object is saved with a .hvg suffix. 1015 
+
+2.4 Dimensionality Reduction 1016 
+
+tool run pca(file path, n comps=50) computes principal component analysis on the HVG-1017 
+
+filtered expression matrix. A variance-explained elbow plot is generated automatically and saved to 1018 
+
+the session directory. PCA embeddings are stored in adata.obsm[‘X pca’] and the per-component 1019 
+
+variance ratios in adata.uns[‘pca’][‘variance ratio’] .1020 
+
+tool run neighbors(file path, n neighbors=15, n pcs=30) constructs a k-nearest neighbor 1021 
+
+graph from the top principal components. The resulting connectivities and distances matrices are 1022 
+
+stored in adata.obsp .1023 
+
+tool run umap(file path, random state=0) computes two-dimensional UMAP coordinates 1024 
+
+for visualization. The fixed random seed ensures reproducibility of visual outputs for identical inputs. 1025 
+
+2.5 Clustering and Differential Expression 1026 
+
+tool run leiden cluster(file path, resolution=0.8, random state=0) performs Leiden com-1027 
+
+munity detection on the precomputed neighbor graph. Cluster assignments are stored in both 1028 
+
+adata.obs[‘leiden’] and a standardized adata.obs[‘cluster’] column, the latter serving as the 1029 
+
+canonical cluster identifier for downstream annotation tools. 1030 
+
+tool visualize clusters(file path) generates a UMAP scatter plot colored by cluster assign-1031 
+
+ments and saves the figure as a PNG file. This visualization can be consumed by the VLM module 1032 
+
+(Supplementary Note 4) to produce a structured assessment of cluster separation quality. 1033 
+
+tool find deg(file path, n genes=25, method=‘wilcoxon’) identifies differentially 1034 
+
+expressed genes per cluster using Scanpy’s sc.tl.rank genes groups with the Wilcoxon rank-sum 1035 
+
+test as the default method. For each cluster, the top-ranked genes are returned along with their 1036 
+
+scores, adjusted p-values, and log fold changes. 1037 
+
+2.6 Annotation 1038 
+
+tool query markers(file path, marker file=None, top k=50) cross-references the top K dif-1039 
+
+ferentially expressed genes per cluster against a marker gene database. When marker file is not 1040 
+
+provided, the tool uses the built-in default database; when a custom marker file is supplied by the user, 1041 
+
+it is automatically injected by the execution engine (Supplementary Note 1, Section 1.7). For each 1042 
+
+cluster, the function computes marker hit counts for all candidate cell types and assigns the predicted 1043 
+
+29 
+
+> .CC-BY-NC 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted July 10, 2026. ;https://doi.org/10.64898/2026.07.06.736807 doi: bioRxiv preprint
+
+label and confidence score as defined in Supplementary Note 6. Predictions and confidence values are 1044 
+
+written to adata.obs[‘predicted cell type’] and adata.obs[‘predicted confidence’] . Clus-1045 
+
+ters with zero total marker hits are labeled as Unassigned and flagged for subsequent LLM-based 1046 
+
+refinement. 1047 
+
+tool validate annotation(file path) performs post-annotation quality checks, including ver-1048 
+
+ification of the total number of clusters, the cluster size distribution, the count of unassigned 1049 
+
+clusters, and the number of clusters with confidence scores below 0.5. Warnings are emitted as 1050 
+
+structured text in the tool output but do not halt the workflow. This tool also internally invokes 1051 
+
+tool generate annotation report .1052 
+
+tool llm annotate unassigned(file path) is invoked only when unassigned clusters remain 1053 
+
+after marker-based annotation. For each such cluster, the tool constructs a structured prompt 1054 
+
+containing the top differentially expressed genes, any partial marker matches, cluster size, and 1055 
+
+mean QC statistics. The language model is instructed to return a JSON object with three fields: 1056 
+
+cell type , confidence , and reasoning . Responses that do not conform to this schema are 1057 
+
+assigned a default confidence of 0.3. Refined labels and associated confidence values are stored in 1058 
+
+adata.obs[‘llm annotate’] and adata.obs[‘llm confidence’] , respectively. 1059 
+
+2.7 Reporting 1060 
+
+tool generate annotation report(file path) produces a multi-panel summary figure that consol-1061 
+
+idates the key outputs of the entire workflow into a single visualization for downstream auditing. 1062 
+
+The figure includes a UMAP embedding colored by cluster identity, a UMAP colored by predicted 1063 
+
+cell type, per-cell overlays of QC metrics, and marker gene expression patterns across annotated 1064 
+
+populations. This report is saved as a high-resolution PNG file in the session directory. 1065 
+
+Supplementary Note 3: Prompt Engineering and Chain-of-Thought Design 1066 
+
+This note presents the complete prompt templates used by CellPilot, including the system prompt 1067 
+
+that governs the agent’s reasoning behavior, the structured XML protocol for tool invocation, and 1068 
+
+the auxiliary prompts for self-critique and vision-language model integration. Section 4.2 of the main 1069 
+
+text describes the role of these prompts within the state-machine architecture. Here we provide the 1070 
+
+verbatim prompt text to support reproducibility and independent evaluation of the prompt design. 1071 
+
+3.1 System Prompt 1072 
+
+The system prompt is constructed at agent initialization and remains fixed throughout the session. It 1073 
+
+comprises six functional sections: role specification and output format constraints, preprocessing order 1074 
+
+enforcement, quality control filtering guidelines, clustering parameter recommendations, workflow and 1075 
+
+execution rules, and the dynamically generated tool list. The complete prompt is shown in Box 1. 1076 
+
+The prompt employs several design strategies that are intended to improve instruction adherence 1077 
+
+in compact reasoning models. Domain-specific constraints are phrased as imperative rules rather than 1078 
+
+suggestions. Correct usage examples are included explicitly. The preprocessing order is reinforced 1079 
+
+through both a numbered sequence and a worked code example. QC filtering guidance is framed as 1080 
+
+quantile-based heuristics with concrete numerical examples, converting a qualitative judgment into 1081 
+
+an operational decision rule. 1082 
+
+The tool list section is generated dynamically from the registered tool functions using Python’s 1083 
+
+inspect.signature , ensuring that the prompt reflects the exact function signatures available in the 1084 
+
+current toolkit version. 1085 
+
+Box 1. System Prompt (verbatim, tool list abbreviated) 
+
+You are a single-cell RNA-seq expert. CRITICAL: Use XML tags correctly! - Code execution: <execute>code</execute> - Final answer ONLY: <solution>answer</solution> - NEVER use <solution> for plans or intermediate steps! - NEVER use markdown backticks (‘‘‘) 
+
+30 
+
+> .CC-BY-NC 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted July 10, 2026. ;https://doi.org/10.64898/2026.07.06.736807 doi: bioRxiv preprint
+
+CRITICAL PREPROCESSING ORDER (MUST FOLLOW): Step 4: Normalize + Log ONLY (do_scale=False) Step 5: Find HVGs on log-normalized data Step 5b: Scale ONLY the HVGs (do_scale=True) Step 6: Then run PCA NEVER scale before finding HVGs! This destroys variance information needed for HVG detection. CORRECT EXAMPLE: <execute>tool_normalize_data("filtered.h5ad", do_normalize=True, do_log=True, do_scale=False)</execute> <execute>tool_hvg("filtered.norm.h5ad", n_top_genes=2000)</execute> <execute>tool_normalize_data("filtered.norm.hvg.h5ad", do_normalize=False, do_log=False, do_scale=True)</execute> <execute>tool_run_pca( "filtered.norm.hvg.norm.scaled.h5ad", n_pcs=50)</execute> CLUSTERING PARAMETER GUIDELINES (adapt based on dataset): - PBMC-like (3k-10k cells): resolution 0.5-1.2, n_neighbors 10-15, n_pcs 30-40 - Larger datasets (>10k): resolution 1.0-2.0, n_neighbors 15-30 - Smaller datasets (<1k): resolution 0.3-0.8, n_neighbors 5-10 - Complex tissues: higher resolution (1.5-3.0) - Use elbow plot to guide n_pcs selection QC FILTERING: MUST RETAIN >= 90% CELLS After tool_calculate_qc_metrics, you get quantile stats (Q01, Q05, Q50, Q95, Q99) and recommendations. ANALYZE THE DATA, SET APPROPRIATE THRESHOLDS: - min_genes: Below Q05 (e.g., Q05=1200 -> use 500-800) - max_genes: Above Q95 to catch doublets (e.g., Q95=5000 -> use 7000-8000). Skip if Q99 < 2x median - max_mito: Based on "% cells >30% mito" (e.g., 5% -> use 35-40%) - min_counts/max_counts: Usually NOT needed Verify: If removed >15% cells, thresholds were too strict - re-filter with looser values. TOOLS (exact names -- do NOT invent other names): - tool_inspect_data(file_path) Description: Loads and inspects an input dataset... - tool_calculate_qc_metrics(file_path) Description: Computes standard QC metrics... [... 16 tools total, dynamically generated ...] EXECUTION RULES: 1. FIRST RESPONSE FORMAT: Analysis Plan: - [ ] Step 1: Load and inspect data - [ ] Step 2: Calculate QC metrics - [ ] Step 3: Filter cells - [ ] Step 4: Normalize - [ ] Step 5: Find HVGs 
+
+31 
+
+> .CC-BY-NC 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted July 10, 2026. ;https://doi.org/10.64898/2026.07.06.736807 doi: bioRxiv preprint
+
+- [ ] Step 6: Run PCA - [ ] Step 7: Cluster cells - [ ] Step 8: Visualize - [ ] Step 9: DEG analysis - [ ] Step 10: Marker query -> Validate -> (LLM annotate if unassigned) -> Report <execute>tool_inspect_data("data.h5ad")</execute> 2. SUBSEQUENT RESPONSES: After seeing <observation>: - Analyze the results - If more steps: <execute>next_tool(...)</execute> - If all done: <solution>Final summary</solution> 3. Generate ONLY ONE <execute> tag per response! 4. NEVER wrap the plan in <solution> tags! 5. After each <observation>, CHECK if step succeeded. 6. Use <solution> ONLY for the final summary. 7. Before <solution>, verify each checklist item. 
+
+3.2 Dynamic Prompt Compression 1086 
+
+CellPilot supports an alternative dynamic prompt mode designed for models with smaller context 1087 
+
+windows. In this mode, rather than including the full system prompt at every LLM invoca-1088 
+
+tion, the system selects a subset of tools relevant to the current workflow stage and constructs 1089 
+
+a shorter prompt containing only the essential formatting rules and the selected tool signa-1090 
+
+tures. Tool selection operates by maintaining the canonical execution sequence and including 1091 
+
+a sliding window of up to six tools centered on the next unexecuted tool, supplemented by 1092 
+
+a fixed set of core tools ( tool inspect data , tool normalize data , tool visualize clusters ,1093 
+
+tool validate annotation , tool generate annotation report ) that are always available. The 1094 
+
+compressed prompt retains the critical formatting constraints and preprocessing order but omits the 1095 
+
+more detailed QC guidelines, clustering parameter recommendations, and usage examples. 1096 
+
+3.3 Structured XML Protocol and Interaction Examples 1097 
+
+The XML protocol governs all communication between the language model and the execution engine. 1098 
+
+Three tag types are defined: <execute> encloses a single tool call to be executed, <observation> 1099 
+
+wraps the structured output returned after execution, and <solution> marks the final analytical 1100 
+
+summary. The agent is constrained to emit exactly one <execute> block per response, enforcing 1101 
+
+atomic tool execution. This constraint simplifies error isolation because a failed tool call yields a 1102 
+
+single, unambiguous observation. 1103 
+
+Box 2 illustrates a representative three-turn interaction excerpt showing the XML protocol in 1104 
+
+practice. 1105 
+
+Box 2. Representative interaction excerpt (XML protocol) 
+
+--- Turn 1: Agent reasoning + tool call ---The data has been loaded successfully with shape (2700, 32738). The expression values appear to be raw counts. Next, I will calculate QC metrics. [x] Step 1: Inspect data [ ] Step 2: Calculate QC metrics <execute> tool_calculate_qc_metrics("pbmc3k.h5ad") </execute> --- Turn 2: Observation (from execution engine) ---<observation> 
+
+32 
+
+> .CC-BY-NC 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted July 10, 2026. ;https://doi.org/10.64898/2026.07.06.736807 doi: bioRxiv preprint
+
+Tool: tool_calculate_qc_metrics. Status: OK Summary: QC metrics computed for 2700 cells. n_genes_by_counts: Q05=312, Q25=672, Q50=817, Q75=1013, Q95=1463 total_counts: Q05=1135, Q25=2494, Q50=3356, Q75=4574, Q95=8249 pct_counts_mt: Q05=1.2%, Q25=2.8%, Q50=3.9%, Q75=5.5%, Q95=8.4% Recommendation: min_genes=200, max_mito=15.0 Figures: - figures/a1b2c3d4_pbmc3k.qc_violin.png Figure summaries (via Qwen-VL): - pbmc3k.qc_violin.png: Violin plots show three QC metrics across 2700 cells. Gene counts concentrated around 700-1000 with a tail to ~2500. Total counts centered at ~3000 UMIs. Mitochondrial % mostly below 8% with sparse outliers near 10-12%. </observation> --- Turn 3: Agent reasoning + next tool call ---QC metrics look reasonable. Mitochondrial % is mostly below 8% with no bimodal pattern, so I will use a conservative threshold. Gene detection is moderate with Q05=312, so min_genes=200 will only remove extreme low-quality cells. [x] Step 1: Inspect data [x] Step 2: Calculate QC metrics [ ] Step 3: Filter cells <execute> tool_filter_by_qc("pbmc3k.qc.h5ad", min_genes=200, max_mito=12.0) </execute> 
+
+3.4 Self-Critic Prompt 1106 
+
+After the agent emits a <solution> tag, the self-critic mechanism, when enabled, injects a review 1107 
+
+prompt into the conversation and invokes the language model for one additional reasoning pass. The 1108 
+
+review prompt is appended as a user message following the pruned conversation history, with the 1109 
+
+original system prompt retained. The verbatim self-critic prompt is shown in Box 3. 1110 
+
+The critic operates under the same XML protocol as the main agent: it may emit a new <execute> 1111 
+
+tag to trigger corrective tool calls, or confirm completion with a <solution> tag. 1112 
+
+Box 3. Self-critic review prompt (verbatim) 
+
+Before submitting the final answer, please carefully review the preceding plan, execution results, and <observation> outputs. If any steps remain incomplete or if outputs contain errors, continue issuing new <execute> commands or update the plan. If you confirm that all objectives have been accomplished, output the final <solution>. 
+
+3.5 Vision-Language Model Prompt 1113 
+
+When a tool generates a visualization, the VLM module (Supplementary Note 4) receives the image 1114 
+
+along with a fixed instruction prompt designed to elicit quantitative, actionable observations rather 1115 
+
+than generic descriptions. The verbatim VLM prompt is shown in Box 4. 1116 
+
+33 
+
+> .CC-BY-NC 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted July 10, 2026. ;https://doi.org/10.64898/2026.07.06.736807 doi: bioRxiv preprint
+
+The prompt explicitly requests measurable details because the main agent, which processes 1117 
+
+VLM summaries as text, benefits more from numeric observations that can guide parameter choices 1118 
+
+than from purely qualitative descriptions. The 100-word limit is enforced both through the prompt 1119 
+
+instruction and through post hoc truncation in the agent code. 1120 
+
+Box 4. VLM image summary prompt (verbatim) 
+
+This image is the result of a single-cell analysis step. Please carefully interpret the figure and write a concise summary WITH quantitative numbers. Include any measurable details you can infer (e.g., number of clusters, relative separation, approximate proportions, axis ranges, notable outliers). Keep the summary within 100 words. Output plain text only. 
+
+3.6 Prompt Design Rationale 1121 
+
+Several design choices in the prompt system merit explicit justification, as they reflect trade-offs 1122 
+
+specific to piloting compact language models through multi-step analytical workflows. 1123 
+
+Redundant constraint encoding. The preprocessing order (normalize → log → HVG → scale →1124 
+
+PCA) is stated repeatedly in the system prompt, including a numbered sequence, a negative rule, and 1125 
+
+a worked code example. This redundancy is intended to reduce order violations in long multi-step 1126 
+
+sessions. 1127 
+
+Checklist-driven planning. The prompt requires the agent to produce an explicit analysis plan 1128 
+
+with checkboxes in its first response and to mark each item as completed or skipped with justification 1129 
+
+before emitting a <solution> . This externalizes progress tracking into the conversation history. 1130 
+
+Data-conditional threshold guidance. Rather than prescribing fixed QC thresholds, the prompt 1131 
+
+provides a mapping from observed quantile statistics to plausible threshold ranges. This allows the 1132 
+
+agent to adapt parameter choices to the structure of the input dataset. 1133 
+
+Single-execute constraint. Restricting the model to one <execute> block per turn forces the 1134 
+
+agent to observe each tool output before planning the next step, producing a cleaner thought-action-1135 
+
+observation loop. 1136 
+
+Supplementary Note 4: Vision-Language Model Integration 1137 
+
+This note documents the design and operation of the vision-language model (VLM) module that 1138 
+
+enables CellPilot to incorporate visual evidence into its reasoning process. Section 4.4 of the main 1139 
+
+text introduces the rationale for multimodal observation enrichment and identifies the VLM backbone 1140 
+
+model. Here we describe the technical integration, output handling, and provide a concrete example 1141 
+
+from a benchmark annotation session. 1142 
+
+4.1 Module Architecture 1143 
+
+The VLM module is implemented as a separate QwenVisionSummarizer class that is instantiated 1144 
+
+lazily upon first use rather than at agent initialization. When a tool execution produces one or 1145 
+
+more image files, the execute node in the agent graph passes the image paths to the summarization 1146 
+
+method, which coordinates VLM inference. Each image is loaded from disk, base64-encoded, and 1147 
+
+sent to the VLM alongside a fixed instruction prompt via an OpenAI-compatible API endpoint. The 1148 
+
+returned text summary is appended directly to the <observation> block as a Figure summaries 1149 
+
+section, making visual evidence available to the language model in the same context as the numeric 1150 
+
+tool output. Supported input formats include PNG, JPEG, and WebP. 1151 
+
+4.2 Output Constraints and Computational Cost Control 1152 
+
+Two mechanisms limit the computational cost and context consumption of VLM summaries. First, 1153 
+
+each tool invocation triggers summarization of at most 2 images, even when more output figures are 1154 
+
+generated. Images are processed in the order they appear in the tool output. Second, each summary 1155 
+
+is constrained to 100 words through both the prompt instruction and post hoc truncation enforced in 1156 
+
+34 
+
+> .CC-BY-NC 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted July 10, 2026. ;https://doi.org/10.64898/2026.07.06.736807 doi: bioRxiv preprint
+
+the agent code. These constraints allow VLM summaries to enrich the observation context without 1157 
+
+dominating the available context window. 1158 
+
+4.3 Caching and Failure Handling 1159 
+
+VLM summarization operates on a best-effort basis. Summaries are cached per file using a composite 1160 
+
+key derived from the absolute file path, last modification timestamp, and file size, preventing redun-1161 
+
+dant VLM calls when the same visualization is referenced repeatedly. If VLM inference fails for any 1162 
+
+reason, an empty result is returned silently rather than injecting error text into the <observation> 1163 
+
+block. Failed summaries are logged to the session directory for diagnosis but are not exposed to the 1164 
+
+main agent. VLM invocation is gated on the presence of a valid API key; when no key is configured, 1165 
+
+the module is disabled and the agent proceeds with numeric observations only. 1166 
+
+4.4 Example VLM-Guided Decision Making 1167 
+
+To illustrate the VLM module in practice, we present an example from a CellPilot annotation session 1168 
+
+on a Tabula Sapiens kidney dataset. After differential expression analysis and marker gene cross-1169 
+
+referencing, tool query markers produced a marker hit heatmap visualizing the number of DEG-1170 
+
+marker overlaps between each cluster and each candidate cell type. Box 1 shows the heatmap (right) 1171 
+
+alongside the verbatim VLM summary (left) as it was appended to the agent’s <observation> 1172 
+
+context. 1173 
+
+Box 1. VLM input and output: marker hit heatmap (Kidney, Tabula Sapiens) 
+
+This heatmap displays Marker DEG Hits per Cluster across 7 cell types (x-axis) and 13 clusters (y-axis). Hit counts range 0-10, with highest values (10) observed in 4 cell-type-cluster pairs: b cell (cluster 8), cd8-positive alpha-beta T cell (cluster 8), macrophage (cluster 7), and nk cell (cluster 12). Cluster 8 shows two cell types with 10 hits. Most clusters (e.g., 0, 1, 2) have low hits (0-2). Cell types share clusters (e.g., b cell and cd8+ T cell in cluster 8), indicating overlapping marker expression patterns. (98 words) 
+
+This summary provided the agent with three actionable observations: a subset of clusters showed 1174 
+
+dominant marker support for a single cell type, at least one cluster displayed ambiguous support 1175 
+
+across closely related lymphocyte labels, and several clusters showed low hit counts overall, suggesting 1176 
+
+limited marker database coverage for the dominant epithelial populations. This kind of compressed 1177 
+
+interpretation can help the agent decide whether additional refinement steps are warranted. 1178 
+
+Supplementary Note 5: Benchmark Design, Dataset Preparation, and 1179 
+
+Fairness Controls 1180 
+
+Section 4.6 of the main text describes the benchmark datasets and the general principle that unified 1181 
+
+inputs were used across methods without dataset-specific tuning. This note provides the technical 1182 
+
+details of dataset organization, per-method input assumptions, cluster-level evaluation alignment, 1183 
+
+and fairness controls that are necessary for interpreting the comparative benchmark. 1184 
+
+5.1 Benchmark Inputs and Per-Tissue Evaluation Units 1185 
+
+Each benchmark dataset was partitioned into per-tissue subsets, and each tissue was treated as an 1186 
+
+independent evaluation unit. For CellPilot, the input to each session consisted of a raw count matrix 1187 
+
+for a single tissue together with a marker gene list or differential expression gene list when available. 1188 
+
+Starting from this input, CellPilot autonomously executed quality control, normalization, highly 1189 
+
+variable gene selection, principal component analysis, neighbor graph construction, Leiden clustering, 1190 
+
+differential expression analysis, and annotation without manual intervention. 1191 
+
+35 
+
+> .CC-BY-NC 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted July 10, 2026. ;https://doi.org/10.64898/2026.07.06.736807 doi: bioRxiv preprint
+
+This per-tissue design reflects a practical single-cell analysis setting in which one tissue is analyzed 1192 
+
+at a time, and it also allows tissue-level scores to be computed independently. 1193 
+
+5.2 Shared Dataset Subsets Across Methods 1194 
+
+All methods were evaluated on the same per-tissue subsets drawn from the same benchmark datasets. 1195 
+
+No method received a privileged subset of tissues or cells. Likewise, no dataset-specific prompt editing 1196 
+
+or manual correction was introduced for CellPilot. The same global prompt template and the same 1197 
+
+tool set were used throughout the benchmark. Parameter values used by CellPilot were selected by 1198 
+
+the agent itself on the basis of observed data characteristics within each session rather than by human 1199 
+
+tuning. 1200 
+
+5.3 Benchmark Datasets and Format Standardization 1201 
+
+Expression matrices for all three datasets were downloaded from their original public repositories. 1202 
+
+GTEx single-cell and single-nucleus data were obtained from the GTEx Portal (https://gtexportal. 1203 
+
+org; PMID: 35549429). Tabula Sapiens data were downloaded from the CZI cellxgene portal (https: 1204 
+
+//cellxgene.cziscience.com; PMID: 35549404). Mouse Cell Atlas data were retrieved from the MCA 1205 
+
+website (http://bis.zju.edu.cn/MCA/; PMID: 29474909; GEO accession: GSE108097). 1206 
+
+All datasets were converted to AnnData ( .h5ad ) format prior to analysis. For GTEx and Tabula 1207 
+
+Sapiens, where data were already distributed as AnnData objects, conversion consisted of extracting 1208 
+
+the raw count layer and discarding precomputed embeddings or transformed representations so that 1209 
+
+CellPilot operated on count-level inputs. For MCA, the original Microwell-seq count matrices were 1210 
+
+loaded into AnnData structures with gene names as variable indices and cell barcodes as observation 1211 
+
+indices. No gene filtering, cell filtering, or normalization was applied before CellPilot processing. 1212 
+
+5.4 Tissue-Level Organization 1213 
+
+Each dataset was split into per-tissue subsets, with each tissue processed as an independent CellPilot 1214 
+
+session. Supplementary Table 2 summarizes the key characteristics of each dataset, including species, 1215 
+
+tissue count, cell type count, and publication references. 1216 
+
+GTEx comprises 7 tissues (Breast, Esophagus, Heart, Lung, Prostate, Skeletal Muscle, Skin), with 1217 
+
+cell counts per tissue ranging from approximately 10,000 to 50,000 and 41 distinct cell types across 1218 
+
+all tissues. 1219 
+
+Tabula Sapiens comprises 24 tissues spanning immune (Blood, Bone Marrow, Lymph Node, 1220 
+
+Spleen, Thymus), epithelial (Lung, Large Intestine, Small Intestine, Bladder, Trachea), solid (Heart, 1221 
+
+Liver, Kidney, Pancreas), glandular (Mammary, Prostate, Salivary Gland), and other organ systems 1222 
+
+(Eye, Fat, Muscle, Skin, Tongue, Uterus, Vasculature), encompassing 171 distinct cell types. 1223 
+
+MCA spans 51 tissues with 64 cell types. Unlike GTEx and Tabula Sapiens, MCA tissues vary 1224 
+
+considerably in sequencing depth and cell recovery, with some tissues containing fewer than 500 cells. 1225 
+
+These small-tissue samples present particular challenges for clustering and differential expression 1226 
+
+analysis. 1227 
+
+5.5 Baseline-Specific Input Assumptions 1228 
+
+The four baseline methods evaluated in the main benchmark differ substantially in the upstream infor-1229 
+
+mation they receive as input. This distinction is important for interpreting comparative performance, 1230 
+
+as methods that are provided with ground-truth cluster assignments effectively operate under an ora-1231 
+
+cle clustering assumption, removing a major source of analytical uncertainty. CellPilot, by contrast, 1232 
+
+receives only the raw count matrix and determines all upstream analytical decisions autonomously, 1233 
+
+without access to ground-truth cluster boundaries or precomputed marker gene lists (Methods). A 1234 
+
+summary of the input requirements for each method is provided in Supplementary Table 1. 1235 
+
+Among the baselines, SingleR operates without access to ground-truth cluster boundaries: 1236 
+
+SingleR. SingleR operates at the single-cell level, assigning labels by comparing each cell inde-1237 
+
+pendently to a reference expression atlas using correlation-based similarity. Cluster assignments are 1238 
+
+not required for prediction. In this study, predictions were aggregated to the cluster level by majority 1239 
+
+vote for evaluation, but all labels were generated independently at the single-cell level. 1240 
+
+The remaining three baselines require ground-truth cluster assignments as input: 1241 
+
+ScType. ScType operates at the cluster level and does not perform clustering. It takes pre-1242 
+
+defined cluster assignments together with expression data and assigns a label to each cluster using 1243 
+
+36 
+
+> .CC-BY-NC 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted July 10, 2026. ;https://doi.org/10.64898/2026.07.06.736807 doi: bioRxiv preprint
+
+the ScType marker database. In this benchmark, the supplied cluster assignments correspond to the 1244 
+
+ground-truth labels provided with each dataset. 1245 
+
+GPTCelltype4. GPTCelltype4 also operates at the cluster level. It takes marker gene lists 1246 
+
+derived from ground-truth clusters, together with tissue information, and returns predicted cell type 1247 
+
+labels using GPT-4. Both the cluster definitions and the corresponding differential expression results 1248 
+
+were derived from the ground-truth annotations in the benchmark datasets. 1249 
+
+CASSIA. CASSIA operates at the cluster level using a multi-step prompting strategy with GPT-1250 
+
+4o. Similar to GPTCelltype4, it relies on marker gene lists derived from ground-truth clusters, along 1251 
+
+with tissue context information. Default parameters were used throughout, consistent with the other 1252 
+
+baseline methods. 1253 
+
+5.6 Shared Inputs and Clustering Assumptions Across Methods 1254 
+
+To clarify the use of “same preprocessed clusters” in the main text, it is important to distinguish 1255 
+
+between their role as method inputs and as the common reference for evaluation. 1256 
+
+For clustering, ScType, GPTCelltype4, and CASSIA were provided with the ground-truth cluster 1257 
+
+assignments from the benchmark datasets as direct input. In contrast, SingleR does not use cluster 1258 
+
+assignments for prediction, and CellPilot performs clustering from raw data. Neither SingleR nor 1259 
+
+CellPilot had access to the benchmark-provided cluster boundaries during annotation. For evaluation, 1260 
+
+however, predictions from all methods were mapped to the same ground-truth clusters to ensure a 1261 
+
+consistent basis for comparison. 1262 
+
+For marker gene inputs, GPTCelltype4, CASSIA, ScType, and CellPilot all used the top 10 1263 
+
+differentially expressed genes per cluster as the basis for annotation. For the three cluster-dependent 1264 
+
+baselines, these marker gene lists were precomputed from the ground-truth clusters. CellPilot instead 1265 
+
+computed differential expression from its own clusters, while maintaining the same marker list size 1266 
+
+for consistency. SingleR does not rely on marker genes and instead performs direct expression profile 1267 
+
+matching against a reference atlas. 1268 
+
+5.7 Cluster-Level Evaluation of CellPilot 1269 
+
+Because CellPilot performs clustering by itself, its inferred clusters do not necessarily align with 1270 
+
+the reference clusters provided in the benchmark datasets. To enable direct comparison with other 1271 
+
+methods, CellPilot predictions were therefore mapped to the dataset-defined reference clusters for 1272 
+
+evaluation. 1273 
+
+Two complementary aggregation schemes were used. 1274 
+
+CellPilot (Score). Each cell was assigned an agreement score based on the comparison between 1275 
+
+its predicted label and the reference annotation. For each reference cluster, these cell-level scores were 1276 
+
+averaged to obtain a continuous cluster-level score ranging from 0 to 1. 1277 
+
+CellPilot (Vote). For each reference cluster, the most frequent predicted cell type among its 1278 
+
+constituent cells was taken as the cluster-level label. This label was then compared with the reference 1279 
+
+annotation using the three-level scoring scheme described in Supplementary Note 6, yielding a score 1280 
+
+of 0, 0.5, or 1. 1281 
+
+At the tissue level, scores were computed as the unweighted mean across all reference clusters 1282 
+
+within each tissue, such that each cluster contributed equally regardless of its size. 1283 
+
+5.8 Cluster Aggregation Policy and Absence of Majority Thresholding 1284 
+
+No additional majority threshold was imposed when summarizing predictions within reference clus-1285 
+
+ters. In particular, clusters that contained heterogeneous cell populations were not excluded, relabeled, 1286 
+
+or separated on the basis of purity criteria. All reference clusters were retained in evaluation as 1287 
+
+provided by the benchmark datasets. 1288 
+
+5.9 Ground-Truth Label Harmonization 1289 
+
+Predicted and ground-truth cell type labels were mapped to Cell Ontology names and broad cell 1290 
+
+type categories to enable standardized evaluation. For Tabula Sapiens, the finest available annotation 1291 
+
+level ( cell ontology class ) was used as the primary reference label. For MCA, the original study 1292 
+
+annotations were used. Cross-species evaluation in MCA was performed without explicit mouse-to-1293 
+
+human ortholog conversion at the input stage, meaning that the method had to rely on conserved 1294 
+
+marker patterns rather than direct gene-name remapping. 1295 
+
+37 
+
+> .CC-BY-NC 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted July 10, 2026. ;https://doi.org/10.64898/2026.07.06.736807 doi: bioRxiv preprint
+
+5.10 Marker Gene Lists for GPTCelltype4 Benchmarking 1296 
+
+To ensure comparability with GPTCelltype4, marker gene lists were generated following the protocol 1297 
+
+described by Hou and Ji for the corresponding datasets. For GTEx, raw counts were library-size 1298 
+
+normalized and log-transformed after adding a pseudocount of 1, ComBat was applied to account 1299 
+
+for protocol- and sex-specific batch effects, and Welch’s t-test was used to identify differential genes. 1300 
+
+For Tabula Sapiens, raw counts were library-size normalized and log-transformed after adding a 1301 
+
+pseudocount of 1, and Seurat’s FindAllMarkers() with default settings was used to obtain differential 1302 
+
+genes within each tissue. For MCA, the differential gene lists provided by the original study were 1303 
+
+used. In the primary benchmark experiments, GPTCelltype4 was provided with the top 10 marker 1304 
+
+genes per cluster as recommended in the original study. 1305 
+
+5.11 No Manual Intervention 1306 
+
+No dataset-specific prompt engineering, no tissue-specific parameter presets, and no manual post 1307 
+
+hoc correction of CellPilot predictions were applied during benchmarking. CellPilot used a unified 1308 
+
+prompt and made tool-parameter decisions on the basis of session-specific observations. This design 1309 
+
+was chosen to evaluate the method as a general-purpose autonomous framework rather than as a 1310 
+
+manually tuned workflow. 1311 
+
+Supplementary Note 6: Marker Database Construction, Annotation 1312 
+
+Provenance, and Hierarchical Evaluation 1313 
+
+This note describes the origin of the marker information used by CellPilot, the scoring logic imple-1314 
+
+mented in the marker-query step, the conditions under which clusters are designated as unassigned, 1315 
+
+and the hierarchical rules used to classify prediction outcomes as full matches, partial matches, or 1316 
+
+mismatches. 1317 
+
+6.1 Marker Source Hierarchy 1318 
+
+CellPilot first allows the user to provide a custom marker gene list. This is the preferred mode when 1319 
+
+the user has access to a curated tissue-specific or study-specific marker resource. When no user-1320 
+
+supplied marker file is available, the system falls back to an internal default marker database derived 1321 
+
+from PanglaoDB. 1322 
+
+This design separates two use cases. In one setting, CellPilot serves as a flexible annotation 1323 
+
+framework that can incorporate expert-provided prior knowledge. In the other, it operates in a default 1324 
+
+mode using a broad public marker resource. 1325 
+
+6.2 Marker Query Procedure 1326 
+
+The core marker-based annotation logic is implemented in the tool query markers function in 1327 
+
+marker db.py . For each cluster, the tool extracts the top K differentially expressed genes from 1328 
+
+rank genes groups , with top k=50 by default. Gene symbols are converted to uppercase before 1329 
+
+matching to the marker database. If a queried gene is found in the marker table for one or more cell 1330 
+
+types, the hit count for the corresponding cell type is incremented. This procedure yields, for each 1331 
+
+cluster, a dictionary of the form {cell type: hit count }.1332 
+
+The predicted cell type for the cluster is defined as the cell type with the highest hit count. 1333 
+
+6.3 Marker-Based Confidence Score 1334 
+
+The confidence score used in the primary marker-based annotation layer is defined as 1335 
+
+confidence = top hit count total hits for cluster .
+
+Thus, if a cluster produces 20 total marker hits across all candidate cell types and 15 of those 1336 
+
+hits support a T-cell label, the resulting confidence score is 15 /20 = 0 .75. This score reflects the 1337 
+
+concentration of marker evidence on the top-supported label rather than the absolute number of 1338 
+
+matched markers. 1339 
+
+38 
+
+> .CC-BY-NC 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted July 10, 2026. ;https://doi.org/10.64898/2026.07.06.736807 doi: bioRxiv preprint
+
+6.4 Triggering of Unassigned Labels 1340 
+
+A cluster is designated as Unassigned only when none of its top K differentially expressed genes 1341 
+
+match any entry in the marker database. In implementation terms, this occurs when the cluster has 1342 
+
+no entry in the top-hit summary map and is later filled with Unassigned and a confidence of 0.0. 1343 
+
+The trigger is therefore strict: zero marker hits. If even a single DEG matches the marker database, 1344 
+
+the cluster receives a predicted label. 1345 
+
+6.5 Annotation Provenance and LLM Refinement 1346 
+
+Marker-based annotation constitutes the primary annotation layer in CellPilot. Clusters labeled 1347 
+
+Unassigned are then eligible for a secondary refinement step using tool llm annotate unassigned .1348 
+
+The refined label, confidence score, and brief reasoning returned by the language model are stored 1349 
+
+separately from the original marker-based fields. This preserves annotation provenance and makes it 1350 
+
+possible to distinguish direct marker-supported assignments from LLM-based fallback assignments in 1351 
+
+downstream analyses. 1352 
+
+6.6 Scope and Limitations of the Marker Database 1353 
+
+The default PanglaoDB-derived marker database provides broad coverage across many canonical cell 1354 
+
+types, but it is not tissue-complete and does not guarantee uniform resolution across all lineages. 1355 
+
+In particular, rare epithelial subtypes, transitional stromal populations, and species-specific cellular 1356 
+
+states may be underrepresented. For this reason, low marker hit counts or Unassigned outcomes do 1357 
+
+not necessarily indicate that a cluster lacks biological identity. Instead, they may reflect incomplete 1358 
+
+marker coverage in the reference database. 1359 
+
+6.7 Hierarchical Evaluation Rules 1360 
+
+Each identified cell type annotation was assigned an unambiguous cell ontology name and, when 1361 
+
+applicable, a broad cell type name. A pair of identified cell type annotations was classified as fully 1362 
+
+matched if they shared the same annotation term or the same available Cell Ontology name. A pair 1363 
+
+was classified as partially matched if they had the same broad cell type name, or if one was subordinate 1364 
+
+to the other at the broad cell type level, but the detailed annotation term and Cell Ontology name 1365 
+
+differed. A pair was classified as a mismatch if broad cell type name, annotation term, and Cell 1366 
+
+Ontology name were all different. 1367 
+
+This three-level scheme was used throughout the main benchmark to translate biologically near-1368 
+
+miss predictions into an intermediate score rather than treating all non-identical labels as equally 1369 
+
+incorrect. 1370 
+
+6.8 Parent–Child Adjudication Examples 1371 
+
+The partial-match category is intended to capture biologically related labels that differ in granularity. 1372 
+
+For example, a prediction of stromal cell for a reference label fibroblast , or the reverse, is treated as 1373 
+
+a partial match rather than a complete mismatch. Likewise, predictions at a broader lineage level 1374 
+
+can receive intermediate credit when they remain within the same biological compartment as the 1375 
+
+reference annotation. 1376 
+
+6.9 Broad Cell Type Mapping 1377 
+
+Broad cell type categories were used both in hierarchical scoring and in downstream stratified analyses. 1378 
+
+This layer allows performance to be summarized at a coarser biological resolution, which is particularly 1379 
+
+helpful when comparing methods that differ in how often they assign broad parent labels versus 1380 
+
+fine-grained subtypes. 1381 
+
+6.10 Semantic Similarity Analysis with SapBERT 1382 
+
+Semantic similarity analysis was used to further characterize residual errors beyond the categorical 1383 
+
+full/partial/mismatch scoring scheme. In particular, cases scored as partial matches or mismatches can 1384 
+
+still differ substantially in biological plausibility. SapBERT-based text embedding similarity therefore 1385 
+
+provides an auxiliary view of whether predicted and reference labels remain semantically close even 1386 
+
+when they are not identical under the hierarchical evaluation rules. 1387 
+
+39 
+
+> .CC-BY-NC 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted July 10, 2026. ;https://doi.org/10.64898/2026.07.06.736807 doi: bioRxiv preprint
+
+In the final manuscript version, this subsection will additionally document the exact input label 1388 
+
+normalization procedure, the pairwise comparison set used for the analysis, and the rationale for 1389 
+
+focusing on non-full-match cases in the semantic similarity plots. 1390 
+
+Supplementary Note 7: Cell-level Annotation Performance Across 1391 
+
+Annotation Granularity, Broad Cell Types, Cluster Size, and Tissue 1392 
+
+Context 1393 
+
+7.1 Annotation Granularity 1394 
+
+Annotation performance differed modestly but consistently between major cell type and subtype 1395 
+
+annotations. Ground-truth labels classified as major cell types achieved a full-match rate of 83%, 1396 
+
+while subtype-level labels reached 78%. This difference is not unexpected, because many cell subtypes 1397 
+
+share a large proportion of their expressed gene repertoire with closely related populations. Naive and 1398 
+
+central memory T cells, for example, can be distinguished only by a relatively small number of differ-1399 
+
+entially expressed genes, many of which are co-expressed at low levels across both populations. The 1400 
+
+retention of a 78% full-match rate at the subtype level suggests that CellPilot preserves annotation 1401 
+
+specificity at finer granularity more effectively than methods that systematically collapse uncertain 1402 
+
+cases to broad parent categories. 1403 
+
+7.2 Broad Cell Type Performance and Misclassification Patterns 1404 
+
+To characterize annotation performance across major biological lineages independently of the original 1405 
+
+annotation granularity, all ground-truth labels were mapped to their corresponding broad cell type 1406 
+
+categories. The ten most frequently represented broad types in human datasets collectively covered 1407 
+
+92.3% (581,535 of 629,934) of annotated cells; in mouse datasets, the equivalent coverage was 77.1% 1408 
+
+(45,687 of 59,250 cells) (Supplementary Fig. 4). 1409 
+
+Among human lineages, cell types with highly specific and well-validated marker gene signatures 1410 
+
+performed best. Fibroblast ( n = 56 ,781), Endothelial cell ( n = 51 ,430), and B cell ( n = 51 ,924) 1411 
+
+all showed consistently high full-match rates, consistent with the structural distinctiveness of their 1412 
+
+transcriptional profiles. Stem cell presented a more complex picture: 18% of stem cells were anno-1413 
+
+tated as Epithelial cell, likely reflecting the epithelial-like gene expression programs retained by many 1414 
+
+tissue-resident progenitor populations. Granulocyte showed 14% misclassification to Macrophage/-1415 
+
+monocyte, a pattern attributable to overlap in inflammatory gene modules shared across myeloid 1416 
+
+lineages (Supplementary Fig. 5a). 1417 
+
+In mouse datasets, Stem cell ( n = 4 ,428) and Stromal cell ( n = 7 ,515) were annotated with 1418 
+
+high accuracy. Myeloid populations were more problematic: 21% of Macrophage/monocyte cells were 1419 
+
+assigned to Stem cell, a pattern that may reflect reduced conservation of canonical myeloid marker 1420 
+
+genes in the mouse reference and the resulting difficulty of distinguishing these populations in a 1421 
+
+cross-species annotation setting. Erythroid cell showed 18% misclassification to Muscle cell. Although 1422 
+
+the transcriptional basis of this pattern is less obvious, both lineages can share cytoskeletal and 1423 
+
+membrane-associated signatures, and the relatively small erythroid cluster sizes in some mouse tissues 1424 
+
+may further increase instability (Supplementary Fig. 5b). 1425 
+
+Across both species, misclassification events were concentrated within biologically related lineages 1426 
+
+and rarely spanned unrelated identities, consistent with the semantic similarity patterns reported in 1427 
+
+the main text. 1428 
+
+7.3 Cluster Size Effects 1429 
+
+The dependence of annotation accuracy on cluster size reflects a fundamental constraint of differential 1430 
+
+expression analysis. In clusters of ten or fewer cells, the statistical power to identify stable and 1431 
+
+reproducible marker rankings is limited, and the resulting DEG lists are more sensitive to sampling 1432 
+
+noise. Under these conditions, the genes passed to the annotation step may vary substantially across 1433 
+
+runs and may not faithfully represent the canonical marker structure of the underlying cell type. This 1434 
+
+instability propagates directly into annotation quality. 1435 
+
+In practical terms, very small clusters warrant closer manual review regardless of the annotation 1436 
+
+tool used. CellPilot confidence scores offer one practical way to flag such cases for further inspection 1437 
+
+without requiring a fixed size cutoff in advance. 1438 
+
+40 
+
+> .CC-BY-NC 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted July 10, 2026. ;https://doi.org/10.64898/2026.07.06.736807 doi: bioRxiv preprint
+
+7.4 Tissue-Level Performance 1439 
+
+Agreement proportions varied considerably across tissue types in both Tabula Sapiens and HCA 1440 
+
+datasets (Fig. 4d). Tissues with predominantly haematopoietic compositions achieved the highest full-1441 
+
+match rates: Tongue, Bone Marrow, Blood, and Lymph Node all showed strong annotation accuracy, 1442 
+
+consistent with the well-characterized and highly specific marker gene signatures of immune lineages. 1443 
+
+Esophagus in the HCA dataset performed similarly well. 1444 
+
+Tissues with predominantly epithelial or stromal compositions showed higher proportions of partial 1445 
+
+matches. Mammary and Kidney were notable in this regard, reflecting the transcriptional similarity 1446 
+
+among epithelial and stromal subtypes that complicates boundary assignment at fine resolution. 1447 
+
+Skeletal muscle, Muscle, and Heart showed intermediate performance; muscle lineage markers are 1448 
+
+moderately specific, but subtype boundaries vary across tissue contexts and annotation schemes, 1449 
+
+contributing more often to partial rather than full agreement. 1450 
+
+These tissue-dependent patterns support the practical use of confidence-based filtering rather than 1451 
+
+a single global threshold. Tissues that are intrinsically more difficult to annotate can be expected 1452 
+
+to produce lower-confidence predictions on average, allowing review effort to be allocated more 1453 
+
+selectively. 1454 
+
+41 
+
+> .CC-BY-NC 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted July 10, 2026. ;https://doi.org/10.64898/2026.07.06.736807 doi: bioRxiv preprint
+
+Supplementary table. 1455 
+
+## Supplementary Tables 1456 
+
+Table 1 Summary of input requirements and clustering assumptions across annotation methods. Ground-truth cluster access indicates whether the method receives benchmark-provided cluster assignments as direct input for annotation. Evaluation unit for all methods is the ground-truth reference cluster. 
+
+Method Input GT clusters as input Annotation level 
+
+SingleR Expression profiles + reference atlas No Single-cell ScType GT cluster assignments + marker DB Yes Cluster GPTCelltype4 Marker gene list from GT clusters Yes Cluster CASSIA Marker gene list from GT clusters Yes Cluster CellPilot Raw count matrix No Cluster 
+
+> GT = ground truth. For SingleR, single-cell predictions were aggregated to the cluster level by majority vote for evaluation. For CellPilot, cell-level predictions from de novo clusters were mapped back onto ground-truth reference clusters for scoring.
+
+42 
+
+.CC-BY-NC 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted July 10, 2026. ;https://doi.org/10.64898/2026.07.06.736807 doi: bioRxiv preprint Supplementary figures. 1457 
+
+## 1 Supplementary Figures 1458 GTEx 
+
+Supplementary Fig. 1 SapBERT-based semantic similarity between SingleR-predicted and true cell-type names for incorrect cases across GTEx, MCA, and Tabula Sapiens. Split violin plots compare completely incorrect predictions (agreement = 0) and partially correct predictions (agreement = 0.5). Violin width reflects score density, and inner boxes indicate the interquartile range with median. Higher values denote greater semantic proximity between predicted and true labels. GTEx 
+
+Supplementary Fig. 2 SapBERT-based semantic similarity between SCType-predicted and true cell-type names for incorrect cases across GTEx, MCA, and Tabula Sapiens. Split violin plots compare completely incorrect predictions (agreement = 0) and partially correct predictions (agreement = 0.5). Violin width reflects score density, and inner boxes indicate the interquartile range with median. Higher values denote greater semantic proximity between predicted and true labels. 
+
+43 
+
+.CC-BY-NC 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted July 10, 2026. ;https://doi.org/10.64898/2026.07.06.736807 doi: bioRxiv preprint GTEx Supplementary Fig. 3 SapBERT-based semantic similarity between GPTCelltype4-predicted and true cell-type names for incorrect cases across GTEx, MCA, and Tabula Sapiens. Split violin plots compare completely incorrect predictions (agreement = 0) and partially correct predictions (agreement = 0.5). Violin width reflects score density, and inner boxes indicate the interquartile range with median. Higher values denote greater semantic proximity between predicted and true labels. 0.0 0.2 0.4 0.6 0.8 1.0 
+
+Proportion 
+
+> T/
+> nk cell
+> Stem cell
+> Macrophage/
+> monocyte
+> Granulocyte
+> Epithelial cell
+> B cell
+> Muscle cell
+> Dendritic cell,
+> macrophage/monocyte
+> Endothelial cell
+> Fibroblast
+> n=101,534
+> n=50,597
+> n=65,459
+> n=20,867
+> n=124,456
+> n=51,924
+> n=47,800
+> n=10,717
+> n=51,400
+> n=56,781
+
+Human (TS+HCA)      
+
+> Fully match
+> Partially match
+> Mismatch
+> 0.0 0.2 0.4 0.6 0.8 1.0
+
+Proportion 
+
+> Progenitor cell
+> Macrophage/
+> monocyte
+> T/
+> nk cell
+> Granulocyte
+> Erythroid cell
+> Muscle cell
+> Epithelial cell
+> Neuron
+> Stromal cell
+> Stem cell
+> n=2,471
+> n=4,613
+> n=5,067
+> n=2,192
+> n=2,246
+> n=6,330
+> n=8,360
+> n=2,465
+> n=7,515
+> n=4,428
+
+Mouse (MCA) 
+
+a bHuman Mouse 
+
+Supplementary Fig. 4 Top 10 broad cell types in human and mouse datasets. (a) Human datasets (GTEx + TS): For the ten most frequent broad cell types, the proportions of agreement scores (0, 0.5, and 1) are shown, representing completely incorrect, partially correct, and fully correct annotations, respectively. (b) Mouse datasets (MCA): The same analysis is presented for the top ten broad cell types in mouse. Numbers displayed on the right indicate the total number of cells (n) in each broad cell-type category. 
+
+44 
+
+.CC-BY-NC 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted July 10, 2026. ;https://doi.org/10.64898/2026.07.06.736807 doi: bioRxiv preprint ("+!$"$$$ 
+
+> 
+> &#$$
+> )'(! 
+> %'&'-+
+> ")'$*+
+> $$
+> &'+!$"$$$
+> +%$$
+> ,*$$$
+> )&,$'-+
+> &)"+"$$%)'(! 
+> %'&'-+
+
+)"+)'+-(                       
+
+> ("+!$"$$$
+> 
+> &#$$
+> )'(! 
+> %'&'-+
+> ")'$*+
+> $$
+> &'+!$"$$$
+> +%$$
+> ,*$$$
+> )&,$'-+
+> &)"+"$$%)'(! 
+> %'&'-+
+> ),)'+-(
+>    
+>  
+>      
+>  
+>   
+>  
+>   
+>    
+>    
+>  
+
+   
+
+> ("+!$"$$$
+> +)'%$$$
+> ,*$$$
+> 
+> &#$$
+> )'(! 
+> %'&'-+
+> +%$$
+> )' &"+')$$
+> ,)'&
+> )-+!)'"$$
+> )&,$'-+
+
+)"+)'+-(                      
+
+> ("+!$"$$$
+> +)'%$$$
+> ,*$$$
+> 
+> &#$$
+> )'(! 
+> %'&'-+
+> +%$$
+> )' &"+')$$
+> ,)'&
+> )-+!)'"$$
+> )&,$'-+
+> ),)'+-(
+>   
+>   
+>    
+> 
+>    
+> 
+>      
+>  
+>    
+>    
+
+   
+
+> 
+> 
+> 
+> 
+> 
+> 
+> )'(')+"'&
+
+   Mouse Human Supplementary Fig. 5 Broad-type confusion matrices for the top 10 cell categories in human and mouse datasets. (a) Human (GTEx + TS): Confusion matrix for the ten most frequent broad cell types. Rows indicate true broad cell types and columns indicate predicted broad cell types. Values represent the proportion of cells within each true category assigned to each predicted category. (b) Mouse (MCA): Confusion matrix for the top ten broad cell types in mouse, displayed in the same format. Diagonal entries correspond to correct broad-type assignments, while off-diagonal entries indicate misclassification patterns. 6 8 10 12 14 16 Number of unique broad cell types per tissue 0.75 0.80 0.85 0.90 0.95 Mean agreement score r = - 0.07, p = 7.24e-01 Cell type diversity v s accuracy GTEx TS 
+
+4 6 8 10 12 14 16 Number of unique broad cell types per tissue 0.0 0.2 0.4 0.6 0.8 1.0 Mean predicted confidence r = - 0.34, p = 5.87e-02 Cell type diversity v s confidence GTEx TS 
+
+a b
+
+Supplementary Fig. 6 Relationship between cell-type diversity and model performance. (a) Association between the number of unique broad cell types per tissue and the mean agreement score. Each point represents a tissue from human datasets (GTEx, TS). The dashed line indicates the linear regression fit with shaded area representing the 95% confidence interval. The reported r and p values correspond to Pearson correlation. (b) Association between the number of unique broad cell types per tissue and the mean predicted confidence. Points and regression lines are shown as in (a). Negative trends suggest reduced confidence and slightly lower agreement in tissues with greater cell-type diversity. 
+
+45 
+
+.CC-BY-NC 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted July 10, 2026. ;https://doi.org/10.64898/2026.07.06.736807 doi: bioRxiv preprint 0.0 0.2 0.4 0.6 0.8 1.0              
+
+> Mean predicted confidence
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> Observed accuracy (full match)
+> Confidence calibration curve
+> Perfect calibration
+> GTEx
+> TS
+> MCA
+> 0.0 0.2 0.4 0.6 0.8 1.0
+> Predicted confidence
+> 0
+> 1
+> 2
+> 3
+> 4
+> 5
+> 6
+> Density
+> Confidence distribution by dat aset
+> GTEx
+> TS
+> MCA
+> 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9
+> Confidence threshold
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> Value
+> Accuracy vs retention at confidence thresholds
+> Accuracy
+> Retention rate
+> GTEx
+> TS
+> MCA
+
+a b cSupplementary Fig. 7 Evaluation of confidence calibration and reliability across datasets. (a) Confidence calibration curves for GTEx, TS, and MCA. The x-axis represents the mean predicted confidence within bins, and the y-axis shows the observed full-match accuracy. The dashed diagonal line indicates perfect calibration. Points above the diagonal reflect underconfident predictions, whereas points below indicate overconfidence. (b) Distribution of predicted confidence scores for each dataset. Curves represent kernel density estimates of confidence values. Vertical dotted lines indicate the median confidence per dataset. (c) Accuracy–retention trade-off across confidence thresholds. Solid lines show observed accuracy among predictions with confidence greater than or equal to each threshold, while dashed lines represent the corresponding retention rate (fraction of predictions retained). This panel illustrates how increasing the confidence threshold improves accuracy at the cost of coverage. 
+
+46 
+
+.CC-BY-NC 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted July 10, 2026. ;https://doi.org/10.64898/2026.07.06.736807 doi: bioRxiv preprint 0.75 0.80 0.85 0.90 0.95 1.00 1.05 Agreement Score Lung Skeletal Muscle Prostate Esophagus Heart Skin Breast 
+
+> 0.000 0.000 0.000 0.000 0.000 0.000 0.000
+
+GTEx — Vote-based 
+
+> w/ VLM w/o VLM
+
+0.70 0.75 0.80 0.85 0.90 0.95 1.00 1.05 Agreement Score Lung Skeletal Muscle Esophagus Prostate Skin Heart Breast 
+
+> +0.022 +0.002 -0.009 +0.004 -0.006 +0.025 +0.075
+
+GTEx — Scored-based 
+
+> w/ VLM w/o VLM
+
+0.5 0.6 0.7 0.8 0.9 1.0 Agreement Score Eye Blood Prostate Lymph Node Bone Marrow Lung Fat Skin Small Intestine Large Intestine Muscle Trachea Vasculature Uterus Spleen Thymus Kidney Mammary Tongue Salivary Gland Pancreas Liver Bladder Heart 
+
+> +0.034 -0.019 +0.024 +0.034 0.000 +0.054 -0.077 0.000 -0.024 -0.025 +0.053 +0.024 +0.036 +0.071 +0.021 +0.109 0.000 -0.071 +0.125 +0.022 +0.033 0.000 +0.067 0.000
+
+TS — Vote-based 
+
+> w/ VLM w/o VLM
+
+0.4 0.5 0.6 0.7 0.8 0.9 1.0 Agreement Score Eye Blood Prostate Lung Lymph Node Bone Marrow Fat Muscle Small Intestine Skin Spleen Large Intestine Vasculature Trachea Uterus Kidney Thymus Tongue Mammary Salivary Gland Pancreas Liver Bladder Heart 
+
+> +0.052 +0.004 +0.008 +0.018 -0.002 +0.029 -0.061 +0.005 -0.023 +0.011 -0.013 -0.015 +0.036 +0.031 +0.058 -0.094 +0.091 +0.044 -0.071 +0.032 +0.017 0.000 +0.038 +0.072
+
+TS — Scored-based 
+
+> w/ VLM w/o VLM
+
+abSupplementary Fig. 8 Impact of vision-language model (VLM) integration on tissue-level annotation agreement. (a)Agreement scores with and without VLM across GTEx tissues using vote-based (left) and score-based (right) consensus strategies. Numerical annotations denote the score difference (w/ VLM minus w/o VLM). (b) Corresponding analysis across 24 Tabula Sapiens tissues. Blue and red dots indicate scores with and without VLM, respectively. 
+
+47 
+
+.CC-BY-NC 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted July 10, 2026. ;https://doi.org/10.64898/2026.07.06.736807 doi: bioRxiv preprint CellPilot Score 
+
+（Qwen ）
+
+CellPilot Score 
+
+（GPT-4o ）
+
+GPT CellType 
+
+（Qwen ）
+
+GPT-4o Skeletal muscle Breast Skin Heart Prostate Lung Esophagus 0.80 0.99 0.82 0.79 0.43 0.68 0.94 0.96 1.00 1.00 0.31 0.38 0.89 0.93 0.94 1.00 0.47 0.62 0.90 0.89 0.92 0.88 0.42 0.69 0.82 0.87 0.88 0.94 0.19 0.53 0.77 0.87 0.80 0.90 0.43 0.57 0.82 0.86 0.88 0.91 0.47 0.53 
+
+GTEx: absolute score 
+
+GPTCellType Skeletal muscle Breast Skin Heart Prostate Lung Esophagus +0.19 -0.04 +0.25 +0.02 +0.00 +0.06 +0.04 +0.06 +0.16 -0.00 -0.04 +0.27 +0.05 +0.06 +0.34 +0.10 +0.10 +0.13 +0.04 +0.03 +0.06 
+
+GTEx: delta (GPT-4o - Qwen) 
+
+Bladder Heart Kidney Salivary Gland Mammary Vasculature Liver Small Intestine Thymus Uterus Skin Prostate Pancreas Trachea Muscle Large Intestine Fat Tongue Lymph Node Lung Spleen Bone Marrow Blood Eye 0.88 0.85 0.93 0.93 0.63 0.70 0.93 0.83 1.00 1.00 0.25 0.58 0.74 0.81 0.79 0.93 0.71 0.71 0.78 0.81 0.85 0.89 0.52 0.54 0.77 0.75 0.79 0.79 0.39 0.75 0.71 0.74 0.75 0.79 0.64 0.86 0.84 0.74 0.92 0.81 0.50 0.69 0.69 0.74 0.71 0.81 0.38 0.38 0.76 0.72 0.78 0.75 0.42 0.56 0.73 0.72 0.75 0.75 0.57 0.61 0.70 0.69 0.70 0.68 0.62 0.66 0.57 0.68 0.62 0.71 0.45 0.52 0.82 0.68 0.87 0.70 0.57 0.70 0.71 0.67 0.74 0.69 0.69 0.57 0.68 0.64 0.74 0.68 0.37 0.61 0.70 0.64 0.72 0.72 0.25 0.42 0.66 0.64 0.69 0.69 0.31 0.58 0.77 0.64 0.83 0.67 0.29 0.71 0.62 0.63 0.66 0.64 0.50 0.66 0.61 0.62 0.69 0.66 0.53 0.51 0.70 0.59 0.75 0.60 0.40 0.56 0.65 0.49 0.68 0.56 nan 0.41 0.55 0.49 0.54 0.46 nan 0.38 0.50 0.49 0.50 0.48 0.41 0.45 
+
+Tabula Sapiens: absolute score 
+
+Bladder Heart Kidney Salivary Gland Mammary Vasculature Liver Small Intestine Thymus Uterus Skin Prostate Pancreas Trachea Muscle Large Intestine Fat Tongue Lymph Node Lung Spleen Bone Marrow Blood Eye -0.02 +0.00 +0.07 -0.10 +0.00 +0.33 +0.07 +0.14 +0.00 +0.02 +0.04 +0.02 -0.02 +0.00 +0.36 +0.03 +0.04 +0.21 -0.10 -0.12 +0.19 +0.05 +0.10 +0.00 -0.04 -0.03 +0.14 -0.01 +0.00 +0.04 -0.01 -0.02 +0.04 +0.10 +0.10 +0.07 -0.14 -0.17 +0.13 -0.04 -0.05 -0.12 -0.03 -0.05 +0.24 -0.06 +0.00 +0.17 -0.02 +0.00 +0.27 -0.13 -0.17 +0.42 +0.01 -0.02 +0.16 +0.00 -0.03 -0.01 -0.11 -0.15 +0.17 -0.15 -0.12 +nan -0.05 -0.07 +nan -0.02 -0.02 +0.03 
+
+Tabula Sapiens: delta (GPT-4o - Qwen) Method Qwen3-8B GPT-4o Delta 
+
+Agent (average) 0.729 0.749 +0.020 Agent (majority vote) 0.773 0.820 +0.047 GPTCellType 0.188 0.586 +0.398 
+
+MCA aggregate (no tissue split) 
+
+0.0 0.2 0.4 0.6 0.8 1.0 Agreement score 
+
+−0.4 −0.2 
+
+0.0 0.2 0.4 Delta CellPilot Vote 
+
+（Qwen ）
+
+CellPilot Vote 
+
+（GPT-4o ）
+
+GPT CellType 
+
+（GPT-4o ）
+
+CellPilot Score 
+
+（Qwen ）
+
+CellPilot Score 
+
+（GPT-4o ）
+
+GPT CellType 
+
+（Qwen ）
+
+CellPilot Vote 
+
+（Qwen ）
+
+CellPilot Vote 
+
+（GPT-4o ）
+
+GPT CellType 
+
+（GPT-4o ）
+
+CellPilot Score CellPilot Vote GPTCellType CellPilot Score CellPilot Vote 
+
+## a bc deSupplementary Fig. 9 Backbone sensitivity of CellPilot and GPTCelltype across single-cell bench-marks. (a)(c) Absolute agreement scores for GTEx and Tabula Sapiens tissues, respectively, comparing CellPilot with Qwen3-8B and GPT-4o backbones under average score and majority-vote evaluation, and GPTCelltype with the same two backbones. b, d, Corresponding GPT-4o minus Qwen3-8B differences for GTEx and Tabula Sapiens. e, Aggregate MCA results without tissue-level stratification. CellPilot maintains high agreement with relatively small backbone-dependent changes, whereas GPTCelltype shows larger gains when moving from Qwen3-8B to GPT-4o, particularly in several Tabula Sapiens tissues and in the MCA benchmark. These results indicate that the structured agent framework reduces dependence on model scale while preserving strong annotation performance across datasets. 
+
+48 
+
+.CC-BY-NC 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted July 10, 2026. ;https://doi.org/10.64898/2026.07.06.736807 doi: bioRxiv preprint −12 
+
+−8 
+
+−4 
+
+0
+
+5 10 15 20 
+
+umap_1 
+
+> umap_2
+
+Epithelial Cells 
+
+Keratinocytes 
+
+Melanocytes 
+
+Proli ferating Epithelial Cells 
+
+Unassigned 
+
+Normal Skin 2 
+
+−5 
+
+0
+
+5
+
+10 
+
+15 
+
+−10 0 10 20 
+
+umap_1 
+
+> umap_2
+
+B Cells 
+
+Co nventional Dend ritic cells 
+
+Endothelial Cells 
+
+Fibro blasts 
+
+Keratinocytes 
+
+Macrophages 
+
+Mig rato ry Dend ritic Cells 
+
+NK Cells 
+
+Pe ricytes 
+
+Smooth Muscle Cells 
+
+T Cells 
+
+Unassigned 
+
+Normal Skin 3 
+
+−5 
+
+0
+
+5
+
+10 
+
+15 
+
+−10 −5 0 5 10 
+
+umap_1 
+
+> umap_2
+
+Endothelial Cells 
+
+Epithelial Cells 
+
+Fibro blasts 
+
+Hair follicle epithelial cells 
+
+Keratinocytes 
+
+Langerhans Cells 
+
+Proli ferating Epithelial Cells 
+
+Smooth Muscle Cells 
+
+T Cells 
+
+Unassigned 
+
+Actinic Keratosis 1 
+
+−5 
+
+0
+
+5
+
+−20 −10 0 10 20 30 
+
+umap_1 
+
+> umap_2
+
+B Cells 
+
+Co nventional Dend ritic Cells 
+
+Endothelial Cells 
+
+Fibro blasts 
+
+Keratinocytes 
+
+Macrophages 
+
+Mast Cells 
+
+Melanocytes 
+
+Mig rato ry Dend ritic Cells 
+
+NK Cells 
+
+Pe ricytes 
+
+Smooth Muscle Cells 
+
+T Cells 
+
+Unassigned 
+
+Actinic Keratosis 2 
+
+−5 
+
+0
+
+5
+
+10 
+
+15 
+
+−20 −10 0 10 20 
+
+umap_1 
+
+> umap_2
+
+Co nventional Dend ritic Cells 
+
+Endothelial Cells 
+
+Epithelial Cells 
+
+Fibro blasts 
+
+Keratinocytes 
+
+Macrophages 
+
+Mast Cells 
+
+Melanocytes 
+
+NK Cells 
+
+Pe ricytes 
+
+Smooth Muscle Cells 
+
+Sudo riferous Gland Cells 
+
+T Cells 
+
+Unassigned 
+
+Actinic Keratosis 3 
+
+−20 
+
+−10 
+
+0
+
+0 10 
+
+umap_1 
+
+> umap_2
+
+Endothelial Cells 
+
+Epithelial Cells 
+
+Fibro blasts 
+
+Keratinocytes 
+
+Langerhans Cells 
+
+Melanocytes 
+
+Pe ricytes 
+
+Proli ferating Epithelial Cells 
+
+Smooth Muscle Cells 
+
+Sudo riferous Gland Cells 
+
+T Cells 
+
+Unassigned 
+
+Squamous Cell Ca rcinoma 1 
+
+0
+
+10 
+
+−5 0 5 10 15 
+
+umap_1 
+
+> umap_2
+
+Endothelial Cells 
+
+Epithelial Cells 
+
+Fibro blasts 
+
+Keratinocytes 
+
+Macrophages 
+
+NK Cells 
+
+Pe ricytes 
+
+Proli ferating Epithelial Cells 
+
+Smooth Muscle Cells 
+
+T Cells 
+
+Squamous Cell Ca rcinoma 2 
+
+0
+
+2000 
+
+4000 
+
+ns1 ns2 ns3 ak1 ak2 ak3 scc1 scc2 scc3 
+
+> Number of cells
+
+group 
+
+Normal Skin 
+
+Actinic Keratosis 
+
+Squamous Cell Carcinoma 
+
+−5 
+
+0
+
+5
+
+10 
+
+−10 −5 0 5
+
+umap_1 
+
+> umap_2
+
+Endothelial Cells 
+
+Epithelial Cells 
+
+Fibro blasts 
+
+Keratinocytes 
+
+Langerhans Cells 
+
+Macrophages 
+
+NK Cells 
+
+Proli ferating Epithelial Cells 
+
+Smooth Muscle Cells 
+
+T Cells 
+
+Unassigned 
+
+Squamous Cell Ca rcinoma 3 
+
+10 
+
+15 
+
+20 
+
+25 
+
+−10 −5 0 5 10 
+
+umap_1 
+
+> umap_2
+
+Endothelial Cells 
+
+Epithelial Cells 
+
+Fibro blasts 
+
+Hair follicle epithelial cells 
+
+Keratinocytes 
+
+Macrophages 
+
+Melanocytes 
+
+Proli ferating Epithelial Cells 
+
+Smooth Muscle Cells 
+
+Sudo riferous Gland Cells 
+
+T Cells 
+
+Unassigned 
+
+Normal Skin 1 a
+
+# bSupplementary Fig. 10 Sample-wise UMAP visualization of agent-generated cell type annotation. (a) Uniform Manifold Approximation and Projection (UMAP) embeddings of single-cell transcriptomes from nine individ-ual skin samples. Each panel represents one sample, with cells colored according to cell type annotations generated by the agent. (b) Bar plot showing the total number of cells profiled in each sample, grouped by condition. 
+
+49 
+
+.CC-BY-NC 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted July 10, 2026. ;https://doi.org/10.64898/2026.07.06.736807 doi: bioRxiv preprint −5    
+
+> 0
+> 5−5 0510
+
+umap_1 umap_2 Normal Skin Actinic Keratosis Squamous Cell Carcinoma 
+
+condition   
+
+> 0.00
+> 0.25 0.50 0.75
+> 1.00 Normal Skin Actinic Keratosis Squamous Cell Carcinoma Proportion llm_annotate Keratinocytes Epithelial Cells Proliferating Epithelial Cells Hair Follicle Epithelial Cells Sudoriferous Gland Cells Endothelial Cells Pericytes Smooth Muscle Cells Fibroblasts T Cells NK Cells B Cells Macrophages Langerhans Cells Dendritic Cells Mast Cells Melanocytes
+
+Mast Cells Melanocytes 
+
+Macrophages Langerhans Cells Dendritic Cells T Cells NK Cells B Cells Pericytes Smooth Muscle Cells Fibroblasts Hair Follicle Epithelial Cells Sudoriferous Gland Cells Endothelial Cells Keratinocytes Epithelial Cells Proliferating Epithelial Cells 
+
+Normal Skin Actinic Keratosis Squamous Cell Carcinoma Normal Skin Actinic Keratosis Squamous Cell Carcinoma Normal Skin Actinic Keratosis Squamous Cell Carcinoma 0.000 
+
+0.025 0.050 0.075 
+
+0.00 0.01 0.02 0.03 0.00 
+
+0.05 
+
+0.10 
+
+0.15 
+
+0.20 
+
+0.25 
+
+0.000 
+
+0.005 
+
+0.010 
+
+0.015 
+
+0.020 0.000 
+
+0.005 
+
+0.010 
+
+0.015 
+
+0.0 0.1 0.2 0.3 0.000 0.002 0.004 0.006 0.008 0.00 0.01 0.02 0.03 0.04 0.00 0.01 0.02 0.03 0.04 0.0000 
+
+0.0025 0.0050 0.0075 
+
+0.0100 0.000 0.002 0.004 0.0 0.1 0.2 0.3 0.4 
+
+0.5 
+
+0.00 0.02 0.04 0.06 0.000 
+
+0.005 
+
+0.010 
+
+0.015 
+
+0.00 
+
+0.05 
+
+0.10 
+
+0.15 
+
+0.20 0.00 0.02 0.04 0.000 
+
+0.005 
+
+0.010 
+
+0.015 
+
+0.020 Proportion 
+
+# a b
+
+# cSupplementary Fig. 11 Cell-type proportion changes across normal skin, actinic keratosis and squamous cell carcinoma. (a) Uniform Manifold Approximation and Projection (UMAP) of all cells integrated across nine samples, colored by disease condition (normal skin, actinic keratosis, and squamous cell carcinoma). (b) Stacked bar plot showing the proportion of annotated cell types within each condition. (c) Bar plot showing cell-type specific proportion changes across disease conditions. 
+
+50 
+
+.CC-BY-NC 4.0 International license made available under a (which was not certified by peer review) is the author/funder, who has granted bioRxiv a license to display the preprint in perpetuity. It is The copyright holder for this preprint this version posted July 10, 2026. ;https://doi.org/10.64898/2026.07.06.736807 doi: bioRxiv preprint
