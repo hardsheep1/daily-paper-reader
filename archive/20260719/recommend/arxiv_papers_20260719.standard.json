@@ -1,0 +1,55 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-07-19T21:09:11.553441+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 0,
+    "deep_cap": 7,
+    "deep_selected": 0,
+    "quick_candidates": 1,
+    "quick_skim_target": 12,
+    "quick_selected": 1
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2607.12421v1",
+      "source": "arxiv",
+      "title": "Adaptive Sampling for Minimum-Norm $k$-Clustering",
+      "abstract": "In $k$-clustering problems, we are given a metric space $(\\mathcal{C}, d)$, and must choose a set $S$ of $k$ centers to open. Each client $j \\in \\mathcal{C}$ incurs an assignment cost, which is the distance between $j$ and center in $S$ that it has been assigned to. In this work, we study the \\emph{minimum-norm $k$-clustering problem}, where we are given an arbitrary monotone symmetric norm $f$, and wish to open $k$ centers so as to minimize $f$(assignment-cost vector). This is a powerful generalization, encompassing many classical $k$-clustering problems including the $k$-median, $k$-means, and $k$-center problems.   A simple and efficient algorithmic idea is that of \\emph{adaptive sampling}, wherein we randomly choose the location of the next center to open with probability proportional to its ``cost\" under the currently chosen set. While this has yielded fast algorithms for some $k$-clustering problem, little is known for settings \\emph{without} ``min-sum\" objectives.   We devise the first adaptive-sampling-based bicriteria constant-factor approximation algorithm for general minimum-norm $k$-clustering, vastly expanding the scope of problems handled by adaptive sampling. For the special case of $\\text{Top}_\\ell$ norms, which form a building block of monotone symmetric norms, we show that adaptive sampling yields an $O(\\log k)$-approximation algorithm.",
+      "authors": [
+        "Haripriya Pulyassary",
+        "Chaitanya Swamy"
+      ],
+      "primary_category": "cs.DS",
+      "categories": [
+        "cs.DS"
+      ],
+      "published": "2026-07-14T06:47:16+00:00",
+      "link": "https://arxiv.org/pdf/2607.12421v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "adaptive sampling for k-clustering, similar to query strategy in active clustering",
+      "llm_evidence_cn": "k聚类的自适应采样，类似于主动聚类中的查询策略",
+      "llm_evidence": "k聚类的自适应采样，类似于主动聚类中的查询策略",
+      "canonical_evidence": "k聚类的自适应采样，类似于主动聚类中的查询策略",
+      "llm_tldr_en": "Proposes an adaptive sampling algorithm for minimum-norm k-clustering that serves as a query strategy, bridging to active clustering methods.",
+      "llm_tldr_cn": "该论文研究最小范数k聚类问题，提出一种自适应采样算法来依次选择聚类中心。该方法在每一步根据当前分配成本随机采样下一个中心，与主动学习中的查询策略思想类似。虽然论文未明确涉及主动学习或大语言模型，但其自适应采样策略为主动聚类方法提供了理论工具。理论分析表明该算法在多种范数下具有近似保证。",
+      "llm_tldr": "该论文研究最小范数k聚类问题，提出一种自适应采样算法来依次选择聚类中心。该方法在每一步根据当前分配成本随机采样下一个中心，与主动学习中的查询策略思想类似。虽然论文未明确涉及主动学习或大语言模型，但其自适应采样策略为主动聚类方法提供了理论工具。理论分析表明该算法在多种范数下具有近似保证。",
+      "llm_tags": [
+        "query:active-clust"
+      ],
+      "matched_query_tag": "query:active-clust",
+      "matched_query_text": "active learning clustering methods",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}

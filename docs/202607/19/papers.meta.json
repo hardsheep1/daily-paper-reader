@@ -1,0 +1,24 @@
+{
+  "label": "2026-07-19",
+  "date": "2026-07-19",
+  "generated_at": "2026-07-19T21:10:17",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "202607/19/2607.12421v1-adaptive-sampling-for-minimum-norm-k-clustering",
+      "section": "quick",
+      "title_en": "Adaptive Sampling for Minimum-Norm $k$-Clustering",
+      "authors": "Haripriya Pulyassary, Chaitanya Swamy",
+      "date": "2026-07-14",
+      "pdf": "https://arxiv.org/pdf/2607.12421v1",
+      "score": "7.0",
+      "evidence": "k聚类的自适应采样，类似于主动聚类中的查询策略",
+      "tldr": "最小范数k聚类问题旨在以任意单调对称范数度量聚类成本，统一了k-中位数、k-均值和k-中心等经典问题。现有自适应采样方法仅适用于最小和型目标，本文首次将自适应采样扩展到一般范数场景，提出双准则常数近似算法。对于Top_l范数这一基本构造块，算法达到O(log k)近似比。该工作大幅拓宽了自适应采样在聚类问题中的适用范围，提供了高效的理论保证。",
+      "tags": "query:active-clust",
+      "abstract_en": "In $k$-clustering problems, we are given a metric space $(\\mathcal{C}, d)$, and must choose a set $S$ of $k$ centers to open. Each client $j \\in \\mathcal{C}$ incurs an assignment cost, which is the distance between $j$ and center in $S$ that it has been assigned to. In this work, we study the \\emph{minimum-norm $k$-clustering problem}, where we are given an arbitrary monotone symmetric norm $f$, and wish to open $k$ centers so as to minimize $f$(assignment-cost vector). This is a powerful generalization, encompassing many classical $k$-clustering problems including the $k$-median, $k$-means, and $k$-center problems.   A simple and efficient algorithmic idea is that of \\emph{adaptive sampling}, wherein we randomly choose the location of the next center to open with probability proportional to its ``cost\" under the currently chosen set. While this has yielded fast algorithms for some $k$-clustering problem, little is known for settings \\emph{without} ``min-sum\" objectives.   We devise the first adaptive-sampling-based bicriteria constant-factor approximation algorithm for general minimum-norm $k$-clustering, vastly expanding the scope of problems handled by adaptive sampling. For the special case of $\\text{Top}_\\ell$ norms, which form a building block of monotone symmetric norms, we show that adaptive sampling yields an $O(\\log k)$-approximation algorithm.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

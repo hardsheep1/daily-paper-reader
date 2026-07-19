@@ -1,0 +1,3063 @@
+Title: Adaptive Sampling for Minimum-Norm k-Clustering
+
+URL Source: https://arxiv.org/pdf/2607.12421v1
+
+Published Time: Wed, 15 Jul 2026 11:58:38 GMT
+
+Number of Pages: 23
+
+Markdown Content:
+# Adaptive Sampling for Minimum-Norm 
+
+# k-Clustering 
+
+## Haripriya Pulyassary #
+
+Cornell University, Ithaca, NY 14850 
+
+## Chaitanya Swamy #
+
+Dept. of Combinatorics and Optimization, Univ. Waterloo, waterloo, ON N2L 3G1 
+
+Abstract 
+
+In k-clustering problems, we are given a metric space (C, d ), and must choose a set S of k centers to open. Each client j ∈ C incurs an assignment cost, which is the distance between j and center in 
+
+S that it has been assigned to. In this work, we study the minimum-norm k-clustering problem ,where we are given an arbitrary monotone symmetric norm f , and wish to open k centers so as to minimize f (assignment-cost vector). This is a powerful generalization, encompassing many classical 
+
+k-clustering problems including the k-median, k-means, and k-center problems. A simple and efficient algorithmic idea is that of adaptive sampling , wherein we randomly choose the location of the next center to open with probability proportional to its “cost" under the currently chosen set. While this has yielded fast algorithms for some k-clustering problem, little is known for settings without “min-sum" objectives. We devise the first adaptive-sampling-based bicriteria constant-factor approximation algorithm for general minimum-norm k-clustering, vastly expanding the scope of problems handled by adaptive sampling. For the special case of Top ℓ norms, which form a building block of monotone symmetric norms, we show that adaptive sampling yields an O(log k)-approximation algorithm. 
+
+2012 ACM Subject Classification Theory of computation → Approximation algorithms analysis; Mathematics of computing → Discrete optimization 
+
+Keywords and phrases Approximation algorithms, Clustering, Adaptive sampling, Randomized algorithms, Minimum-norm k-clustering 
+
+Related Version A preliminary version is to appear in the Proceedings of the European Symposium on Algorithms (ESA) 2026. 
+
+Funding Supported in part by C. Swamy’s NSERC Discovery grant. 
+
+Haripriya Pulyassary : Part of this work was done while the author was a Master’s student at the University of Waterloo. 
+
+## 1 Introduction 
+
+Clustering problems are ubiquitous, and arise in a variety of application domains including data mining, machine learning, computer vision, computational geometry, bioinformatics, and supply-chain logistics. Typically, in a k-clustering problem, we are given a metric space 
+
+(C, d ) and must choose a set S of k centers to open. Each client j ∈ C incurs a connection or assignment cost, namely the distance between j and center in S that it has been assigned to (which is often the closest center in S). In many such problems, the goal is to choose 
+
+k-centers so as to minimize some function of the induced assignment-cost vector. Classical problems of this form, which have been extensively studied, include the k-median , k-means ,and k-center problems, wherein the function (to be minimized) is the sum , sum of squares, and maximum , of the assignment-cost vector entries respectively. In this paper, we study the minimum-norm k-clustering problem , which is a far-reaching generalization of the k-median and k-center problems (and also essentially captures the 
+
+k-means problem). In this problem, we are given an arbitrary monotone, symmetric norm arXiv:2607.12421v1 [cs.DS] 14 Jul 2026 2 Adaptive Sampling for Minimum-Norm k-Clustering 
+
+f : Rn 7 → R+, where n = |C| , and we wish to minimize f (assignment-cost vector ). Monotone, symmetric norms capture a very wide range of objective functions; we list two relevant examples here, and refer the reader to [18] and the references therein for further examples. 
+
+ℓp-norms : These are probably the most well-known example of monotone, symmetric norms, where ℓp(v) := ( ∑nj=1 |vj |p)1/p , for p ≥ 1. When p = 1 , ∞, we obtain the k-median and k-center problems respectively, and p = 2 essentially captures the k-means problem (the k-means objective is ℓ22). 
+
+Top ℓ and ordered norms : The Top ℓ-norm of a vector v ∈ Rn is the sum of the ℓ
+
+largest entries of (|vj |)j∈[n]. Letting v↓ denote the vector v with its entries sorted in non-increasing order, for v ≥ 0, we have Top ℓ(v) = ∑ℓj=1 v↓ 
+
+> j
+
+. An ordered norm is a nonnegative linear combination of Top ℓ norms; equivalently, we can describe this by a non-increasing weight vector w ≥ 0, which defines the ordered norm f (v) := ∑nj=1 wj v↓
+
+> j
+
+for v ≥ 0. The problems of minimizing the Top ℓ-norm and ordered-norm of the induced cost vector are referred to as the ℓ-centrum and ordered k-median problems respectively in the clustering literature [35, 6, 16, 17, 18]. Furthermore, the class of monotone symmetric norms is closed under nonnegative linear combinations, and taking the maximum (over a finite collection of monotone symmetric norms). Also, for any monotone norm g, f = g(v↓) and f = Eπ [g({vπ(i)}i∈[n])] (where π is a random permutation) are monotone symmetric norms. Thus, minimum-norm k-clustering is indeed a very versatile problem that can be used to model a wide range of applications. An elegant algorithmic idea that has been applied to some k-clustering problems is adaptive sampling [7, 3 ] (see also [ 31 ]). In adaptive sampling, we randomly choose the location of the next center to open with probability proportional to the objective-function contribution of the point under the currently chosen set. The power of adaptive sampling lies in its simplicity; unlike other more complicated (and often linear-programming-based) algorithms, adaptive sampling is fast, and uses pairwise-distance information in a conservative manner. This makes adaptive-sampling-based algorithms well-suited for computing a preliminary set of centers in data-sparsification procedures (e.g. coreset construction [ 19 , 13 ]), as well as other situations where pairwise-distance queries are expensive (e.g. [15, 33, 32]). It is known that adaptive sampling can be used to obtain a bicriteria constant-factor approximation for the k-median and k-means clustering problems [ 3]; by this we mean, a solution that opens at most αk centers and has cost at most β times the optimum—denoted an 
+
+(α, β )-approximate solution—where α, β = O(1) . For both these problems, as noted earlier, the objective is a min-sum objective, where we sum up the costs incurred by the individual clients. Consequently, sampling the next center to open with probability proportional to its current cost does indeed yield good solutions (with constant probability). While adaptive sampling, which is also called D2-sampling in the context of the k-means objective, has been leveraged in various settings—e.g., for other objectives [ 2, 3, 34 ], constrained k-means problems [ 10 , 12 , 9], streaming settings [ 5, 14 ], models where other clustering information is available [ 4]—to our knowledge, with the exception of the very recent work [ 33 , 32 ], all these applications of adaptive sampling have involved k-clustering with min-sum objectives ,a milieu naturally suited for adaptive sampling. Recently, [ 33 , 32 ] extended the adaptive-sampling approach to obtain a bicriteria constant-factor approximation for the ℓ-centrum problem (i.e., where the norm is a Top ℓ norm). A notable aspect of this result is that, unlike a min-sum objective, the Top ℓ-norm objective is not separable , i.e., we cannot quite isolate the contribution of a client to the objective, and consequently, it is not clear how to utilize the adaptive-sampling template here. Nevertheless, H. Pulyassary and C. Swamy 3
+
+[33 , 32 ] observed that one can sidestep this issue by moving to the min-sum (hence, separable) proxy function introduced by [ 18 ], which well-estimates the Top ℓ-norm. In this sense, Top ℓ-norms are only mildly non-separable, and by using adaptive sampling on this separable proxy function (i.e., sampling a client with probability proportional to its proxy-cost contribution), one can obtain an (O(1) , O (1) )-approximate solution for Top ℓ norms [33, 32]. 
+
+## 1.1 Our contributions 
+
+We design an adaptive-sampling-based bicriteria constant-factor approximation algorithm for general minimum-norm k-clustering. Given the generality of minimum-norm k-clustering, we thus obtain a fast, simple algorithm that is versatile and can be applied to a very wide range of k-clustering problems. The simplicity and efficiency of adaptive sampling also opens up the possibility of leveraging our ideas to handle minimum-norm k-clustering in the streaming setting (as has been done for k-means). The only other polynomial-time guarantee known for minimum-norm k-clustering is a constant-factor approximation algorithm due to Chakrabarty and Swamy [ 18 ]. They obtain a “true” approximation, i.e., the solution returned opens (at most) k centers, but their algorithm is much more involved: it is based on solving a suitable LP-relaxation of the problem, which makes it less efficient than our adaptive-sampling algorithm. It is worth noting that by using our algorithm to sparsify the data, and then running the algorithm in [ 18 ], we can obtain a (true) O(1) -approximation algorithm with better running time that succeeds with constant probability; see Section 4.3. We also show that for Top ℓ norms, which form a building block of monotone symmetric norms, adaptive sampling yields a (true) O( log k)-approximation . Previously, such guarantees were known only for min-sum objectives when the underlying distance function d (determining the client assignment costs) satisfies the approximate triangle inequality d(p, q ) ≤ ρ(d(p, r ) + 
+
+d(r, q )) for all points p, q, r , for some parameter ρ [7 , 2 , 34 ]. Notably, the proxy function that renders Top ℓ-norm as a min-sum objective does not satisfy this approximate triangle inequality for any finite ρ, so we need to supplement the analysis in [7] with new ideas. 
+
+Technical overview. Technically, the highly non-separable nature of general monotone, symmetric norms (for instance, the norm could be the maximum of any collection of monotone, symmetric norms) presents a significant challenge, and makes it much more challenging to deal with this general class of objectives as compared to Top ℓ norms. In particular, 
+
+unlike the case of Top ℓ-norms, there is no simple proxy-cost function that one can switch to, that renders the minimum-norm problem separable . As mentioned above, having such a separable proxy function was key towards extending adaptive sampling to make it work for Top ℓ-norms in [ 33 , 32 ]. However, without access to such a separable function for a general monotone, symmetric norm, we need to come up with new ideas. Indeed, this highly non-separable nature of general monotone, symmetric norms, which manifests itself in terms of the lack of a convenient separable proxy cost function, often presents an obstacle in extending results obtained for Top ℓ-norms to general monotone, symmetric norms, and for a variety of combinatorial-optimization problems (e.g., k-clustering, shortest path, matching), we have much less of an understanding of the minimum-norm variant of the problem compared to the Top ℓ-norm variant of the problem. 1                           
+
+> 1As an illustrative example, consider minimum-norm s-tpath , where we seek an s-tpath Pto minimize
+> f(⃗cP), where ⃗cP∈REis the vector whose entry for edge eis ceif e∈Pand 0otherwise. When fis
+
+4 Adaptive Sampling for Minimum-Norm k-Clustering 
+
+The way forward is to utilize majorization theory [ 25 ], which tells us that we can control the norm f (v) by controlling all Top ℓ-norms of v. More precisely (see Theorem 2.4), to ensure that f (v) ≤ O(1) · f (o∗), where o∗ is the cost-vector induced by an optimal solution, it suffices to ensure that Top ℓ(v) ≤ O(1) · Top ℓ(o∗) for all ℓ, or, in fact, (roughly speaking) geometrically increasing values of ℓ. Since we have an adaptive-sampling algorithm for Top ℓ
+
+norms [ 33 , 32 ], this seems promising; however, the execution of this algorithm, in particular, the sampling process, (naturally) depends on the index ℓ, whereas we need to control the Top ℓ-norms for multiple values of ℓ simultaneously . Also, note that simply running the Top ℓ-norm algorithm multiple times will not work, since we will end up opening far too many centers, O(k log n).Nonetheless, we are able to devise an adaptive-sampling algorithm (Algorithm 1) for this problem by exploiting some key insights from the analysis of the adaptive-sampling algorithm for Top ℓ norms in [ 33 , 32 ]. The analysis therein (see Section 3.1) shows that the algorithm makes progress when it chooses a center in the “core” of a cluster induced by an optimal solution that is currently costly (Claim 3.5), and that this event happens with constant probability as long as the current Top ℓ-cost is large (Lemma 3.6). While these cores differ for different values of ℓ, for any fixed cluster, they form a nested family: the cores get smaller as ℓ increases (Claim 3.9). This yields the following extremely-fruitful insight, which drives our algorithm: if at each step, we concentrate on the largest index ℓ for which the current Top ℓ-cost is large, then with constant probability, the new center that we open will simultaneously make progress with respect to all costly Top ℓ-norms . Hence, using a standard martingale argument, we can show that after O(k) centers are opened, the Top ℓ-cost of our solution is bounded for all indices ℓ (with constant probability), and this implies that we have an (O(1) , O (1) )-approximate solution (Theorem 3.7). 
+
+## 1.2 Related literature 
+
+The ℓ-centrum and its generalization, the ordered k-median problem, have been extensively studied in the Operations Research literature (see, e.g., [ 6, 29 , 30 ] and the references within). The first O( log n)-approximation algorithms for ℓ-centrum and the ordered k-median problems were given by Tamir [ 35 ] and Aouad and Segev [ 6] respectively. Subsequently, Byrka et al. [ 16 ], and Chakrabarty and Swamy [ 17 ] gave the first constant-factor approximations for these two problems. Chakrabarty and Swamy [ 18 ] introduced the much-more general minimum-norm 
+
+k-clustering problem, and used LP techniques to devise a (408 + ε)-approximation algorithm for the problem that opens exactly k centers. To the best of our knowledge, this the only polytime approximation result known for monotone symmetric norms. But there has been some work on parameterized approximation algorithms for even-more general norm-clustering problems [1]. In this paper, we study adaptive sampling algorithms for the minimum-norm k-clustering problem. Adaptive sampling (initially coined as D2 sampling in the context of the k-means problem), was introduced and studied by Arthur and Vassilvitskii [ 7 ]. Their adaptive sampling-based algorithm, k-means++ , yields a solution of expected cost O(log k) · OPT ; this bound was later proved to be tight, even in two dimensions [ 11 ]. With some modifications to the        
+
+> aTop ℓ-norm, the min-sum proxy function of [ 18 ] conveniently reduces the problem to a standard s-t
+> shortest-path problem, which can be solved efficiently. To solve the problem with a general monotone, symmetric norm, we need to control multiple Top ℓ-norms; this translates to an s-tpath problem with multiple knapsack or cardinality constraints; this changes the nature of the problem significantly, and only an O(log log n)-approximation algorithm is known [20].
+
+H. Pulyassary and C. Swamy 5
+
+original k-means++ algorithm, it is possible to obtain improved runtime and approximation guarantees. In particular, Bachem et al. [ 8] showed that one can obtain an O( log k)-approx in sublinear time by replacing the exact D2-sampling step with a (faster) approximation based on Markov Chain Monte Carlo sampling. Aggarwal, Deshpande, and Kannan [ 3]later proved that using the D2-sampling protocol to open O(k) centers (instead of exactly k
+
+centers) yields a constant factor bicriteria approximation for k-means. Adaptive sampling has been used to give approximation algorithms for other variants of the k-means problem as well, including under the streaming model [ 5, 14 ], clustering with outliers [ 9 , 22 ], other constrained k-means problems [ 10 , 12 ], as also other objectives such as minimizing the sum of the pth-powers of distances [ 3], Bregman divergences [ 2 ], truncated costs [ 34 ], and Top ℓ-norms [ 33 , 32 ]. As noted earlier, except for [ 33 , 32 ], all these works consider min-sum, and hence, separable objectives, and [ 33 , 32 ] also move to a min-sum proxy function that well-estimates the Top ℓ norm. 
+
+## 2 Preliminaries 
+
+Monotone, symmetric norms. Recall that a function f : Rn → R+ is a norm if it satisfies (i) f (x) = 0 iff x = 0 ; (ii) f (x + y) ≤ f (x) + f (y) for all x, y ∈ Rn (triangle inequality); and (iii) f (λx ) = |λ|f (x) for all x ∈ Rn, λ ∈ R (homogeneity). If f is monotone , then f (x) ≤ f (y)
+
+for all 0 ≤ x ≤ y, and f is symmetric if permuting the coordinates of v does not change the value of f (v).We collect here various properties of monotone, symmetric norms from prior work that we will utilize. For a vector v ∈ Rn
+
+> +
+
+, we use v↓ to denote v with its coordinates sorted in non-increasing order. A special class of monotone symmetric norms which will be particularly useful are Top ℓ norms. 
+
+▶ Definition 2.1. The Top ℓ-norm of v ∈ Rn
+
+> +
+
+, denoted Top ℓ(v), is the sum of the ℓ largest coordinates of v, i.e., Top ℓ(v) = ∑ℓi=1 v↓ 
+
+> i
+
+.
+
+Top ℓ-norms can be difficult to work with because they are non-separable, i.e., it is unclear how to isolate the contribution from a single coordinate vi towards f (v). But this difficulty can be somewhat mitigated by working with a separable proxy function—the expression on the RHS of Claim 2.2 (a)—introduced by [ 18 ]. (This proxy function does not however satisfy the triangle inequality, which does cause other complications.) For z ∈ R, define 
+
+z+ := max {z, 0}.
+
+▷ Claim 2.2 (Claims 6.1 and 6.2 in [18]). Let v ∈ Rn 
+
+> +
+
+and ρ ∈ R+. Then, 
+
+(a) Top ℓ(v) ≤ ℓ · ρ + ∑ni=1 (vi − ρ)+;
+
+(b) if v↓ 
+
+> ℓ
+
+≤ ρ ≤ (1 + ε)v↓ 
+
+> ℓ
+
+, we have ℓ · ρ + ∑ni=1 (vi − ρ)+ ≤ (1 + ε) · Top ℓ(v).An important property of Top ℓ-norms is that they serve as a handle for reasoning about arbitrary monotone symmetric norms. Indeed, a key insight that is useful when dealing with monotone symmetric norms, and leveraged by our algorithm as well, is that for any monotone symmetric norm f , in order to control f (v), it suffices to control Top ℓ(v) for all 
+
+ℓ ∈ [n]. In fact, it suffices to control only logarithmically-many Top ℓ norms (incurring a small loss in approximation quality). 
+
+▶ Definition 2.3. Define POS n,δ ⊆ [n] as follows. We include index 1 in POS n,δ . Subse-quently, if ℓ is the current-largest index in POS n,δ and ⌈(1 + δ)ℓ⌉ ≤ n, we include ⌈(1 + δ)ℓ⌉
+
+in POS n,δ . We abbreviate POS n,δ to POS , when n, δ are clear from the context. 6 Adaptive Sampling for Minimum-Norm k-Clustering 
+
+We are using the definition of POS n,δ in [ 26 ], which is slightly different from the definition in [18], as we will utilize certain results from [26]; but this difference is not crucial. 
+
+▶ Theorem 2.4. Let x, y ∈ Rn
+
+> +
+
+, ρ, β ≥ 0. Let h : Rn 7 → R+ be a monotone, symmetric norm. 
+
+(a) [Follows from majorization theory of [ 25 ]] If Top ℓ(x) ≤ ρ · Top ℓ(y) + β for all ℓ ∈ [n], then 
+
+h(x) ≤ ρ · h(y) + β · h(1 , 0, . . . , 0) .
+
+(b) [Slight generalization of Claim 2.6 in [ 26 ]] If Top ℓ(x) ≤ ρ · Top ℓ(y) + β for all ℓ ∈ POS n,δ ,then h(x) ≤ (1 + δ)(ρ · h(y) + β · h(1 , 0, . . . , 0) ).
+
+Proof of part (b). Claim 2.6 in [ 26 ] states that if u, v ∈ Rn are such that Top ℓ(u) ≤ Top ℓ(v)
+
+for all ℓ ∈ POS n,δ , then h(u) ≤ (1 + δ)h(v). Now take u = x, and v = ρy ↓ + β · (1 , 0, . . . , 0) .Then Top ℓ(v) = ρTop ℓ(y) + β for all ℓ ∈ [n], and h(v) ≤ ρh (y) + β · h(1 , 0, . . . , 0) . ◀
+
+We will need to estimate Top ℓ(u) for ℓ ∈ POS n,δ , given estimates of u↓ 
+
+> ℓ
+
+for all ℓ ∈ POS n,δ .We utilize the following result from [ 26 ], which we have slightly paraphrased. We say that a vector v ∈ RPOS  
+
+> +
+
+is non-increasing if vℓ ≥ vℓ′ for indices ℓ, ℓ ′ ∈ POS , ℓ < ℓ ′.
+
+▶ Lemma 2.5 (Lemma 2.8 (a) and (b) in [ 26 ] slightly paraphrased) . Let u ∈ Rn 
+
+> +
+
+and v ∈ RPOS n,δ 
+
+> +
+
+be a non-increasing vector. For r ∈ [n], let prev (r) denote the largest index ℓ ≤ r in POS n,δ .Suppose that u↓ 
+
+> ℓ
+
+≤ vℓ ≤ (1 + ε)u↓ 
+
+> ℓ
+
++ κ for all ℓ ∈ POS n,δ . Then Top ℓ(u) ≤ ∑ℓr=1 vprev( r) ≤
+
+(1 + ε)(1 + δ)Top ℓ(u) + ℓκ for all ℓ ∈ [n].
+
+Complementing the above, we utilize the following result, which shows how we can find a suitable set T containing good estimates of u↓ 
+
+> ℓ
+
+for all ℓ ∈ POS n,δ .
+
+▶ Lemma 2.6 (Lemma 2.9 (b) in [ 26 ] paraphrased) . Let u ∈ Rn 
+
+> +
+
+and 0 < ϵ ≤ 1. Suppose that we have bounds lb and ub such that lb ≤ u↓ 
+
+> ℓ
+
+≤ ub for all ℓ ∈ POS n,δ . Let N =(2 e)|POS n,δ | + ( ub lb 
+
+)O( 1 
+
+> ϵ)
+
+. We can construct T ⊆ RPOS n,δ  
+
+> +
+
+with |T | ≤ N in O(N ) time that contains a non-increasing vector v ∈ RPOS n,δ  
+
+> +
+
+such that u↓ 
+
+> ℓ
+
+≤ vℓ ≤ (1 + ϵ)u↓ 
+
+> ℓ
+
+for all ℓ ∈ POS n,δ .
+
+Minimum-norm k-clustering. In k-clustering problems, we are given a set of centers F, n
+
+clients, C, a distance function d : ( F ∪ C )2 → R≥0, and must choose a set of k centers from 
+
+F to open. The assignment cost incurred by client j ∈ C for a given set S ⊆ F , denoted 
+
+d(j, S ), is their distance to the closest center in S. Thus, a set of open centers S induces a cost vector, denoted d(C, S ), where d(C, S )j = d(j, S ) is the assignment cost incurred by client j under S. We mostly consider the setting where F = C, but in Section 4.2, we discuss how the general setting can be handled.In the minimum-norm k clustering problem, we seek to minimize f (d(C, S )), where f is a given monotone, symmetric norm . A useful special case of this is when f is a Top ℓ-norm. Observe that this special case, which is sometimes called the ℓ-centrum problem , captures both the k-center ( ℓ = 1 ) and k-median ( ℓ = n) problems. Recall that, for k-median, the following adaptive-sampling process yields a constant-factor bicriteria approximation: pick a random point j ∈ C to add to the current center-set S with probability proportional to d(j, S ), and repeat this for O(k) iterations. It is worth pointing out that this algorithm, as stated, can fail badly even for k-center (i.e., 1-centrum). 
+
+▶ Theorem 2.7. Let τ ≥ 1, L > 1, ϵ ∈ (0 , 1) be fixed. There exists a 2-center instance such that Pr [Top 1
+
+(d(C, S )) > L · OPT ] ≥ 1 − ϵ, where OPT is the optimal value, and S is the set of 2τ centers obtained by running the k-median adaptive-sampling algorithm 2τ times. 
+
+Proof. Consider an instance with client-set C = C1 ∪ { j∗}, where the set C1 contains at least 
+
+2τ (1 + 4τ L ϵ
+
+) clients. Furthermore, the distance between any pair of clients in C1 is 1. The H. Pulyassary and C. Swamy 7
+
+client j∗ is located at a distance of L from every client in C1; notice that this indeed defines a valid metric. An optimal solution for the 2-center problem would be to open one center in 
+
+C1, and one center at j∗; this solution has a cost of 1. In fact, any set of centers with cost less than L · OPT must include j∗ and some client in C1.We now argue that, with probability at least 1 − ϵ, the k-median adaptive sampling algorithm fails to open a center at j∗. Suppose no center has been opened at j∗ by the end of the (i − 1) -th iteration. Let Si−1 be the set of currently open centers, and let si
+
+be the center opened in iteration i. Since j∗ is at a distance of L from Si−1, Pr [si =
+
+j∗|j∗ /∈ Si−1] = L 
+
+> |C1|−| Si−1|+L
+
+≤ L  
+
+> |C1|− 2τ+L
+
+< ϵ  
+
+> 8τ2
+
+; by applying the Union bound, we have 
+
+Pr [j∗ ∈ S|j∗ /∈ Si−1] ≤ ϵ/ 4τ . So, the probability that j∗ ∈ S2τ , is at most Pr [s0 =
+
+j∗] + 2 τ · ϵ 
+
+> 4τ
+
+= 1 
+
+> n
+
++ ϵ 
+
+> 2
+
+< ϵ . Since any set of centers with cost less than L · OPT must include 
+
+j∗, Pr[ Top 1
+
+(d(C, S )) > L · OPT ] ≥ 1 − ϵ. ◀
+
+## 3 Adaptive sampling 
+
+We now present our adaptive-sampling algorithm for minimum-norm k-clustering. As suggested by Theorem 2.4, our approach for controlling a general monotone, symmetric norm is by controlling all Top ℓ norms. So we first discuss adaptive sampling for Top ℓ-norms in Section 3.1. We then exploit insights gained from the analysis of adaptive sampling for Top ℓ norms to devise our adaptive-sampling algorithm for monotone, symmetric norms (Section 3.2). 
+
+## 3.1 Top ℓ-norms 
+
+We give an overview of the key ideas of the adaptive-sampling algorithm of [ 33 ] for Top ℓ-norms, which we build upon in Section 3.2. As noted previously, the Top ℓ-objective can be difficult to work with directly, due to its non-separable nature. Instead, [ 33 ] observed that, for suitably chosen parameters β, t ℓ, one can work with the proxy function ∑ 
+
+> j∈C
+
+(d(j, S ) − βt ℓ)+
+
+suggested by Claim 2.2 (where S is the center-set), which is separable. We can now treat 
+
+(d(j, S ) − βt ℓ)+ as the individual contribution of client j to the current cost of the solution, and so the next center to open is sampled with probability proportional to this proxy cost .So the adaptive-sampling algorithm in [ 33 ] for Top ℓ-norms is simply the following: choose the first center uniformly at random from C, choose every subsequent center as discussed above, and continue this for O(k) centers. They showed that if tℓ is good estimate of the 
+
+ℓ-th largest cost incurred by an optimal solution, then (for a suitably chosen β) this returns an O(1) -approximation with constant probability. 
+
+Analysis. We include some components of the analysis in [ 32 ], which we need to modify slightly for our purposes. Throughout, S denotes the current (random) center-set. Fix an optimal solution O∗ = {o∗
+
+> 1
+
+, . . . , o ∗
+
+> k
+
+} for the Top ℓ k-clustering problem, and let C∗ 
+
+> 1
+
+, . . . , C ∗
+
+> k
+
+denote the clusters induced by this solution, which we will often call the optimal clusters; that is, C∗ 
+
+> q
+
+is the set of clients assigned to center o∗ 
+
+> q
+
+, for all q ∈ [k]. Let OPT ℓ = Top ℓ
+
+(d(C, O ∗))
+
+denote the optimal Top ℓ-cost. Let τ = 35 , ρ = 35 . It will be convenient to state the analysis in terms of certain parameters α, β, γ , whose values are chosen to satisfy the following: 2
+
+β = γ = α + 1 , ρ ≥ 2( α + 2 β + 3) + γ, 
+
+(
+
+1 − γρ
+
+)
+
+· α−12α(α+β+3) ≥ 1
+
+τ . (1)         
+
+> 2These imply the inequalities (3) in [ 32 ], which are used in their analysis of adaptive sampling for Top ℓ-norms, by taking κ=α+β+ 3 .
+
+8 Adaptive Sampling for Minimum-Norm k-Clustering 
+
+For instance, one can take α = 2 , γ = β = 3 . At a given iteration of the algorithm, we classify an optimal cluster C∗ 
+
+> q
+
+∈ {C∗ 
+
+> 1
+
+, . . . , C ∗
+
+> k
+
+} as “good” or “bad”, depending on whether the clients in C∗ 
+
+> q
+
+incur a large proxy cost compared to what they incur under O∗.
+
+▶ Definition 3.1. Say that C∗ 
+
+> q
+
+is ℓ-good , if ∑
+
+> j∈C∗
+> q
+
+(d(j, S ) − βt ℓ)+ ≤ γ ∑
+
+> j∈C∗
+> q
+
+(d(j, o ∗ 
+
+> q
+
+) − tℓ)+.If C∗ 
+
+> q
+
+is not ℓ-good, we say that it is ℓ-bad .
+
+If all clusters are good, then the Top ℓ-cost of the current solution is O(OPT ℓ), assuming that tℓ is a good estimate of t∗ 
+
+> ℓ
+
+= d(C, O ∗)↓ 
+
+> ℓ
+
+.
+
+▷ Claim 3.2 (Claim 4.24 in [ 32 ]). Let t∗ 
+
+> ℓ
+
+= d(C, O ∗)↓ 
+
+> ℓ
+
+. Suppose that t∗ 
+
+> ℓ
+
+≤ tℓ ≤ max {(1 + 
+
+ε)t∗ 
+
+> ℓ
+
+, εOPT ℓ
+
+> ℓ
+
+}. If every cluster is ℓ-good, then Top ℓ(d(C, S )) ≤ (1 + ε)γ · OPT ℓ.
+
+Proof. We include the proof from [ 32 ] to keep the exposition more self-contained. We have Top ℓ
+
+(d(C, S )) ≤ ℓ · βt ℓ +
+
+> k
+
+∑
+
+> q=1
+
+∑
+
+> j∈C∗
+> q
+
+(d(j, S ) − βt ℓ)+
+
+≤ γ · max {(1 + ε)ℓt ∗ 
+
+> ℓ
+
+, ε · OPT ℓ
+
+} +
+
+> k
+
+∑
+
+> q=1
+
+γ · ∑
+
+> j∈C∗
+> q
+
+(d(j, o ∗ 
+
+> q
+
+) − t∗ 
+
+> ℓ
+
+)+
+
+= γ · max {(1 + ε)ℓt ∗ 
+
+> ℓ
+
+, ε · OPT ℓ
+
+} + γ · ∑
+
+> j∈C
+
+(d(j, O ∗) − t∗ 
+
+> ℓ
+
+)+ ≤ γ(1 + ε)OPT ℓ.
+
+The first inequality is from Claim 2.2 (b). The second inequality is because all clusters are 
+
+ℓ-good, we have γ ≥ β, and due to the bounds on tℓ. ◀
+
+On the other hand, if the Top ℓ-cost of our solution is large, then one can show that the next center added to the solution S lies in the “core” of some bad cluster C∗ 
+
+> q
+
+, with some constant probability p. Moreover, when a center is opened from the core of C∗ 
+
+> q
+
+, that cluster becomes good (Claim 3.5) and hence, remains good in all subsequent iterations. Definition 3.3 gives the precise definition of core, but informally, the core of a cluster C∗ 
+
+> q
+
+consists of points that are sufficiently close to its center o∗ 
+
+> q
+
+.Thus, in every iteration, we make progress towards obtaining a low-cost solution by reducing the number of bad clusters with probability p. Hence, the expected number of bad clusters decreases with each iteration, and one can then use standard martingale arguments to show that after (k + √k)/p iterations, with some constant probability, we obtain a solution with no bad clusters, and therefore a near-optimal solution. We now discuss some details. Define the radius of a cluster C∗ 
+
+> q
+
+to be rℓ(C∗ 
+
+> q
+
+) := 
+
+∑   
+
+> j∈C∗
+> q
+> (d(j,o ∗
+> q)−tℓ)+
+> |C∗
+> q|
+
+.
+
+▶ Definition 3.3. The ℓ-core of C∗ 
+
+> q
+
+is core ℓ(C∗ 
+
+> q
+
+) := {j ∈ C∗ 
+
+> q
+
+: d(j, o ∗ 
+
+> q
+
+) ≤ α(tℓ + rℓ(C∗ 
+
+> q
+
+)) }.
+
+▶ Remark 3.4. Our definition of core is slightly different from (and cleaner than) the definition in [ 32 ] (see Definition 4.26 in [ 32 ]), where this is defined as {j ∈ C∗ 
+
+> q
+
+: d(j, o ∗ 
+
+> q
+
+) ≤ tℓ} if o∗ 
+
+> q
+
+is sufficiently close to S, and as {j ∈ C∗ 
+
+> q
+
+: ( d(j, o ∗ 
+
+> q
+
+) − tℓ)+ ≤ αr ℓ(C∗ 
+
+> q
+
+)} otherwise. The reason for this change will become clear in Section 3.2. The precise definition used in [ 32 ] is not so important, but importantly , we note that the core of C∗ 
+
+> q
+
+, as defined in [ 32 ], is a subset 
+
+of core ℓ(C∗ 
+
+> q
+
+) as defined above. For clarity, we use ℓ-supercore to refer to the version of core defined in [32]; so we have supercore ℓ(C∗ 
+
+> q
+
+) ⊆ core ℓ(C∗ 
+
+> q
+
+).By slightly reworking the arguments in [ 33 ] (to account for our definition of core), we have the following. H. Pulyassary and C. Swamy 9
+
+▷ Claim 3.5. Consider a cluster C∗ 
+
+> q
+
+. If S ∩ core ℓ(C∗ 
+
+> q
+
+)̸ = ∅, then C∗ 
+
+> q
+
+is ℓ-good (and hence remains ℓ-good throughout). 
+
+Proof. Let s be a point in S ∩ core ℓ(C∗ 
+
+> q
+
+). Since β ≥ α + 1 , we have 
+
+∑
+
+> j∈C∗
+> q
+
+(d(j, s ) − βt ℓ)+ ≤ ∑
+
+> j∈C∗
+> q
+
+((d(j, o ∗ 
+
+> q
+
+) − tℓ)+ + ( d(s, o ∗ 
+
+> q
+
+) − αt ℓ)+)
+
+≤ | C∗ 
+
+> q
+
+| · (rℓ(C∗ 
+
+> q
+
+) + ( αt ℓ + αr ℓ(C∗ 
+
+> q
+
+) − αt ℓ)+) = ( α + 1) · | C∗ 
+
+> q
+
+| · rℓ(C∗ 
+
+> q
+
+).
+
+The first inequality is because d satisfies the triangle inequality, and since (y + z)+ ≤ y+ + z+.The second inequality follows from the definition of rℓ(C∗ 
+
+> q
+
+) and since s ∈ core ℓ(C∗ 
+
+> q
+
+). Finally, since γ ≥ α + 1 (see (1)), this shows that C∗ 
+
+> q
+
+is ℓ-good. ◀
+
+Lemma 3.6 is the main result proved in [ 32 ], which underlies their proof that adaptive sampling works for Top ℓ-norms. This will also be key to extending adaptive sampling to monotone, symmetric norms in Section 3.2. 
+
+▶ Lemma 3.6 (Follows from Lemma 4.28 in [ 32 ]) . Consider any iteration i for which Top ℓ(d(C, S i−1)) > ρ (1 + ε) · Top ℓ(d(C, S ∗)) . Suppose we open the next center si at j ∈ C 
+
+with probability proportional to (d(j, S i−1) − βt ℓ)+. Then, si lies in the ( ℓ-supercore, and hence) ℓ-core of some ℓ-bad cluster C∗ 
+
+> q
+
+, with probability at least 1 
+
+> τ
+
+.
+
+## 3.2 Arbitrary monotone symmetric norms 
+
+We now describe the adaptive-sampling algorithm for minimum-norm k-clustering . Recall that in this problem, we seek to minimize f (d(C, S )), where d(C, S ) is the cost vector induced by opening S, and f : Rn 7 → R+ is an arbitrary monotone, symmetric norm. We will typically refer to f (d(C, S )) as the f -cost induced by S. Let POS = POS n,δ (Definition 2.3). Again, the objective function is non-separable in that we cannot isolate the contribution of a specific client to the f -cost in any convenient way. Furthermore, in contrast with Top ℓ-norms, we do not have a proxy-cost function that renders the problem separable. We therefore resort to Theorem 2.4, which shows that in order to control the f -cost induced by our solution, it suffices to control the Top ℓ-cost of our solution with respect to all ℓ ∈ POS .A naive way of utilizing this observation is to simply run the adaptive-sampling algorithm for Top ℓ-norms from Section 3.1 for each ℓ ∈ POS , and return the union of these solutions. However, this would open O(k|POS |) = O(k log n) centers, instead of the O(k) centers we seek in a (O(1) , O (1) )-approximate solution. Also, this naive algorithm would achieve much more than what is required in that the resulting solution S would satisfy Top ℓ
+
+(d(C, S )) ≤
+
+ρ(1 + ε)OPT ℓ for every ℓ ∈ POS ,3 where recall that OPT ℓ is the optimal Top ℓ-cost, which implies that it is a ρ(1 + ε)-approximate solution for every monotone, symmetric norm h (by Theorem 2.4); this kind of universal approximation is a much stronger guarantee than we seek, and for such a strong guarantee one must end up opening O(k log n) centers [28]. Since we only want the f -cost f (d(C, S )) of our solution to be O(1) · OPT , where OPT 
+
+is the optimal f -cost, we only need that, for every ℓ ∈ POS , Top ℓ
+
+(d(C, S )) is within a constant-factor of the Top ℓ-cost of a fixed solution, namely the optimal solution O∗ to the minimum-norm problem. We design a sampling process that allows us to do so by      
+
+> 3The probability of success in one run would only be e−O(log n), but this can be boosted to constant probability of success by repeating the process nO(1) times.
+
+10 Adaptive Sampling for Minimum-Norm k-Clustering 
+
+capitalizing on some insights from the analysis of the adaptive-sampling algorithm for Top ℓ-norms presented in Section 3.1. From the analysis therein, we can infer that to ensure that Top ℓ
+
+(d(C, S )) = O(1) · Top ℓ
+
+(d(C, O ∗)) for all ℓ ∈ POS , it suffices for S to hit the ℓ-core of every cluster C∗ 
+
+> q
+
+induced by O∗, for all ℓ ∈ POS . Here, one extremely useful property comes in handy: for any fixed cluster C∗ 
+
+> q
+
+, the ℓ-cores for different indices ℓ are nested (Claim 3.9); this is precisely, why we define core ℓ(C∗ 
+
+> q
+
+) slightly differently as compared to [ 32 ]. This implies that if we open a center from core ℓ(C∗ 
+
+> q
+
+), then we have also hit core ℓ′ (C∗ 
+
+> q
+
+) for all indices 
+
+ℓ′ ≤ ℓ; so we have simultaneously turned C∗ 
+
+> q
+
+into an ℓ′-good cluster (see Definition 3.1) for all ℓ′ ≤ ℓ, and thereby made progress by bounding the proxy-cost of C∗ 
+
+> q
+
+for all these indices. We can now finish things up with one additional observation: we only need to consider indices ℓ ∈ POS for which the current Top ℓ-cost is large. Formally, call an index ℓ costly if Top ℓ
+
+(d(C, S )) > ρ (1 + ε)Top ℓ
+
+(d(C, O ∗)). (In the actual algorithm, we work with a suitable estimate of Top ℓ
+
+(d(C, O ∗)).) Let ℓmax be the largest costly index. Now suppose we run an iteration of the adaptive-sampling algorithm from Section 3.1 for index ℓmax , i.e., we open the next center at j ∈ C with probability proportional to (d(j, S ) − 3tℓmax )+. By Lemma 3.6, we know that we will hit core ℓmax (C∗ 
+
+> q
+
+) for some ℓmax -bad cluster C∗ 
+
+> q
+
+with constant probability, which will imply that C∗ 
+
+> q
+
+becomes an ℓ-good cluster for every costly index ℓ ∈ POS . The upshot is that we have now “taken care of C∗ 
+
+> q
+
+” in the sense that for every index ℓ ∈ POS ,we know that the Top ℓ-proxy cost of clients in C∗ 
+
+> q
+
+is small, or the Top ℓ-cost of the entire solution is small. Therefore, by Lemma 3.6, we obtain that with some constant probability p,we “take care of” some cluster in each iteration, and one can utilize the same martingale argument to show that with constant probability, after O(k) iterations, there is no costly index; hence, f (d(C, S )) = O(1) · OPT (assuming we have the right tℓ values).   
+
+> Algorithm 1 Adaptive sampling for minimum-norm k-clustering
+
+Input : instance (C, d ), a non-increasing vector ⃗ t ∈ R|POS | 
+
+> +
+> 1:
+
+Initialize S0 ← ∅, I ← POS  
+
+> 2:
+
+For ℓ ∈ POS , define Bℓ := ∑ℓr=1 tprev( r), where prev (r) is the largest index ℓ ≤ r in POS  
+
+> 3:
+
+for i = 1 , . . . , ⌈35( k + √k)⌉ do  
+
+> 4:
+
+If I = ∅, set ℓmax ← 1; otherwise set ℓmax ← largest index in I. 
+
+> 5:
+
+If i = 1 , sample si uniformly at random from C; otherwise, sample si with probability proportional to (d(si, S i−1) − 3tℓmax )+. 
+
+> 6:
+
+Update Si ← Si−1 ∪ { si}. 
+
+> 7:
+
+Update I ← {ℓ ∈ POS : Top ℓ
+
+(d(C, S )) > ρ (1 + ε) · Bℓ
+
+}. 
+
+> 8:
+
+end for  
+
+> 9:
+
+return S⌈35( k+√k)
+
+⌉
+
+Analysis. It will be convenient to assume via scaling that f (1 , 0, . . . , 0) = 1 . For ℓ ∈ [n],let t∗ 
+
+> ℓ
+
+= d(C, O ∗)↓ 
+
+> ℓ
+
+be the ℓ-th largest assignment cost incurred under the optimal solution 
+
+O∗. Our main result is as follows. We have not attempted to optimize constants here, but instead chosen simplicity of exposition (and some calculations). 
+
+▶ Theorem 3.7. Let ⃗ t be a non-increasing vector such that t∗ 
+
+> ℓ
+
+≤ tℓ ≤ max {(1 + ε)t∗ 
+
+> ℓ
+
+, εOPT  
+
+> n
+
+}
+
+for all ℓ ∈ POS . Algorithm 1 runs in O(nk ) time and returns a set S of O(k) centers satisfying f (d(C, S )) ≤ 35(1 + ε)3(1 + δ)2 · OPT with constant probability. H. Pulyassary and C. Swamy 11 
+
+Complementing this, Lemma 3.10 shows that one can compute in polytime a set T
+
+containing a vector ⃗ t satisfying the conditions of Theorem 3.7. So if we run Algorithm 1 for each vector in T and return the best solution obtained, then this will be an (O(1) , O (1) )-bicriteria solution for minimum-norm k-clustering with constant probability. In Algorithm 1, we use Bℓ := ∑ℓr=1 tprev( r) as an estimate of Top ℓ
+
+(d(C, O ∗)). We begin by showing that this estimate is fairly accurate if ⃗ t satisfies the conditions of Theorem 3.7. 
+
+▷ Claim 3.8. Suppose that t∗ 
+
+> ℓ
+
+≤ tℓ ≤ max {(1 + ε)t∗ 
+
+> ℓ
+
+, εOPT  
+
+> n
+
+} for all ℓ ∈ POS . Then, we have Top ℓ
+
+(d(C, O ∗)) ≤ Bℓ ≤ (1 + ε)(1 + δ)Top ℓ
+
+(d(C, O ∗)) + εOPT for all ℓ ∈ POS .
+
+Proof. Apply Lemma 2.5 to u = ( t∗ 
+
+> ℓ
+
+)ℓ∈[n] and v = ( tℓ)ℓ∈POS . ◀
+
+Next, we show that the ℓ-cores of a cluster are nested. 
+
+▷ Claim 3.9. For any ℓ′ ≤ ℓ, we have core ℓ(C∗ 
+
+> q
+
+) ⊆ core ℓ′ (C∗ 
+
+> q
+
+).
+
+Proof. This follows from the fact that tℓ + rℓ(C∗ 
+
+> q
+
+) is a non-increasing function of ℓ. (Note that tℓ ≤ tℓ′ .) Given this, the result is immediate since j ∈ core ℓ(C∗ 
+
+> q
+
+) implies that d(j, o ∗ 
+
+> q
+
+) ≤
+
+α(tℓ + rℓ(C∗ 
+
+> q
+
+)) ≤ α(tℓ′ + rℓ′ (C∗ 
+
+> q
+
+)) , and so j ∈ core ℓ′ (C∗ 
+
+> q
+
+). To see the fact, we have 
+
+tℓ + rℓ(C∗ 
+
+> q
+
+) = tℓ +
+
+∑ 
+
+> j∈C∗
+> q
+
+(d(j, o ∗ 
+
+> q
+
+) − tℓ)+
+
+|C∗ 
+
+> q
+
+| = tℓ +
+
+∑
+
+> j∈C∗
+> q
+
+((d(j, o ∗ 
+
+> q
+
+) − tℓ′ ) + ( tℓ′ − tℓ))+
+
+|C∗ 
+
+> q
+
+|≤ tℓ +
+
+∑ 
+
+> j∈C∗
+> q
+
+(d(j, o ∗ 
+
+> q
+
+) − tℓ′ )+
+
+|C∗ 
+
+> q
+
+| + ( tℓ′ − tℓ) = tℓ′ + rℓ′ (C∗ 
+
+> q
+
+).
+
+The inequality follows because (y + z)+ ≤ y+ + z+. ◀
+
+Proof of Theorem 3.7. As in Section 3.1, let τ = 35 , ρ = 35 , α = 2 , γ = β = 3 . These parameters satisfy (1) . For any index ℓ, Definition 3.1 specifies what it means for a cluster 
+
+C∗ 
+
+> q
+
+to be ℓ-good or ℓ-bad, and core ℓ(C∗ 
+
+> q
+
+) is defined in Definition 3.3. Note that I can only shrink as the algorithm proceeds. Observe that if I̸ = ∅ at the start of some iteration, then there must be some ℓmax -bad cluster C∗ 
+
+> q
+
+; otherwise, by Claim 3.2 (and since γ ≤ ρ), we would have Top ℓmax 
+
+(d(C, S )) ≤ ρ(1 + ε)Top ℓmax 
+
+(d(C, O ∗)) ≤ ρ(1 + ε)Bℓmax ,contradicting that ℓmax ∈ I. So if I̸ = ∅, then by Lemma 3.6, with probability at least 1 
+
+> τ
+
+, the next center added to S lies in core ℓmax (C∗ 
+
+> q
+
+) for some ℓmax -bad cluster C∗ 
+
+> q
+
+. Since the ℓ-cores are nested, by Claim 3.5 and the definition of ℓmax , this implies that C∗ 
+
+> q
+
+becomes ℓ-good for every ℓ ∈ I after this iteration. Define bad := {q ∈ [k] : C∗ 
+
+> q
+
+is ℓ-bad for some ℓ ∈ I}. The above discussion shows that if 
+
+I̸ = ∅ at the start of an iteration, then after the iteration, |bad | has decreased by at least 
+
+1 with probability at least p := 1 
+
+> τ
+
+. Given this, we can follow the same martingale-based-approach used in [ 32 ] to analyze adaptive sampling for Top ℓ-norms. Let N = ⌈τ (k + √k)⌉.Ideally, we would like to define Xi = |bad | for the set bad at the end of iteration i, but 
+
+Xi −Xi+1 could potentially be large. So we define X0 = k. For i ≥ 1, we define Xi = Xi−1 −1
+
+if I = ∅, or if si lies in the ℓmax -core of some ℓmax -bad cluster C∗ 
+
+> q
+
+. Otherwise, we define 
+
+Xi = Xi−1. So we have E[Xi|Xi−1
+
+] ≤ Xi−1 − p by Lemma 3.6. Note that, by construction, if I̸ = ∅ at the start of an iteration i, then |bad | at the end of iteration i is at most Xi. So if XN = 0 , we must have I = ∅ after iteration N : if I̸ = ∅
+
+at the start of iteration N , then |bad | ≤ XN = 0 at the end of iteration N , which implies that I = ∅ after iteration N . But I = ∅ means that Top ℓ
+
+(d(C, S )) ≤ ρ(1+ ε)Bℓ ≤ ρ(1+ ε)
+
+(
+
+(1+ ε)(1+ δ)Top ℓ
+
+(d(C, O ∗))+εOPT 
+
+)
+
+for all ℓ ∈ POS 12 Adaptive Sampling for Minimum-Norm k-Clustering 
+
+where the last inequality is due to Claim 3.8. By Theorem 2.4 (b) (recall that f (1 , 0, . . . , 0) = 1), this implies that f (d(C, S )) ≤ ρ(1 + ε)2(1 + δ)2 · OPT + ρ(1 + ε)(1 + δ)εOPT ≤
+
+ρ(1 + ε)3(1 + δ)2OPT .Finally, we argue that Pr [XN > 0] ≤ e−p/ 4. For i = 0 , 1, . . . , define Yi = Xi + i · p. Then 
+
+|Yi+1 − Yi| ≤ 1 and E[Yi+1 |Yi
+
+] ≤ E[Xi+1 |Xi
+
+] + ( i + 1) p ≤ Xi + i · p = Yi, so Y0, Y 1, . . . form a supermartingale. If XN > 0, we have YN > N p , so by the Azuma-Hoeffding inequality, 
+
+Pr[ YN − Y0 > (N p − k)] ≤ exp 
+
+(
+
+− (N p −k)2
+
+> 2N
+
+)
+
+= exp 
+
+(
+
+− kp 
+
+> 2( k+√k)
+
+)
+
+≤ e− p 
+
+> 4
+
+.
+
+The running time follows because each iteration of the for -loop takes O(n) time. ◀
+
+We conclude by showing that we can efficiently obtain a vector ⃗ t satisfying the conditions of Theorem 3.7. 
+
+▶ Lemma 3.10. We can obtain a set T ⊆ RPOS  
+
+> +
+
+of size O( 1 
+
+> ε
+
+· log( n) · max {( nε )O(1 /ε ), n 1/δ })
+
+that contains a valid threshold vector ⃗ t satisfying the conditions of Theorem 3.7. 
+
+Proof. We utilize Lemma 2.6. Take u to be the vector (max {t∗ 
+
+> ℓ
+
+, εOPT 
+
+> 2n
+
+}) 
+
+> ℓ∈[n]
+
+, and set 
+
+ϵ = min {1, ε }. We can now apply Lemma 2.6 provided that we can obtain bounds lb and ub 
+
+as required by the lemma. We run the well-known 2-approximation algorithm for k-center due to Gonzalez [ 23 ] to obtain a center-set S∗ 
+
+> 1
+
+. Note that OPT ≥ f (1 , 0, . . . , 0) · Top 1
+
+(d(C, O ∗))
+
+due to monotonicity of f . Recall that we have normalized f so that f (1 , 0, . . . , 0) = 1 . So we have OPT ≥ t∗
+
+> 1
+
+. We also have t∗ 
+
+> 1
+
+≥ Top 1
+
+(d(C, S ∗ 
+
+> 1
+
+))/2 since S∗ 
+
+> 1
+
+is a 2-approximate k-center solution. So letting lb := ε·Top 1(d(C,S ∗  
+
+> 1)) 4n
+
+, we obtain that max {t∗ 
+
+> ℓ
+
+, εOPT 
+
+> 2n
+
+} ≥ lb for all ℓ ∈ POS .We also have t∗ 
+
+> 1
+
+≤ OPT ≤ f (d(C, S ∗ 
+
+> 1
+
+)) ≤ f (1 , 0, . . . , 0) · Top n
+
+(d(C, S ∗ 
+
+> 1
+
+)), where the last inequality follows from the triangle inequality. So taking ub := max {1, ε
+
+> 2n
+
+}·n·Top 1
+
+(d(C, S ∗ 
+
+> 1
+
+)),we obtain that max {t∗ 
+
+> ℓ
+
+, εOPT 
+
+> 2n
+
+} ≤ ub for all ℓ ∈ POS .So by Lemma 2.6, we can compute in polytime T with |T | ≤ ( nε
+
+)O( 1  
+
+> ε)
+
+containing the desired vector ⃗ t. ◀
+
+## 4 Refinements and extensions 4.1 An O(log k)-approximation for Top ℓ norms using k centers 
+
+We show that, for Top ℓ norms, if we stop the adaptive-sampling process after k iterations, then we obtain an (true) O( log k)-approximation. Recall that such a guarantee was obtained by Arthur and Vassilvistskii [ 7] for k-means and k-median, where the latter is the special case of Top ℓ norm when ℓ = n. We consider the setting F = C, but one can show that this guarantee also holds for the extension of adaptive sampling to the F̸ = C setting discussed in Section 4.2. We borrow heavily from the exposition in [ 21 ], which simplified somewhat the analysis in [ 7]. However, we encounter some significant difficulties due to the fact that the proxy cost function ∑
+
+> j∈C
+
+(d(j, S ) − βt ℓ
+
+)+ does not satisfy the traingle inequality, even in the approximate sense considered by [34]. 4
+
+Recall that O∗ = {o∗
+
+> 1
+
+, . . . , o ∗
+
+> k
+
+} denotes some fixed optimal solution for the Top ℓ k-clustering problem, and C∗ 
+
+> 1
+
+, . . . , C ∗ 
+
+> k
+
+are the corresponding optimal clusters, where C∗ 
+
+> q
+
+is the set of clients   
+
+> 4Note that for the proxy cost
+
+(d(j, s ) − θ)+, there is no finite ρ such that (d(j, s ) − θ)+ ≤ ρ[( d(j, p ) −
+
+> θ
+
+)+ + (d(p, s ) − θ)+] holds for all j, s, p ∈ C : we could have d(j, s ) > θ but d(j, p ), d (p, s ) ≤ θ.H. Pulyassary and C. Swamy 13 
+
+assigned to center o∗ 
+
+> q
+
+, for all q ∈ [k]. As in [ 7, 21 ], we divide the optimal clusters C∗ 
+
+> 1
+
+, . . . , C ∗
+
+> k
+
+into two categories, those that are hit by the current center-set S (i.e., S ∩ C∗
+
+> q
+
+̸ = ∅), and the un-hit clusters. The analysis for k-means comprises at a high level two main ingredients: (1) showing that the expected cost of the clusters that are hit is O(1) times the optimum, and (2) charging the expected cost of the un-hit clusters to the expected cost of the hit clusters. For Top ℓ norms, the second portion of the analysis (using the proxy cost) proceeds similarly, but the first part of the analysis becomes more involved, and we need to proceed differently to take into account the lack of triangle inequality. Recall that adaptive sampling for Top ℓ-norms proceeds as follows. Let tℓ be an estimate of t∗ 
+
+> ℓ
+
+= d(C, O ∗)↓ 
+
+> ℓ
+
+, the ℓ-th largest cost incurred by an optimal solution. We add centers iteratively: let S0 := ∅, and Si denote the center-set after i iterations. In the first iteration, we pick a point uniformly at random from C to form S1; in each subsequent iteration i, we sample si ∈ C with probability proportional to (d(si, S i−1)−3tℓ
+
+)+ and set Si ← Si−1 ∪{ si−1}.We continue this for k iterations. We prove the following. 
+
+▶ Theorem 4.1. Suppose that t∗ 
+
+> ℓ
+
+≤ tℓ ≤ max {(1 + ε)t∗ 
+
+> ℓ
+
+, εOPT 
+
+> ℓ
+
+}. Then E[Top ℓ
+
+(d(C, S k))] ≤
+
+O(log k) · OPT .
+
+Analysis. For sets C, S ⊆ C , and θ ∈ R+, define cost (C, S ; θ) := ∑
+
+> j∈C
+
+(d(j, S ) − θ)+; with 
+
+θ = βt ℓ, this measures the total proxy cost of clients in C with respect to center-set S. We abbreviate cost ({j}, S ; θ) to cost (j, S ; θ), and cost (C, {j}; θ) to cost (C, j ; θ).As in Section 3.1, it will be convenient to perform the analysis in terms of parameters 
+
+α, β, κ, τ , where 
+
+α = 2 , β = 3 ≥ α + 1 , κ = 2 α + 4 , τ = max {α + κ + 2 , 2(1 + α(2 α+5) 
+
+> α−1
+
+)} . (2) Recall that the radius of a cluster C∗ 
+
+> q
+
+is rℓ(C∗ 
+
+> q
+
+) := cost (C∗    
+
+> q,o ∗
+> q;tℓ)
+> |C∗
+> q|
+
+, and the ℓ-core of C∗ 
+
+> q
+
+is 
+
+core ℓ(C∗ 
+
+> q
+
+) := {j ∈ C∗ 
+
+> q
+
+: d(j, o ∗ 
+
+> q
+
+) ≤ α(tℓ + rℓ(C∗ 
+
+> q
+
+)) }. Define num q := |C∗ 
+
+> q
+
+− core ℓ(C∗ 
+
+> q
+
+)|. Say that C∗ 
+
+> q
+
+is ℓ-close with respect to the current center-set S if d(o∗ 
+
+> q
+
+, S ) ≤ κ max {rℓ(C∗ 
+
+> q
+
+), t ℓ
+
+};otherwise C∗ 
+
+> q
+
+is ℓ-far .For i = 0 , 1, . . . , k , let Hi := {q ∈ [k] : Si ∩ C∗
+
+> q
+
+̸ = ∅}, Ui := [ k] − Hi, and Wi := i − | Hi|.While Hi and Ui track the clusters that are hit and not hit respectively in the first i
+
+iterations, Wi counts the “lost” or “wasted” iterations among the first i iterations, where the algorithm “lost out” on hitting a new cluster. Define Λi := ∑ 
+
+> q∈Hi
+
+cost (C∗ 
+
+> q
+
+, S i; βt ℓ), and 
+
+Ψi := Wi ·
+
+∑  
+
+> q∈Ui
+> cost (C∗
+> q,S i;βt ℓ)
+> |Ui|
+
+. Note that all of the above quantities are random variables .Observe that Λ0 = 0 (since H0 = ∅) and Ψ0 = Ψ 1 = 0 (since W0 = W1 = 0 ), and 
+
+Λk + Ψ k = cost (C, S k; βt ℓ), since Wk = |Uk|.We will prove that E[Λi
+
+] ≤ O(1) · (cost (C, O ∗; tℓ) + ℓt ℓ
+
+) for all i ∈ [k] if tℓ ≥ t∗
+
+> ℓ
+
+(Lemma 4.4), and E[Ψi − Ψi−1
+
+] ≤ E[Λi−1
+
+] 
+
+> k−i+1
+
+for all i ∈ [k] (Lemma 4.5). It follows that 
+
+E[Λk + Ψ k
+
+] ≤ O( log k) · (cost (C, O ∗; tℓ) + ℓt ℓ
+
+). So if tℓ is a good estimate of t∗ 
+
+> ℓ
+
+, we obtain that the expected cost of the solution returned is O(log k) · OPT , proving Theorem 4.1. For the first iteration, the following claim will be useful. 
+
+▷ Claim 4.2. For any cluster C∗ 
+
+> q
+
+, we have E[cost (C∗ 
+
+> q
+
+, S 1; βt ℓ) | q ∈ H1
+
+] ≤ 2 · cost (C∗ 
+
+> q
+
+, o ∗ 
+
+> q
+
+; tℓ).
+
+Proof. The first center s is chosen uniformly at random from C. So the expectation in the claim statement is 
+
+1
+
+|C∗ 
+
+> q
+
+| · ∑
+
+> s∈C∗
+> q
+
+∑
+
+> j∈C∗
+> q
+
+(d(j, s )−βt ℓ
+
+)+ ≤ 1
+
+|C∗ 
+
+> q
+
+| · ∑
+
+> s,j ∈C∗
+> q
+
+(d(j, o ∗ 
+
+> q
+
+)+ d(o∗ 
+
+> q
+
+, s )−βt ℓ
+
+)+ ≤ 2· ∑
+
+> j∈C∗
+> q
+
+(d(j, o ∗ 
+
+> q
+
+)−tℓ
+
+)+14 Adaptive Sampling for Minimum-Norm k-Clustering 
+
+where the last inequality is because β ≥ 2. ◀
+
+The bound on E[Λi
+
+] will follow from the following result. 
+
+▶ Lemma 4.3. Consider any iteration i ∈ [k] and any q ∈ [k]. Then 
+
+EZ sampled in iteration i
+
+[cost (C∗ 
+
+> q
+
+, S i−1∪{ Z}; βt ℓ) | Si−1, {Z ∈ C∗ 
+
+> q
+
+}] ≤ τ ·cost (C∗ 
+
+> q
+
+, o ∗ 
+
+> q
+
+; tℓ)+( κ−2) num q ·tℓ.
+
+The proof of Lemma 4.3 is somewhat technical and long, so we defer this to the end of the section to avoid detracting the reader. 
+
+▶ Lemma 4.4. Suppose tℓ ≥ t∗ 
+
+> ℓ
+
+. For any i ∈ [k], we have E[Λi
+
+] ≤ τ ·cost (C, O ∗; tℓ)+( κ−2) ℓt ℓ.
+
+Proof. We use induction on i to show that E[Λi
+
+] ≤ ∑ 
+
+> q∈[k]
+
+Pr [q ∈ Hi] · (τ · cost (C∗ 
+
+> q
+
+, o ∗ 
+
+> q
+
+; tℓ) + (κ − 2) num q · tℓ
+
+) for all i ∈ [k]. This immediately yields the lemma because tℓ ≥ t∗ 
+
+> ℓ
+
+implies that ∑ 
+
+> q∈[k]
+
+num q ≤ ℓ, since any client j ∈ ⋃
+
+> q∈[k]
+
+(C∗ 
+
+> q
+
+− core ℓ(C∗ 
+
+> q
+
+)) incurs assignment cost at least tℓ under the optimal solution O∗.The base case, when i = 1 , follows from Claim 4.2, which shows that E[Λ1 | q ∈ H1
+
+] ≤
+
+2 · cost (C∗ 
+
+> q
+
+, o ∗ 
+
+> q
+
+; tℓ) for any q ∈ [k]. Suppose the above statement holds for i − 1. Consider index 
+
+i. Let us condition on Si−1. Note that Hi−1 and Λi−1 also get fixed under this conditioning. Consider E[Λi − Λi−1 | Si−1
+
+]. If q ∈ Hi−1, then the contribution of C∗ 
+
+> q
+
+to Λi − Λi−1 is non-positive. So we have 
+
+E[Λi − Λi−1 | Si−1
+
+] ≤ ∑
+
+> q∈Ui−1
+
+Pr[ q ∈ Hi | Si−1] · EZ
+
+[cost (C∗ 
+
+> q
+
+, S i−1 ∪ { Z}; βt ℓ) | Si−1, {Z ∈ C∗ 
+
+> q
+
+}]
+
+≤ ∑
+
+> q∈Ui−1
+
+Pr[ q ∈ Hi | Si−1] ·
+
+(
+
+τ · cost (C∗ 
+
+> q
+
+, o ∗ 
+
+> q
+
+; tℓ) + ( κ − 2) num q · tℓ
+
+)
+
+(using Lemma 4.3) So removing the conditioning on Si−1, we obtain that 
+
+E[Λi − Λi−1
+
+] ≤ ∑
+
+> q∈[k]
+
+Pr[ q ∈ Hi − Hi−1] · (τ · cost (C∗ 
+
+> q
+
+, o ∗ 
+
+> q
+
+; tℓ) + ( κ − 2) num q · tℓ
+
+).
+
+Combining this with the induction hypothesis for i − 1, we obtain that E[Λi
+
+] is at most 
+
+∑ 
+
+> q∈[k]
+
+Pr[ q ∈ Hi] · (τ · cost (C∗ 
+
+> q
+
+, o ∗ 
+
+> q
+
+; tℓ) + ( κ − 2) num q · tℓ
+
+). ◀▶ Lemma 4.5. For any i ∈ [k], we have E[Ψi − Ψi−1
+
+] ≤ E[Λi−1
+
+] 
+
+> k−i+1
+
+.
+
+Proof. This holds for i = 1 , since W1 = 0 . So consider i > 1, and condition on Si−1. Let 
+
+Z be the random center chosen in iteration i, so Si = Si−1 ∪ { Z}. If Hi = Hi−1, then 
+
+Wi = Wi−1 + 1 , and so we have 
+
+Ψi − Ψi−1 =
+
+∑
+
+> q∈Ui−1
+
+(Wi · cost (C∗ 
+
+> q
+
+, S i; βt ℓ) − Wi−1 · cost (C∗ 
+
+> q
+
+, S i−1; βt ℓ))
+
+|Ui−1|≤
+
+∑ 
+
+> q∈Ui−1
+
+cost (C∗ 
+
+> q
+
+, S i−1; βt ℓ)
+
+|Ui−1| .H. Pulyassary and C. Swamy 15 
+
+Suppose Hi ⊋ Hi−1. We have 
+
+E
+
+[ ∑ 
+
+> q∈Ui
+
+cost (C∗ 
+
+> q
+
+, S i; βt ℓ) | Si−1, {Hi ⊋ Hi−1}
+
+]
+
+≤ ∑
+
+> q∈Ui−1
+
+cost (C∗ 
+
+> q
+
+, S i−1; βt ℓ) · (1 − Pr[ Z ∈ C∗ 
+
+> q
+
+| Si−1, {Hi ⊋ Hi−1}])
+
+= ∑
+
+> q∈Ui−1
+
+cost (C∗ 
+
+> q
+
+, S i−1; βt ℓ) − ∑
+
+> q∈Ui−1
+
+cost (C∗ 
+
+> q
+
+, S i−1; 3 tℓ)
+
+∑ 
+
+> r∈Ui−1
+
+cost (C∗ 
+
+> r
+
+, S i−1; 3 tℓ) · cost (C∗ 
+
+> q
+
+, S i−1; βt ℓ)
+
+≤ ∑
+
+> q∈Ui−1
+
+cost (C∗ 
+
+> q
+
+, S i−1; βt ℓ) − ∑
+
+> q∈Ui−1
+
+cost (C∗ 
+
+> q
+
+, S i−1; 3 tℓ)
+
+|Ui−1|
+
+where the last inequality is because β = 3 and using the Cauchy-Schwartz inequality. Since 
+
+Hi ⊋ Hi−1 implies that |Ui| = |Ui−1| − 1 and Wi = Wi−1, the inequalities above imply that 
+
+E[Ψi | Si−1, {Hi ⊋ Hi−1}] ≤ Ψi−1.So we obtain that 
+
+E[Ψi − Ψi−1 | Si−1
+
+] ≤ Pr[ Hi = Hi−1 | Si−1] ·
+
+∑ 
+
+> q∈Ui−1
+
+cost (C∗ 
+
+> q
+
+, S i−1; βt ℓ)
+
+|Ui−1|
+
+= ∑
+
+> q∈Hi−1
+
+Pr[ Z ∈ C∗ 
+
+> q
+
+| Si−1] ·
+
+∑ 
+
+> q∈Ui−1
+
+cost (C∗ 
+
+> q
+
+, S i−1; βt ℓ)
+
+|Ui−1|
+
+=
+
+∑ 
+
+> q∈Hi−1
+
+cost (C∗ 
+
+> q
+
+, S i−1; 3 tℓ)
+
+cost (C, S i−1; 3 tℓ) ·
+
+∑ 
+
+> q∈Ui−1
+
+cost (C∗ 
+
+> q
+
+, S i−1; βt ℓ)
+
+|Ui−1|≤
+
+∑ 
+
+> q∈Hi−1
+
+cost (C∗ 
+
+> q
+
+, S i−1; 3 tℓ)
+
+|Ui−1| ≤ Λi−1
+
+k − i + 1 
+
+where the last inequality is because |Ui−1| ≥ k − i + 1 . Removing the conditioning on Si−1
+
+yields the lemma. ◀
+
+Proof of Theorem 4.1. We can finally put everything together to prove Theorem 4.1. Recall that t∗ 
+
+> ℓ
+
+≤ tℓ ≤ max {(1 + ε)t∗ 
+
+> ℓ
+
+, εOPT 
+
+> ℓ
+
+}. By Lemmas 4.4 and 4.5, we can infer that 
+
+E[Λk + Ψ k
+
+] = E[Λk
+
+] + ∑
+
+> i∈[k]
+
+E[Ψi − Ψi−1
+
+] ≤ (1 + Hk)(τ · cost (C, O ∗; tℓ) + ( κ − 2) ℓt ℓ
+
+).
+
+So we have 
+
+E[Top ℓ
+
+(d(C, S k))] ≤ ℓ · βt ℓ + E[cost (C, S k; βt ℓ)] = ℓ · βt ℓ + E[Λk + Ψ k
+
+]
+
+≤ ℓ · βt ℓ + (1 + Hk)τ · cost (C, O ∗; tℓ) + (1 + Hk)( κ − 2) ℓt ℓ
+
+≤ O(log k) · (max {(1 + ε)ℓt ∗ 
+
+> ℓ
+
+, ε OPT } + cost (C, O ∗; t∗ 
+
+> ℓ
+
+))
+
+= O(log k) · (ℓt ∗ 
+
+> ℓ
+
++ cost (C, O ∗; t∗ 
+
+> ℓ
+
+)) + O(log k) · εOPT ≤ O(log k) · OPT . ◀
+
+Finally, we prove Lemma 4.3. We restate the lemma for convenience. 
+
+▶ Lemma 4.3. Consider any iteration i ∈ [k] and any q ∈ [k]. Then 
+
+EZ sampled in iteration i
+
+[cost (C∗ 
+
+> q
+
+, S i−1∪{ Z}; βt ℓ) | Si−1, {Z ∈ C∗ 
+
+> q
+
+}] ≤ τ ·cost (C∗ 
+
+> q
+
+, o ∗ 
+
+> q
+
+; tℓ)+( κ−2) num q ·tℓ.
+
+Proof. When i = 1 , this is implied by Claim 4.2, so suppose i > 1. We consider the cases where C∗ 
+
+> q
+
+is ℓ-close and ℓ-far separately. We abbreviate rℓ(C∗ 
+
+> q
+
+) to rℓ to avoid notational clutter. 16 Adaptive Sampling for Minimum-Norm k-Clustering 
+
+C∗ 
+
+> q
+
+is ℓ-close. If Z ∈ core ℓ(C∗ 
+
+> q
+
+), then Claim 3.5 implies that cost (C∗ 
+
+> q
+
+, Z ; βt ℓ) ≤ (α +1) cost (C∗ 
+
+> q
+
+, o ∗ 
+
+> q
+
+; tℓ), since Claim 3.5 shows that when β ≥ α + 1 , for any s ∈ core ℓ(C∗ 
+
+> q
+
+), we have 
+
+cost (C∗ 
+
+> q
+
+, s ; βt ℓ) ≤ (α + 1) cost (C∗ 
+
+> q
+
+, o ∗ 
+
+> q
+
+; tℓ). So we have 
+
+EZ
+
+[cost (C∗ 
+
+> q
+
+, S i−1 ∪ { Z}; βt ℓ) | Si−1, {Z ∈ C∗ 
+
+> q
+
+}] ≤ Pr[ Z ∈ core ℓ(C∗ 
+
+> q
+
+)] Pr[ Z ∈ C∗ 
+
+> q
+
+] · (α + 1) cost (C∗ 
+
+> q
+
+, o ∗ 
+
+> q
+
+; tℓ)+ Pr[ Z ∈ C∗ 
+
+> q
+
+− core ℓ(C∗ 
+
+> q
+
+)] · cost (C∗ 
+
+> q
+
+, S i−1; βt ℓ)Pr[ Z ∈ C∗ 
+
+> q
+
+] (3) where all probabilities are in the conditional space, where we condition on Si−1. For 
+
+Z ∈ C∗ 
+
+> q
+
+−core ℓ(C∗ 
+
+> q
+
+), we utilize that C∗ 
+
+> q
+
+is ℓ-close to charge the expected cost to cost (C∗ 
+
+> q
+
+, o ∗ 
+
+> q
+
+; tℓ)
+
+and num q · max {rℓ, t ℓ}. (Recall that num q = |C∗ 
+
+> q
+
+− core ℓ(C∗ 
+
+> q
+
+)|.) For any set C ⊆ C , we have Pr [Z ∈ C] = cost (C, S i−1; 3 tℓ)/cost (C, S i−1; 3 tℓ), and we have cost (C∗ 
+
+> q
+
+, S i−1; βt ℓ) ≤ cost (C∗ 
+
+> q
+
+, S i−1; 3 tℓ). So the second term on the RHS of (3) is at most 
+
+cost (C∗ 
+
+> q
+
+− core ℓ(C∗ 
+
+> q
+
+), S i−1; 3 tℓ) ≤ ∑  
+
+> j∈C∗
+> q−core ℓ(C∗
+> q)
+
+(d(j, o ∗ 
+
+> q
+
+) − tℓ
+
+)+ + num q · (d(o∗ 
+
+> q
+
+, S i−1) − 2tℓ
+
+)+
+
+≤ cost (C∗ 
+
+> q
+
+, o ∗ 
+
+> q
+
+; tℓ) + num q
+
+(κr ℓ + ( κ − 2) tℓ
+
+)
+
+where the last inequality is because d(o∗ 
+
+> q
+
+, S i−1) ≤ κ max {rℓ, t ℓ} ≤ κ(rℓ + tℓ), as C∗ 
+
+> q
+
+is ℓ-close. Since num q · κr ℓ is at most κ · cost (C∗ 
+
+> q
+
+, o ∗ 
+
+> q
+
+; tℓ), we can say that 
+
+cost (C∗ 
+
+> q
+
+− core ℓ(C∗ 
+
+> q
+
+), S i−1; 3 tℓ) ≤ (κ + 1) · cost (C∗ 
+
+> q
+
+, o ∗ 
+
+> q
+
+; tℓ) + ( κ − 2) num q · tℓ.
+
+Plugging this in (3), when C∗ 
+
+> q
+
+is ℓ-close, we obtain that 
+
+EZ
+
+[cost (C∗ 
+
+> q
+
+, S i−1 ∪{ Z}; βt ℓ) | Si−1, {Z ∈ C∗ 
+
+> q
+
+}] ≤ (α+κ+2) cost (C∗ 
+
+> q
+
+, o ∗ 
+
+> q
+
+; tℓ)+( κ−2) num q ·tℓ.
+
+(4) 
+
+C∗ 
+
+> q
+
+is ℓ-far. We have 
+
+EZ
+
+[cost (C∗ 
+
+> q
+
+, S i−1 ∪ { Z}; βt ℓ) | Si−1, {Z ∈ C∗ 
+
+> q
+
+}]
+
+≤ ∑
+
+> s∈C∗
+> q
+
+cost (s, S i−1; 3 tℓ)
+
+cost (C∗ 
+
+> q
+
+, S i−1; 3 tℓ) · min 
+
+{
+
+cost (C∗ 
+
+> q
+
+, S i−1; βt ℓ), cost (C∗ 
+
+> q
+
+, s ; βt ℓ)
+
+}
+
+. (5) We have cost (s, S i−1; 3 tℓ) ≤ cost (s, o ∗ 
+
+> q
+
+; tℓ) + cost (j, o ∗ 
+
+> q
+
+; tℓ) + cost (j, S i−1; tℓ) for any j ∈ C∗ 
+
+> q
+
+.Averaging this inequality over all j ∈ C∗ 
+
+> q
+
+, we obtain that 
+
+cost (s, S i−1; 3 tℓ) ≤ cost (s, o ∗ 
+
+> q
+
+; tℓ) + cost (C∗ 
+
+> q
+
+, o ∗ 
+
+> q
+
+; tℓ)
+
+|C∗ 
+
+> q
+
+| + cost (C∗ 
+
+> q
+
+, S i−1; tℓ)
+
+|C∗ 
+
+> q
+
+| .
+
+Plugging this in (5) , and simplifying, we obtain that the expectation in the lemma statement is at most 
+
+1
+
+cost (C∗ 
+
+> q
+
+, S i−1 · 3tℓ) · ∑
+
+> s∈C∗
+> q
+
+(
+
+cost (s, o ∗ 
+
+> q
+
+; tℓ) · cost (C∗ 
+
+> q
+
+, S i−1; βt ℓ)+ cost (C∗ 
+
+> q
+
+, o ∗ 
+
+> q
+
+; tℓ)
+
+|C∗ 
+
+> q
+
+| · cost (C∗ 
+
+> q
+
+, S i−1; βt ℓ) + cost (C∗ 
+
+> q
+
+, S i−1; tℓ)
+
+|C∗ 
+
+> q
+
+| · cost (C∗ 
+
+> q
+
+, s ; βt ℓ)
+
+)
+
+≤ 2 · cost (C∗ 
+
+> q
+
+, o ∗ 
+
+> q
+
+; tℓ) + cost (C∗ 
+
+> q
+
+, S i−1; tℓ)
+
+cost (C∗ 
+
+> q
+
+, S i−1; 3 tℓ) ·
+
+∑ 
+
+> s∈C∗
+> q
+
+cost (C∗ 
+
+> q
+
+, s ; βt ℓ)
+
+|C∗ 
+
+> q
+
+| . (6) H. Pulyassary and C. Swamy 17 
+
+The quantity 
+
+∑   
+
+> s∈C∗
+> q
+> cost (C∗
+> q,s ;βt ℓ)
+> |C∗
+> q|
+
+in the final term on (6) is at most 2 · cost (C∗ 
+
+> q
+
+, o ∗ 
+
+> q
+
+; tℓ), as shown in Claim 4.2. So we proceed to bound cost (C∗   
+
+> q,S i−1;tℓ)
+> cost (C∗
+> q,S i−1;3 tℓ)
+
+by O(1) , which will finish the proof of this case, and hence the lemma. We have cost (C∗ 
+
+> q
+
+, S i−1; tℓ) ≤ ∑
+
+> j∈C∗
+> q
+
+(d(j, o ∗ 
+
+> q
+
+) − tℓ
+
+)+ + |C∗ 
+
+> q
+
+| · d(o∗ 
+
+> q
+
+, S i−1) = |C∗ 
+
+> q
+
+| · (rℓ +
+
+d(o∗ 
+
+> q
+
+, S i−1)). So since C∗ 
+
+> q
+
+is ℓ-far, we have cost (C∗ 
+
+> q
+
+, S i−1; tℓ) ≤ (1 + 1
+
+> κ
+
+) · | C∗ 
+
+> q
+
+| · d(o∗ 
+
+> q
+
+, S i−1). We lower bound cost (C∗ 
+
+> q
+
+, S i−1; 3 tℓ) by cost (core ℓ(C∗ 
+
+> q
+
+), S i−1; 3 tℓ), which is at least 
+
+∑ 
+
+> j∈core ℓ(C∗
+> q)
+
+(d(o∗ 
+
+> q
+
+, S i−1) − d(j, o ∗ 
+
+> q
+
+) − 3tℓ
+
+)+ ≥ | core ℓ(C∗ 
+
+> q
+
+)| · (d(o∗ 
+
+> q
+
+, S i−1) − αr ℓ − αt ℓ − 3tℓ
+
+)
+
+≥ | core ℓ(C∗ 
+
+> q
+
+)| · d(o∗ 
+
+> q
+
+, S i−1) ·
+
+(
+
+1 − 2α+3 
+
+> κ
+
+)
+
+.
+
+The first inequality above is because j ∈ core ℓ(C∗ 
+
+> q
+
+), and the second is because C∗ 
+
+> q
+
+is 
+
+ℓ-far. Combining these bounds, and since | core ℓ(C∗ 
+
+> q
+
+)| ≥ (1 − 1
+
+> α
+
+)|C∗ 
+
+> q
+
+|, we obtain that    
+
+> cost (C∗
+> q,S i−1;tℓ)
+> cost (C∗
+> q,S i−1;βt ℓ)
+
+≤ αα−1 · κ+1  
+
+> κ−2α−3
+
+≤ α(2 α+5)  
+
+> α−1
+
+, where the last inequality is because κ+1  
+
+> κ−2α−3
+
+is a decreasing function of κ and κ ≥ 2α + 4 .Plugging these bounds in (6), when C∗ 
+
+> q
+
+is ℓ-far, we obtain that 
+
+EZ
+
+[cost (C∗ 
+
+> q
+
+, S i−1 ∪ { Z}; βt ℓ) | Si−1, {Z ∈ C∗ 
+
+> q
+
+}] ≤ 2
+
+(
+
+1 + α(2 α + 5) 
+
+α − 1
+
+)
+
+· cost (C∗ 
+
+> q
+
+; o∗ 
+
+> q
+
+; tℓ). (7) The lemma now follows from (4) and (7), and the definition of τ (see (2)). ◀
+
+## 4.2 The setting F̸ = C
+
+First, note that the adaptive-sampling algorithm and its analysis extend to the setting F ⊇ C :we still sample a client in step 5, and open a center at this client in step 6. Given this, we can proceed in two ways. One standard idea that works for many k-clustering problems is to simply “move” each client to the center in F closest to it. We then obtain an instance where the clients are located at some subset of F (with possibly multiple co-located clients), so we can use the adaptive-sampling algorithm from Section 3. This works because the loss in 
+
+f -cost due to moving clients can be bounded in terms of OPT .For S ⊆ F , let d′(j, S ) denote the assignment-cost of j under S for the new instance, i.e., when j has been moved from its original location to the center in F closest to it. So we have |d′(j, S ) − d(j, S )| ≤ d(j, F). So if OPT ′ is the optimal f -cost for the new instance, we have OPT ′ ≤ 2 · OPT : if O∗ is an optimum solution for the original problem, then we have 
+
+d′(j, O ∗) ≤ d(j, O ∗) + d(j, F) for every client j, so f (d′(C, O ∗)) ≤ OPT + f (d(C, F)) and 
+
+f (d(C, F )) ≤ OPT . Therefore, if S ⊆ F is a ρ-approximate solution for the new instance, then we have d(j, S ) ≤ d(j, F) + d′(j, S ), so we have f (d(C, S )) ≤ f (d(C, F)) + ρ · OPT ′ ≤
+
+(2 ρ + 1) OPT .A cleaner approach, which avoids a factor-2 loss in approximation, is to directly modify adaptive sampling in the following simple fashion. In step 5, we still sample a client si ∈ C 
+
+with probability proportional to (d(si, S i−1) − βt ℓmax 
+
+)+ (for a suitable β value); but in step 6, we now add to Si the center in F closest to si. This modification was made for Top ℓ-norms in [ 32 ], and, exactly as with the case F = C, we can rely on their analysis to extend things to general monotone, symmetric norms. Suppose that α, β, γ, ρ, τ satisfy 
+
+β = γ = 2 α + 1 , ρ ≥ 2( α + 2 β + 3) + γ, 
+
+(
+
+1 − γρ
+
+)
+
+· α−12α(α+β+3) ≥ 1
+
+τ . (8) 18 Adaptive Sampling for Minimum-Norm k-Clustering 
+
+In particular, we can take α = 2 , β = γ = 5 , τ = ρ = 45 . These inequalities imply the inequalities (5) in [ 32 ] (by taking κ = α + β + 3 ), which are used in [ 32 ] to analyze adaptive sampling for Top ℓ-norms when F̸ = C. With this choice of parameters, [ 32 ] show that almost the entire analysis of adaptive sampling for Top ℓ-norms in the setting F = C continues to hold. In particular, with the same definitions for ℓ-good, ℓ-bad clusters, and ℓ-core (and 
+
+ℓ-supercore) of a cluster, Claim 3.2 and Lemma 3.6 continue to hold. The only portion of the analysis that we need to modify is Claim 3.5 showing that if we sample a client from the 
+
+ℓ-core of a cluster then that cluster becomes ℓ-good. 
+
+▷ Claim 4.6. Consider a cluster C∗ 
+
+> q
+
+and let S be the current center-set. Suppose there is some client s ∈ core ℓ(C∗ 
+
+> q
+
+) such that S contains the center in F closest to s (so d(s, S ) = d(s, F)). Then C∗ 
+
+> q
+
+is ℓ-good (and hence remains ℓ-good throughout). 
+
+Proof. Let a ∈ S be such that d(s, a ) = d(s, F). Then ∑
+
+> j∈C∗
+> q
+
+(d(j, S )−βt ℓ)+ ≤ ∑
+
+> j∈C∗
+> q
+
+(d(j, a )−
+
+βt ℓ)+, which (since β ≥ 2α + 1 ) is at most 
+
+∑
+
+> j∈C∗
+> q
+
+((d(j, o ∗ 
+
+> q
+
+) − tℓ)+ + ( d(s, o ∗ 
+
+> q
+
+) + d(s, a ) − 2α · tℓ)+) ≤ | C∗ 
+
+> q
+
+| · (rℓ(C∗ 
+
+> q
+
+) + (2 d(s, o ∗ 
+
+> q
+
+) − 2α · tℓ))+.
+
+≤ | C∗ 
+
+> q
+
+|(rℓ(C∗ 
+
+> q
+
+) + 2 α · rℓ(C∗ 
+
+> q
+
+)).
+
+The first inequality follows from the triangle inequality, and since (y + z)+ ≤ y+ + z+; the second follows from the definition of rℓ, and since d(s, a ) ≤ d(s, o ∗ 
+
+> q
+
+); The third is because 
+
+s ∈ core( C∗ 
+
+> q
+
+). Since γ ≥ 2α + 1 , this shows that C∗ 
+
+> q
+
+is ℓ-good. ◀
+
+Given the above claim, we obtain the following guarantee for the F̸ = C setting by the exact same arguments as in Section 3.2. 
+
+▶ Theorem 4.7. Let ⃗ t be a non-increasing vector such that t∗ 
+
+> ℓ
+
+≤ tℓ ≤ max {(1 + ε)t∗ 
+
+> ℓ
+
+, εOPT  
+
+> n
+
+}
+
+for all ℓ ∈ POS . The above modification of Algorithm 1 returns a set S of O(k) centers satisfying f (d(C, S )) ≤ 45(1 + ε)3(1 + δ)2 · OPT with constant probability. 
+
+Complementing this with Lemma 3.10, we again obtain an (O(1) , O (1) )-bicriteria al-gorithm for minimum-norm k-clustering when F̸ = C, by running the adaptive-sampling algorithm for each vector ⃗ t in the set T output by Lemma 3.10, and returning the best solution found. 
+
+## 4.3 Faster O(1) -approximation by sparsifying data 
+
+We show that by using our algorithm in conjunction with the (true) O(1) -approximation algorithm for minimum-norm k-clustering in [ 18 ], referred to as CSAlg from now on, we can obtain a faster O(1) -approximation algorithm. We note that this way of obtaining running-time savings was also outlined by [3] for the k-means problem. We consider the F = C setting for simplicity (which is the setting also considered in [ 18 ]). Let POS = POS n, 1, i.e., POS consists of all powers of 2 up to n (possibly including 
+
+n). Algorithm CSAlg also requires knowing the right threshold vector ⃗ t satisfying the conditions in Theorem 3.7. As shown earlier, we can find a set T containing such a vector (Lemma 3.10). For an instance with n clients and a fixed ⃗ t ∈ T , CSAlg solves an LP, which is the standard k-median LP (with O(n2) variables and constraints) augmented with O(n)H. Pulyassary and C. Swamy 19 
+
+additional constraints, 5 and rounds its optimal solution. To elaborate, CSAlg considers the setting wherein the norm f is the maximum of a collection of ordered norms specifed in the input, and their LP has constraints bounding the (proxy) cost under each ordered norm in this collection. Given Theorem 2.4, one can approximate f by specifying Top ℓ-norm budgets for all ℓ ∈ POS (obtained from a threshold vector ⃗ t ∈ RPOS  
+
+> ≥0
+
+), so this results in O( log n) such constraints. In the sequel, we refer to this LP as the augmented k-median LP, which has 
+
+O(n2) variables and O(n2) constraints. For a given ⃗ t, the running time of CSAlg is dominated by the time needed to solve this augmented k-median LP. 6 Thus, the overall running time of CSAlg , is O(|T | · LPsolve (n)), where LPsolve is the time needed to solve their augmented 
+
+k-median LP on an instance with n clients. For the faster algorithm, we first use Algorithm 1 to obtain an (α, ρ )-approximate solution 
+
+S, where α, ρ = O(1) , with constant probability. This involves running Algorithm 1 for each ⃗ t in the set T , and returning the best solution found. A simple implementation of Algorithm 1 takes O(nk ) time, so we can find S in O(|T | nk ) time. Now, we consider the instance where we move each client to its closest center in S, and are allowed to open centers only at locations in S. We run CSAlg on the resulting instance, which we call the sparsified instance where, by design, there are at most |S| ≤ αk distinct client locations and we may have co-located clients. (While the algorithm in [ 18 ] is stated for the setting F = C, it works as is for the setting F ⊇ C and opens centers at a subset of F.) Lemma 4.8 shows that moving to the sparsified instance incurs only an O(1) -factor loss in approximation. Since 
+
+|S| ≤ αk , running CSAlg on the sparsified instance takes time O(|T ′| · LPsolve (αk )), where 
+
+T ′ is a set containing a suitable threshold vector for the sparsified instance (which still has n
+
+clients). So the total running time is O(|T | nk + |T ′| · LPsolve (αk )). This is better than the earlier running time, since solving LPs takes super-quadratic time [ 27 ]), but note also that the time required to solve LPs now only affects the dependence of the runtime on k.Furthermore, we show in Lemma 4.9 that one can refine Lemma 3.10 so that, for an instance with n clients, one can identify a set of size O(n log n) that contains a threshold vector ⃗ t such that: (a) running a slightly modified version of Algorithm 1 with ⃗ t yields an (O(1) , O (1) )-approximation; and (b) running CSAlg with ⃗ t yields an O(1) -approximate solution. Thus, |T | and |T ′| can be bounded by O(n log n), so Lemmas 4.9 and 4.8 show that this sparsify-and-solve approach yields an O(1) -approximation (with constant probability) in 
+
+O(n log n · (nk + LPsolve (O(k))) ) time. In particular, for constant k, the overall runtime is now roughly quadratic in n. In contrast, even assuming ( very generously) that we have a 
+
+linear-time algorithm for (approximately) solving LPs, we would obtain LPsolve (n) = O(n2)
+
+(since the LP has n2 variables), and so running CSAlg on the original instance would require 
+
+Ω( n3 log n) time. 
+
+▶ Lemma 4.8. Let S be an (α, ρ )-approximate solution for the original instance. Let ˜S ⊆ S
+
+be a λ-approximate solution for the new instance. Then the f -cost of ˜S for the original instance is at most (2 λ + 2( λ + 1) ρ) · OPT .
+
+Proof. We follow a similar approach as in [ 24 ]. Let OPT ′ denote the optimum for the modified instance where we have moved clients, and can open centers only at points in S.We claim that OPT ′ ≤ 2 · OPT + 2 · f (d(C, S )). Consider an optimal solution O∗, and map            
+
+> 5The O(n)additional constraints are constraints (OCl-4) in [ 18 ]. Although, it seems like there are quadratically many such constraints, a closer inspection shows that one needs to consider at most one such constraint for each client.
+> 6The running time of the LP-rounding procedure in CSAlg is not explicitly stated in [ 18 ], but from its description, one can infer that it is O(n) + poly( k).
+
+20 Adaptive Sampling for Minimum-Norm k-Clustering 
+
+each center in O∗ to its closest point in S. Let S∗ ⊆ S denote the resulting subset of (at most) k centers from S. Consider any client j ∈ C , which is assigned to center o∗ ∈ O∗, and which was moved to location a ∈ S. We can bound the assignment cost of j under S∗ for the new instance as follows: consider moving j from a to j, then to o∗, and then moving from o∗ to the point in S closest to o∗. This yields an assignment cost of at most 
+
+d(j, S ) + d(j, o ∗) + d(o∗, S ) ≤ d(j, S ) + d(j, o ∗) + d(o∗, a )
+
+≤ d(j, S ) + d(j, o ∗) + d(o∗, j ) + d(j, a ) = 2 · d(j, S ) + 2 · d(j, o ∗).
+
+So the f -cost of center-set S∗ for the new instance is at most 2 · OPT + 2 · f (d(C, S )).Recall that ˜S ⊆ S is a λ-approximate solution for the new instance. Then, we can bound the assignment cost of a client under ˜S for the original instance by simply “moving back” the client from its location in S to its original location. This moving-back step incurs an additional f -cost of f (d(C, S )). So the f -cost of ˜S for the original instance is at most 
+
+λ · OPT ′ + f (d(C, S )) ≤ 2λ · OPT + (2 λ + 1) · f (d(C, S )) ≤ (2 λ + (2 λ + 1) ρ) · OPT . ◀▶ Lemma 4.9. Let POS = POS n, 1.
+
+(a) We can obtain a set T ⊆ RPOS  
+
+> +
+
+with |T | ≤ O(n log n) such that T contains a vector ⃗ t
+
+with Top ℓ
+
+(d(C, O ∗)) ≤ ℓt ℓ ≤ 2 · Top ℓ
+
+(d(C, O ∗)) for all ℓ ∈ POS .
+
+(b) Running Algorithm 1 with threshold vector ⃗ t, but changing step 2 so as to define Bℓ := ℓt ℓ
+
+for all ℓ ∈ POS , yields an (O(1) , O (1) )-approximate solution, with constant probability. 
+
+(c) Running CSAlg with threshold vector ⃗ t yields an O(1) -approximate solution. 
+
+Proof. Define ̂ tℓ = Top ℓ
+
+(d(C, O ∗))/ℓ for ℓ ∈ POS . The benefit of considering the target vector ̂ t (as opposed to the vector {d(C, O ∗)↓
+
+> ℓ
+
+}
+
+> ℓ∈POS
+
+), is that ̂ t is not only a non-increasing vector, but consecutive coordinates decrease by a factor of at most 2: for ℓ ∈ POS , ℓ > 1,we have ̂  
+
+> tℓ/ 2
+> 2
+
+≤̂ tℓ ≤̂ tℓ/ 2. This is helpful because then the nearest powers-of-2 vector ⃗ t that coordinate-wise overestimates ̂ t can be described by specifying t1 and the subset of POS 
+
+where the coordinate values drop by a factor of 2.As in the proof of Lemma 3.10, we can estimate ̂ t1 within an O(n)-factor as follows. Let 
+
+S∗ 
+
+> 1
+
+be the output of the 2-approximation algorithm for k-center due to [ 23 ], and let ub be the smallest power of 2 that is at least n · d(C, S ∗ 
+
+> 1
+
+)↓
+
+> 1
+
+. Then, the proof of Lemma 3.10 shows that ub  
+
+> 4n
+
+≤̂ t1 ≤ ub . Define 
+
+T =
+
+{
+
+v ∈ RPOS  
+
+> +
+
+: vℓ is a power of 2 ∀ℓ ∈ POS ;
+
+v1 ∈ [ ub  
+
+> 4n
+
+, ub ], vℓ/ 2 
+
+> 2
+
+≤ vℓ ≤ vℓ/ 2 ∀ℓ ∈ POS , ℓ > 1
+
+}
+
+.
+
+We show that T satisfies the properties stated in part (a). Let ⃗ t ∈ RPOS  
+
+> +
+
+be such that tℓ is the smallest power of 2 that is at least ̂ tℓ, for all ℓ ∈ POS . We have t1 ≤ ub and ̂ tℓ ≤ tℓ < 2̂ tℓ
+
+for all ℓ ∈ POS by design, which also implies that tℓ/ 2 
+
+> 2
+
+≤ tℓ ≤ tℓ/ 2 for all ℓ ∈ POS − { 1};so ⃗ t ∈ T . Any vector v ∈ T is uniquely determined by v1 and the subset S ⊆ POS − { 1}
+
+for which vℓ = vℓ/ 2 
+
+> 2
+
+. There are at most n subsets of POS − { 1}, as |POS | = O( log n), and 
+
+O(log n) choices for v1, so we have |T | = O(n log n).For part (b), let α = 2 , β = γ = 3 , τ = ρ = 35 as in Section 3.1. We only need to prove the analogue of Claim 3.2 showing that if all clusters are ℓ-good (when considering the input vector ⃗ t from part (a) in Algorithm 1), for some index ℓ ∈ POS , then the Top ℓ-cost of the solution is at most ρ · Top ℓ
+
+(d(C, O ∗)), and so ℓ / ∈ I. Given this, the proof of Theorem 3.7 shows that at the end of N = ⌈τ (k + √k)⌉ iterations, we have I = ∅ with constant H. Pulyassary and C. Swamy 21 
+
+probability. This implies that Top ℓ
+
+(d(C, S )) ≤ ρ(1 + ε) · Top ℓ
+
+(d(C, O ∗)) for all ℓ ∈ POS and hence, f (d(C, S )) ≤ 2ρ(1 + ε)OPT .To prove the analogue of Claim 3.2, suppose all clusters are ℓ-good for some ℓ ∈ POS .Note that tℓ ≥ Top ℓ
+
+(d(C, O ∗))/ℓ implies that tℓ ≥ t∗ 
+
+> ℓ
+
+:= d(C, O ∗)↓ 
+
+> ℓ
+
+. Similar to the proof of Claim 3.2, we have Top ℓ
+
+(d(C, S )) ≤ ℓ · βt ℓ +
+
+> k
+
+∑
+
+> q=1
+
+∑
+
+> j∈C∗
+> q
+
+(d(j, S ) − βt ℓ)+
+
+≤ 2β · Top ℓ
+
+(d(C, S )) +
+
+> k
+
+∑
+
+> q=1
+
+γ · ∑
+
+> j∈C∗
+> q
+
+(d(j, o ∗ 
+
+> q
+
+) − t∗ 
+
+> ℓ
+
+)+ ≤ (2 β + γ) · Top ℓ
+
+(d(C, O ∗)).
+
+Since ρ ≥ 2β + γ, we have Top ℓ
+
+(d(C, S )) ≤ ρ · Top ℓ
+
+(d(C, O ∗)).For part (c), we first note that CSAlg has the following guarantee: given a threshold vector ⃗t ∈ RPOS  
+
+> ≥0
+
+and budgets {Bℓ}ℓ∈POS such that tℓ ≥ d(C, O ∗)↓ 
+
+> ℓ
+
+and Top ℓ
+
+(d(C, O ∗)) ≤ Bℓ for all 
+
+ℓ ∈ POS , CSAlg returns a k-clustering solution whose Top ℓ-cost is bounded by O(ℓt ℓ + Bℓ)
+
+for all ℓ ∈ POS .7 Given the bounds on tℓ, it is valid to set the Top ℓ budgets to ℓt ℓ for all 
+
+ℓ ∈ POS . Then CSAlg returns a solution whose Top ℓ-cost is O(ℓt ℓ) = O(Top ℓ
+
+(d(C, O ∗))) for all ℓ ∈ POS , which is therefore an O(1) -approximate solution. ◀
+
+References 
+
+1 Fateme Abbasi, Sandip Banerjee, Jarosław Byrka, Parinya Chalermsook, Ameet Gadekar, Kamyar Khodamoradi, Dániel Marx, Roohani Sharma, and Joachim Spoerhase. Parameterized approximation schemes for clustering with general norm objectives. In Proceedings of the 64th IEEE Symposium on Foundations of Computer Science (FOCS) , pages 1377–1399, 2023. 
+
+2 Marcel R. Ackermann and Johannes Blömer. Coresets and Approximate Clustering for Bregman Divergences. In Proceedings of the 20th Symposium on Discrete Algorithms (SODA) ,2009. 
+
+3 Ankit Aggarwal, Amit Deshpande, and Ravi Kannan. Adaptive Sampling for k-Means Clustering. In Proceedings of the 12th APPROX , 2009. 
+
+4 Nir Ailon, Anup Bhattacharya, Ragesh Jaiswal, and Amit Kumar. Approximate clustering with same-cluster queries. In Proceedings of the 9th Innovations in Theoretical Computer Science Conference (ITCS) , 2018. 
+
+5 Nir Ailon, Ragesh Jaiswal, and Claire Monteleoni. Streaming k-means approximation. In 
+
+Advances in neural information processing systems (NeurIPS) , 2009. 
+
+6 Ali Aouad and Danny Segev. The ordered k-median problem: surrogate models and approxi-mation algorithms. Mathematical Programming , 177:55–83, 2018. 
+
+7 David Arthur and Sergei Vassilvitskii. K-means++ the advantages of careful seeding. In 
+
+Proceedings of the 18th Symposium on Discrete Algorithms (SODA) , 2007. 
+
+8 Olivier Bachem, Mario Lucic, S. Hamed Hassani, and Andreas Krause. Approximate K-Means++ in Sublinear Time. In Proceedings of the AAAI Conference on Artificial Intelligence ,2016. 
+
+9 Aditya Bhaskara, Sharvaree Vadgama, and Hong Xu. Greedy sampling for approximate clustering in the presence of outliers. Advances in Neural Information Processing Systems (NeurIPS) , 2019.  
+
+> 7See the proof of Theorem 9.2 in [18].
+
+22 Adaptive Sampling for Minimum-Norm k-Clustering 
+
+10 Anup Bhattacharya, Dishant Goyal, Ragesh Jaiswal, and Amit Kumar. On sampling based algorithms for k-means. In Proceedings of the 40th Conference on Foundations of Software Technology and Theoretical Computer Science (FSTTCS) , 2020. 
+
+11 Anup Bhattacharya, Ragesh Jaiswal, and Nir Ailon. Tight lower bound instances for k-means++ in two dimensions. Theoretical Computer Science , 634:55–66, 2016. 
+
+12 Anup Bhattacharya, Ragesh Jaiswal, and Amit Kumar. Faster algorithms for the constrained k-means problem. Theory of computing systems , 62:93–115, 2018. 
+
+13 Vladimir Braverman, Shaofeng H.-C. Jiang, Robert Krauthgamer, and Xuan Wu. Coresets for Ordered Weighted Clustering. In Proceedings of the 36th International Conference on Machine Learning (ICML) , 2019. 
+
+14 Vladimir Braverman, Adam Meyerson, Rafail Ostrovsky, Alan Roytman, Michael Shindler, and Brian Tagiku. Streaming k-means on well-clusterable data. In Proceedings of the 22nd Symposium on Discrete Algorithms (SODA) , 2011. 
+
+15 Jakob Burkhardt, Ioannis Caragiannis, Karl Fehrs, Matteo Russo, Chris Schwiegelshohn, and Sudarshan Shyam. Low-Distortion Clustering with Ordinal and Limited Cardinal Information. In Proceedings of the 38th AAAI Conference on Artificial Intelligence , 2024. 
+
+16 Jaroslaw Byrka, Krzysztof Sornat, and Joachim Spoerhase. Constant-factor approximation for ordered k-median. In Proceedings of the 50th Symposium on Theory of Computing (STOC) ,2018. 
+
+17 Deeparnab Chakrabarty and Chaitanya Swamy. Interpolating between k-Median and k-Center: Approximation Algorithms for Ordered k-Median. In Proceedings of the 45th International Colloquium on Automata, Languages, and Programming (ICALP) , 2018. 
+
+18 Deeparnab Chakrabarty and Chaitanya Swamy. Approximation algorithms for minimum norm and ordered optimization problems. In Proceedings of the 51st Symposium on Theory of Computing (STOC) , 2019. Detailed version posted on the CS arxiv, arXiv:1811.05022. 
+
+19 Ke Chen. On Coresets for k -Median and k -Means Clustering in Metric and Euclidean Spaces and Their Applications. SIAM Journal on Computing , 39:923–947, 2009. 
+
+20 Kuowen Chen, Jian Li, Yuval Rabani, and Yiran Zhang. New results on a general class of minimum norm optimization problems. In Proceedings of the 52nd International Colloquium on Automata, Languages, and Programming (ICALP) , pages 50:1–50:20, 2025. arxiv preprint arXiv:2504.13489. 
+
+21 Sanjoy Dasgupta. Lecture 3 – Algorithms for k-means clustering. Lecture notes, CSE291: Geometric Algorithms, UC San Diego, 2013. URL: https://cseweb.ucsd.edu/~dasgupta/ 291-geom/ .
+
+22 Amit Deshpande, Praneeth Kacham, and Rameshwar Pratap. Robust k-means++. In 
+
+Proceedings of Conference on uncertainty in artificial intelligence , 2020. 
+
+23 Teofilo F. Gonzalez. Clustering to minimize the maximum intercluster distance. Theoretical computer science , 38:293–306, 1985. 
+
+24 S. Guha, N. Mishra, R. Motwani, and L. O’Callaghan. Clustering data streams. In Proceedings of the 41st Symposium on Foundations of Computer Science (FOCS) , 2000. 
+
+25 Godfrey Hardy, John E. Littlewood, and George Polya. Inequalities . Cambridge Univ Press, 1934. 
+
+26 Sharat Ibrahimpur and Chaitanya Swamy. Minimum-norm load balancing is (almost) as easy as minimizing makespan. In Proceedings of the 48th International Colloquium on Automata, Languages, and Programming (ICALP) , 2021. 
+
+27 Shunhua Jiang, Zhao Song, Omri Weinstein, and Hengjie Zhang. A faster algorithm for solving general LPs. In Proceedings of the 53rd STOC , pages 823–832, 2021. 
+
+28 Amit Kumar and Jon Kleinberg. Fairness measures for resource allocation. In Proceedings of the 41st Symposium on Foundations of Computer Science (FOCS) , 2000. 
+
+29 Gilbert Laporte, Stefan Nickel, and Francisco Saldanha-da Gama. Introduction to location science . Springer, 2019. H. Pulyassary and C. Swamy 23 
+
+30 Stefan Nickel and Justo Puerto. Location theory: a unified approach . Springer Science & Business Media, 2006. 
+
+31 Rafail Ostrovsky, Yuval Rabani, Leonard J Schulman, and Chaitanya Swamy. The effectiveness of lloyd-type methods for the k-means problem. Journal of the ACM (JACM) , 59(6):1–22, 2013. 
+
+32 Haripriya Pulyassary and Chaitanya Swamy. Constant-factor distortion mechanisms for 
+
+k-committee election. arXiv preprint arXiv:2501.19148, 2025. Abridged version in [33]. 
+
+33 Haripriya Pulyassary and Chaitanya Swamy. Constant-Factor Distortion Mechanisms for k-Committee Election. In Proceedings of the 39th AAAI Conference on Artificial Intelligence ,2025. 
+
+34 Adiel Statman, Liat Rozenberg, and Dan Feldman. k-means+++: Outliers-resistant clustering. 
+
+Algorithms , 13:311, 2020. 
+
+35 Arie Tamir. The k-centrum multi-facility location problem. Discrete Applied Mathematics ,109(3):293–307, 2001.
