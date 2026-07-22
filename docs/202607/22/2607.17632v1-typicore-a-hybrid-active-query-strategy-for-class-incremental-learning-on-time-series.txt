@@ -1,0 +1,578 @@
+Title: TypiCore: A Hybrid Active Query Strategy for Class-Incremental Learning on Time Series
+
+URL Source: https://arxiv.org/pdf/2607.17632v1
+
+Published Time: Tue, 21 Jul 2026 01:34:18 GMT
+
+Number of Pages: 26
+
+Markdown Content:
+# TypiCore: A Hybrid Active Query Strategy for Class-Incremental Learning on Time Series 
+
+## G´ abor Sz˝ ucs 1, S´ amuel Jacsev 1, Marcell N´ emeth 1,Davide Dalle Pezze 2, Gian Antonio Susto 2
+
+1Department of Telecommunications and Artificial Intelligence, Budapest University of Technology and Economics, Budapest, Hungary. 
+
+2Department of Information Engineering, University of Padua, Padua, Italy. Contributing authors: szucs@tmit.bme.hu; ; nemethm@tmit.bme.hu; davide.dallepezze@unipd.it; gianantonio.susto@unipd.it; 
+
+Abstract 
+
+Time series data play a pivotal role across numerous domains, including health-care and manufacturing. In real-world environments, models must cope with distribution shifts over time, a challenge commonly addressed through Continual Learning (CL) techniques. However, existing CL methods face a critical limita-tion: real-world data streams are rarely fully labeled, making annotation cost a major practical constraint. This paper investigates Active Class-Incremental Learning (ACIL) for multivariate time series, where a model must sequentially learn new classes while selectively querying labels under a fixed annotation bud-get. We present a systematic evaluation of a wide range of query strategies combined with multiple rehearsal-based approaches, assessing their impact on plasticity, stability, and label efficiency across four benchmark datasets. Our anal-ysis reveals the limitations of uncertainty-based and distribution-aware methods in achieving strong performance under constrained labeling budgets. To address these shortcomings, we propose TypiCore, a novel hybrid query strategy that alternates between typicality-based and diversity-based sample selection across active learning cycles, enabling the construction of memory buffers that are both representative and diverse. Evaluated on the TSCIL benchmark, TypiCore delivers statistically significant improvements over all baselines and matches or surpasses fully supervised continual learning performance on multiple datasets while requiring a fraction of the available labels. 
+
+Keywords: Continual Learning, Active Learning, Time-series Classification 
+
+1arXiv:2607.17632v1 [cs.LG] 20 Jul 2026 1 Introduction 
+
+The deployment of machine learning systems in dynamic real-world environments increasingly demands models capable of adapting to continuously evolving data dis-tributions. This challenge is especially pronounced in the time series domain, where applications such as industrial fault detection, healthcare monitoring, and human activity recognition operate in inherently non-stationary settings. In these scenarios, new classes of events or behaviors emerge over time, a new fault type in a production line, a previously unseen activity pattern, or a novel clinical condition, and models must incorporate this new knowledge without catastrophically overwriting what was previously learned. How to adapt to new incoming data while retaining the previous knowledge is known as Continual Learning (CL). Among its various formulations, Class-Incremental Learning (CIL) represents one of the most challenging and practically relevant settings: the model must sequentially learn new classes as they arise, while remaining capable of classifying all previously seen classes at inference time, and without access to task identifiers [1]. Despite substantial progress in CL in recent years, there are two critical issues that are unexplored. The first is that classic CL scenarios assume incoming data streams are fully labeled, but in practice, this assumption rarely holds. Data acquisition is often automatic and inexpensive, but annotation requires domain expertise, sustained manual effort, and considerable time and financial resources. The second gap concerns the scope of evaluation. The vast majority of continual learning research has been conducted in the computer vision [2] and, more recently, natural language processing domains [3], leaving time series data comparatively underexplored despite its preva-lence in high-stakes applications. One of the few exceptions is the work [4], which introduced the Time Series Class-Incremental Learning (TSCIL) benchmark to stan-dardize evaluation across a diverse set of time series datasets. However, the benchmark operates under the standard fully-labeled assumption, leaving the label-scarce setting entirely unaddressed. Active Learning (AL) offers a principled solution to the labeling bottleneck by strategically selecting the most informative samples for annotation, maximizing model performance under a fixed labeling budget [5]. In isolation, both CIL and AL are well-established research areas with rich literature and mature methodologies. Yet their intersection, Active Class-Incremental Learning (ACIL), remains remarkably under-explored, with few works focused on image classification [6]. However, time series classification introduces additional complexity beyond standard CIL benchmarks: tem-poral dependencies, multivariate channel interactions, inter-subject variability, and noisy acquisition conditions all compound the challenge of learning incrementally from limited labeled data. The first contribution of this work is a comprehensive and systematic evaluation of active learning query strategies in rehearsal-based approaches for the CIL sce-nario applied to multivariate time series classification. The core of the work involves designing and systematically evaluating a wide range of active learning methodologies, including uncertainty-based, distribution-aware, and hybrid strategies. 2We then analyze the effectiveness of these strategies in dynamic environments using the TSCIL benchmark. The first insight is that, contrary to the expectation, complex and optimal methods like ASER show that in data-scarce active learning scenarios, the simpler ER mechanism often yields superior stability. The uncertainty-based methods prove consistently detrimental, frequently degrading performance below random selec-tion. In contrast, distribution-aware methods like Core-Set excel at geometric coverage, maximizing exposure to the underlying data distribution while hybrid approaches like TypiClust excels at representativeness by selecting typical high-density samples, thereby promoting stable memory retention. However, neither approach alone achieves a robust balance between plasticity and stability across the benchmark. Therefore, as the third contribution, motivated by this analysis, we introduce Typ-iCore, a novel hybrid active query strategy that alternates between typicality-based and diversity-based selection across active learning cycles. TypiCore constructs mem-ory buffers that are simultaneously robust against forgetting and expressive enough to capture the complexity of the underlying data distribution. Through experiments on the TSCIL benchmark, we show that TypiCore con-sistently outperforms all baseline methods with statistically significant gains across multiple datasets. Furthermore, despite operating under a limited labeling budget, it matches or exceeds the performance of fully supervised continual learning approaches on several benchmarks. The remainder of this paper is organized as follows. Section 2 reviews the rel-evant literature on continual learning, covering the main scenarios and approaches. Section 3 surveys the active learning strategies, from uncertainty-based methods to diversity and typicality-based approaches. Section 4 formalizes the proposed Active Class-Incremental Learning framework, and introduces TypiCore, our novel hybrid query strategy. Section 5 details the experimental setup, including the benchmark datasets, model architecture, training configuration, and evaluation protocol. Section 6 presents and analyzes the empirical results across all query strategies and datasets. Finally, Section 7 concludes the paper, summarizing the key findings and outlining directions for future work. 
+
+# 2 Related Work 
+
+Traditional machine learning paradigms assume independent and identically dis-tributed samples drawn from a stationary distribution, but real-world applications often encounter evolving data streams where new tasks emerge sequentially. The ability to learn sequentially from non-stationary data streams without for-getting previously acquired knowledge has emerged as a central challenge in modern machine learning and is known as Continual Learning (CL). The core problem is catas-trophic forgetting, where a neural network trained sequentially on new tasks tends to lose performance on prior information. This phenomenon occurs because the neural network abruptly overwrites previously learned representations when exposed to new training data. Therefore, CL focuses on developing techniques to mitigate forgetting during network updates and find an optimal balance between stability (preserving old knowledge) and plasticity (acquiring new knowledge) [7]. 3Fig. 1 ACIL Framework . Scheme to integrate Active Learning strategies in the Class Incremental Learning scenario. Each task is composed of multiple active learning cycles and each one is composed of three phases: i) Query Strategy, ii) Oracle labeling, iii) Training. 
+
+Literature on CL usually adopt the taxonomy proposed in [1] introducing three CL scenarios, (i) Task-Incremental Learning (TIL), where task identity is available at inference time, (ii) Domain-Incremental Learning (DIL), where the class set remains fixed but the input distribution shifts, and (iii) Class-Incremental Learning (CIL), where new classes arrive sequentially and the model must classify among all classes seen so far without task identity. Of these, CIL represents the most challenging and practically relevant setting, as it most closely mirrors real-world conditions. While continual learning research has historically been concentrated in computer vision, and more recently in natural language processing driven by the rise of large language models, other data modalities have received comparatively little attention. Time series data, despite its prevalence in real-world applications such as industrial monitoring, healthcare, and activity recognition, remains much less explored in the continual learning literature. To address this gap, the Time Series Class-Incremental Learning (TSCIL) benchmark [4] was developed, which systematically evaluates the performance of established continual learning methods across four curated time series datasets under the class-incremental learning scenario. To mitigate catastrophic forgetting, the literature has converged on three broad families of approaches: regularization-based, architecture-based and rehearsal-based [8]. Regularization-based methods impose constraints on parameters or acti-vations to protect knowledge critical to previous tasks. Some well-known methods belonging to this category are Elastic Weight Consolidation (EWC) [9], which intro-duced a penalty on parameters important for prior tasks, and Learning without Forgetting (LwF) [10], which instead applies knowledge distillation [11], constraining the network’s output activations on new data to remain consistent with those of the 4previously trained model. However, these methods tend to degrade under long task sequences and have been shown to perform poorly in the CIL scenario. 
+
+Architecture-based methods address forgetting by allocating distinct model components to different tasks, ensuring that learning a new task does not interfere with the parameters storing knowledge from previous ones [12]. Representative approaches include Progressive Neural Networks [13], which grow the architecture with each new task by adding lateral connections to frozen columns, and PackNet [14], which itera-tively masks and prunes subnetworks within a fixed-capacity model. However, these methods have two fundamental limitations: they usually do not scale well with the number of tasks, and task identity is typically required at inference time to route inputs to the correct subnetwork, an assumption not allowed in the CIL scenario. 
+
+Rehearsal-based methods have emerged as the most practically effective family of approaches for CIL [15, 16]. The core principle, introduced by Experience Replay (ER) [15], is simple yet powerful. A small subset of samples from previous tasks is stored in a fixed-size episodic memory buffer. These samples are revisited together with the new samples when visiting a new task. In this way, the model can retain the accumulated knowledge by periodically revisiting previous data while remaining plastic enough to incorporate new classes. Despite its simplicity, ER has proven a remarkably competitive baseline across diverse benchmarks, motivating a rich line of follow-up work focused on improving memory management strategies. While some methods consider hybrid approaches that combine replay with other strategies [16–18], a parallel line of work has focused specifically on improving memory retrieval [19, 20]. For example, ASER leverages an efficient k-nearest-neighbor approximation of Shapley values to quantify each sample’s marginal contribution to classification performance [20] and achieves state-of-the-art performance on the TSCIL benchmark [4]. Despite the significant advances, a fundamental limitation persists across the entire continual learning literature: the assumption that incoming data streams are fully labeled. In practice, however, deploying a continual learning system requires continu-ous human intervention to annotate new data, a process that is costly, time-consuming, and difficult to scale. This bottleneck severely constrains the real-world applicability of existing CIL methods, regardless of their methodological complexity. Therefore, in this paper, we directly address this limitation by incorporating active learning capa-bilities in the TSCIL benchmark. We analyze the effect of different query strategies on the performance of rehearsal-based methods, with a particular focus on ER and ASER. Finally, we propose TypiCore, a novel hybrid query strategy that alternates between typicality-based and diversity-based sample selection across active learning cycles, enabling the construction of memory buffers that are both representative and diverse. 53 Active Learning Approaches 
+
+## 3.1 Introduction 
+
+In classification problems, obtaining labels can be expensive, often requiring expert knowledge. Therefore, given a fixed labeling budget, the specific subset of data chosen for labeling can critically impact the resulting model’s performance. Active Learning is the process of strategically selecting the most informative sam-ples from an unlabeled pool for labeling, thereby maximizing learning performance with minimal labeling effort [5, 21]. Active learning systems implement this selection using query strategies in an iterative process. The model is trained on an initial set of labeled samples, resulting in a model state θ. Based on this model state, the active learning strategy selects a new batch of samples from the unlabeled pool, from which the model is expected to gain the most information. These strategies generally fall into two main categories: uncertainty-based and distribution-aware .
+
+## 3.2 Uncertainty-Based Methods 
+
+Uncertainty-based methods select samples about which the model, in its current state 
+
+θ, is most uncertain, based on the assumption that uncertain samples are likely to be the most informative for improving model performance. These methods rely on the model’s softmax output probabilities computed using the model state from the previous step, θa−1. In the following, pθa−1 (yk | x) denotes the predicted probability for class k given the input x. We define pθa−1 (ymax 1 | x) and 
+
+pθa−1 (ymax 2 | x) as the probabilities of the most (maximum predicted probability) and second-most likely classes, respectively. 
+
+Entropy-Based Uncertainty Entropy measures the disorder or uncertainty in the model’s predicted probability distribution [22]. For a classification task with K
+
+classes, the uncertainty is defined as follows, where samples with high entropy are considered uncertain. 
+
+Uentropy (x) = −
+
+> K
+
+X
+
+> k=1
+
+pθa−1 (yk | x) log pθa−1 (yk | x) (1) 
+
+Margin-Based Uncertainty This strategy focuses on the difference between the top two predicted classes [22]. The next equation presents the formula, where samples with small margins are considered uncertain. 
+
+Umargin (x) = pθa−1 (ymax 1 | x) − pθa−1 (ymax 2 | x) (2) 
+
+Least Confidence This strategy selects samples where the model is least confi-dent in its most probable prediction [22]. Samples with low confidence are considered uncertain, where the confidence is calculated based on the next equation. 
+
+ULC (x) = 1 − pθa−1 (ymax 1 | x) (3) 63.3 Distribution-aware Methods 
+
+Distribution-aware methods select samples that best represent the overall data distri-bution in the feature space, ensuring good coverage and preventing the model from focusing on narrow regions [5]. Distribution-aware methods aim to select samples that capture the variety and span the underlying structure of the overall data distribution in the feature space. 
+
+Core-Set [23] (as diversity-based method) employs a greedy k-center approxima-tion algorithm to find a subset that effectively covers the data by choosing centers that minimize the maximum distance from any data point to its nearest center. The algorithm operates in the feature space extracted from the model’s embedding layer using a furthest-first traversal strategy. Given labeled samples L and unlabeled candidates U , the algorithm maintains for each unlabeled sample the distance to its nearest labeled neighbor. At each iteration, it selects the unlabeled sample with the maximum such distance, effectively choosing the sample that is furthest from all currently labeled points. After adding this sample to L, the distances are updated incrementally by comparing each unlabeled sample’s current minimum distance with its distance to the newly selected point. This process repeats until n samples are selected. Formally, at each iteration, the algorithm selects: 
+
+x∗ = arg max  
+
+> x∈U
+
+min  
+
+> x′∈L
+
+∥f (x) − f (x′)∥2 (4) where f (·) denotes the feature embedding. This greedy approach ensures maximum coverage of the feature space and provides a 2-approximation to the optimal k-center problem. Some methods combine different objectives, such as uncertainty, diversity [24, 25]. However, although combining uncertainty and diversity can enhance performance, these two criteria alone may be insufficient in low-budget scenarios. Therefore, TypiClust [26] (typicality-based method) introduces a third dimension, representativeness, which proves equally critical: rather than selecting samples that are merely uncertain or geometrically spread, a robust query strategy should prioritize samples that are typical of their class distribution. Representativeness describes how typical a sample is of its class, or equivalently, how similar it is to other samples in the same region of the feature space. Building on this principle, TypiClust [26] combines clustering with typicality scoring to systematically identify and select the most representative samples from each region of the data distribution. Typicality measures a sample’s density in feature space, quantified as the inverse of the average Euclidean distance to its K nearest neighbors: Typicality( x) = 
+
+ 1
+
+K
+
+X
+
+> xi∈K-NN( x)
+
+∥x − xi∥2
+
+
+
+> −1
+
+(5) where x is the feature vector, K-NN( x) denotes the K nearest neighbors of x, and 
+
+∥x − xi∥2 is the Euclidean distance between x and neighbor xi. The method proceeds through three steps: 71. Representation learning: Learn a feature space from the unlabeled pool U0 using self-supervised learning. 2. Clustering for diversity: At iteration i, partition the data into k = |L i−1| + B
+
+clusters, where B is the batch size and |L i−1| is the number of labeled examples. This ensures that at least B clusters contain no labeled examples. 3. Querying typical examples: Select the most typical example (Eq. 5) from each of the B largest clusters without labeled examples. 
+
+Algorithm 1: Generic ER-based method for Task t
+
+Input: Memory M; Parameters θt−1, Dataset Dt; Task t 
+
+> 1
+
+Initialize parameters: θ′ ← θt−1 
+
+> 2
+
+while not converged do  
+
+> 3
+
+for B ∼ D t do  
+
+> 4
+
+if t = 1 then  
+
+> 5
+
+θ′ ← SGD( B, θ ′) // first task, empty memory  
+
+> 6
+
+else  
+
+> 7
+
+BM ← MemoryRetrieval( M, B, θ ′) 
+
+> 8
+
+θ′ ← SGD( BM ∪ B, θ ′) // train on combined batch  
+
+> 9
+
+θt ← θ′ // converged, set as optimal for task t  
+
+> 10
+
+for B ∼ D t do  
+
+> 11
+
+M ← MemoryUpdate( M, B, θ ′) // memory update  
+
+> 12
+
+return θt, M
+
+# 4 Methodology: TypiCore in ACIL Framework 
+
+## 4.1 Replay Approach 
+
+Among the approaches proposed to address catastrophic forgetting, replay-based methods have emerged as one of the most effective and practical. The core idea is to maintain a fixed-size memory buffer M containing a small subset of samples from previously learned tasks. During training on a new task, previously stored exemplars are retrieved from the memory buffer and interleaved with the current task’s data, exposing the model simultaneously to old and new class distributions and thereby counteracting the forgetting. Formally, the sequential learning scenario consists of T incremental tasks. Each task t ∈ { 1, . . . , T } introduces a disjoint subset of new classes Ct, such that Ci ∩ C j = ∅
+
+for all i̸ = j. The set of all classes encountered up to and including task t is defined as C≤t = Sti=1 Ci. At the onset of each task t, a dataset Dt = {xti}Nt 
+
+> i=1
+
+of Nt samples becomes available. Each sample x ∈ Rd×τ is a multivariate time series with d channels and τ time steps. The learner’s objective is to incrementally train a classifier fθ : Rd×τ → C ≤t that, after completing task t, correctly classifies instances from the full joint label space C≤t.Furthermore, we operate under the class-incremental learning protocol, in which no 8task identifier is provided at inference time and the model must discriminate among all previously seen classes without access to task identifiers. Experience Replay (ER) [15] is the most famous replay-based method and consists of two components. 
+
+1. Rehearsal. During training on task t, each mini-batch Bℓ sampled from the current dataset Dt is augmented with a batch Bm retrieved uniformly at random from the memory buffer M. The model is then updated on the combined batch Bm ∪ Bℓ,exposing it simultaneously to new and old class distributions. The model parameters 
+
+θ are updated by minimizing the combined loss: 
+
+L(θt) = LCE (θt; Bm) + LCE (θt; Bℓ) (6) where LCE denotes the cross-entropy loss. 
+
+2. Memory update. After processing each task, the buffer M is updated via reservoir sampling [27], which guarantees that every observed sample has an equal probability of being retained regardless of when it was encountered. This ensures that M remains a uniformly random subset of all samples seen so far. The complete procedure is detailed in Algorithm 1. 
+
+## 4.2 ASER 
+
+While ER provides a simple and effective foundation for replay-based continual learn-ing, its reliance on uniform random sampling treats all stored exemplars as equally valuable. In practice, however, samples differ substantially in their contribution to preventing catastrophic forgetting: exemplars that are representative of their class distribution or that occupy critical regions near decision boundaries are far more informative during rehearsal than outliers or redundant samples. Adversarial Shapley Value Experience Replay (ASER) [20] addresses this limitation by replacing both random memory retrieval and reservoir-based memory update with importance-driven selection based on the shapley values. The Shapley value was originally developed in cooperative game theory. Given a dataset of N samples indexed by I = {1, . . . , N } and a utility function v(S) represent-ing model performance when trained on subset S ⊆ I , the Shapley value for sample i
+
+is defined as: 
+
+s(i) = X
+
+> S⊆I\{ i}
+
+|S| !( N − |S| − 1)! 
+
+N ! [v(S ∪ { i}) − v(S)] (7) This formulation computes the average marginal contribution of sample i across all possible subsets that exclude it. However, computing exact Shapley values is computationally prohibitive, requiring O(2 N ) evaluations. ASER addresses this by leveraging an efficient k-nearest neighbour (KNN) based approximation that reduces complexity to O(N log N ). This approximation exploits the natural clustering of classes in the embedding space and defines a KNN utility function that measures the likelihood of correct classification. The resulting KNN 9Shapley value sj (i) quantifies the average marginal contribution of candidate sample i
+
+with respect to a reference sample j. When i and j share the same label then sj (i) > 0, with magnitude |sj (i)| reflecting their proximity in the latent space. Building on this, ASER introduces the Adversarial Shapley Value (ASV) score to balance the competing objectives of continual learning: maintaining stability on previously learned tasks while enabling plasticity for new tasks. The ASV score is formulated as: 
+
+ASV (i) = max 
+
+> j∈S sub
+
+sj (i) − min 
+
+> k∈B n
+
+sk(i) (8) where i ∈ M \ S sub , Ssub is a class-balanced subsample from memory M and Bn is the incoming batch. The first term captures stability while the second term captures plasticity. A softer variant replaces the max and min operators with mean aggregation over the same sets, providing more stable estimates: 
+
+ASV μ(i) = 1
+
+|S sub |
+
+X
+
+> j∈S sub
+
+sj (i) − 1
+
+|B n|
+
+X
+
+> k∈B n
+
+sk(i). (9) ASER modifies two critical components of the generic ER procedure described in Algorithm 1. 1. Memory Retrieval. Instead of random sampling, ASER computes ASV(i) as defined in Eq. 8 or in Eq. 9 for candidate samples in M and retrieves the 
+
+BM samples with the highest scores. 2. Memory Update. Rather than reservoir sampling, ASER employs a value maximization strategy. It considers the union of the current memory and the incoming batch, C = M∪B n, and computes the average KNN-SV score: v(i) = 1
+
+> |S sub |
+
+P 
+
+> j∈S sub
+
+sj (i) for each candidate i ∈ C . Here, the evaluation set 
+
+Ssub ⊂ M is a random subsample drawn from the current memory, serving as a refer-ence for class representation. The buffer is updated by retaining the top-|M| samples with the highest v(i). Together, these two modifications transform ER from a pas-sive, random rehearsal mechanism into an active, value-driven memory management system, achieving state-of-the-art performance on the TSCIL benchmark [4, 28]. 10 Algorithm 2: ACIL Framework for Task t
+
+Input: Task t, unlabeled pool Dt, consolidated memory M, previous model 
+
+θt−1,N a , AL policy A, budget b, cycles Na
+
+// 1. Initialization  
+
+> 1
+
+θt, 0 ← θt−1,N a ; // Parameters from end of task t − 1 
+
+> 2
+
+Lt, 0 ← ∅ , Lacc  
+
+> t, 0
+
+← ∅ ; 
+
+> 3
+
+Ut, 0 ← D t ; // Initialize unlabeled pool // 2. Active learning cycles  
+
+> 4
+
+for a = 1 to Na do 
+
+// 2.1. Query and Update  
+
+> 5
+
+Qt,a ← A (Ut,a −1, θ t,a −1, b ) ; // Select informative batch  
+
+> 6
+
+Acquire labels for Qt,a from oracle;  
+
+> 7
+
+Lt,a ← { (x, y ) | x ∈ Q t,a } ; // Form current training batch  
+
+> 8
+
+Lacc  
+
+> t,a
+
+← L acc  
+
+> t,a −1
+
+∪ L t,a ; // Append to cumulative set  
+
+> 9
+
+Ut,a ← U t,a −1 \ Q t,a ;
+
+// 2.2. Incremental Training Step  
+
+> 10
+
+θ′ ← θt,a −1; 
+
+> 11
+
+while not converged do  
+
+> 12
+
+for Bℓ ∼ L acc  
+
+> t,a
+
+do  
+
+> 13
+
+if t = 1 then  
+
+> 14
+
+θ′ ← SGD( Bℓ, θ ′);  
+
+> 15
+
+else  
+
+> 16
+
+BM ← MemoryRetrieval( M, B ℓ, θ ′) ; // Retrieve replay batch  
+
+> 17
+
+θ′ ← SGD( BM ∪ Bℓ, θ ′) ; // Train with replay  
+
+> 18
+
+θt,a ← θ′ ; // Update model state for cycle a
+
+// 3. Memory Consolidation  
+
+> 19
+
+for Bℓ ∼ L acc  
+
+> t,N a
+
+do  
+
+> 20
+
+M ← MemoryUpdate( M, B ℓ, θ ′) ; // Update consolidated memory  
+
+> 21
+
+return θt,N a , M
+
+## 4.3 ACIL Framework 
+
+Standard continual learning methods, including both ER and ASER, operate under the assumption that all incoming data is fully labeled. While this assumption simplifies the learning protocol, it is rarely satisfied in practice. In real-world deployments, data acquisition is often automatic and inexpensive, sensors continuously generate readings, cameras capture frames, and devices log activity, but annotation requires domain expertise, sustained manual effort, and considerable time and financial resources. This disconnect between methodological assumptions and deployment constraints severely limits the practical applicability of existing CIL systems. 11 Active learning is the natural complement to this problem, rather than label-ing everything, the learner strategically selects the most informative samples for annotation, maximizing learning performance under a fixed budget. We therefore propose integrating active learning directly into replay-based approaches, thereby introducing the Active Class Incremental Learning (ACIL) frame-work, as shown in Figure 1. At each task t, the learner has access to an unlabeled pool 
+
+Dt of Nt samples but may only query labels for at most B ≪ Nt of them. In other words, we assume a limited annotation budget B per task, which must be distributed among multiple query cycles. The central challenge lies in designing query strate-gies that select samples that are simultaneously informative for learning the current task and representative enough to populate a memory buffer that supports long-term retention across all previously seen classes. 
+
+Active Learning Cycle Formally, we structure the annotation process within each task t as a sequence of Na active learning cycles, as shown in Figure 1. The dataset Dt is partitioned into q equal slices, defining a query batch size of b = ⌊Nt/q ⌋.The learner is permitted to query Na ≤ q of these slices, resulting in a total annotation budget of B = Na × b and a budget ratio ρ = Na/q representing the fraction of the total data that is annotated. 
+
+Query Batch (Qt,a ): At cycle a of task t, an active learning policy A selects a query set Qt,a of b samples from the current unlabeled pool Ut,a −1:
+
+Qt,a = A(Ut,a −1, θ t,a −1, b )where θt,a −1 denotes the model state at the end of the previous cycle. 
+
+Labeled Set (Lt,a ): Labels are then acquired from an oracle, representing a human annotator or equivalent labeling process, to form the current labeled batch: 
+
+Lt,a = {(x, y ) | x ∈ Qt,a }
+
+Cumulative Labeled Set (Lacc  
+
+> t,a
+
+) This batch is appended to the cumulative labeled set, which aggregates all annotations acquired within the current task up to cycle a:
+
+Lacc t,a = Lacc t,a −1 ∪ Lt,a 
+
+Crucially, model training at each cycle operates on the full cumulative set Lacc t,a rather than solely on the most recent batch Lt,a . This design choice ensures that the model retains knowledge of all classes encountered within the current task, regardless of when their samples were queried. Algorithm 2 presents the complete ACIL framework for a single task t. The pro-cedure unfolds in three phases. 
+
+1. Initialization. The model parameters θt, 0 are inherited from the end of the previ-ous task, θt−1,N a . Both the current labeled batch Lt, 0 and the cumulative set Lacc t, 0 are initialized as empty, and the full dataset Dt constitutes the initial unlabeled pool Ut, 0.
+
+2. Cycle loop. For each cycle a ∈ { 1, . . . , N a}, the protocol proceeds as follows. 12 First, the active learning policy A selects b samples from the unlabeled pool, which are labeled by the oracle and appended to the cumulative set. The model then trains to convergence on Lacc t,a : for the first task, each mini-batch Bℓ is used directly for gradi-ent updates; for subsequent tasks, every mini-batch is augmented with a replay batch 
+
+BM retrieved from M, and the model is updated on the combined batch BM ∪ Bℓ.The updated model state θt,a is then carried forward to the next cycle, where it serves as the basis for the next query. 
+
+3. Memory consolidation. Once all Na cycles are complete, the consolidated mem-ory M is updated by iterating through Lacc t,N a in mini-batches using the strategy-specific 
+
+Memory Update procedure. The cumulative labeled set is then discarded, as its role is fulfilled by M for all future tasks. 
+
+Memory Retrieval and Memory Update A critical design decision in the ACIL framework concerns how the memory M interacts with the active learning process. In our framework, Memory Retrieval and Memory Update are not fixed procedures but are determined by the underlying continual learning method, ER or ASER. During the cycle loop, Memory Retrieval is invoked at every training iteration to augment the current mini-batch Bℓ with a replay batch BM drawn from M. Under ER, this retrieval is uniform random; under ASER, it is importance-driven, prioritizing exemplars with the highest ASV scores. 
+
+Memory Update , by contrast, is invoked only once per task, at the memory consoli-dation phase after all Na active learning cycles have been completed. At this point, the full cumulative labeled set Lacc  
+
+> t,N a
+
+, comprising all samples annotated during the task, is streamed through the update procedure in mini-batches. Under ER, reservoir sam-pling ensures that a uniformly random subset of all seen samples is retained. Under ASER, a value-maximization strategy retains the top-|M| samples according to their KNN Shapley value. 
+
+## 4.4 TypiCore 
+
+From the experimental analysis of individual active learning strategies showed later in Section 6 emerges a fundamental limitation. Specifically, no single method is sufficient on its own for the active class-incremental learning setting. Uncertainty-based approaches systematically fail to outperform random selec-tion. Also, distribution-aware methods underperform with Core-Set that maximizes coverage, ensuring plasticity and immediate learning accuracy, but at the cost of catastrophic forgetting, as the memory becomes populated with atypical, boundary-adjacent samples that lack the robust features necessary for long-term retention. On the contrary, TypiClust, which builds a stable and representative memory buffer but underrepresents regions of the feature space. Therefore, we propose a novel approach, TypiCore, that considers a trade-off of the two objectives: representativeness and coverage . Representativeness prioritizes the selection of high-density, prototypical samples that accurately reflect the core structure of each class, ensuring stability as the model encounters new tasks. Coverage ,instead, focuses on selecting samples from underrepresented regions of the feature 13 space, preserving diversity and preventing the memory buffer from collapsing onto a narrow, potentially unrepresentative subset of the data distribution. Neither objective alone is adequate: pure representativeness leads to a memory that is stable but lacks diversity, while pure coverage leads to diversity without the robustness needed to resist forgetting. TypiCore addressed these two complementary distribution-aware objectives through a dynamic alternating mechanism that interleaves two phases across succes-sive active learning cycles. Concretely, the following two phases alternate within each task: 1. A TypiClust selection step to find the most typical samples from the densest regions of the current unlabeled pool. 2. A Core-Set selection step to identify samples that maximally extend the geometric coverage of the already-labeled set by applying the greedy k-center heuristic. This strict alternation prevents any prolonged period of strategic misalignment and ensures that the cumulative labeled set simultaneously captures the distributional core of each class and spans the broader feature space. The choice to initialize the alternation sequence with TypiClust rather than Core-Set is not arbitrary. At the onset of the first active learning cycle for each task, the model has had no opportunity to observe any labeled samples from the incoming classes, placing it in a cold-start condition where prediction-based methods are unre-liable. In this regime, beginning with TypiClust ensures that the first queried samples are prototypical, representatives of the underlying distribution. This initialization provides a stable foundation for the subsequent Core-Set phase, which can then exploit the labeled anchors already placed in high-density regions to identify the largest remaining unlabeled voids and extend coverage outward.                                          
+
+> Table 1 Overview of the TSCIL benchmark datasets. ddenotes the channel dimensionality and τthe sequence length.
+> Dataset Shape ( d×τ)Train size Test size #Classes #Tasks
+> UCI-HAR 9×128 5,952 2,947 63UWave 3×315 722 3,582 84GRABMyo 28 ×128 20,315 7,525 10 5WISDM 3×200 10,825 4,010 12 6
+
+# 5 Experimental Setting 
+
+## 5.1 Benchmark Datasets 
+
+We evaluate our approach on the benchmark datasets established in the TSCIL (Time Series Class-Incremental Learning) framework [4]. These datasets encompass a diverse 14 Fig. 2 Average accuracy across sequential tasks on the GRABMyo dataset for four active learning query strategies (TypiClust, CoreSet, Uncertainty-margin, Random) combined with two replay mech-anisms (ER: solid lines; ASER: dashed lines).TypiClust-ER achieves the highest final accuracy (55%), while uncertainty-margin and CoreSet paired with ASER exhibit the steepest forgetting curves. 
+
+range of time series classification tasks, varying in sequence length, channel dimen-sionality, application domain, and complexity. All datasets consist of fixed-length multivariate time series with a consistent shape d × τ , where d represents the number of channels and τ denotes the temporal length of each sequence. Table 5.1 provides a comprehensive overview of the datasets, including their dimensionality, train/test splits, class counts, and task divisions for the incremental learning setting. 
+
+UCI-HAR (Human Activity Recognition Using Smartphones) [29] contains sensor data from smartphones worn by 30 subjects performing six daily activities (walking, walking upstairs, walking downstairs, sitting, standing, and laying). The dataset com-prises 9-channel accelerometer and gyroscope readings sampled at 50 Hz, with each sequence containing 128 time steps. This dataset is widely used for evaluating activ-ity recognition systems and represents a relatively balanced, moderate-complexity classification task. 
+
+UWave is a gesture recognition dataset collected from accelerometer sensors [30]. It contains 3-channel time series of length 315, representing 8 different hand ges-tures performed by multiple users. Despite having the smallest training set among the benchmarks (896 samples), it presents challenges due to inter-subject variability and the temporal complexity of gesture patterns. 
+
+GRABMyo is a hand gesture recognition dataset based on surface electromyo-graphy (sEMG) signals [31]. It contains 28-channel sEMG recordings of length 128, capturing 16 different hand and wrist gestures. With over 36,000 training samples, 15 GRABMyo is the largest dataset in our benchmark suite and presents unique chal-lenges due to the noisy nature of sEMG signals and the subtle differences between certain gesture classes. 
+
+WISDM (Wireless Sensor Data Mining) [32] is an activity recognition dataset col-lected from smartphone and smartwatch accelerometer sensors. It features 3-channel time series of length 200, representing 18 different activities including various forms of walking, running, and daily tasks. The dataset’s class imbalance and real-world collection conditions make it particularly challenging for incremental learning scenar-ios. We preserve the original train/test splits established in the TSCIL [4] to ensure fair comparison with existing methods. For the incremental learning setting, classes are randomly shuffled and partitioned into mutually exclusive subsets corresponding to sequential tasks, as described in Section 4.1. This partitioning simulates realistic scenarios where new classes arrive over time and must be learned without access to previous task data. 
+
+## 5.2 Evaluation Metrics 
+
+We follow the standard TSCIL task construction protocol. For each dataset, classes are randomly permuted and partitioned into tasks with mutually exclusive label spaces. To ensure robustness against class ordering effects, all experiments are repeated with five independent runs with distinct random class orderings. Let acc i,j denote the clas-sification accuracy on the test set of task j after completing the training of task i (where j ≤ i). We report the following metrics, averaged over the five runs with 95% confidence intervals: Average Accuracy ( Ai): The average accuracy at the end of task i is defined as: 
+
+Ai = 1
+
+i
+
+> i
+
+X
+
+> j=1
+
+acc i,j (10) The final average accuracy ACC corresponds to AT and serves as the primary summary metric for overall performance. 
+
+Learning Accuracy: To assess the model’s ability to acquire new knowledge (plas-ticity), we calculate the learning accuracy acc i,i on the current task immediately after learning it and the average learning accuracy Acur , which is the average of the task accuracies: 
+
+Acur = 1
+
+T
+
+> T
+
+X
+
+> i=1
+
+acc i,i (11) 
+
+Average Forgetting ( Fi): Forgetting measures the performance drop on previous tasks. For a specific task j < i , where i > 1, forgetting is defined as: 
+
+fi,j = max  
+
+> k<i
+
+acc k,j − acc i,j (12) 16 The average forgetting after task i is: 
+
+Fi = 1
+
+i − 1
+
+> i−1
+
+X
+
+> j=1
+
+fi,j (13) 
+
+F T (FT ) defines the Final Average Forgetting after all tasks have been learned. Moreover, we define the Stability metric as the retention of previously acquired knowledge after learning all tasks: Stability = Acurr − F T (14) where Acurr is the average accuracy on the current task and F T = FT is the Final Average Forgetting, measuring the average performance drop on previous tasks after the full task sequence has been learned. This metric is shown in Figure 3 to compare all the methods under the stability (Stability) and plasticity ( Acurr ). 
+
+## 5.3 Model Architecture 
+
+We employ the 1D-CNN backbone from the TSCIL framework [4] across all experi-ments. The network fθ is composed of a feature extractor fext : Rd×τ → Rh and a classifier fcl : Rh → R|C ≤t|, such that fθ(x) = fcl (fext (x)). The feature extractor fext consists of four convolutional blocks. Each block con-tains a 1D convolutional layer, Batch Normalization (BN), ReLU activation, 1D max-pooling, and dropout as presented in paper [4]. 
+
+## 5.4 Training Configuration 
+
+We control the granularity of the active learning process via two parameters: the number of query cycles Na and the total number of dataset partitions q. The query batch size is derived as b = ⌈ Nt 
+
+> q
+
+⌉, where Nt is the size of the current task’s dataset. The optimization mini-batch size Bℓ is set equal to the query batch size, i.e., |Bℓ| = b,and is sampled from the cumulative labeled set Lacc  
+
+> t,a
+
+during training. For tasks t > 1, we maintain a balanced replay strategy with |Bℓ| = |BM |, where BM denotes the memory replay batch, resulting in a total mini-batch size of |B| = 2 b.The configurations were chosen to balance annotation costs with learning stability. UCI-HAR employs fine-grained partitioning ( q = 300) with a strict budget ratio ( ρ =0.01), whereas other datasets utilize coarser partitioning ( q ∈ { 20 , 25 , 40 }) with ratios between 0 .12 and 0 .30. We utilize the following optimization protocol: 
+
+• Optimizer: Adam with an initial learning rate of 10 −3.
+
+• Stopping Criterion: Training proceeds for up to 100 epochs per cycle, utilizing early stopping based on validation loss to prevent overfitting on small query batches. The same backbone architecture, hyperparameters, and training schedule are used for all memory-based baselines (e.g., ER, ASER) to ensure fair comparison of query strategies. 17 Fig. 3 Plasticity vs. Stability trade-off for each dataset under the Experience Replay (ER) approach. Methods closer to the top-right corner achieve a better balance between learning new tasks (plasticity) and retaining knowledge of previous ones (stability). 
+
+Memory Buffer Configuration Similar to the TSCIL benchmark, we retain the original CIL replay-memory configuration, where the memory is nominally set to 5% of the training-set size. While active learning imposes strict annotation budgets, this does not necessitate reducing the consolidated memory capacity. 
+
+# 6 Results 
+
+## 6.1 Uncertain-based Methods 
+
+Tables 2 and 3 report the full performance comparison across all query strategies under the ER and ASER replay settings, respectively. In each experiment, the annotation was limited according to the active learning scenario, which was solved differently: the Random method used random selection; the Uncertainty-based and Distribution-aware methods solved the problem based on scores specified in their algorithms. Across both 18 Dataset Metric Uncertainty-based Distribution-aware Random Entropy Margin LC CoreSet TypiClust TypiCore (ours) UCIHAR ACC ↑ 67 .84 69 .54 69 .83 72 .52 63 .19 75 .26 70 .70 FT ↓ 36 .30 28 .79 36 .70 29 .36 47 .66 29 .97 35 .69 
+
+Acurr ↑ 91 .95 87 .53 94 .29 92 .09 94 .97 95 .24 94 .49 UWave ACC ↑ 77 .01 75 .46 78 .45 76 .79 74 .77 81 .03 82 .88 
+
+FT ↓ 21 .85 21 .86 17 .90 23 .08 26 .32 16 .64 16 .35 
+
+Acurr ↑ 93 .40 91 .86 91 .83 94 .10 94 .50 93 .51 95 .14 
+
+GRABMyo ACC ↑ 51 .25 44 .87 49 .17 49 .58 44 .09 54 .89 56 .10 
+
+FT ↓ 23 .99 20 .76 32 .54 32 .06 53 .11 22 .40 29 .27 
+
+Acurr ↑ 67 .66 60 .21 75 .09 75 .06 86 .57 69 .20 78 .34 WISDM ACC ↑ 46 .41 36 .02 42 .66 41 .13 40 .90 50 .69 51 .73 
+
+FT ↓ 40 .29 31 .78 40 .12 34 .47 50 .99 41 .27 39 .12 
+
+Acurr ↑ 79 .76 62 .50 76 .10 69 .85 83 .39 85 .08 84 .25  
+
+> Table 2 Results across datasets and query strategies for Experience Replay (ER)
+
+Dataset Metric Uncertainty-based Distribution-aware Random Entropy Margin LC CoreSet TypiClust TypiCore (ours) UCIHAR ACC ↑ 63 .00 61 .10 62 .57 57 .46 63 .03 62 .52 69 .11 
+
+FT ↓ 46 .24 43 .66 45 .80 53 .15 46 .99 47 .02 38 .89 
+
+Acurr ↑ 93 .83 88 .50 92 .87 92 .90 94 .36 93 .86 95 .04 
+
+UWave ACC ↑ 59 .75 60 .96 61 .40 62 .53 61 .10 62 .26 63 .65 
+
+FT ↓ 43 .23 41 .85 44 .29 40 .00 44 .67 41 .17 42 .39 
+
+Acurr ↑ 92 .18 92 .35 94 .62 92 .53 94 .60 93 .14 95 .44 
+
+GRABMyo ACC ↑ 49 .79 42 .83 46 .07 46 .06 41 .19 52 .91 52 .84 FT ↓ 31 .38 23 .31 27 .54 30 .42 53 .85 29 .80 32 .88 
+
+Acurr ↑ 73 .38 58 .82 67 .26 69 .68 84 .18 76 .35 78 .18 WISDM ACC ↑ 42 .93 37 .56 42 .30 39 .39 39 .65 47 .37 47 .98 
+
+FT ↓ 42 .88 28 .34 40 .40 33 .75 51 .31 44 .00 42 .35 
+
+Acurr ↑ 78 .37 60 .07 75 .97 67 .51 82 .41 84 .04 83 .27  
+
+> Table 3 Results across datasets and query strategies for ASER
+
+ER and ASER, uncertainty-based strategies consistently fail to improve over random selection and frequently degrade performance. Under ER, entropy sampling reduces ACC on GRABMyo from 51.25 to 44.87 and on WISDM from 46.41 to 36.02, a drop of more than ten percentage points on the latter. Learning accuracy ( Acurr ) follows the same pattern: entropy with ER reaches only 62.50 on WISDM against the random baseline of 79.76. The degradation is equally pronounced under ASER. Margin sampling is the most competitive of the three uncertainty variants, occa-sionally matching or slightly exceeding the random baseline in ACC (e.g., 78.45 vs. 77.01 on UWave with ER), but it never establishes a consistent advantage. Therefore, 19 aspects Random Entropy Margin LC CoreSet TypiClust TypiCore ER 4.50 4.92 4.50 4.08 5.25 2.58 2.17 
+
+ASER 4.50 4.92 4.08 4.58 4.50 3.25 2.17 
+
+ACC 4.00 6.12 4.00 4.50 5.75 2.25 1.38 
+
+All 4.50 ∗ 4.92 ∗ 4.29 ∗ 4.33 ∗ 4.88 ∗ 2.92 2.17  
+
+> Table 4 Comparison of rank averages of methods from several perspectives. Smaller is better, and the best average rank in each row is highlighted by bold characters. Competing methods that were significantly outperformed by our method (i.e., the pairwise p-value was less than 0.02 in the Nemenyi test) were marked with an asterisk in the last row.
+
+## Method UCIHAR UWave GRABMyo WISDM 
+
+## Fine-Tuning 32.9 26.0 19.4 15.5 Joint Training 93.9 96.6 93.8 85.7 LwF 40.0 47.3 19.4 15.9 MAS 48.0 51.9 16.9 11.2 ER 72.8 72.7 46.5 41.7 ASER 89.1 83.2 55.9 51.6 
+
+## Random (ER) 67.84 77.01 51.25 46.41 Random (ASER) 63.00 59.75 49.79 42.93 Unc-Entropy (*) 69.54 75.46 44.87 36.02 Unc-Margin (*) 69.83 78.45 49.17 42.66 Unc-LC (*) 72.52 76.79 49.58 41.13 CoreSet (*) 63.19 74.77 44.09 40.90 TypiClust (*) 75.26 81.03 54.89 50.69 TypiCore (ER) 70.70 82.88 56.10 51.73 
+
+## TypiCore (ASER) 69.11 63.65 52.84 47.98  
+
+> Table 5 ACC results across datasets including baselines, continual learning methods, and active learning strategies. TypiCore is reported under ER and ASER settings. The sign (*) means the better version among ER and ASER variants. CIL Reference corresponds to the active-task (AT) performance of the continual learning reference model under ER and ASER.
+
+the systematic underperformance of uncertainty methods across datasets and replay strategies confirms that boundary-focused selection is fundamentally misaligned with the requirements of rehearsal-based continual learning. 
+
+## 6.2 Distribution-aware Methods 
+
+The results for distribution-aware methods are reported in Tables 2 and 3 for ER and ASER, respectively, and the accuracy trends across sequential tasks on GRABMyo are shown in Figure 2. 20 CoreSet produces a sharp and consistent plasticity–stability trade-off. Under ER, it achieves the highest or near-highest Acurr on several datasets, reaching 94.97 on UCI-HAR, 94.50 on UWave, and a striking 86.57 on GRABMyo, outperforming the random baseline by nearly nineteen percentage points on the latter. However, this immediate learning gain comes at a severe cost to long-term retention: FT on GRABMyo rises to 53.11 under ER and 53.85 under ASER, more than doubling the random baseline values of 23.99 and 31.38, respectively. TypiClust presents the inverse profile. It consistently achieves competitive or best-in-class ACC values under ER, reaching 75.26 on UCI-HAR, 81.03 on UWave, 54.89 on GRABMyo, and 50.69 on WISDM, all above their respective random baselines. Its FT figures are also among the lowest across all strategies, particularly on UCI-HAR (29.97) and UWave (16.64). Under ASER, TypiClust’s advantage over the random baseline largely disappears, with ACC values close to or below random on UCI-HAR (62.52 vs. 63.00) and UWave (62.26 vs. 59.75), suggesting that its benefits are more strongly realized when paired with the simpler replay mechanism. 
+
+## 6.3 Our Approach 
+
+Tables 2 and 3 present that TypiCore achieves the best overall ACC on three out of four datasets under ER (82.88 on UWave, 56.10 on GRABMyo, 51.73 on WISDM) and under ASER as well, including a clear margin over all other methods on UCI-HAR (69.11 vs. the next best of 63.03 for CoreSet-ASER). We created a ranking based on the values (under Experience Replay) of the Table 4 by sorting all seven methods (in the case of ACC and Acurr , the method with the highest value received rank 1, while in the case of FT, the method with the lowest value was the best). The average rank of the three indicators calculated on the four data sets (out of a total of twelve data) is shown in the first row of the Table 4. The best average rank in each row is highlighted by bold characters. We calculated the same for the ASER values also, and the corresponding average ranks are shown in the 2nd row of this table. Since the ACC is the most important indicator for us, we examined and averaged the ACC ranks separately (on all data sets, with both ER and ASER); these average ranks are placed in the 3rd row. The last row shows the average of all rankings (i.e. not only ACC, but also the other two indicators). For the last row (since this is already calculated from the average of 24 data), we performed a Friedman test, which shows with a p-value of 7 .1−06 that there is a significant difference between the methods. Then, we performed a post-hoc Nemenyi test between TypiCore and all competing methods. Setting the significance level to 98%, we marked with an asterisk those competing methods that our method significantly outperformed (i.e. the pairwise p-value was less than 0.02). As can be seen from the table, TypiCore achieved significantly better values than all competitors (except one). Figure 3 further contextualizes these results by examining the plasticity–stability trade-off across all query strategies. TypiCore consistently occupies the top-right region of the plot, indicating that its accuracy gains do not come at the expense of catastrophic forgetting. Notably, CoreSet, despite achieving competitive Acurr scores, 21 suffers from substantially higher forgetting, resulting in lower stability across all four datasets. 
+
+## 6.4 Comparison among CL methods 
+
+Table 5 places the active learning results within the wider context of continual learning methods, where TypiCore-ER is the best on three datasets, and the second best on UCIHAR dataset. The methods in the first two blocks (marked in italics) are those that used full labeled dataset, unlike the methods below them, which only had a limited number of such instances available. The second block contains methods that were developed exclusively for continuous learning. Regularization-based approaches such as LwF [10] and MAS [33] remain far below all rehearsal methods, with ACC values as low as 11.2 (MAS on WISDM) and 16.9 (MAS on GRABMyo). Fine-tuning, as expected, collapses to near-chance performance across all datasets. Joint training (where there is no annotation limit and no forgetting, as the model learns all classes simultaneously), establishes the practical upper bound, reaching 93.9 on UCI-HAR and 93.8 on GRABMyo. Both TypiCore versions (ER and ASER) surpass the fully supervised LwF and MAS methods on all datasets, demonstrating that intelligent sample selection can compensate for the absence of full label supervision. One possible reason is that by systematically selecting prototypical and geometrically diverse samples, TypiCore effectively filters out noisy, redundant, or ambiguous annotations that, when included indiscriminately under full supervision. A consistent finding across all strategies is that ER outperforms ASER in the active learning setting. The gap is particularly pronounced for TypiCore on UWave, where TypiCore-ER achieves 82.88 versus 63.65 for TypiCore-ASER. Under severe annotation budgets, the simpler and more robust random rehearsal mechanism of ER appears better suited to the constraints of the active learning regime. 
+
+# 7 Conclusion 
+
+In this paper, we addressed the problem of Active Class-Incremental Learning (ACIL) for multivariate time series classification, a setting that combines the sequential nature of continual learning with the practical constraint of limited label availability. We conducted a systematic evaluation of a broad range of active learning query strategies integrated into rehearsal-based continual learning approaches. We assessed their impact on plasticity, stability, and label efficiency across four benchmark datasets from the TSCIL framework. Our analysis revealed several key insights. Uncertainty-based methods consistently fail to improve over random selec-tion and frequently degrade performance in the ACIL setting, as boundary-focused sample selection is fundamentally misaligned with the requirements of memory-based replay. Distribution-aware methods have better performance, but neither strategy alone achieves a robust and consistent balance across datasets and task sequences. Motivated by these findings, we proposed TypiCore, a novel hybrid query strat-egy that dynamically alternates between typicality-based and diversity-based selection 22 across active learning cycles. By initializing each task with a TypiClust step to anchor prototypical samples in high-density regions, and subsequently applying CoreSet to extend coverage into underrepresented areas of the feature space, TypiCore constructs memory buffers that are simultaneously representative and diverse. Evaluated on the TSCIL benchmark, TypiCore achieves statistically significant improvements over all baselines under both ER and ASER replay settings, and on several datasets exceeds the performance of fully supervised continual learning meth-ods while annotating a fraction of the available data. This shows that intelligent label selection can act as an implicit regularizer, filtering out noisy and redundant samples that would otherwise destabilize rehearsal-based learning. Moreover, a consistent finding across all experiments is that the simpler ER mech-anism outperforms ASER in the active learning regime, particularly under severe annotation budgets. This suggests that the importance-driven memory management of ASER, while effective under full supervision, may be less robust when the labeled pool is small and potentially unrepresentative in early cycles. Future work will explore several promising directions. First, future methods could consider dynamic budget allocation: rather than distributing the annotation budget uniformly across tasks, methods could estimate the degree of distribution shift between incoming and previously seen data, and allocate more labeling resources to tasks that deviate most significantly from prior knowledge, as these are likely to require more annotated samples to be learned effectively without destabilizing the existing memory buffer. Second, future work could investigate more complex scenarios that combine ele-ments of both Domain-Incremental and Class-Incremental Learning, where the same classes may reappear across tasks with shifted distributions alongside the introduc-tion of entirely new ones. In this setting, the model must simultaneously distinguish between genuine new knowledge and distributional variations of already-known classes, posing new challenges for both query strategy design and memory management. 
+
+# References 
+
+[1] Ven, G.M., Tuytelaars, T., Tolias, A.S.: Three types of incremental learning. Nature Machine Intelligence 4(12), 1185–1197 (2022) [2] Pezze, D.D., Anello, E., Masiero, C., Susto, G.A.: Continual learning approaches for anomaly detection. Evolving Systems 16 (4), 111 (2025) [3] Carta, A., Marinelli, A.R., Passaro, L.C.: Adapting language models with continual learning for temporal drifts. Evolving Systems 17 (2), 53 (2026) [4] Qiao, Z., Pham, Q., Cao, Z., Le, H.H., Suganthan, P.N., Jiang, X., Ramasamy, S.: Class-incremental learning for time series: Benchmark and evaluation. In: Pro-ceedings of the 30th ACM SIGKDD Conference on Knowledge Discovery and Data Mining, pp. 5613–5624 (2024) [5] Settles, B.: Active learning literature survey (2009) 23 [6] Bhattacharya, A.R., Goswami, D., Chakraborty, S.: Acil: Active class incremental learning for image classification. arXiv preprint arXiv:2602.04252 (2026) [7] Yamauchi, K.: Quick continual kernel learning on bounded memory space based on balancing between adaptation and forgetting. Evolving Systems 14 (3), 437– 460 (2023) [8] Wickramasinghe, B., Saha, G., Roy, K.: Continual learning: A review of techniques, challenges, and future directions. IEEE Transactions on Artificial Intelligence 5(6), 2526–2546 (2023) [9] Kirkpatrick, J., Pascanu, R., Rabinowitz, N., Veness, J., Desjardins, G., Rusu, A.A., Milan, K., Quan, J., Ramalho, T., Grabska-Barwinska, A., et al. : Over-coming catastrophic forgetting in neural networks. Proceedings of the national academy of sciences 114 (13), 3521–3526 (2017) [10] Li, Z., Hoiem, D.: Learning without forgetting. IEEE transactions on pattern analysis and machine intelligence 40 (12), 2935–2947 (2017) [11] Hinton, G., Vinyals, O., Dean, J.: Distilling the knowledge in a neural network. arXiv preprint arXiv:1503.02531 (2015) [12] Fernando, C., Banarse, D., Blundell, C., Zwols, Y., Ha, D., Rusu, A.A., Pritzel, A., Wierstra, D.: Pathnet: Evolution channels gradient descent in super neural networks. arXiv preprint arXiv:1701.08734 (2017) [13] Rusu, A.A., Rabinowitz, N.C., Desjardins, G., Soyer, H., Kirkpatrick, J., Kavukcuoglu, K., Pascanu, R., Hadsell, R.: Progressive neural networks. arXiv preprint arXiv:1606.04671 (2016) [14] Mallya, A., Lazebnik, S.: Packnet: Adding multiple tasks to a single network by iterative pruning. In: Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition, pp. 7765–7773 (2018) [15] Chaudhry, A., Rohrbach, M., Elhoseiny, M., Ajanthan, T., Dokania, P.K., Torr, P.H., Ranzato, M.: On tiny episodic memories in continual learning. arXiv preprint arXiv:1902.10486 (2019) [16] Buzzega, P., Boschini, M., Porrello, A., Abati, D., Calderara, S.: Dark experi-ence for general continual learning: a strong, simple baseline. Advances in neural information processing systems 33 , 15920–15930 (2020) [17] Rebuffi, S.-A., Kolesnikov, A., Sperl, G., Lampert, C.H.: icarl: Incremental clas-sifier and representation learning. In: Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition, pp. 2001–2010 (2017) [18] Lopez-Paz, D., Ranzato, M.: Gradient episodic memory for continual learning. 24 Advances in neural information processing systems 30 (2017) [19] Aljundi, R., Belilovsky, E., Tuytelaars, T., Charlin, L., Caccia, M., Lin, M., Page-Caccia, L.: Online continual learning with maximal interfered retrieval. Advances in neural information processing systems 32 (2019) [20] Shim, D., Mai, Z., Jeong, J., Sanner, S., Kim, H., Jang, J.: Online class-incremental continual learning with adversarial shapley value. In: Proceedings of the AAAI Conference on Artificial Intelligence, vol. 35, pp. 9630–9638 (2021) [21] Cherman, E.A., Papanikolaou, Y., Tsoumakas, G., Monard, M.C.: Multi-label active learning: key issues and a novel query strategy. Evolving Systems 10 (1), 63–78 (2019) [22] Tharwat, A., Schenck, W.: A survey on active learning: State-of-the-art, practical challenges and research directions. Mathematics 11 (4), 820 (2023) [23] Sener, O., Savarese, S.: Active learning for convolutional neural networks: A core-set approach. arXiv preprint arXiv:1708.00489 (2017) [24] He, T., Zhang, S., Xin, J., Zhao, P., Wu, J., Xian, X., Li, C., Cui, Z.: An active learning approach with uncertainty, representativeness, and diversity. The Scientific World Journal 2014 (1), 827586 (2014) [25] Giouroukis, P.S., Gidiotis, A., Tsoumakas, G.: Dual: Diversity and uncertainty active learning for text summarization. arXiv preprint arXiv:2503.00867 (2025) [26] Hacohen, G., Dekel, A., Weinshall, D.: Active learning on a budget: Opposite strategies suit high and low budgets. arXiv preprint arXiv:2202.02794 (2022) [27] Vitter, J.S.: Random sampling with a reservoir. ACM Transactions on Mathe-matical Software (TOMS) 11 (1), 37–57 (1985) [28] Sz˝ ucs, G., N´ emeth, M., Jacsev, S.: Active learning for class-incremental time series with dual memory and shapley replay. IFAC-PapersOnLine 59 (26), 229–234 (2025) [29] Anguita, D., Reyes-Ortiz, J., Ghio, A., Oneto, L., Parra, X.: Human activity recognition using smartphones. UCI Machine Learning Repository (2013) [30] Middlehurst, M., Rushbrooke, A., Ismail-Fawaz, A., Devanne, M., Forestier, G., Dempster, A., Webb, G.I., Holder, C., Bagnall, A.: The multiverse of time series machine learning: an archive for multivariate time series classification. arXiv preprint arXiv:2603.20352 (2026) [31] Jiang, N., Pradhan, A., He, J.: Gesture recognition and biometrics electromyo-gram (grabmyo). PhysioNet. doi: https://doi. org/10.13026/dzhr-nj10 (2022) 25 [32] Kwapisz, J.R., Weiss, G.M., Moore, S.A.: Activity recognition using cell phone accelerometers. ACM SigKDD Explorations Newsletter 12 (2), 74–82 (2011) [33] Aljundi, R., Babiloni, F., Elhoseiny, M., Rohrbach, M., Tuytelaars, T.: Memory aware synapses: Learning what (not) to forget. In: Proceedings of the European Conference on Computer Vision (ECCV), pp. 139–154 (2018) 26

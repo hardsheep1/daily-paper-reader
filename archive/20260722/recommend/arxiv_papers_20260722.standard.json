@@ -1,0 +1,58 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-07-22T21:45:54.916646+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 1,
+    "deep_cap": 7,
+    "deep_selected": 1,
+    "quick_candidates": 0,
+    "quick_skim_target": 12,
+    "quick_selected": 0
+  },
+  "deep_dive": [
+    {
+      "id": "2607.17632v1",
+      "source": "arxiv",
+      "title": "TypiCore: A Hybrid Active Query Strategy for Class-Incremental Learning on Time Series",
+      "abstract": "Time series data play a pivotal role across numerous domains, including healthcare and manufacturing. In real-world environments, models must cope with distribution shifts over time, a challenge commonly addressed through Continual Learning (CL) techniques. However, existing CL methods face a critical limitation: real-world data streams are rarely fully labeled, making annotation cost a major practical constraint. This paper investigates Active Class-Incremental Learning (ACIL) for multivariate time series, where a model must sequentially learn new classes while selectively querying labels under a fixed annotation budget. We present a systematic evaluation of a wide range of query strategies combined with multiple rehearsal-based approaches, assessing their impact on plasticity, stability, and label efficiency across four benchmark datasets. Our analysis reveals the limitations of uncertainty-based and distribution-aware methods in achieving strong performance under constrained labeling budgets. To address these shortcomings, we propose TypiCore, a novel hybrid query strategy that alternates between typicality-based and diversity-based sample selection across active learning cycles, enabling the construction of memory buffers that are both representative and diverse. Evaluated on the TSCIL benchmark, TypiCore delivers statistically significant improvements over all baselines and matches or surpasses fully supervised continual learning performance on multiple datasets while requiring a fraction of the available labels.",
+      "authors": [
+        "Gabor Szucs",
+        "Samuel Jacsev",
+        "Marcell Nemeth",
+        "Davide Dalle Pezze",
+        "Gian Antonio Susto"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-07-20T07:39:17+00:00",
+      "link": "https://arxiv.org/pdf/2607.17632v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "active query strategy for incremental learning",
+      "llm_evidence_cn": "面向增量学习的主动查询策略",
+      "llm_evidence": "面向增量学习的主动查询策略",
+      "canonical_evidence": "面向增量学习的主动查询策略",
+      "llm_tldr_en": "TypiCore proposes a hybrid active query strategy for class-incremental learning on time series, systematically evaluating query strategies with rehearsal methods.",
+      "llm_tldr_cn": "提出面向多变量时间序列的主动类增量学习方法，系统评估多种查询策略与回放方法的组合。TypiCore混合查询策略在固定标注预算下有效选择新类别的代表性样本，缓解数据流标注成本问题。实验表明平衡主动学习与类增量学习的关键，为时间序列持续学习提供了实用方案，其查询策略可迁移至主动聚类场景。",
+      "llm_tldr": "提出面向多变量时间序列的主动类增量学习方法，系统评估多种查询策略与回放方法的组合。TypiCore混合查询策略在固定标注预算下有效选择新类别的代表性样本，缓解数据流标注成本问题。实验表明平衡主动学习与类增量学习的关键，为时间序列持续学习提供了实用方案，其查询策略可迁移至主动聚类场景。",
+      "llm_tags": [
+        "query:active-clust"
+      ],
+      "matched_query_tag": "query:active-clust",
+      "matched_query_text": "query strategy for active clustering",
+      "matched_requirement_id": "req-11",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": []
+}
