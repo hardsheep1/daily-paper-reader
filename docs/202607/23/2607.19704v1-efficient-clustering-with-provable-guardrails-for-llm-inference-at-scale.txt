@@ -1,0 +1,828 @@
+Title: Efficient Clustering with Provable Guardrails for LLM Inference at Scale
+
+URL Source: https://arxiv.org/pdf/2607.19704v1
+
+Published Time: Thu, 23 Jul 2026 00:21:23 GMT
+
+Number of Pages: 20
+
+Markdown Content:
+> HiLD 2026: 4th Workshop on High-dimensional Learning Dynamics
+
+# Efficient Clustering with Provable Guardrails for LLM Inference at Scale 
+
+Longshaokan Wang LONGSHA @AMAZON .COM 
+
+Wai Tsang Keung WKEUNG @AMAZON .COM 
+
+Punit Ghodasara GHOPUNIT @AMAZON .COM 
+
+Roman Wang WANGRZ @AMAZON .COM 
+
+Ali Dashti DASHTIA @AMAZON .COM 
+
+Francesc Moreno-Noguer CESCMORE @AMAZON .ES 
+
+Amazon 
+
+Abstract 
+
+Scaling LLM-based applications to millions of users is bottlenecked by the inference cost and latency of modern foundation models. A natural fix is to cluster the inputs and call the LLM only on cluster representatives, letting other members inherit the output — but this is only safe if each member is measurably close to its representative. Existing clustering methods do not offer such per-sample quality control at scale: none jointly guarantee a minimal within-cluster similarity, exact matching of categorical attributes, and scalability to tens of millions of samples. We propose a two-stage algorithm that generates initial clusters with Mini-batch K-Means, then greedily selects representatives within each initial cluster — a step equivalent to the Johnson–Chvátal heuristic for Set Cover over α-balls in embedding space. The algorithm enforces the similarity and attribute guardrails exactly by construction; and runs in O(nd + n2d/K ) time and O(nd + n2/K 2) memory for n samples, feature dimension d, and K initial clusters — linear in n when K grows proportionally with n. We provide benchmarks against common clustering methods on internal and public datasets — our method not only delivers per-sample guardrails but also runs 10 –1000 × faster and scales to data sizes where most standard methods become intractable. Deployed on 38 million customers for a persona-based recommender, the clustering method cut downstream cost and latency by 50-fold while preserving personalization and unblocked the production launch. 
+
+1. Introduction 
+
+Large Language Models (LLMs) are increasingly deployed in eCommerce applications [ 7 , 12 , 14 ,17 , 19 , 21 , 24 , 33 ], but their inference cost and latency scale poorly to user bases of tens of millions [5 , 11 , 18 , 20 , 25 , 27 , 35 ]. A natural way to reduce this cost is to cluster inputs and invoke the downstream LLM only on cluster representatives, at the price of approximation error: all members of a cluster inherit the output computed for the representative. For customer-facing applications, this error must be explicitly controlled—irrelevant recommendations damage trust and, in the worst case, pose safety concerns (e.g., choking-hazard toys surfaced to households with young children). We consider a production personalized-recommendation pipeline (Figure 1) in which customer shopping personas are mapped to personalized queries via an LLM, products are retrieved, and an LLM-based Marketing Critic filters results. For 38 M customers, the LLM stages alone cost $1.13M and 508 days of wall-clock time under our allocated throughput. Clustering the input personas before the pipeline is therefore essential, but must satisfy four requirements jointly: 1. semantic similarity between each sample and its cluster representative exceeds a user-specified threshold α as a quality guardrail;      
+
+> © L. Wang, W.T. Keung, P. Ghodasara, R. Wang, A. Dashti & F. Moreno-Noguer. arXiv:2607.19704v1 [cs.LG] 22 Jul 2026 EFFICIENT CLUSTERING WITH PROVABLE GUARDRAILS FOR LLM I NFERENCE AT SCALE
+
+Figure 1: High-level overview of the personalized recommendation pipeline. 2. all samples in a cluster share identical user-specified categorical attributes (e.g., household composition) as another quality guardrail; 3. the number of clusters is substantially smaller than the initial sample size n (target ≥ 10 ×
+
+reduction) for downstream computation reduction; 4. clustering runtime, memory, and cost scale to n ∼ 10 7 and remain small relative to the downstream LLM cost saved. To our knowledge no existing clustering method satisfies all four jointly. We propose a two-stage clustering algorithm that satisfies all four desired requirements: Stage (i) Mini-batch K-Means [28] produces initial clusters, and (ii) within each initial cluster we iteratively select the point covering the largest number of remaining samples in its α-ball under the match relation (similarity ≥ α and 
+
+attribute equality). Stage 2 is exactly the Johnson–Chvátal greedy heuristic for S ET COVER restricted to each initial partition, which yields an exact guardrail guarantee and a provable (1 + ln |Ck|)-approximation on cluster count per initial cluster Ck. The resulting cluster-size distribution is heavily skewed by design, enabling aggressive tail-trimming for additional data reduction. 
+
+Contributions. (1) A simple two-stage clustering algorithm with exact similarity and attribute guardrails, and a set-cover approximation bound on data-reduction efficiency (Appendix D). (2) Com-plexity analysis showing O(nd + n2d/K ) time and O(nd + n2/K 2) memory, linear in n when 
+
+K = Θ( n) (Appendix E). (3) Benchmarks against six standard clustering methods on internal and public data showing 10 ×–1000 × speedups at matched cluster counts (Section 4). (4) A production deployment clustering 38M customers for a 50-fold reduction in downstream compute (Section 5). 
+
+2. Related Work 
+
+Standard clustering methods (K-Means [ 22 ], Gaussian Mixture [ 10 ], BIRCH [ 34 ], Spectral [ 30 , 31 ]) do not accept minimal-similarity or attribute-equality constraints out of the box. Threshold-based methods such as Community Detection [ 26 ], Star Clustering [ 3], and SimClus [ 2] support a similarity threshold but require O(n2) pairwise computation and do not scale to n ∼ 10 7. Lexical near-deduplication (MinHash [ 6 ]) cannot handle paraphrases. Closest to our work is SemDedup [ 1], which uses a two-stage embedding-plus-clustering design for data-efficient pretraining; we differ in (i) enforcing attribute-equality jointly with similarity; and (ii) using greedy set-cover representative selection with a reassignment step, which improves average within-cluster similarity (Table 1) and produces the skewed cluster-size distribution exploited for tail-trimming (Appendix F.1). 
+
+3. Method 
+
+3.1. Problem Formulation 
+
+Let D = {(Pi, Ai)}ni=1 with textual content Pi and categorical attributes Ai. An embedding model 
+
+femb maps Pi 7 → Ei ∈ Rd, and fsim denotes cosine similarity. We seek a cluster assignment 
+
+bfcluster : D → { 1, . . . , n } whose image is the set of representative indices, subject to the guardrail property bfcluster (Pi, Ai) = j =⇒ fsim (Ei, Ej ) ≥ α and Ai = Aj . (1) 
+
+> 2
+
+EFFICIENT CLUSTERING WITH PROVABLE GUARDRAILS FOR LLM I NFERENCE AT SCALE 
+
+Input :Dataset D = {(Pi, Ai)}ni=1 , embedding function femb , similarity function fsim , similarity threshold 
+
+α, number of initial clusters K.
+
+Output : Cluster assignment ˆfcluster : D → { 1, 2, . . . , n }; data reduction | ˆfcluster (D)| < |D| ; minimal similarity 
+
+bfcluster (Pi, Ai) = j ⇒ fsim (femb (Pi), f emb (Pj )) ≥ α; attribute matching bfcluster (Pi, Ai) = j ⇒
+
+Ai = Aj .
+
+/* Stage 1: Initial Clustering */ 
+
+Ei ← femb (Pi) ∀ i ∈ { 1, 2, . . . , n } // Convert personas to embeddings 
+
+Cinit ← MiniBatchKMeans ({Ei}ni=1 , K ) // Generate initial clusters /* Stage 2: Representative Customer Selection */ 
+
+for each initial cluster Ck ∈ C init do 
+
+Sij ← fsim (Ei, Ej ) ∀ i, j ∈ Ck // Compute pairwise similarities within Ck
+
+Mij ← I{Sij ≥ α ∧ Ai = Aj } ∀ i, j ∈ Ck // Compute pairwise matches within Ck
+
+U ← Ck // Set of unmatched customers 
+
+R ← ∅ // Set of representative customers 
+
+while U̸ = ∅ do 
+
+Mi ← { j ∈ U : Mij = 1 } ∀ i ∈ Ck // Find matches from the unmatched customers 
+
+r∗ ← arg max i∈Ck |M i| // Customer with the most matches 
+
+R ← R ∪ { r∗} // Add to representatives 
+
+ˆfcluster (Pi, Ai) ← r∗ ∀ i ∈ M r∗ // Assign matched customers to the representative 
+
+U ← U \ M r∗ // Remove matched customers 
+
+end end return ˆfcluster 
+
+Algorithm 1: Two-Stage Clustering with Greedy Representative Selection Equivalently, defining the match relation i ∼α j ⇐⇒ fsim (Ei, Ej ) ≥ α ∧ Ai = Aj and its α-ball 
+
+Bα(i) = {j : i ∼α j}, every sample must be assigned to a representative whose α-ball covers it. Note ∼α is reflexive and symmetric but not transitive , which is what makes the problem non-trivial. The formulation extends to any feature vector and any similarity/distance function. 
+
+3.2. Two-Stage Algorithm 
+
+Algorithm 1 proceeds in two stages. Stage 1 runs Mini-batch K-Means on {Ei} to produce K initial clusters {Ck}. Stage 2 operates independently within each Ck: it computes the pairwise similarity matrix Sij and match matrix Mij = I{Sij ≥ α ∧ Ai = Aj }, then iteratively selects the point r∗
+
+with the largest number of still-unmatched matches, designates it a representative, and assigns all its matched points to it. The process repeats until every point is covered. Figure 2 (Appendix) illustrates the procedure on a toy example. 
+
+Set-cover view and guarantees. Within each Ck, Stage 2 is exactly the Johnson–Chvátal greedy heuristic for S ET COVER over the candidate family {B α(i) ∩ Ck : i ∈ Ck}. Reflexivity of ∼α ensures a valid cover always exists. We prove in Appendix D that Algorithm 1 satisfies the guardrail (1) exactly, and that the number of selected representatives within each initial cluster obeys 
+
+|R k| ≤ OPT k · (1 + ln |Ck|). Because greedy set-cover prioritizes the largest uncovered set at each step, the resulting cluster-size distribution is heavily right-skewed—an intended feature that enables tail-cluster trimming for further data reduction (Appendix F.1). 
+
+3EFFICIENT CLUSTERING WITH PROVABLE GUARDRAILS FOR LLM I NFERENCE AT SCALE 
+
+Table 1: Within-cluster similarity and runtime at matched cluster count. Min. Sim. is the worst-case sample-to-representative similarity—baselines violate the guardrail ( < α ) for 3–21% of samples, while Algorithm 1 is exact by construction.                                                                                                    
+
+> Shopping Personas AG News Cosmopedia
+> Method Avg. Sim. Min. Sim. Perc. Below Thresh. Time (sec.) Avg. Sim. Min. Sim. Perc. Below Thresh. Time (sec.) Avg. Sim. Min. Sim. Perc. Below Thresh. Time (sec.)
+> Proposed 0.802 0.750 0.0% 2.7 0.413 0.300 0.0% 4.2 0.512 0.400 0.0% 6.8 Proposed w/ Reassign. 0.825 0.750 0.0% 2.7 0.490 0.300 0.0% 4.2 0.588 0.400 0.0% 6.8
+> Mini-batch K-Means 0.819 0.554 6.1% 44 0.553 0.006 5.7% 33 0.619 -0.005 4.3% 91 K-Means 0.828 0.600 2.9% 154 0.561 -0.038 4.9% 136 0.630 0.133 2.9% 296 Agglomerative 0.812 0.542 10.3% 1778 0.543 -0.108 9.6% 2854 0.608 0.007 7.0% 2851 BIRCH 0.799 0.558 14.0% 28 0.536 -0.068 9.2% 878 0.603 -0.001 7.0% 1337 Spectral 0.807 0.445 11.3% 6281 0.505 -0.186 21.2% 1221 0.592 -0.077 13.9% 1804 Gaussian Mixture 0.846 0.618 0.8% 5548 0.562 0.006 4.8% 1898 0.630 0.090 3.0% 4254
+
+Complexity. Stage 1 is O(T1bKd ) time and O(nd ) memory. Stage 2 is O(d P 
+
+> k
+
+n2
+
+> k
+
+) time and 
+
+O(max k n2
+
+> k
+
+) memory when processed one initial cluster at a time. For balanced nk ≈ n/K , total complexity is O(nd + n2d/K ) time and O(nd + n2/K 2) memory—linear in n when K = Θ( n).Appendix E shows the full derivation and comparison. The role of K is a scalability knob: larger K
+
+reduces per-cluster quadratic cost but introduces partition noise that mildly inflates |R| (Table 3). 
+
+Optional reassignment. Greedy selection is order-dependent: a point may be covered early by a representative less similar than one chosen later. A post-hoc reassignment step (Algorithm 2, Appendix) reassigns each point to its most-similar feasible representative, strictly increasing average within-cluster similarity while preserving |R| and the guardrail (1) (Appendix D). The trade-off is a flatter cluster-size distribution, which slightly reduces tail-trimming efficiency (Appendix F.1). 
+
+4. Experiments 
+
+We benchmark on 100K-sample subsets of (i) internal customer shopping personas, (ii) AG News [ 9 ,13 ], and (iii) Cosmopedia [ 4 ]. The 100K size is chosen because several baselines (Agglomerative, Spectral) become intractable beyond this size. Full setup in Appendix G. 
+
+4.1. Within-Cluster Similarity and Runtime 
+
+To compare fairly against baselines that do not accept an α constraint, we fix the number of clusters: we first run our algorithm with α chosen to yield ∼ 50 × data reduction (thresholds 0.75 /0.3/0.4
+
+for the three datasets), then run each baseline with the matching cluster count. Table 1 reports the average and minimum within-cluster similarity, fraction of samples below α, and runtime on a single 
+
+r7i.12xlarge without parallelization. Two observations: (i) every baseline violates the guardrail on a non-trivial fraction of samples (Min. Sim. well below α), while our method holds it exactly; (ii) our method is 10 ×–1000 × faster because the O(n2) similarity computation is restricted to within each initial cluster of size ≈ n/K ,not to the full dataset. Notably, running Mini-batch K-Means alone to produce all final clusters is 
+
+> 10 × slower than our two-stage approach at the same cluster count, since running K-Means with 
+
+K = |R| is dominated by centroid updates across many clusters. 
+
+4EFFICIENT CLUSTERING WITH PROVABLE GUARDRAILS FOR LLM I NFERENCE AT SCALE 
+
+4.2. Cluster-Size Skew and Tail Trimming 
+
+The set-cover greedy selects the largest uncovered set first, producing a heavily right-skewed cluster-size distribution (Figure 3, Appendix F). This is a practical advantage: the top 4% of clusters on the internal data cover 90% of customers, so trimming the tail yields an additional 25 × data reduction at the cost of dropping a small fraction of users (who can be compensated for by oversampling upstream). Baselines, which target balanced clusters, achieve at most ∼ 30% coverage at the same 
+
+4% threshold. The reassignment variant (Section 3.2) partially flattens this distribution, trading tail-trimming efficiency for higher average similarity. 
+
+4.3. Similarity as a Proxy for Recommendation Relevance 
+
+The guardrail (1) is only useful if within-cluster similarity correlates with downstream recommenda-tion relevance. We stratified-sample 7,000 member–representative pairs across 7 similarity buckets (0.2–0.9), generate 15 recommendations per representative, and have an LLM-based Marketing Critic rate each (member, product) pair on a 1–5 relevance scale. The Pearson/Spearman correla-tions between pair similarity and mean relevance are 0.781 /0.797 (p < 0.001 ; scatter in Figure 5, Appendix), empirically validating embedding similarity as a proxy for recommendation relevance. 
+
+5. Production Deployment 
+
+We deployed Algorithm 1 in a June 2025 A/B test of the recommendation pipeline in Figure 1, target-ing 38M customers with α = 0 .77 and exact matching on adult gender, adult count, child presence, child gender, and child age. The threshold α = 0 .77 was chosen via offline validation to balance recommendation relevance against the throughput ceiling imposed by our allocated LLM budget; the attribute-matching constraints reflect product-safety considerations (e.g., age-appropriateness) not captured by embedding similarity alone. Clustering achieves ∼50 × data reduction, shrinking the LLM query-generation step from $114,000/22.8 days (cost/time) to $2,100/0.4 days and the Market-ing Critic step from $1,018,500/485 days to $20,370/9.7 days—an aggregate ∼50-fold reduction in downstream LLM compute and wall-clock time. To validate that clustering preserves recommendation quality at scale, we applied the Marketing Critic to 5,000 representative–member pairs: the product-to-member relevance rate is only 0.7% 
+
+below the product-to-representative rate, confirming that the α-guardrail translates to minimal end-quality loss. This gap is small relative to the ∼50 × compute and latency savings downstream. The A/B test showed statistically significant positive impact on business metrics and enabled subsequent launches built on the same clustering infrastructure. 
+
+6. Conclusion 
+
+We presented a two-stage clustering algorithm that reframes the LLM-inference-scaling problem as greedy set cover over α-balls in embedding space, yielding exact within-cluster similarity and attribute guardrails, a (1 + ln |Ck|) approximation on cluster count, and linear-in-n runtime for 
+
+K = Θ( n). Empirically it is 10 –1000 × faster than standard baselines at matched cluster counts, and in production it enabled a 50-fold downstream computation reduction for a 38M-customer recommender system. Future directions include richer similarity metrics that better predict LLM output agreement, and learned representatives that minimize cluster count under the guardrail.      
+
+> 5EFFICIENT CLUSTERING WITH PROVABLE GUARDRAILS FOR LLM I NFERENCE AT SCALE
+
+Acknowledgements 
+
+The paper focuses on the novel clustering method and its application, while the persona-based recommender system (Section 5) involves many contributors and multi-team collaborations including but not limited to our engineering partners Nicholas Rahardja, Sri Venkata Vivek Dhulipala, Minh Le, and Daniel Di Pasquale. 
+
+References 
+
+[1] Amro Abbas, Kushal Tirumala, Dániel Simig, Surya Ganguli, and Ari S. Morcos. Semdedup: Data-efficient learning at web-scale through semantic deduplication, 2023. URL https: //arxiv.org/abs/2303.09540 .[2] Mohammad Al Hasan, Saeed Salem, and Mohammed J. Zaki. SimClus: an effective algorithm for clustering with a lower bound on similarity. Knowledge and Information Systems , 28(3): 665–685, 2011. doi: 10.1007/s10115-010-0360-6. [3] Javed Aslam, Katya Pelekhov, and Daniela Rus. Static and dynamic information organization with star clusters. In Proceedings of the Seventh International Conference on Information and Knowledge Management (CIKM ’98) , pages 208–217. ACM, 1998. doi: 10.1145/288627. 288659. [4] Loubna Ben Allal, Anton Lozhkov, Guilherme Penedo, Thomas Wolf, and Leandro von Werra. Cosmopedia, February 2024. URL https://huggingface.co/datasets/ HuggingFaceTB/cosmopedia .[5] Rishi Bommasani, Drew A. Hudson, Ehsan Adeli, Russ Altman, Simran Arora, Sydney von Arx, Michael S. Bernstein, Jeannette Bohg, Antoine Bosselut, Emma Brunskill, Erik Brynjolfsson, Shyamal Buch, Dallas Card, Rodrigo Castellon, Niladri Chatterji, Annie Chen, Kathleen Creel, Jared Quincy Davis, Dora Demszky, Chris Donahue, Moussa Doumbouya, Esin Durmus, Stefano Ermon, John Etchemendy, Kawin Ethayarajh, Li Fei-Fei, Chelsea Finn, Trevor Gale, Lauren Gillespie, Karan Goel, Noah Goodman, Shelby Grossman, Neel Guha, Tatsunori Hashimoto, Peter Henderson, John Hewitt, Daniel E. Ho, Jenny Hong, Kyle Hsu, Jing Huang, Thomas Icard, Saahil Jain, Dan Jurafsky, Pratyusha Kalluri, Siddharth Karamcheti, Geoff Keeling, Fereshte Khani, Omar Khattab, Pang Wei Koh, Mark Krass, Ranjay Krishna, Rohith Kuditipudi, Ananya Kumar, Faisal Ladhak, Mina Lee, Tony Lee, Jure Leskovec, Isabelle Levent, Xiang Lisa Li, Xuechen Li, Tengyu Ma, Ali Malik, Christopher D. Manning, Suvir Mirchandani, Eric Mitchell, Zanele Munyikwa, Suraj Nair, Avanika Narayan, Deepak Narayanan, Ben Newman, Allen Nie, Juan Carlos Niebles, Hamed Nilforoshan, Julian Nyarko, Giray Ogut, Laurel Orr, Isabel Papadimitriou, Joon Sung Park, Chris Piech, Eva Portelance, Christopher Potts, Aditi Raghunathan, Rob Reich, Hongyu Ren, Frieda Rong, Yusuf Roohani, Camilo Ruiz, Jack Ryan, Christopher Ré, Dorsa Sadigh, Shiori Sagawa, Keshav Santhanam, Andy Shih, Krishnan Srinivasan, Alex Tamkin, Rohan Taori, Armin W. Thomas, Florian Tramèr, Rose E. Wang, William Wang, Bohan Wu, Jiajun Wu, Yuhuai Wu, Sang Michael Xie, Michihiro Yasunaga, Jiaxuan You, Matei Zaharia, Michael Zhang, Tianyi Zhang, Xikun Zhang, Yuhui Zhang, Lucia Zheng, Kaitlyn Zhou, and Percy Liang. On the opportunities and risks of foundation models, 2022. URL https://arxiv.org/abs/2108.07258 .     
+
+> 6EFFICIENT CLUSTERING WITH PROVABLE GUARDRAILS FOR LLM I NFERENCE AT SCALE
+
+[6] A.Z. Broder. On the resemblance and containment of documents. In Proceedings. Compression and Complexity of SEQUENCES 1997 (Cat. No.97TB100171) , pages 21–29, 1997. doi: 10.1109/SEQUEN.1997.666900. [7] Tom Brown, Benjamin Mann, Nick Ryder, Melanie Subbiah, Jared D Kaplan, Prafulla Dhari-wal, Arvind Neelakantan, Pranav Shyam, Girish Sastry, Amanda Askell, Sandhini Agar-wal, Ariel Herbert-Voss, Gretchen Krueger, Tom Henighan, Rewon Child, Aditya Ramesh, Daniel Ziegler, Jeffrey Wu, Clemens Winter, Chris Hesse, Mark Chen, Eric Sigler, Mateusz Litwin, Scott Gray, Benjamin Chess, Jack Clark, Christopher Berner, Sam McCandlish, Alec Radford, Ilya Sutskever, and Dario Amodei. Language models are few-shot learners. In H. Larochelle, M. Ranzato, R. Hadsell, M.F. Balcan, and H. Lin, editors, Advances in Neu-ral Information Processing Systems , volume 33, pages 1877–1901. Curran Associates, Inc., 2020. URL https://proceedings.neurips.cc/paper_files/paper/2020/ file/1457c0d6bfcb4967418bfb8ac142f64a-Paper.pdf .[8] V. Chvátal. A greedy heuristic for the set-covering problem. Mathematics of Operations Research , 4(3):233–235, 1979. doi: 10.1287/moor.4.3.233. [9] Gianna M. Del Corso, Antonio Gulli, and Francesco Romani. Ranking a stream of news. In 
+
+Proceedings of the 14th International World Wide Web Conference , pages 97–106, Chiba, Japan, 2005. [10] A. P. Dempster, N. M. Laird, and D. B. Rubin. Maximum likelihood from incomplete data via the em algorithm. Journal of the Royal Statistical Society. Series B (Methodological) , 39(1): 1–38, 1977. ISSN 00359246. URL http://www.jstor.org/stable/2984875 .[11] Ege Erdil. Inference economics of language models, 2025. URL https://arxiv.org/ abs/2506.04645 .[12] Chenhao Fang, Xiaohan Li, Zezhong Fan, Jianpeng Xu, Kaushiki Nag, Evren Korpeoglu, Sushant Kumar, and Kannan Achan. Llm-ensemble: Optimal large language model en-semble method for e-commerce product attribute value extraction. In Proceedings of the 47th International ACM SIGIR Conference on Research and Development in Informa-tion Retrieval , SIGIR ’24, pages 2910–2914, New York, NY, USA, 2024. Association for Computing Machinery. ISBN 9798400704314. doi: 10.1145/3626772.3661357. URL 
+
+https://doi.org/10.1145/3626772.3661357 .[13] Antonio Gulli. The anatomy of a news search engine. In Proceedings of the 14th International World Wide Web Conference , pages 880–881, Chiba, Japan, 2005. [14] Christian Herold, Michael Kozielski, Leonid Ekimov, Pavel Petrushkov, Pierre-Yves Vanden-bussche, and Shahram Khadivi. Lilium: ebay’s large language models for e-commerce, 2024. URL https://arxiv.org/abs/2406.12023 .[15] Rob Hyndman, Anne B Koehler, J Keith Ord, and Ralph D Snyder. Forecasting with exponential smoothing: the state space approach . Springer Science & Business Media, 2008. [16] David S. Johnson. Approximation algorithms for combinatorial problems. Journal of Computer and System Sciences , 9(3):256–278, 1974. doi: 10.1016/S0022-0000(74)80044-9.      
+
+> 7EFFICIENT CLUSTERING WITH PROVABLE GUARDRAILS FOR LLM I NFERENCE AT SCALE
+
+[17] Takeshi Kojima, Shixiang Shane Gu, Machel Reid, Yutaka Matsuo, and Yusuke Iwasawa. Large language models are zero-shot reasoners. In Proceedings of the 36th International Conference on Neural Information Processing Systems , NIPS ’22, Red Hook, NY, USA, 2022. Curran Associates Inc. ISBN 9781713871088. [18] Woosuk Kwon, Zhuohan Li, Siyuan Zhuang, Ying Sheng, Lianmin Zheng, Cody Hao Yu, Joseph Gonzalez, Hao Zhang, and Ion Stoica. Efficient memory management for large language model serving with pagedattention. In Proceedings of the 29th Symposium on Operating Systems Principles , SOSP ’23, pages 611–626, New York, NY, USA, 2023. Association for Computing Machinery. ISBN 9798400702297. doi: 10.1145/3600006.3613165. URL 
+
+https://doi.org/10.1145/3600006.3613165 .[19] Yangning Li, Shirong Ma, Xiaobin Wang, Shen Huang, Chengyue Jiang, Hai-Tao Zheng, Pengjun Xie, Fei Huang, and Yong Jiang. Ecomgpt: instruction-tuning large language models with chain-of-task tasks for e-commerce. In Proceedings of the Thirty-Eighth AAAI Conference on Artificial Intelligence and Thirty-Sixth Conference on Innovative Applications of Artificial Intelligence and Fourteenth Symposium on Educational Advances in Artificial Intelligence ,AAAI’24/IAAI’24/EAAI’24. AAAI Press, 2024. ISBN 978-1-57735-887-9. doi: 10.1609/aaai. v38i17.29820. URL https://doi.org/10.1609/aaai.v38i17.29820 .[20] Yueying Li, Jim Dai, and Tianyi Peng. Throughput-optimal scheduling algorithms for llm inference and ai agents, 2025. URL https://arxiv.org/abs/2504.07347 .[21] Chen Luo, Dimitri Papadimitriou, Hariharan Muralidharan, Dhineshkumar Ramasubbu, Aakash Kolekar, Wenju Xu, Cong Xu, Anirudh Srinivasan, Mukesh Jain, and Qi He. Language model alignment for conversational shopping at amazon. In Proceedings of the 48th International ACM SIGIR Conference on Research and Development in Information Retrieval , SIGIR ’25, pages 4314–4318, New York, NY, USA, 2025. Association for Computing Machinery. ISBN 9798400715921. doi: 10.1145/3726302.3731955. URL https://doi.org/10.1145/ 3726302.3731955 .[22] J MacQueen. Multivariate observations. In Proceedings of the 5th Berkeley Symposium on Mathematical Statistics and Probability , volume 1, pages 281–297, 1967. [23] F. Pedregosa, G. Varoquaux, A. Gramfort, V. Michel, B. Thirion, O. Grisel, M. Blondel, P. Prettenhofer, R. Weiss, V. Dubourg, J. Vanderplas, A. Passos, D. Cournapeau, M. Brucher, M. Perrot, and E. Duchesnay. Scikit-learn: Machine learning in Python. Journal of Machine Learning Research , 12:2825–2830, 2011. [24] Wenjun Peng, Guiyang Li, Yue Jiang, Zilong Wang, Dan Ou, Xiaoyi Zeng, Derong Xu, Tong Xu, and Enhong Chen. Large language model based long-tail query rewriting in taobao search. In Companion Proceedings of the ACM Web Conference 2024 , WWW ’24, pages 20–28, New York, NY, USA, 2024. Association for Computing Machinery. ISBN 9798400701726. doi: 10.1145/3589335.3648298. URL https://doi.org/10.1145/3589335.3648298 .[25] Reiner Pope, Sholto Douglas, Aakanksha Chowdhery, Jacob Devlin, James Bradbury, Anselm Levskaya, Jonathan Heek, Kefan Xiao, Shivani Agrawal, and Jeff Dean. Efficiently scaling trans-former inference. ArXiv , abs/2211.05102, 2022. URL https://api.semanticscholar. org/CorpusID:253420623 .     
+
+> 8EFFICIENT CLUSTERING WITH PROVABLE GUARDRAILS FOR LLM I NFERENCE AT SCALE
+
+[26] Nils Reimers and Iryna Gurevych. Sentence-bert: Sentence embeddings using siamese bert-networks. In Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing . Association for Computational Linguistics, 11 2019. URL https://arxiv. org/abs/1908.10084 .[27] Siddharth Samsi, Dan Zhao, Joseph McDonald, Baolin Li, Adam Michaleas, Michael Jones, William Bergeron, Jeremy Kepner, Devesh Tiwari, and Vijay Gadepally. From words to watts: Benchmarking the energy costs of large language model inference. In 2023 IEEE High Performance Extreme Computing Conference (HPEC) , pages 1–9. IEEE, 2023. [28] D. Sculley. Web-scale k-means clustering. In Proceedings of the 19th International Conference on World Wide Web , WWW ’10, pages 1177–1178, New York, NY, USA, 2010. Association for Computing Machinery. ISBN 9781605587998. doi: 10.1145/1772690.1772862. URL 
+
+https://doi.org/10.1145/1772690.1772862 .[29] Matthias Seeger, David Salinas, and Valentin Flunkert. Bayesian intermittent demand fore-casting for large inventories. In Proceedings of the 30th International Conference on Neural Information Processing Systems , pages 4653–4661, 2016. [30] Jianbo Shi and Jitendra Malik. Normalized cuts and image segmentation. IEEE Transactions on Pattern Analysis and Machine Intelligence , 22(8):888–905, 2000. [31] Ulrike von Luxburg. A tutorial on spectral clustering. Statistics and Computing , 17(4):395–416, 2007. [32] Joe H. Ward. Hierarchical grouping to optimize an objective function. Journal of the Ameri-can Statistical Association , 58:236–244, 1963. URL https://api.semanticscholar. org/CorpusID:32863022 .[33] Shunyu Yao, Howard Chen, John Yang, and Karthik Narasimhan. Webshop: Towards scalable real-world web interaction with grounded language agents. In S. Koyejo, S. Mo-hamed, A. Agarwal, D. Belgrave, K. Cho, and A. Oh, editors, Advances in Neural Infor-mation Processing Systems , volume 35, pages 20744–20757. Curran Associates, Inc., 2022. URL https://proceedings.neurips.cc/paper_files/paper/2022/file/ 82ad13ec01f9fe44c01cb91814fd7b8c-Paper-Conference.pdf .[34] Tian Zhang, Raghu Ramakrishnan, and Miron Livny. Birch: an efficient data clustering method for very large databases. In Proceedings of the 1996 ACM SIGMOD international conference on Management of data , pages 103–114. ACM, 1996. doi: 10.1145/233269.233324. [35] Kan Zhu, Yufei Gao, Yilong Zhao, Liangyu Zhao, Gefei Zuo, Yile Gu, Dedong Xie, Tian Tang, Qinyu Xu, Zihao Ye, Keisuke Kamahori, Chien-Yu Lin, Ziren Wang, Stephanie Wang, Arvind Krishnamurthy, and Baris Kasikci. Nanoflow: Towards optimal large language model serving throughput, 2025. URL https://arxiv.org/abs/2408.12757 .
+
+Appendix A. Design Considerations and Technical Details 
+
+By design, the algorithm proposed in Section 3.2 satisfies all the desired requirements listed in Section 1: Steps 4-5 ensure that any customer and their matched representative customer will have a      
+
+> 9EFFICIENT CLUSTERING WITH PROVABLE GUARDRAILS FOR LLM I NFERENCE AT SCALE
+
+persona similarity above the user-specified threshold and share the same user-specified attributes. The initial clustering allows the more expensive pairwise similarity computation to be performed within an initial cluster instead of for all the data. The embedding model, the initial clustering with Mini-batch K-Means, and the representative customer selection are all computationally cheap, especially compared to LLMs. Hence the clustering algorithm can effectively scale to large datasets (38 million samples in our recommendation use case described in Section 5). Section 4.1 shows the speed advantage of the proposed algorithm against various benchmark methods. Section F.3 shows that even with a relatively high minimal similarity requirement of 0.75, we can still achieve 186-fold reduction in data size. We perform clustering on the embeddings of the customer personas to capture their semantic similarity, a better approach than near-deduplication approaches based on lexical similarity like MinHash [ 6 ], as lexical similarity cannot handle paraphrases and does not always align with semantic similarity. SentenceTransformer [ 26 ] provides a variety of embedding models and their performance and latency benchmarks to help with model selection. Our first selection criterion is for the output embeddings to support both Euclidean distance (used during initial clustering with Mini-batch K-means) and Cosine similarity (used during representative customer selection). The next criterion is for the embedding model to perform well across multiple benchmark datasets while having a reasonable latency. Based on these criteria, we select "all-MiniLM-L6-v2" as the embedding model for the recommendation use case, but other embedding models that satisfy these criteria can be used as well. The initial clustering need not be precise, since the subsequent representative selection will further partition it. We thus choose Mini-batch K-Means, which is significantly faster and more memory-efficient than standard K-Means while achieving similar results [28]. The further partition step also makes our algorithm robust to its hyperparameters (Appendix F.4). The number of initial clusters K, however, controls a meaningful trade-off: increasing K reduces Stage 2 time linearly and peak memory quadratically (Appendix E), but also slightly reduces data-reduction efficiency by potentially separating similar customers into different initial clusters. On 100K shopping personas, varying K from 10 to 250 changes the final cluster count by only ∼50% while keeping minimal within-cluster similarity at the user-specified threshold (Table 3). In practice we recommend the smallest K that latency and memory budgets allow. 
+
+Appendix B. Clustering Algorithm Illustration 
+
+See Figure 2 for an illustration of the proposed clustering algorithm. 
+
+Appendix C. Pseudo-Code of the Reassignment Step 
+
+Refer to Algorithm 2 for the optional reassignment step that improves average within-cluster similarity while preserving the minimal similarity and attribute matching guardrails. 
+
+Appendix D. Formal Guarantees of the Proposed Algorithm 
+
+In this section we prove that both Algorithm 1 (the base two-stage algorithm) and Algorithm 2 (the optional reassignment variant) satisfy the minimal similarity and attribute matching requirements stated in Section 1 (Requirements 1 and 2). We formalize the argument through the lens of set cover ,which naturally captures the representative-selection step. 
+
+> 10
+
+EFFICIENT CLUSTERING WITH PROVABLE GUARDRAILS FOR LLM I NFERENCE AT SCALE 
+
+Figure 2: A. Visualization of the embeddings of six sentences projected to a 2D plot. B. The six embeddings are clustered into two initial clusters by Mini-batch K-means. C. Cosine similarity matrix of initial cluster 1 (left) and after filtering with a similarity threshold of 0.7 (right). “The customer likes team sports” has the highest number of matches and is selected as the representative. D. The final clusters. 
+
+Input : Initial cluster Ck, representative set R ⊆ Ck, similarity matrix {Sij }i,j ∈Ck , match matrix 
+
+{Mij }i,j ∈Ck , cluster assignment ˆfcluster from Algorithm 1. 
+
+Output : Updated cluster assignment ˆfcluster with improved average within-cluster similarity; minimal similarity and attribute matching guarantees preserved. 
+
+for each customer i ∈ Ck do 
+
+r∗ ← arg max r∈R :Mir =1 Sir // Find the best-matching representative 
+
+if r∗ exists then 
+
+ˆfcluster (Pi, Ai) ← r∗ // Reassign customer to the most similar representative 
+
+end end return ˆfcluster 
+
+Algorithm 2: Reassignment Step (optionally applied within Algorithm 1, Stage 2, for each initial cluster) 
+
+11 EFFICIENT CLUSTERING WITH PROVABLE GUARDRAILS FOR LLM I NFERENCE AT SCALE 
+
+D.1. Preliminaries and Notation 
+
+Let D = {(Pi, A i)}ni=1 be the input dataset, with embeddings Ei = femb (Pi). For a user-specified similarity threshold α ∈ [−1, 1] and attribute space, define the match relation ∼α on D by 
+
+i ∼α j ⇐⇒ fsim (Ei, E j ) ≥ α and Ai = Aj .
+
+For any i ∈ { 1, . . . , n }, let the α-ball (or admissible set ) of i be 
+
+Bα(i) = { j ∈ { 1, . . . , n } : i ∼α j }.
+
+Note that ∼α is reflexive (since fsim (Ei, E i) = 1 ≥ α for any reasonable α ≤ 1, and trivially 
+
+Ai = Ai) and symmetric (since fsim is symmetric and equality of attributes is symmetric), so 
+
+i ∈ B α(i) and j ∈ B α(i) ⇐⇒ i ∈ B α(j). It is not transitive in general, which is why clustering under this relation is non-trivial. A cluster assignment ˆfcluster : D → { 1, . . . , n } with representative set R ⊆ { 1, . . . , n } is said to satisfy the guardrail property if 
+
+ˆfcluster (Pi, A i) = r =⇒ r ∈ R and i ∈ B α(r). (2) Equivalently, (2) says that every customer is assigned to a representative whose α-ball covers them. This is precisely the condition required by Requirements 1 and 2. 
+
+D.2. Set-Cover Interpretation 
+
+Within any initial cluster Ck ⊆ { 1, . . . , n } produced in Stage 1, consider the collection of candidate cover sets 
+
+Fk =  Bα(i) ∩ Ck : i ∈ Ck .
+
+Stage 2 of Algorithm 1 is exactly the classical greedy algorithm for S ET COVER applied to the universe Ck with candidate sets Fk: at each iteration it picks the set covering the largest number of still-uncovered elements, removes those elements, and repeats until the universe is exhausted. Because ∼α is reflexive, every element i ∈ Ck is contained in at least one candidate set (namely 
+
+Bα(i) ∩ Ck), so a valid cover always exists and the greedy procedure terminates. 
+
+D.3. Correctness of Algorithm 1 Theorem 1 (Guardrail guarantee for Algorithm 1) For any input D, any embedding function 
+
+femb , any symmetric similarity function fsim with fsim (x, x ) ≥ α, any threshold α, and any number of initial clusters K ≥ 1, the assignment ˆfcluster returned by Algorithm 1 satisfies the guardrail property 
+
+(2) . In particular, for every i ∈ { 1, . . . , n }, letting r = ˆfcluster (Pi, A i),
+
+fsim 
+
+ femb (Pi), f emb (Pr) ≥ α and Ai = Ar.
+
+Proof Fix an initial cluster Ck produced in Stage 1, and consider Stage 2 applied to Ck. Let U(t)
+
+denote the set of unmatched customers at the start of iteration t, with U(1) = Ck.At iteration t, the algorithm computes, for each i ∈ Ck,
+
+M(t) 
+
+> i
+
+= { j ∈ U (t) : Mij = 1 } = Bα(i) ∩ U (t),
+
+12 EFFICIENT CLUSTERING WITH PROVABLE GUARDRAILS FOR LLM I NFERENCE AT SCALE 
+
+where the second equality follows from the definition Mij = 1{Sij ≥ α and Ai = Aj } in line 7 of Algorithm 1. It then selects r∗(t) = arg max i∈Ck |M (t) 
+
+> i
+
+| and assigns every j ∈ M (t) 
+
+> r∗(t)
+
+to representative r∗(t) (line 14). By construction, 
+
+j ∈ M (t) 
+
+> r∗(t)
+
+=⇒ j ∈ B α(r∗(t)),
+
+so fsim (Ej , E r∗(t) ) ≥ α and Aj = Ar∗(t) . The set M(t) 
+
+> r∗(t)
+
+is then removed from U(t+1) (line 15), so no customer is ever reassigned within Stage 2, and every customer assigned in iteration t satisfies (2) .Since ∼α is reflexive, r∗(t) ∈ M (t) 
+
+> r∗(t)
+
+, so at least one element is removed per iteration, guarantee-ing termination in at most |Ck| iterations with U(T +1) = ∅. Hence every i ∈ Ck is assigned to some representative r ∈ Ck with i ∈ B α(r). Because Stage 1 partitions {1, . . . , n } into {Ck}Kk=1 and Stage 2 is applied independently within each Ck, the guarantee extends to every i ∈ { 1, . . . , n }.
+
+Corollary 2 (Cover interpretation) Let Rk ⊆ Ck be the representatives selected by Stage 2 within initial cluster Ck. Then {B α(r) ∩ Ck}r∈R k is a valid cover of Ck, and R = SKk=1 Rk induces the final cluster assignment. The final number of clusters is exactly |R| = PKk=1 |R k|.
+
+Remark 3 (Role of the initial clustering) Theorem 1 holds for any partition {Ck}Kk=1 used in Stage 1, including the trivial partition K = 1 . The choice of initial clustering affects only the number of final clusters and the runtime/memory (Appendix B in the main paper), not the correctness of the guardrails. This is consistent with the empirical robustness reported in Table 3. 
+
+D.4. Correctness of Algorithm 2 (Reassignment Variant) Theorem 4 (Guardrail guarantee for Algorithm 2) Under the assumptions of Theorem 1, the assignment ˆfcluster returned after applying Algorithm 2 to the output of Algorithm 1 also satisfies the guardrail property (2) . Moreover, for every customer i, the post-reassignment similarity is at least as large as the original: 
+
+fsim 
+
+
+
+Ei, E ˆf new cluster (Pi,A i)
+
+
+
+≥ fsim 
+
+
+
+Ei, E ˆf old cluster (Pi,A i)
+
+
+
+.
+
+where ˆf old  
+
+> cluster
+
+and ˆf new  
+
+> cluster
+
+denote the assignments before and after reassignment, respectively. 
+
+Proof Fix an initial cluster Ck and let Rk ⊆ Ck be the representatives produced by Algorithm 1. For each i ∈ Ck, Algorithm 2 (line 2) defines 
+
+r∗ = argmax r∈R k : Mir =1 Sir 
+
+= argmax r∈R k ∩ B α(i)fsim (Ei, E r).
+
+The reassignment is performed only if the constraint set Rk ∩ B α(i) is nonempty (line 3), in which case r∗ ∈ B α(i) by definition, so the guardrail property (2) is preserved. If Rk ∩ B α(i) is empty, the assignment is left unchanged; by Theorem 1 the original assignment already satisfied the guardrail, so it still does. However, by Theorem 1 the original representative rold = ˆf old 
+
+> cluster
+
+(Pi, A i) belongs to Rk and satisfies i ∈ B α(rold ), equivalently rold ∈ B α(i) by symmetry of ∼α. Hence Rk ∩ B α(i) is always 
+
+13 EFFICIENT CLUSTERING WITH PROVABLE GUARDRAILS FOR LLM I NFERENCE AT SCALE 
+
+nonempty, and the reassignment always executes. Moreover, since rold is a feasible candidate in the 
+
+arg max ,
+
+fsim (Ei, E r∗ ) ≥ fsim (Ei, E rold ),
+
+establishing the monotonicity claim. 
+
+Remark 5 (Representative set is preserved) Algorithm 2 does not modify Rk; it only redistributes the non-representative customers within Ck among the existing representatives. Therefore the final number of clusters |R| is identical for both variants, while the within-cluster similarities can only weakly increase. This explains the empirical observation in Table 1 that the “Proposed w/ Reassign.” variant achieves higher average similarity at the same minimal similarity α and the same number of clusters as “Proposed Clustering”. 
+
+Remark 6 (Trade-off with tail-cluster trimming) While reassignment preserves the guardrail and improves average similarity, it redistributes mass from the largest (earliest-selected) clusters to smaller ones, flattening the cluster-size distribution. Tail-cluster trimming (Section 4.2) therefore covers fewer customers per retained cluster under Algorithm 2, consistent with Figures 3 and 4. 
+
+D.5. Relation to the Minimum Set Cover Problem 
+
+The greedy step in Stage 2 is the classical Johnson–Chvátal greedy heuristic for S ET COVER . Let 
+
+OPT k denote the minimum number of α-balls needed to cover Ck. Then the greedy procedure yields 
+
+|R k| ≤ OPT k ·  1 + ln |Ck|,
+
+so the total number of final clusters satisfies 
+
+|R| =
+
+> K
+
+X
+
+> k=1
+
+|R k| ≤  1 + ln max  
+
+> k
+
+|Ck| KX
+
+> k=1
+
+OPT k.
+
+This provides a formal ceiling on the data reduction loss incurred by the greedy representative selection, relative to the (NP-hard) optimum cover within each initial cluster. We emphasize that this bound concerns data-reduction efficiency, not correctness: the guardrail property (2) holds exactly, not approximately. 
+
+Remark 7 (Partition-constrained vs. global optimum) The bound above compares |R| to the op-timum R∗ 
+
+> partition
+
+subject to the Stage 1 partition {Ck}. The unconstrained optimum R∗ 
+
+> global
+
+(ignoring partition boundaries) can be strictly smaller, since two similar customers split across different Ck
+
+cannot share a representative in our algorithm. The gap |R ∗
+
+> partition
+
+| − |R ∗
+
+> global
+
+| is controlled by the quality of the initial clustering; in our setting Mini-batch K-Means is empirically sufficient to keep this gap small (Table 3 in Appendix F.4). 
+
+Appendix E. Computational Complexity Analysis 
+
+We analyze the time and memory complexity of Algorithm 1 and Algorithm 2 as a function of the dataset size n, the embedding dimension d, the number of initial clusters K, and the attribute-vector dimension a. Let nk = |Ck| denote the size of the k-th initial cluster, with PKk=1 nk = n.
+
+> 14
+
+EFFICIENT CLUSTERING WITH PROVABLE GUARDRAILS FOR LLM I NFERENCE AT SCALE 
+
+E.1. Stage 1: Initial Clustering with Mini-Batch K-Means 
+
+Let b be the Mini-batch K-Means batch size and T1 the number of iterations. A standard Mini-batch K-Means update evaluates b points against K centroids in Rd and performs b centroid updates per iteration, yielding 
+
+TStage 1 = O T1 b K d , MStage 1 = O (n + K) d,
+
+where the memory term accounts for storing the n embeddings and K centroids. Since b and T1 are user-specified constants independent of n, Stage 1 is effectively linear in n: O(n d ) memory and (amortized) O(K d ) time per mini-batch update. This is consistent with Sculley [28]. 
+
+E.2. Stage 2: Pairwise Similarity, Match Matrix, and Greedy Selection 
+
+Stage 2 is executed independently within each initial cluster Ck. Within Ck we perform the following substeps. 
+
+(a) Pairwise similarity matrix. Computing Sij = fsim (Ei, E j ) for all i, j ∈ Ck costs O(n2 
+
+> k
+
+d)
+
+time and O(n2
+
+> k
+
+) memory. 
+
+(b) Attribute match matrix. Computing Mij = 1{Sij ≥ α and Ai = Aj } costs O(n2 
+
+> k
+
+a) time and O(n2
+
+> k
+
+) memory (assuming a-dimensional categorical attributes compared in O(a)). In practice one can precompute attribute group IDs in O(nk a) and reduce the pairwise attribute check to an 
+
+O(1) equality test, giving O(n2
+
+> k
+
+) total. 
+
+(c) Iterative greedy representative selection. Let Tk be the number of greedy iterations within 
+
+Ck (i.e., Tk = |R k|). In each iteration the algorithm must find r∗ = arg max i∈Ck |M (t) 
+
+> i
+
+|, where 
+
+M(t) 
+
+> i
+
+= {j ∈ U (t) : Mij = 1 }. A straightforward implementation maintains a row-sum vector of M
+
+restricted to U(t):• Initialization of row sums: O(n2
+
+> k
+
+).• Per iteration: select r∗ in O(nk), then update row sums by subtracting the columns of M indexed by M(t) 
+
+> r∗
+
+, costing O(|M (t) 
+
+> r∗
+
+| · nk).Since the sets M(t) 
+
+> r∗(t)
+
+partition Ck, P 
+
+> t
+
+|M (t) 
+
+> r∗(t)
+
+| = nk, and the total cost of all updates across all Tk
+
+iterations is O(n2
+
+> k
+
+). Hence the greedy loop runs in O(n2
+
+> k
+
+) time. 
+
+Per-cluster Stage 2 complexity. Combining (a)–(c): 
+
+TStage 2 (Ck) = O n2 
+
+> k
+
+d + n2
+
+> k
+
+ = O(n2 
+
+> k
+
+d),MStage 2 (Ck) = O(n2
+
+> k
+
+).
+
+Aggregate Stage 2 complexity. Summing over initial clusters, 
+
+TStage 2 = O d
+
+> K
+
+X
+
+> k=1
+
+n2
+
+> k
+
+!
+
+, MStage 2 = O
+
+
+
+max  
+
+> k
+
+n2
+
+> k
+
+
+
+,
+
+assuming Stage 2 is processed one initial cluster at a time (so that only one pairwise matrix is held in memory). If initial clusters are roughly balanced with nk ≈ n/K ,
+
+TStage 2 = O
+
+ n2dK
+
+
+
+, MStage 2 = O
+
+ n2
+
+> K2
+
+
+
+.
+
+15 EFFICIENT CLUSTERING WITH PROVABLE GUARDRAILS FOR LLM I NFERENCE AT SCALE 
+
+This formalizes the role of K: increasing K decreases Stage 2 time linearly and peak memory 
+
+quadratically , at the cost of slightly reduced data-reduction efficiency (Appendix F.4, Table 3). 
+
+E.3. Stage 2b: Reassignment Step (Algorithm 2) 
+
+Within initial cluster Ck with representatives Rk, the reassignment loop (Algorithm 2) examines, for each i ∈ Ck, only the columns of S indexed by Rk. The cost is O(nk |R k|) per cluster and 
+
+TReassign = O
+
+> K
+
+X
+
+> k=1
+
+nk |R k|
+
+!
+
+≤ O
+
+> K
+
+X
+
+> k=1
+
+n2
+
+> k
+
+!
+
+,
+
+which is dominated by the pairwise similarity computation and does not increase the asymptotic complexity. No additional pairwise storage is needed because S and M have already been material-ized in Stage 2. This matches the empirical observation that the reassignment variant has essentially identical runtime to the base algorithm (Table 1, “Time” column). 
+
+E.4. Overall Complexity 
+
+Combining Stage 1 and Stage 2, 
+
+Ttotal = O T1 b K d + d
+
+> K
+
+X
+
+> k=1
+
+n2
+
+> k
+
+!
+
+,Mtotal = O
+
+
+
+n d + max  
+
+> k
+
+n2
+
+> k
+
+
+
+.
+
+For roughly balanced initial clusters with nk ≈ n/K ,
+
+Ttotal = O
+
+
+
+nd + n2dK
+
+
+
+, Mtotal = O
+
+
+
+nd + n2
+
+> K2
+
+
+
+.
+
+In the regime K = Θ( n) (i.e., nk = O(1) ), Stage 2 becomes O(n d ), matching Stage 1, and the overall algorithm is linear in n.
+
+E.5. Comparison with Baselines 
+
+For reference, the baseline methods compared in Section 4.1 have the following standard complexities on n points in Rd:• K-Means (Lloyd): O(nKdT ) time, O(nd ) memory. • Mini-batch K-Means : O(bKdT ) time, O(nd ) memory. • Agglomerative (Ward) : O(n2d) time, O(n2) memory (storing the full distance matrix or heap). • BIRCH : O(nd ) amortized time, but with large constants. • Spectral Clustering : O(n3) time in the dense case, with O(n2) memory for the affinity matrix. • Gaussian Mixture (EM) : O(nKd 2T ) time, O(nd + Kd 2) memory. None of these baselines admit a user-specified minimal within-cluster similarity constraint, and the 
+
+O(n2) memory requirement of Agglomerative and Spectral clustering is prohibitive at the n = 38 Mscale (as noted in Section 4: ∼ 90 TB for n = 5 M). Algorithm 1 circumvents this by restricting the quadratic computation to within each initial cluster, yielding O(max k n2
+
+> k
+
+) ≪ O(n2) memory for any 
+
+K ≫ 1. This is the underlying reason for the 10 ×–1000 × runtime advantage observed in Table 1. 
+
+> 16
+
+EFFICIENT CLUSTERING WITH PROVABLE GUARDRAILS FOR LLM I NFERENCE AT SCALE 0% 2% 4% 6% 8% 10% 12% 14%        
+
+> Percentage of clusters sorted by size
+> 0%
+> 20%
+> 40%
+> 60%
+> 80%
+> 100%
+> Percentage of customers covered
+> Shopping Personas
+> 0% 2% 4% 6% 8% 10% 12% 14%
+> Percentage of clusters sorted by size
+> 0%
+> 20%
+> 40%
+> 60%
+> 80%
+> Percentage of customers covered
+> AG News
+> Proposed Clustering
+> Proposed w/ Reassignment
+> Mini-batch K-means
+> K-means
+> Agglomerative Clustering
+> BIRCH
+> Spectral Clustering
+> Gaussian Mixture
+
+Figure 3: Sample coverage by sorted clusters. 
+
+Appendix F. Additional Experiment Results 
+
+F.1. Cluster Size Distributions 
+
+As detailed in Section 3, the iterative greedy selection of representative samples in the proposed algorithm by design leads to highly skewed cluster size distribution, with practical advantages: We can remove a large percentage of tail clusters at the cost of removing a small percentage of samples, improving data size reduction; in the case of personalized recommendation, if quality assurance is expensive, we can focus on the top clusters by size. We examine how many overall samples the top clusters by size can cover for different clustering methods in Figure 3 and Figure 4 based on the experiment output from Section 4.1. We see that as the percentage of top clusters increases, the proposed clustering algorithm can cover significantly more samples than other clustering methods. The practical implication, for example, is that we can keep only 4% of clusters to cover 90% of customers when generating personalized recommendations for a further 25-fold reduction in downstream computation cost and latency. The customer removal can be compensated for by oversampling customers in the beginning. 0% 2% 4% 6% 8% 10% 12% 14% 
+
+> Percentage of clusters sorted by size
+> 0%
+> 20%
+> 40%
+> 60%
+> 80%
+> Percentage of customers covered
+> Proposed Clustering
+> Proposed w/ Reassignment
+> Mini-batch K-means
+> K-means
+> Agglomerative Clustering
+> BIRCH
+> Spectral Clustering
+> Gaussian Mixture
+
+Figure 4: Sample coverage by sorted clusters on Cosmopedia. 
+
+17 EFFICIENT CLUSTERING WITH PROVABLE GUARDRAILS FOR LLM I NFERENCE AT SCALE 
+
+F.2. Relevance Rating v.s. Similarity Figure 
+
+We show the scatterplot of relevance rating vs the member-representative similarity in Figure 5, empirically validating using the minimal within-cluster similarity as quality guardrails of product recommendations. 
+
+Figure 5: Recommendation relevance rating by member-representative similarity. 
+
+F.3. Impact of Minimal Similarity and Household Attributes 
+
+There is a trade-off between within-cluster similarity and the number of clusters. In the case of personalized recommendations, the higher the similarity, the more likely we recommend the relevant products to all customers in a cluster, at the cost of increasing the number of clusters and thus downstream computations. Similarly, the number of clusters will increase if we require matching household attributes in addition to the persona similarity, such as adult gender, adult count, child presence, child gender, and child age. These household attributes are important for personalized recommendations and not always captured in the customer shopping personas. We show how the number of clusters is affected by the minimal similarity and matching attributes required between each sample and the cluster representative in Table 2 on randomly selected 5 million customers of the 38 million customer dataset. 
+
+F.4. Impact of Hyperparameters and Robustness 
+
+We perform the proposed clustering with reassignment step on the 100K Shopping Personas for different hyperparameters of Mini-batch K-Means used for the initial clustering before representative selection. Because the greedy selection and optional reassignment in the second stage help further partition the initial clusters based on desired safety/quality constraints, the proposed clustering      
+
+> 18 EFFICIENT CLUSTERING WITH PROVABLE GUARDRAILS FOR LLM I NFERENCE AT SCALE
+
+Table 2: Clustering performance metrics with different matching attributes and similarity thresholds on 5 million customers. Matching Attributes Required Minimal Similarity Required Number of Clusters Average Similarity Fraction of Data Retained Data Reduction Fold None 0.65 2344 0.794 0.05% 2133 ×                                            
+
+> 0.7 5012 0.812 0.1% 998 ×
+> 0.75 26868 0.824 0.5% 186 ×
+> 0.8 230262 0.840 4.6% 22 ×
+> 0.85 1694033 0.904 33.9% 3×
+> 0.9 4695169 0.994 93.9% 1×
+> adult gender, adult count, child presence, child gender, child age 0.65 44285 0.792 0.9% 113 ×
+> 0.7 49804 0.809 1.0% 100 ×
+> 0.75 97298 0.824 1.9% 51 ×
+> 0.8 435727 0.846 8.7% 11 ×
+> 0.85 2146887 0.916 42.9% 2×
+> 0.9 4787855 0.996 95.8% 1×
+
+method is robust to the hyperparameters of Mini-batch K-Means or even the choice of the clustering method used in the first stage (Table 3). There are two main tradeoffs in our clustering application. The first main tradeoff is between cluster quality and data reduction fold, which impacts the recommendation quality and downstream computation savings. This tradeoff is controlled by the user specified minimal similarity threshold and matching attributes shown in Table 2. The second main tradeoff is between scalability (in terms of latency and memory usage) and data reduction fold. This tradeoff is controlled by the initial number of clusters, K. Recall that in the second stage of the proposed clustering we compute pairwise embedding similarity within each initial cluster for the greedy representative selection. This pairwise computation is O(n2) w.r.t. sample size n, in this case the size of each initial cluster. Thus as K increases, the latency and memory requirement will both decrease, increasing scalability. In exchange, the initial clustering also introduces noise so that samples that pass the final cluster criteria might end up separated during initial clustering, reducing the efficiency of data size reduction, which worsens as K increases (Table 3). In practice we recommend choosing a K as small as latency and memory requirements allow to maximize data reduction. 
+
+Appendix G. Experimental Setup Details 
+
+In the experiment on within-cluster similarities from Section 4.1, we specify the minimal similarity thresholds (0.75 on internal shopping personas, 0.3 on AG News, and 0.4 on Cosmopedia) to obtain 
+
+∼50 fold reduction in data size based on our target use case in personalized recommendation and for making results across 3 datasets more comparable. The conclusions are consistent for other values of minimal similarity thresholds based on further experiments. We set the number of initial clusters to be 0.04% of the sample size. Increasing this ratio will reduce the memory requirement of pair-wise similarity computation within each initial cluster at the potential cost of increasing the number of final clusters.      
+
+> 19 EFFICIENT CLUSTERING WITH PROVABLE GUARDRAILS FOR LLM I NFERENCE AT SCALE
+
+Table 3: Robustness analysis of the proposed clustering algorithm with reassignment on internal Customer Shopping Personas across different Mini-Batch K-Means (MBKM) hyperparam-eters: batch size, init size, and number of initial clusters. We report average within-cluster similarity (Avg. Sim.), minimal within-cluster similarity (Min. Sim.), number of final clusters (# Clusters), data reduction fold (Reduc. Fold), Stage 1 time (MBKM), and Stage 2 time (Representative Selection and Reassignment) in seconds. MBKM Batch Size MBKM Init Size Num Initial Clusters ( K)Avg. Sim. Min. Sim. # Final Clusters Reduc. Fold Stage 1 Time (sec.) Stage 2 Time (sec.) 1024 1024 10 0.826 0.750 2055 48 × 0.12 12.97 1024 1024 50 0.825 0.750 2539 39 × 0.22 1.48 1024 1024 250 0.824 0.750 2920 34 × 0.46 1.02 1024 10240 10 0.825 0.750 2029 49 × 0.18 14.59 1024 10240 50 0.825 0.750 2575 38 × 0.46 1.41 1024 10240 250 0.824 0.750 3042 32 × 1.57 0.90 10240 1024 10 0.826 0.750 2034 49 × 0.29 13.54 10240 1024 50 0.825 0.750 2579 38 × 0.29 1.44 10240 1024 250 0.824 0.750 3054 32 × 0.54 0.89 10240 10240 10 0.826 0.750 2048 48 × 0.21 14.89 10240 10240 50 0.825 0.750 2602 38 × 0.58 1.46 10240 10240 250 0.823 0.750 3104 32 × 1.69 0.86 We use the default hyperparameters of the clustering methods benchmarked against as imple-mented in Scikit-learn [ 23 ] 1.7.2, except for Spectral Clustering whose hyperparameters are slightly adjusted for memory efficiency. The number of clusters is set to match the final number of clusters produced by the proposed clustering algorithm on each dataset to achieve the same data size reduction. Other key hyperparameters are as follows: 1. Mini-batch K-Means : ‘max_iter’: 100, ‘batch_size’: 10240, ‘init_size’: 30720, ‘random_state’: 123. 2. K-Means : ‘init’: ‘k-means++’, ‘n_init’: ‘auto’, ‘max_iter’: 300, ‘algorithm’: ‘lloyd’. 3. Agglomerative Clustering : ‘metric’: ‘euclidean’, ‘linkage’: ‘ward’, ‘compute_full_tree’: ‘auto’. 4. BIRCH : ‘threshold’: 0.5, ‘branching_factor’: 50. 5. Spectral Clustering : ‘affinity’: ‘nearest_neighbors’, ‘n_neighbors’: 10, ‘eigen_solver’: ‘lobpcg’. 6. Gaussian Mixture : ‘covariance_type’: ‘full’, ‘init_params’: ‘kmeans’, ‘max_iter’: 100.

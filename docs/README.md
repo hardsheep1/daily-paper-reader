@@ -6,21 +6,23 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-07-22
-- 运行时间：2026-07-22 21:47:22 UTC
+- 最新运行日期：2026-07-23
+- 运行时间：2026-07-23 21:47:45 UTC
 - 运行状态：成功
 - 本次总论文数：1
 - 精读区：1
 - 速读区：0
 
 ### 今日简报（AI）
-今日精读一篇时间序列类增量学习的高分论文（8.0/10）。TypiCore通过混合主动查询策略有效缓解灾难性遗忘，为时间序列分类带来新思路。若你关注主动学习与增量学习的结合，可进一步探索该框架的实际应用。
-- 详情：[/202607/22/README](/202607/22/README)
+今日聚焦LLM推理优化：一篇关于可证明护栏的高效聚类论文获8分评价。
+提出了一种可证明安全的高效聚类方法，用于保障大规模LLM推理的可靠性。
+建议关注该聚类方法在自有推理系统中的可落地性，或学习可证明护栏的设计思路。
+- 详情：[/202607/23/README](/202607/23/README)
 
 ### 精读区论文标签
-1. [TypiCore: A Hybrid Active Query Strategy for Class-Incremental Learning on Time Series](/202607/22/2607.17632v1-typicore-a-hybrid-active-query-strategy-for-class-incremental-learning-on-time-series)  
-   标签：评分：8.0/10、query:active-clust
-   evidence：面向增量学习的主动查询策略
+1. [Efficient Clustering with Provable Guardrails for LLM Inference at Scale](/202607/23/2607.19704v1-efficient-clustering-with-provable-guardrails-for-llm-inference-at-scale)  
+   标签：评分：8.0/10、query:ac
+   evidence：使用聚类方法优化大语言模型推理
 
 ### 速读区论文标签
 - 本次无速读推荐。

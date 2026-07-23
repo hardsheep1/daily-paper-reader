@@ -1,0 +1,24 @@
+{
+  "label": "2026-07-23",
+  "date": "2026-07-23",
+  "generated_at": "2026-07-23T21:47:51",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "202607/23/2607.19704v1-efficient-clustering-with-provable-guardrails-for-llm-inference-at-scale",
+      "section": "deep",
+      "title_en": "Efficient Clustering with Provable Guardrails for LLM Inference at Scale",
+      "authors": "Longshaokan Wang, Wai Tsang Keung, Punit Ghodasara, Roman Wang, Ali Dashti, Francesc Moreno-Noguer",
+      "date": "2026-07-22",
+      "pdf": "https://arxiv.org/pdf/2607.19704v1",
+      "score": "8.0",
+      "evidence": "使用聚类方法优化大语言模型推理",
+      "tldr": "大型语言模型推断面临成本与延迟瓶颈，现有聚类方法无法在百万级规模下同时保证每个样本与代表的相似度、精确匹配类别属性。提出两阶段算法：先用Mini-batch K-Means生成初始簇，再通过Johnson-Chvatal启发式方法贪心选择代表，严格保证相似度和属性约束。算法复杂度O(nd+n²d/K)，在3800万用户推荐系统中降低50倍成本与延迟，且保持个性化。",
+      "tags": "query:ac",
+      "abstract_en": "Scaling LLM-based applications to millions of users is bottlenecked by the inference cost and latency of modern foundation models. A natural fix is to cluster the inputs and call the LLM only on cluster representatives, letting other members inherit the output -- but this is only safe if each member is measurably close to its representative. Existing clustering methods do not offer such per-sample quality control at scale: none jointly guarantee a minimal within-cluster similarity, exact matching of categorical attributes, and scalability to tens of millions of samples. We propose a two-stage algorithm that generates initial clusters with Mini-batch K-Means, then greedily selects representatives within each initial cluster -- a step equivalent to the Johnson-Chvatal heuristic for Set Cover over alpha-balls in embedding space. The algorithm enforces the similarity and attribute guardrails exactly by construction, and runs in $O(nd + n^2 d/K)$ time and $O(nd + n^2/K^2)$ memory for $n$ samples, feature dimension $d$, and $K$ initial clusters -- linear in $n$ when $K$ grows proportionally with $n$. We provide benchmarks against common clustering methods on internal and public datasets: our method not only delivers per-sample guardrails but also runs 10-1000x faster and scales to data sizes where most standard methods become intractable. Deployed on 38 million customers for a persona-based recommender, the clustering method cut downstream cost and latency by 50-fold while preserving personalization and unblocked the production launch.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}
