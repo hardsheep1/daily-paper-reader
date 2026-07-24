@@ -1,0 +1,24 @@
+{
+  "label": "2026-07-24",
+  "date": "2026-07-24",
+  "generated_at": "2026-07-24T21:47:44",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "202607/24/2607.17227v1-harmonised-benchmarking-of-foundation-models-for-single-cell-and-spatial-transcriptomics-reveals-context-dependent-generalisation",
+      "section": "deep",
+      "title_en": "Harmonised benchmarking of foundation models for single-cell and spatial transcriptomics reveals context-dependent generalisation",
+      "authors": "Sally Chen, Roxana Zahedi, Lucy Chhuo, Ricky Nguyen, Marjan BaghGolshani, Amin Beheshti, Mark Grosser, Min Yang, Nona Farbehi, Nigel Lovell, Ahmadreza Argha, Fatemeh Vafaee, Youqiong Ye, Hamid Alinejad-Rokny",
+      "date": "2026-07-19",
+      "pdf": "https://arxiv.org/pdf/2607.17227v1",
+      "score": "8.0",
+      "evidence": "使用大语言模型（如scGPT）进行聚类分析的基准测试",
+      "tldr": "单细胞和空间基础模型宣称具有可迁移的生物学表征，但其泛化性尚未经过跨模态、跨领域和跨分析任务的系统检验。本研究构建统一基准框架，在scRNA-seq、空间转录组和Perturb-seq上评估六个代表性模型，涵盖零样本和连续预训练的聚类、注释、标记基因和扰动预测。结果显示模型性能高度情境依赖：表达训练的细胞级Transformer在多数细胞识别任务最优，空间和图感知模型更好保留组织结构，语言衍生的基因嵌入在扰动响应指标上具备竞争力。没有任何模型在所有任务上占据主导，排名随模态、预处理、分词策略、生物先验和指标而变化。本基准为模型选择提供实用指导，并主张未来模型应依据生物学泛化、可解释性和扰动基础有效性评判，而非规模或排行榜表现。",
+      "tags": "query:ac",
+      "abstract_en": "Single-cell and spatial foundation models promise transferable biological representations, yet their generality remains largely untested across modalities, biological domains and analytical tasks. We benchmarked six representative models, Nicheformer, CellPLM, scGPT-spatial, GenePT, scELMo and Novae, using a harmonised framework spanning scRNA-seq, spatial transcriptomics and Perturb-seq. We evaluated zero-shot and continually pretrained clustering, supervised annotation, marker-gene concordance and perturbation prediction. Model performance was strongly conditional: expression-trained cell-level transformers best resolved many cell-identity tasks, spatial and graph-aware models better preserved tissue architecture, and language-derived gene embeddings were competitive for selected perturbation-response metrics. No model dominated across tasks, and rankings shifted with modality, preprocessing, tokenisation, biological prior, domain shift and metric choice. This benchmark provides practical guidance for model selection and argues that future models should be judged by biological generalisation, interpretability and perturbation-grounded validity, not by scale or leaderboard performance alone.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

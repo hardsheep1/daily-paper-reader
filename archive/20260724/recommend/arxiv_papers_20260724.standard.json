@@ -1,0 +1,64 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-07-24T21:45:49.496682+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 1,
+    "deep_cap": 7,
+    "deep_selected": 1,
+    "quick_candidates": 0,
+    "quick_skim_target": 12,
+    "quick_selected": 0
+  },
+  "deep_dive": [
+    {
+      "id": "2607.17227v1",
+      "source": "arxiv",
+      "title": "Harmonised benchmarking of foundation models for single-cell and spatial transcriptomics reveals context-dependent generalisation",
+      "abstract": "Single-cell and spatial foundation models promise transferable biological representations, yet their generality remains largely untested across modalities, biological domains and analytical tasks. We benchmarked six representative models, Nicheformer, CellPLM, scGPT-spatial, GenePT, scELMo and Novae, using a harmonised framework spanning scRNA-seq, spatial transcriptomics and Perturb-seq. We evaluated zero-shot and continually pretrained clustering, supervised annotation, marker-gene concordance and perturbation prediction. Model performance was strongly conditional: expression-trained cell-level transformers best resolved many cell-identity tasks, spatial and graph-aware models better preserved tissue architecture, and language-derived gene embeddings were competitive for selected perturbation-response metrics. No model dominated across tasks, and rankings shifted with modality, preprocessing, tokenisation, biological prior, domain shift and metric choice. This benchmark provides practical guidance for model selection and argues that future models should be judged by biological generalisation, interpretability and perturbation-grounded validity, not by scale or leaderboard performance alone.",
+      "authors": [
+        "Sally Chen",
+        "Roxana Zahedi",
+        "Lucy Chhuo",
+        "Ricky Nguyen",
+        "Marjan BaghGolshani",
+        "Amin Beheshti",
+        "Mark Grosser",
+        "Min Yang",
+        "Nona Farbehi",
+        "Nigel Lovell",
+        "Ahmadreza Argha",
+        "Fatemeh Vafaee",
+        "Youqiong Ye",
+        "Hamid Alinejad-Rokny"
+      ],
+      "primary_category": "q-bio.GN",
+      "categories": [
+        "q-bio.GN",
+        "q-bio.CB"
+      ],
+      "published": "2026-07-19T12:29:35+00:00",
+      "link": "https://arxiv.org/pdf/2607.17227v1",
+      "tags": [
+        "keyword:ac"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "benchmarks clustering using large language models on single-cell data",
+      "llm_evidence_cn": "使用大语言模型（如scGPT）进行聚类分析的基准测试",
+      "llm_evidence": "使用大语言模型（如scGPT）进行聚类分析的基准测试",
+      "canonical_evidence": "使用大语言模型（如scGPT）进行聚类分析的基准测试",
+      "llm_tldr_en": "Benchmarks six foundation models on single-cell and spatial transcriptomics, showing clustering performance is context-dependent; expression-trained transformers excel at cell-identity tasks.",
+      "llm_tldr_cn": "该文对六种代表性基础模型（如scGPT、CellPLM等）在单细胞RNA-seq、空间转录组和Perturb-seq上进行了统一基准测试。评估了零样本和持续预训练下的聚类、监督注释等任务。结果表明模型性能高度依赖于上下文：基于表达训练的细胞级Transformer在细胞身份任务上表现最佳，而空间和图感知模型在空间结构保持上更有优势。该研究为选择适合特定任务的基础模型提供了指导，并揭示了当前模型在不同生物领域中的泛化局限性。",
+      "llm_tldr": "该文对六种代表性基础模型（如scGPT、CellPLM等）在单细胞RNA-seq、空间转录组和Perturb-seq上进行了统一基准测试。评估了零样本和持续预训练下的聚类、监督注释等任务。结果表明模型性能高度依赖于上下文：基于表达训练的细胞级Transformer在细胞身份任务上表现最佳，而空间和图感知模型在空间结构保持上更有优势。该研究为选择适合特定任务的基础模型提供了指导，并揭示了当前模型在不同生物领域中的泛化局限性。",
+      "llm_tags": [
+        "query:ac"
+      ],
+      "matched_query_tag": "query:ac",
+      "matched_query_text": "clustering using large language models",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": []
+}
