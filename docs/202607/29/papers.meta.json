@@ -1,0 +1,24 @@
+{
+  "label": "2026-07-29",
+  "date": "2026-07-29",
+  "generated_at": "2026-07-29T21:42:58",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "202607/29/2607.25276v1-funnelal-retrieve-then-rank-active-learning-for-single-class-discovery",
+      "section": "quick",
+      "title_en": "FunnelAL: Retrieve-then-Rank Active Learning for Single-Class Discovery",
+      "authors": "Reihaneh Rostami, Brian Goodwin",
+      "date": "2026-07-28",
+      "pdf": "https://arxiv.org/pdf/2607.25276v1",
+      "score": "6.0",
+      "evidence": "基于检索-排序的主动学习查询策略",
+      "tldr": "大规模监督学习面临高效筛选相关样本与区分视觉易混淆负样本两大挑战。传统主动学习采用单阶段选择，无法同时应对。本文借鉴工业推荐系统漏斗架构，提出FunnelAL：从单正负例开始，依次通过嵌入检索缩小候选集、精度触发时使用RankNet排序并自动混合QBC探索、标注反馈迭代优化。在三个图像分类基准上，完美标注时F1最优且标注成本最低；存在标注误差时，鲁棒性远超经典方法。该工作为多阶段推荐系统与主动学习的结合提供了具体桥梁。",
+      "tags": "query:active-clust",
+      "abstract_en": "We present FunnelAL, a retrieve-then-rank active learning system for single-class discovery, which adapts the multi-stage funnel architecture of industrial recommender systems to data annotation. Large-scale supervised learning faces two challenges: efficiently finding relevant samples in a massive corpus, and distinguishing true positives from visually confusable negatives when embeddings do not cleanly separate classes. Conventional active learning offers a principled framework for reducing annotation cost, yet it treats sample selection as a single-stage process that addresses neither challenge efficiently. FunnelAL decomposes the problem into cascaded stages. Starting from a single positive and negative example, the system iterates through: (1) embedding-based retrieval scoring that narrows the corpus to a manageable candidate set; (2) a precision-triggered ranking stage that exploits a learned ranker (RankNet) while batch precision remains high, then automatically blends in committee-based exploration (QBC) once returns diminish; and (3) feedback from the annotator's labels that refines both stages in subsequent iterations. We evaluate on three diverse image classification benchmarks. With a perfect annotator, FunnelAL attains the best final F1 on all three benchmarks, the best annotation efficiency (first in AULC), and the fewest annotation rounds. The most recent single-class discovery methods (GAL, PF-MA) at best match its final quality, and only at consistently higher labeling cost. Under annotator labeling errors at realistic rates, FunnelAL remains first or statistically tied for first while classical uncertainty-based methods degrade two to three times faster. Our work provides a concrete bridge between multi-stage recommender systems and active learning.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

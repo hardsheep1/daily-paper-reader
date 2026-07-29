@@ -1,0 +1,57 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-07-29T21:41:57.913988+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 0,
+    "deep_cap": 7,
+    "deep_selected": 0,
+    "quick_candidates": 1,
+    "quick_skim_target": 12,
+    "quick_selected": 1
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2607.25276v1",
+      "source": "arxiv",
+      "title": "FunnelAL: Retrieve-then-Rank Active Learning for Single-Class Discovery",
+      "abstract": "We present FunnelAL, a retrieve-then-rank active learning system for single-class discovery, which adapts the multi-stage funnel architecture of industrial recommender systems to data annotation. Large-scale supervised learning faces two challenges: efficiently finding relevant samples in a massive corpus, and distinguishing true positives from visually confusable negatives when embeddings do not cleanly separate classes. Conventional active learning offers a principled framework for reducing annotation cost, yet it treats sample selection as a single-stage process that addresses neither challenge efficiently. FunnelAL decomposes the problem into cascaded stages. Starting from a single positive and negative example, the system iterates through: (1) embedding-based retrieval scoring that narrows the corpus to a manageable candidate set; (2) a precision-triggered ranking stage that exploits a learned ranker (RankNet) while batch precision remains high, then automatically blends in committee-based exploration (QBC) once returns diminish; and (3) feedback from the annotator's labels that refines both stages in subsequent iterations. We evaluate on three diverse image classification benchmarks. With a perfect annotator, FunnelAL attains the best final F1 on all three benchmarks, the best annotation efficiency (first in AULC), and the fewest annotation rounds. The most recent single-class discovery methods (GAL, PF-MA) at best match its final quality, and only at consistently higher labeling cost. Under annotator labeling errors at realistic rates, FunnelAL remains first or statistically tied for first while classical uncertainty-based methods degrade two to three times faster. Our work provides a concrete bridge between multi-stage recommender systems and active learning.",
+      "authors": [
+        "Reihaneh Rostami",
+        "Brian Goodwin"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.IR",
+        "cs.LG"
+      ],
+      "published": "2026-07-28T04:26:26+00:00",
+      "link": "https://arxiv.org/pdf/2607.25276v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "active learning with retrieve-then-rank query strategy",
+      "llm_evidence_cn": "基于检索-排序的主动学习查询策略",
+      "llm_evidence": "基于检索-排序的主动学习查询策略",
+      "canonical_evidence": "基于检索-排序的主动学习查询策略",
+      "llm_tldr_en": "FunnelAL proposes a multi-stage retrieve-then-rank active learning system for single-class discovery, decomposing sample selection into cascaded stages to efficiently find relevant samples in massive corpora, offering transferable query strategies for active clustering.",
+      "llm_tldr_cn": "FunnelAL提出了一种检索-排序的主动学习系统，用于单类发现任务。它将传统单阶段样本选择分解为级联的检索和排序阶段，从少量正负例开始迭代，高效筛选海量数据中的相关样本。该方法展示了主动学习查询策略的改进设计，其原理可迁移至主动聚类场景中优化样本标注顺序。实验证明该系统在单类发现任务上显著降低了标注成本，同时保持了高精度。",
+      "llm_tldr": "FunnelAL提出了一种检索-排序的主动学习系统，用于单类发现任务。它将传统单阶段样本选择分解为级联的检索和排序阶段，从少量正负例开始迭代，高效筛选海量数据中的相关样本。该方法展示了主动学习查询策略的改进设计，其原理可迁移至主动聚类场景中优化样本标注顺序。实验证明该系统在单类发现任务上显著降低了标注成本，同时保持了高精度。",
+      "llm_tags": [
+        "query:active-clust"
+      ],
+      "matched_query_tag": "query:active-clust",
+      "matched_query_text": "query strategy for active clustering",
+      "matched_requirement_id": "req-11",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}
