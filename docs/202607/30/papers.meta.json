@@ -1,0 +1,24 @@
+{
+  "label": "2026-07-30",
+  "date": "2026-07-30",
+  "generated_at": "2026-07-30T22:02:10",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "202607/30/2607.25209v1-validrec-variable-length-llm-aligned-semantic-ids-for-generative-recommendation",
+      "section": "deep",
+      "title_en": "VaLiDRec: Variable-Length LLM-Aligned Semantic IDs for Generative Recommendation",
+      "authors": "Shutong Qiao, Wei Yuan, Tong Chen, Hao Wang, Quoc Viet Hung Nguyen, Hongzhi Yin",
+      "date": "2026-07-28",
+      "pdf": "https://arxiv.org/pdf/2607.25209v1",
+      "score": "8.0",
+      "evidence": "使用大模型对齐的聚类生成语义标识",
+      "tldr": "生成式推荐常使用固定长度语义标识，但存在语义过压缩、与LLM词汇不对齐及自回归解码耗时的问题。VaLiDRec提出可变长度、与LLM对齐的语义标识，通过token重要性估计、语义质量修剪和冲突细化构建，长度自适应语义复杂度。结合图感知软提示和token集预测，消除自回归解码。在四个数据集上全面超越强基线，零样本冷启动优秀，推理速度比LC-Rec快87.49倍。表明LLM原生可变长标识是更高效表达范式。",
+      "tags": "query:ac",
+      "abstract_en": "Generative recommendation commonly represents items using fixed-length semantic identifiers (SIDs) constructed through clustering and quantization. However, these artificial codes may overcompress item semantics, remain misaligned with pretrained LLM vocabularies, and require costly autoregressive decoding. In light of this, we propose VaLiDRec, a generative recommendation framework based on variable-length, LLM-aligned semantic identifiers. VaLiDRec constructs SIDs directly from informative native LLM vocabulary tokens via token importance estimation, semantic-quality-aware pruning, and collision-aware refinement, allowing identifier lengths to adapt to item semantic complexity. To model user preferences, VaLiDRec incorporates graph-aware soft prompts and reformulates recommendation as token-set prediction with token-level item scoring, eliminating autoregressive SID generation and beam search. Experiments on four real-world datasets show that VaLiDRec consistently outperforms strong sequential and generative recommendation baselines across all evaluation metrics. It further achieves superior zero-shot item cold-start performance and 87.49$\\times$ faster inference than LC-Rec. These results demonstrate that LLM-native variable-length semantic identifiers provide a more expressive and efficient paradigm for generative recommendation.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

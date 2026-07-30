@@ -1,0 +1,59 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-07-30T22:00:45.496225+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 1,
+    "deep_cap": 7,
+    "deep_selected": 1,
+    "quick_candidates": 0,
+    "quick_skim_target": 12,
+    "quick_selected": 0
+  },
+  "deep_dive": [
+    {
+      "id": "2607.25209v1",
+      "source": "arxiv",
+      "title": "VaLiDRec: Variable-Length LLM-Aligned Semantic IDs for Generative Recommendation",
+      "abstract": "Generative recommendation commonly represents items using fixed-length semantic identifiers (SIDs) constructed through clustering and quantization. However, these artificial codes may overcompress item semantics, remain misaligned with pretrained LLM vocabularies, and require costly autoregressive decoding. In light of this, we propose VaLiDRec, a generative recommendation framework based on variable-length, LLM-aligned semantic identifiers. VaLiDRec constructs SIDs directly from informative native LLM vocabulary tokens via token importance estimation, semantic-quality-aware pruning, and collision-aware refinement, allowing identifier lengths to adapt to item semantic complexity. To model user preferences, VaLiDRec incorporates graph-aware soft prompts and reformulates recommendation as token-set prediction with token-level item scoring, eliminating autoregressive SID generation and beam search. Experiments on four real-world datasets show that VaLiDRec consistently outperforms strong sequential and generative recommendation baselines across all evaluation metrics. It further achieves superior zero-shot item cold-start performance and 87.49$\\times$ faster inference than LC-Rec. These results demonstrate that LLM-native variable-length semantic identifiers provide a more expressive and efficient paradigm for generative recommendation.",
+      "authors": [
+        "Shutong Qiao",
+        "Wei Yuan",
+        "Tong Chen",
+        "Hao Wang",
+        "Quoc Viet Hung Nguyen",
+        "Hongzhi Yin"
+      ],
+      "primary_category": "cs.IR",
+      "categories": [
+        "cs.IR",
+        "cs.AI"
+      ],
+      "published": "2026-07-28T02:29:10+00:00",
+      "link": "https://arxiv.org/pdf/2607.25209v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "LLM-aligned semantic IDs via clustering",
+      "llm_evidence_cn": "使用大模型对齐的聚类生成语义标识",
+      "llm_evidence": "使用大模型对齐的聚类生成语义标识",
+      "canonical_evidence": "使用大模型对齐的聚类生成语义标识",
+      "llm_tldr_en": "VaLiDRec constructs variable-length semantic identifiers aligned with LLM vocabularies via token importance estimation and clustering refinement, improving generative recommendation.",
+      "llm_tldr_cn": "针对传统固定长度语义标识压缩语义且与大模型词汇表不兼容的问题，本文提出VaLiDRec框架，通过词元重要性估计、语义质量修剪和碰撞感知优化，直接从大模型词表中构建可变长度且与大模型对齐的语义标识。该方法使标识长度自适应物品复杂度，结合图感知偏好建模，在多个数据集上显著优于固定长度基线，实现了更高效准确的生成式推荐。",
+      "llm_tldr": "针对传统固定长度语义标识压缩语义且与大模型词汇表不兼容的问题，本文提出VaLiDRec框架，通过词元重要性估计、语义质量修剪和碰撞感知优化，直接从大模型词表中构建可变长度且与大模型对齐的语义标识。该方法使标识长度自适应物品复杂度，结合图感知偏好建模，在多个数据集上显著优于固定长度基线，实现了更高效准确的生成式推荐。",
+      "llm_tags": [
+        "query:ac"
+      ],
+      "matched_query_tag": "query:ac",
+      "matched_query_text": "clustering using large language models",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": []
+}
