@@ -1,0 +1,69 @@
+{
+  "label": "2026-07-31",
+  "date": "2026-07-31",
+  "generated_at": "2026-07-31T21:59:00",
+  "count": 4,
+  "papers": [
+    {
+      "paper_id": "202607/31/2607.20957v1-fast-and-efficient-approximate-nearest-neighbor-search-for-high-dimensional-llm-embeddings",
+      "section": "quick",
+      "title_en": "Fast and Efficient Approximate Nearest Neighbor Search for High-Dimensional LLM Embeddings",
+      "authors": "Nico Hezel, Kai Uwe Barthel, Bruno Schilling, Konstantin Schall, Andre Moelle, Klaus Jung",
+      "date": "2026-07-23",
+      "pdf": "https://arxiv.org/pdf/2607.20957v1",
+      "score": "6.0",
+      "evidence": "为大模型嵌入提供高效近似最近邻搜索，支持快速聚类高维文本表示",
+      "tldr": "针对SISAP 2026索引挑战赛的高维LLM嵌入ANNS任务，本文提出基于Equi-Voronoi多面体量化的快速kNNG构建方法，并辅以重排序策略保证召回率。对于非归一化特征的MIPS问题，采用维度增强转化为欧氏空间搜索。引入线性分配排序的一维预排序机制，增强图遍历时的空间局部性与缓存命中率。代码已开源，在1024维BGE-M3及Llama嵌入上实现了高效近似搜索。",
+      "tags": "query:ac",
+      "abstract_en": "The annual SISAP Indexing Challenge benchmarks Approximate Nearest Neighbor Search (ANNS) algorithms under rigorous constraints. This paper presents our submissions for the 2026 edition, addressing both $k$-Nearest Neighbor Graph (kNNG) construction on 1024-dimensional BGE-M3 embeddings (Task 1) and Maximum Inner Product Search (MIPS) on unnormalized Llama-3.2-8B features (Task 2). To optimize construction speed, we utilize Equi-Voronoi Polytopes (EVP) for efficient quantization, supplemented by targeted reranking strategies to maintain high recall. For MIPS, we transform the asymmetric inner product problem into a Euclidean search space via dimensionality augmentation. To reduce query latency and optimize memory access, we introduce a 1D presorting mechanism via Fast Linear Assignment Sorting (FLAS) prior to graph construction. This significantly improves spatial locality and cache hit rates during subsequent graph traversal.   Source Code: https://github.com/Visual-Computing/sisap26-deglib",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202607/31/2607.21039v1-regularized-optimization-on-grassmann-manifold-theory-algorithm-and-applications",
+      "section": "quick",
+      "title_en": "Regularized Optimization on Grassmann Manifold: Theory, Algorithm and Applications",
+      "authors": "Zhuan Liang, Zheng Zhai",
+      "date": "2026-07-23",
+      "pdf": "https://arxiv.org/pdf/2607.21039v1",
+      "score": "6.0",
+      "evidence": "正则化谱聚类方法，可作为主动聚类的基础聚类器。",
+      "tldr": "谱方法在社区检测和聚类中广泛应用，但对噪声和异常值敏感。本文提出正则化投影矩阵近似（RPMA）框架，在Grassmann流形上优化带正则项的投影矩阵，提升鲁棒性和可解释性。推导了最优性条件和局部稳定性，并发展出高效的Riemannian梯度算法。实验表明RPMA在噪声环境下优于传统谱方法。",
+      "tags": "query:active-clust",
+      "abstract_en": "Spectral methods are among the most widely used techniques for community detection, clustering, and graph learning. Their performance, however, critically depends on the accurate estimation of the underlying spectral subspace and can deteriorate substantially in the presence of noise, outliers, or model perturbations. To address this limitation, we propose a Regularized Projection Matrix Approximation (RPMA) framework for robust estimation of rank-$K$ projection matrices. RPMA extends classical spectral projection by incorporating a regularization term, producing projection estimates that are more robust, sparse, and interpretable. We formulate the proposed model as an optimization problem on the manifold of rank-$K$ projection matrices and exploit its geometric equivalence to the Grassmann manifold. Based on this manifold characterization, we derive the first- and second-order optimality conditions, establish the local stability of the regularized leading eigenspace, and characterize the stability of the critical-point landscape under sufficiently small regularization. To efficiently solve the resulting nonconvex optimization problem, we develop a Riemannian gradient projection algorithm with backtracking line search, together with a more efficient Cayley--Sherman--Morrison--Woodbury (Cayley--SMW) gradient method that avoids repeated eigendecompositions. Extensive experiments on both synthetic and real-world datasets demonstrate that RPMA substantially improves the recovery accuracy of projection matrices and consistently outperforms conventional spectral projection methods for community detection and clustering under noisy environments.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202607/31/2607.23507v1-choosing-a-text-embedding-model-a-practical-benchmarking-and-decision-framework",
+      "section": "quick",
+      "title_en": "Choosing a Text Embedding Model: A Practical Benchmarking and Decision Framework",
+      "authors": "Madhav S Baidya",
+      "date": "2026-07-26",
+      "pdf": "https://arxiv.org/pdf/2607.23507v1",
+      "score": "6.0",
+      "evidence": "在MTEB基准上评测文本嵌入模型的聚类性能，为基于大模型嵌入的聚类提供选择框架",
+      "tldr": "选择文本嵌入模型是构建检索系统中最关键但也最常被忽视的决策，排行榜上的顶尖模型未必适合实际部署。本文提出一个基于证据的决策框架，通过基准测试对比商业API模型T3EM与多种开源模型，并结合MTEB全景及完整检索链路分析。研究得出按任务类型、延迟、成本等约束条件选择的实用推荐，帮助开发者在完整检索管道中做出更明智的模型选择。",
+      "tags": "query:ac",
+      "abstract_en": "Choosing the right text embedding model is one of the most consequential -- and most frequently under-examined -- decisions in building a retrieval or search system, yet the model that tops a leaderboard is rarely the best choice for a given deployment. This report develops a practical, evidence-based framework for embedding model selection, built on a benchmarking study that evaluates T3EM (Text 3 Embedding Model), a commercial API-based embedding model, against a broad set of open-source alternatives on English-language retrieval tasks, and situates these findings within the wider Massive Text Embedding Benchmark (MTEB) landscape spanning classification, clustering, semantic similarity, reranking, pair classification, bitext mining, and summarization. Beyond raw benchmark scores, the report traces the full path from embedding model to retrieved result -- how embeddings are produced, how they are indexed and searched at scale, and how document chunking strategy shapes retrieval quality -- so that model choice can be reasoned about as one decision within a complete retrieval pipeline rather than in isolation. The result is a consolidated set of practical recommendations for selecting an embedding model according to task, latency, cost, and deployment constraints.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202607/31/2607.27829v1-approximate-dual-separation-for-the-cluster-lp-a-1387-approximation-for-correlation-clustering",
+      "section": "quick",
+      "title_en": "Approximate Dual Separation for the Cluster LP: a 1.387 approximation for Correlation Clustering",
+      "authors": "David García-Soriano, Antoine Schohn",
+      "date": "2026-07-30",
+      "pdf": "https://arxiv.org/pdf/2607.27829v1",
+      "score": "6.0",
+      "evidence": "相关聚类近似算法可支持带成对约束的主动聚类",
+      "tldr": "针对完全图上的相关聚类，现有最佳近似比为1.485。本文提出两个独立贡献：高效近似求解cluster LP对偶中的CCMinRatio问题，以及基于连续条件枢轴规则的舍入方案。二者结合将近似比改进到1.3865+ε，并将cluster LP的积分间隙界定在[4/3,1.3865]区间。算法无需全局预聚类，直接作用于原实例。",
+      "tags": "query:active-clust",
+      "abstract_en": "We give an $(1.3865+\\varepsilon)$-approximation for correlation clustering in complete graphs, improving the previous best factor of $1.485+\\varepsilon$ of Cao et al.\\ (STOC'24). Our two key contributions are independent: an efficient approximate separation oracle for the cluster-LP dual and a new rounding scheme.   The dual separation task is the CCMinRatio problem: for signed vertex weights $q$, minimize $cost(S)/q(S)$ over sets with $q(S)>0$; here $cost(S)$ measures the correlation clustering disagreements attributed to $S$ in any clustering in which $S$ is a cluster. We give a randomized $(1+\\varepsilon)$-approximation in time $2^{poly(1/\\varepsilon)}(n+\\langle q\\rangle)^{O(1)}$. Via the ellipsoid method, this yields a $(1+\\varepsilon)$-approximation of the fractional cluster-LP optimum, along with exactly feasible primal and dual solutions certifying its value and a per-instance certificate. The algorithm works directly on the original instance, without a global preclustering: a new localization technique restricts the search to a small universe while preserving a violation, after which weak regularity handles the resulting dense quadratic minimization.   Our rounding scheme retains the cluster-based procedure of Cao et al.\\ but uses a continuous conditional pivot rule whose analysis rests on a single variance inequality with explicit weights and an exact computer-assisted verification of the resulting polynomial inequalities. This also places the integrality gap of the cluster LP in the narrow range [4/3,1.3865].",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

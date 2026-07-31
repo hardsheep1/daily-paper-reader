@@ -1,0 +1,1878 @@
+Title: Approximate Dual Separation for the Cluster LP: a 1.387 approximation for Correlation Clustering
+
+URL Source: https://arxiv.org/pdf/2607.27829v1
+
+Published Time: Fri, 31 Jul 2026 00:47:05 GMT
+
+Number of Pages: 28
+
+Markdown Content:
+# Approximate Dual Separation for the Cluster LP: a 1.387 
+
+# approximation for Correlation Clustering 
+
+David García-Soriano ∗1 and Antoine Schohn †21Universitat Politècnica de Catalunya, Barcelona, Spain 
+
+> 2
+
+École Polytechnique, Palaiseau, France July 31, 2026 
+
+Abstract 
+
+We give an (1 .3865+ ε)-approximation for correlation clustering in complete graphs, improving the previous best factor of 1.485 + ε of Cao et al. (STOC’24). Our two key contributions are independent: an efficient approximate separation oracle for the cluster-LP dual and a new rounding scheme. The dual separation task is the CC-MinRatio problem: for signed vertex weights q, min-imize cost (S)/q (S) over sets with q(S) > 0; here cost (S) measures the correlation clustering disagreements attributed to S in any clustering in which S is a cluster. We give a randomized 
+
+(1 + ε)-approximation in time 2poly(1 /ε )(n + ⟨q⟩)O(1) . Via the ellipsoid method, this yields a 
+
+(1 + ε)-approximation of the fractional cluster-LP optimum, along with exactly feasible primal and dual solutions certifying its value. The algorithm works directly on the original instance, without a global preclustering: a new localization technique restricts the search to a small universe while preserving a violation, after which weak regularity handles the resulting dense quadratic minimization. Our rounding scheme retains the cluster-based procedure of Cao et al. but uses a continuous conditional pivot rule whose analysis rests on a single variance inequality with explicit weights and an exact computer-assisted verification of the resulting polynomial inequalities. The rounding alone bounds the cluster-LP integrality gap by 1.3865 , near its known lower bound of 4/3.Combined with the primal solver of Cao et al. (STOC’25), it gives a (1 .3865 + ε)-approximation in expected time ˜O(2 poly(1 /ε )n) in the adjacency-list query model; combined instead with our dual solver, it gives the same ratio measured against the fractional optimum in time 
+
+˜O(2 poly(1 /ε ) poly( n)) , as well as a per-instance certificate. 
+
+> ∗
+
+david.garcia.soriano@upc.edu 
+
+> †
+
+antoine.schohn@polytechnique.edu arXiv:2607.27829v1 [cs.DS] 30 Jul 2026 1 Introduction 
+
+Correlation Clustering is perhaps the most natural formulation of clustering, given general pairwise similarity information between objects. On a complete signed graph, with positive (resp., negative) edges representing similar (resp., dissimilar) pairs, it asks for a partition of the vertices that minimizes the number of disagreements ( MinDisagree objective): negative pairs placed in the same cluster or positive pairs placed in different clusters. We encode the positive pairs by an unweighted graph 
+
+G = ( V, E +) and write E− = (V 
+
+> 2
+> )
+
+\ E+ for the complementary set of negative pairs. The computational complexity of the problem and its applications to machine learning have been thoroughly investigated; see [ 11 , 13 ] and the references therein. Its contemporary form was introduced by Bansal, Blum, and Chawla [7] , albeit earlier formulations date at least as far back as the 1960s [ 38 , 41 ]. The problem is NP-hard [ 6, 33 , 40 ], motivating the search for approximation algorithms. The first polynomial-time constant-factor guarantee was given by Bansal, Blum, and Chawla [7] ; Charikar, Guruswami, and Wirth [17] later obtained a 4-approximation. Ailon, Charikar, and Newman [2] achieved ratio 3 via a simple combinatorial algorithm, and gave an LP-based refinement with ratio 2.5. Subsequently, Chawla, Makarychev, Schramm, and Yaroslavtsev [19] achieved a 2.06 -approximation, close to the factor-2 integrality gap of the standard LP relaxation [ 17 ]. Very recently, a breakthrough of Cohen-Addad, Lee, and Newman [22] broke this apparent barrier, giving an (1 .994 + ε)-approximation via the Sherali-Adams hierarchy. This spurred a sequence of improvements: Cohen-Addad, Lee, Li, and Newman [23] reduced the ratio to 1.73 + ε
+
+and introduced the concept of preclustering, rooted in the technique of Cohen-Addad et al. [21] .Later Cao, Cohen-Addad, Lee, Li, Newman, and Vogl [14] introduced the cluster LP , an exponential-size relaxation with one variable for every possible cluster. Remarkably, the latter work succeeded in solving the cluster LP up to a constant factor, from which they derived the state-of-the-art 
+
+(1 .485 + ε)-approximation algorithm for MinDisagree (see also [ 16 ]). Subsequent work gave, for fixed ε, ˜O(n)-time algorithms: a combinatorial (1 .847 + ε)-approximation [ 24 ], and a cluster-LP implementation achieving (1 .485 + ε) [15 ]; these algorithms are sublinear in the size of the signed graph, Θ( n2). The proven guarantees of both cluster-LP solvers [ 14 , 15 ] compare the value of the computed primal solution with the integral (not fractional) correlation-clustering optimum. 
+
+1.1 Our contributions 
+
+Our first result is an efficient weak separation algorithm for the cluster-LP dual (Theorem 2.1). It either finds a violated constraint or certifies feasibility after scaling the dual vector by 1 + ε.This makes the cluster LP algorithmically accessible as a relaxation in its own right, so we can approximate the fractional cluster-LP optimum, produce a feasible dual solution certifying this approximation, and recover a sparse feasible primal solution. This differs from the proven guarantees of Cao et al. [ 14 , 15 ], whose algorithms first precluster the instance and construct a feasible primal 
+
+solution of value at most (1 + ε) times the integral optimum. They remark that their primal analysis should extend to the fractional optimum, but do not provide this extension; separately, they state that they do not know how to solve the cluster LP by considering its dual [ 16 , Section 1.1 and footnote 1]. Our result supplies an explicit self-contained dual-based proof. 
+
+Theorem 1.1 (Approximate dual separation) . For every ε > 0, there is a randomized weak separation algorithm for the cluster-LP dual that, with probability at least 2/3, either returns a violated constraint or correctly reports that the given dual vector becomes feasible after division by 
+
+1 + ε. Its running time is 2poly(1 /ε )(n + ⟨q⟩)O(1) . Thus, in time 2poly(1 /ε )nO(1) one can approximate the fractional cluster-LP optimum within a factor 1 + ε and produce an exactly feasible dual solution together with a feasible primal solution of polynomial support certifying this approximation. 
+
+1Our second result is a rounding algorithm for every feasible cluster-LP solution. 
+
+Theorem 1.2 (Rounding the cluster LP) . There is a randomized polynomial-time algorithm that, given any feasible cluster-LP solution z, returns a clustering A whose expected cost is at most 1.3865 
+
+times the cluster LP value of z.
+
+This result proves that the integrality gap of the cluster LP is at most 1.3865 ; combined with the known lower bound of 4/3 [14], it places the gap in the narrow interval [4 /3, 1.3865] .
+
+Corollary 1.3. For every ε > 0, there is a (1 .3865+ ε)-factor approximation algorithm for correlation clustering in time 2poly(1 /ε ) poly( n).
+
+In fact, the rounding theorem can be combined with either cluster-LP solver, with different benefits. Together with our first result, run with a suitably smaller accuracy parameter, it gives a computable instance-dependent certificate: the ratio between the cost of the clustering returned and the value of the feasible dual solution. Conditional on a successful LP computation, the expected value of this ratio is at most 1.3865 + ε. Alternatively, the primal solution produced by Cao et al. [ 15 ] can be fed to our rounding algorithm, giving a (1 .3865 + ε)-approximation against the integral optimum in expected time ˜O(2 poly(1 /ε )n) with adjacency-list queries. 
+
+1.2 Organization of the paper 
+
+Section 2 defines the cluster LP and its dual, isolates the problem CC-MinRatio , and states the separation theorem (Theorem 2.1, the formal version of Theorem 1.1) and its consequences. Section 3 sketches the proof of Theorem 2.1: the reduction to detecting a negative Lagrangian value, the structural properties of an optimal set, and the three-regime case analysis. The two extreme regimes are handled in Section 4. Section 5 treats the remaining one. Section 6 combines the three regimes into the proof of Theorem 2.1. Section 7 presents our rounding scheme: the two rounding procedures, the new pivot rule and its closed form, and the single variance certificate underlying the 1.3865 -approximation of Theorem 7.1, the formal version of Theorem 1.2. 
+
+1.3 Further related work 
+
+The aforementioned work of Cao et al. [14] showed NP-hardness of approximation for MinDisagree 
+
+up to a factor of 24 /23 . The weighted version, in which pairs carry arbitrary nonnegative weights, is equivalent to minimum multicut and is O(log n)-factor approximable, as observed by Charikar, Guruswami, and Wirth [17] and Demaine, Emanuel, Fiat, and Immorlica [25] . Assuming the Unique Games Conjecture, no polynomial-time O(1) -factor approximation algorithm exists in this case [ 18 ]. Ailon et al. [3] gave a query-efficient algorithm where pairwise similarities can be consulted; their running time is exponential in n. A sublinear-time approximation algorithm with a nearly optimal mixed multiplicative-additive guarantee was designed by Bonchi et al. [9] and simplified in [ 27 ]; see also [ 5 , 34 ]. The work of [ 15 , 24 ] gave sublinear-time algorithms with multiplicative guarantees, assuming the stronger adjacency-list oracle. Many other variants have been investigated, including fixed numbers of clusters [ 28 ], maximiz-ing disagreements [ 17 , 39 ], constrained cluster sizes [ 37 ], overlapping clusters [ 10 ], edge-labeled graphs [12], multilayer networks [36], hypergraphs [32, 35], and streaming settings [1, 20]. Finally, we note that equivalent problems have been researched under names such as cluster editing [8] and clique partitioning [29, 30]. 22 The cluster LP and its separation problem 
+
+For σ ∈ { +, −} , let eσ(S) denote the number of pairs of Eσ with both endpoints in S, and, for disjoint A, B ⊆ V , let eσ(A, B ) denote the number with one endpoint in each set. All degrees refer to the positive-edge graph G = ( V, E +): dA(u) = e+({u}, A \ { u}) denotes the number of positive neighbors of u in A, and d(u) = dV (u) is its positive degree. For u ∈ V , its inclusive positive neighborhood is Γ+(u) = {u} ∪ { v ∈ V : uv ∈ E+}. Define 
+
+cost( S) = e−(S) + 12 e+(S, V \ S) = 
+
+> (
+
+|S|
+
+2
+
+> )
+
++ 12
+
+> ∑
+> u∈S
+
+d(u) − 2e+(S). (1) This is precisely the contribution of a cluster S to the correlation clustering objective (when minimizing disagreements): an internal negative pair is counted once, while the cost of an external positive pair is split between the two clusters it crosses. The cluster LP and its dual are                         
+
+> minimize ∑
+> S⊆V
+> cost( S)xS,
+> subject to ∑
+> S∋u
+> xS= 1 ∀u∈V, xS≥0∀S⊆V.
+> (2) maximize ∑
+> u∈V
+> qu,
+> subject to ∑
+> u∈S
+> qu≤cost( S)∀S⊆V, qu∈R∀u∈V.
+> (3)
+
+Note that these are not a covering/packing pair of problems; the coordinates of q are unrestricted because the corresponding constraints in (2) are equalities. Our main result is a weak separation oracle, in the form needed for weak optimization using the ellipsoid algorithm for linear programming. 
+
+Theorem 2.1 (Weak separation) . For every ε > 0, there is a randomized algorithm which, given an n-vertex graph G = ( V, E +) and q ∈ QV , with success probability at least 2/3, either returns a set T ⊆ V with q(T ) > cost (T ), or reports that q/ (1 + ε) is feasible for the dual (3) . It runs in time 
+
+2poly(1 /ε )(n + ⟨q⟩)O(1) .
+
+Every set returned by the algorithm is a genuine violation, since q(T ) > cost (T ) can be checked by direct computation. The possible error is in the other direction: when q/ (1 + ε) is infeasible, the algorithm may fail to find a violation and incorrectly report feasibility. Independent repetitions, returning the first verified violation found, amplify the probability of finding one in this case. It is convenient to consider the underlying cost ratio problem. For a signed vector q ∈ QV , put 
+
+q+ 
+
+> u
+
+= max {qu, 0}, q+(A) = ∑
+
+> u∈A
+
+q+ 
+
+> u
+
+.
+
+Assume that q+(V ) > 0 (i.e., some vertex has positive q-weight). 
+
+Problem 2.2 (CC-MinRatio ). Given G = ( V, E +) and a signed vector q ∈ QV with q+(V ) > 0,find a set S ⊆ V with q(S) > 0 minimizing ρ(S) = cost( S) 
+
+> q(S)
+
+.
+
+We denote the optimum value by ρ∗ = min S: q(S)>0 ρ(S).
+
+Corollary 2.3 (EPTAS for CC-MinRatio ). For every ε > 0, there is a randomized algorithm which, given an n-vertex graph G = ( V, E +) and q ∈ ZV with q+(V ) > 0, returns a set T ⊆ V with 
+
+q(T ) > 0 and ρ(T ) ≤ (1 + ε)ρ∗ with probability at least 2/3, in time 2poly(1 /ε )(n + ⟨q⟩)O(1) .
+
+3Corollary 2.4 (Approximate primal and dual solutions) . For every ε > 0, there is a randomized algorithm running in time 2poly(1 /ε )nO(1) that, with probability at least 2/3, computes both an exactly feasible vector q for (3) and a feasible solution z of (2) of polynomial support such that 
+
+> ∑
+> u∈V
+
+qu ≥ OPT LP 
+
+1 + ε and ∑
+
+> S
+
+cost( S)zS ≤ (1 + ε) OPT LP .
+
+Here OPT LP is the common optimum value of (2) and (3) .
+
+The proofs of these corollaries, assuming Theorem 2.1, are straightforward applications of the ellipsoid method and are deferred to Appendix A. Note that the ˜O(2 poly(1 /ε )n)-time algorithm of Cao et al. [15] can be used to obtain a (1 .485 + ε)-approximation to the primal cluster LP. While our approximation is better, their dependence on the number of vertices is sharper: the factor in their running time is n, rather than nO(1) .
+
+# 3 Separation oracle: technical overview 
+
+We sketch here the main ideas of the proof of Theorem 2.1. Fix an optimal solution S∗ of CC-MinRatio , and let ρ∗ = ρ(S∗) = cost( S∗) 
+
+> q(S∗)
+
+denote its objective value. If ρ∗ ≥ 1/(1 + ε), then q/ (1 + ε)
+
+is dual feasible. Thus, the oracle needs only find a violated constraint in the gap case 
+
+ρ∗ < 11 + ε . (4) In this case, q(S∗) > (1 + ε) cost( S∗), and hence the Lagrangian 
+
+L(T ) = cost( T ) − q(T ).
+
+satisfies 
+
+L(S∗) < −ε cost( S∗).
+
+To find a violated dual constraint, it suffices to find an approximate minimizer of L with error below the margin cost ε cost (S∗); this yields a set with negative L-value. Our starting point is to approximate the graph with a weakly regular partition and apply dense quadratic optimization. However, the additive error in the weak regularity is proportional to the square of the number of vertices. Applied directly to V , this can exceed the ε cost (S∗) margin. Thus, we introduce a 
+
+localization technique whose purpose is precisely to reduce the universe to Oε(|S∗|) vertices without losing the negative witness. This idea works well when cost( S) is neither too small nor too high. Let s = |S∗|, c = cost( S∗). The following three regimes apply: cost of S∗ useful structure algorithmic step 
+
+c ≫ s2/ε a singleton is nearly optimal test positive-weight singletons 
+
+c ≪ εs 2 S∗ is close to one neighborhood neighborhood + linearization 
+
+c ∈ [Ω( εs 2), O (s2/ε )] additive error is affordable localization + weak regularity 
+
+Parameters. We set the following internal parameters for our algorithm: 
+
+α = ε
+
+100 , β = ε
+
+10 , τ = α
+
+128 . (5) 4Large cost. This is the easiest case to handle. The cost of S∗ is dominated by the positive edges outgoing from S∗, so c is roughly equal to the sum of all degrees in S∗. Moreover, the negative part of q is negligible, otherwise deleting it can only increase the cost by O(s2), but the overall ratio would be improved. Quantitatively, Lemma 4.1(f) shows that 
+
+ρ∗q+(S∗) ≤
+
+> (
+
+s
+
+2
+
+> )
+
++ c. 
+
+When c ≥ s(s − 1) /(2 β), some positive-weight singleton u ∈ S∗ has ratio at most 
+
+ρ({u}) ≤ 
+
+> (s
+> 2
+> )
+
++ cq+(S∗) ≤ ρ∗
+
+> (
+
+1 + s(s − 1) 2c
+
+> )
+
+≤ (1 + β)ρ∗.
+
+As β < ε , testing every positive-weight singleton finds a violated dual constraint in the gap case. 
+
+Small cost. In this case, even the error from the localized universe would overwhelm the margin, so we take a different route. The exact identity (Lemma 4.1(e)) 
+
+> ∑
+> v∈S∗
+
+|Γ+(v) △ S∗| = 2 c
+
+shows that, when c ≤ τ s 2, some positive neighborhood is O(εs )-close to S∗. A degree threshold around that neighborhood produces a superset U ⊇ S∗ with |U \ S∗| = O(c/s ). Among its s-subsets, a linear approximation to L can be minimized greedily. The discarded quadratic correction costs only O(|U \ S∗|2) = O(τ c ), below the εc gap margin. 
+
+Intermediate cost. Perhaps the most interesting case is the remaining one. Optimality of S∗
+
+implies that in any partition S∗ = A ˙∪ B, there will be many positive edges between A and B. In particular, the following key half-density bound holds (Lemma 4.1(c)) : 
+
+e+(A, B ) ≥ |A|| B|
+
+2 .
+
+Our localization procedure constructs, without knowing S∗, a small vertex set U whose intersection 
+
+S∗ ∩ U still has negative L-value. The set U itself need not have negative L-value, but our search for a negative witness can be restricted to a subset of U . Keeping U small is essential because we will later minimize L with additive error proportional to |U |2.To see why such a set must exist, consider an ideal adaptive process that starts from a pivot in S∗
+
+and subsequently samples pivots from the part of S∗ already in the current union of neighborhoods. Half density makes the first neighborhood capture at least half of S∗, and each later sampled pivot covers a constant fraction of the remaining vertices. Thus, the neighbours of O(log (1 /ε )) adaptive samples cover most of the vertices and positive q-weight of S∗. The algorithm enumerates the first pivot and samples from a superset of the optimum; one of its trials is then likely to succeed. It remains to recover a negative-L subset from U . For X ⊆ U , let x ∈ { 0, 1}U be its incidence vector. Expanding the definition of cost( X) gives 
+
+L(X) = ∑
+
+> {u,v }∈
+
+(U 
+
+> 2
+
+)(1 − 2 · 1[uv ∈ E+]) xuxv + ∑ 
+
+> u∈U
+> (
+
+d(u)2 − qu
+
+> )
+
+xu. (6) 5Thus the restriction of L to U is a quadratic pseudo-Boolean function. Write bu = d(u)/2 − qu. If some bu < 0, the singleton {u} itself is a violation. Otherwise b ≥ 0, and the weak regularity lemma of Frieze and Kannan can be used to approximate the number of edges between any two subsets. This approximation is then used to minimize the quadratic function on U to within an additive error smaller than the negative margin of L(R), thereby returning a set of negative L-value. Trying all s (guesses for |S∗|) and pivots covers the three possibilities. The only exceptional case is ρ∗ = 0 , which is easily recognizable by finding a positive-weight connected component forming a clique. The next sections formalize the above sketch, completing the proof of Theorem 2.1. 
+
+# 4 The large and small cost regimes 
+
+In this section we handle the two extreme cost regimes, which are comparatively simpler. The small-cost case is related to the intuition underlying the preclustering procedure of Cohen-Addad, Lee, Li, and Newman [ 23 ]: a cluster whose cost is small relative to its squared size is nearly a positive clique, so positive neighborhoods of its vertices approximate the cluster. We use this observation directly for the unknown optimum, without constructing a global preclustering. The weighted singleton argument and the reconstruction by linearization are specific to our ratio problem. We next collect some key identities and consequences of the optimality of S∗.
+
+Lemma 4.1. The following statements hold. (a) For every A ⊆ V ,
+
+cost( A) ≥ ρ∗q(A). (7) 
+
+(b) For every pair of disjoint sets A, B ⊆ V ,
+
+cost( A) + cost( B) = cost( A ∪ B) + 2 e+(A, B ) − | A|| B|. (8) 
+
+(c) For every partition S∗ = A ˙∪ B,
+
+e+(A, B ) ≥ |A|| B|
+
+2 .
+
+In particular, dS∗ (u) ≥ (|S∗| − 1) /2 for every u ∈ S∗ (take A = {u}, B = S∗ \ { u}). (d) For every X ⊆ S∗,
+
+cost( X) ≤ cost( S∗) + |X| | S∗ \ X|.
+
+(e) Let δv = |Γ+(v) △ S∗| for all v ∈ S∗. Then 
+
+> ∑
+> v∈S∗
+
+δv = 2 e−(S∗) + e+(S∗, V \ S∗) = 2 cost( S∗), (9) 
+
+> ∑
+> v∈S∗
+
+|d(v) − (|S∗| − 1) | ≤ 2 cost( S∗), e+(S∗, V \ S∗) ≤ 2 cost( S∗). (10) 
+
+(f) The positive q-weight of S∗ satisfies 
+
+ρ∗q+(S∗) ≤ 12
+
+> ∑
+> u∈S∗
+> qu>0
+
+d(u) ≤
+
+> (
+
+|S∗|
+
+2
+
+> )
+
++ cost( S∗). (11) 6Hence, whenever cost( S∗) ≥ τ |S∗|2,
+
+q+(S∗)
+
+q(S∗) ≤ 1 + |S∗|(|S∗| − 1) 2 cost( S∗) ≤ 1 + 12τ . (12) 
+
+Proof. (a) This is almost the definition of ρ∗ in Problem 2.2, except that the inequality in (7) is also required to hold when q(A) ≤ 0. But in that case, ρ∗q(A) ≤ 0 ≤ cost( A).(b) This is a consequence of (1). We have 
+
+cost( A ∪ B) = 
+
+(|A ∪ B|
+
+2
+
+)
+
++ 12
+
+∑
+
+> u∈A∪B
+
+d(u) − 2e+(A ∪ B).
+
+cost( A) + cost( B) = 
+
+(|A|
+
+2
+
+)
+
++
+
+(|B|
+
+2
+
+)
+
++ 12
+
+∑
+
+> u∈A∪B
+
+d(u) − 2e+(A) − 2e+(B),
+
+Using (a+b
+
+> 2
+
+) = (a
+
+> 2
+
+) + (b
+
+> 2
+
+) + ab , we get 
+
+cost( A) + cost( B) − cost( A ∪ B) = −| A|| B| + 2( e+(A ∪ B) − e+(A) − e+(B)) = −| A|| B| + 2 e+(A, B ).
+
+(c) For a partition S∗ = A ˙∪ B, (7) and (8) give 
+
+cost( S∗) + 2 e+(A, B ) − | A|| B| = cost( A) + cost( B) ≥ ρ∗(q(A) + q(B)) = cost( S∗).
+
+(d) Write D = S∗ \ X. By (8), nonnegativity of cost( D), and e+(D, X ) ≤ | D|| X|,
+
+cost( X) = cost( S∗) − cost( D) + 2 e+(D, X ) − | D|| X| ≤ cost( S∗) + |D|| X|.
+
+(e) For v ∈ S∗, separate the two sides of the symmetric difference by writing δv = av + bv, where 
+
+av = |S∗ \ Γ+(v)| = |S∗| − 1 − dS∗ (v), bv = |Γ+(v) \ S∗| = dV \S∗ (v).
+
+Every internal negative pair contributes to av at both endpoints, while every positive pair crossing from S∗ to V \ S∗ contributes to bv at its endpoint in S∗. Therefore 
+
+∑
+
+> v∈S∗
+
+δv = 2 e−(S∗) + e+(S∗, V \ S∗) = 2 cost( S∗),
+
+which proves (9). Since d(v) = dS∗ (v) + dV \S∗ (v), we obtain 
+
+d(v) = ( |S∗| − 1 − av) + bv.
+
+Hence 
+
+|d(v) − (|S∗| − 1) | = |bv − av| ≤ av + bv = δv.
+
+Summing the last inequality proves the first bound in (10), and 
+
+e+(S∗, V \ S∗) = ∑
+
+> v∈S∗
+
+bv ≤ ∑
+
+> v∈S∗
+
+(av + bv) = 2 cost( S∗)
+
+7proves the other one. (f) For every u ∈ S∗ with qu > 0, part (a) applied to {u} gives 
+
+ρ∗qu ≤ cost( {u}) = d(u)2 .
+
+Summing only over positive coordinates and then using the preceding bounds, 
+
+ρ∗q+(S∗) ≤ 12
+
+∑
+
+> u∈S∗
+> qu>0
+
+d(u) ≤ 12
+
+∑
+
+> u∈S∗
+
+d(u) = e+(S∗) + 12 e+(S∗, V \ S∗) ≤
+
+(|S∗|
+
+2
+
+)
+
++ cost( S∗).
+
+Dividing by cost( S∗) = ρ∗q(S∗) > 0 proves the claim. 
+
+4.1 Large-cost: singleton sets 
+
+Corollary 4.2. Some u ∈ S∗ with qu > 0 satisfies 
+
+ρ({u}) ≤ ρ∗
+
+(
+
+1 + |S∗|(|S∗| − 1) 2 cost( S∗)
+
+)
+
+. (13) 
+
+Consequently, if cost( S∗) ≥ | S∗|(|S∗| − 1) /(2 ε), then some singleton is a (1 + ε)-approximation. Proof. Let P = {u ∈ S∗ : qu > 0}. Weighted averaging, q+(S∗) ≥ q(S∗) > 0, and (11) give 
+
+min  
+
+> u∈P
+
+ρ({u}) = min 
+
+> u∈P
+
+d(u)2qu
+
+≤
+
+> 12
+
+∑ 
+
+> u∈P
+
+d(u)
+
+q+(S∗) ≤
+
+(|S∗|
+
+> 2
+
+) + cost( S∗)
+
+q(S∗) = ρ∗
+
+(
+
+1 + |S∗|(|S∗| − 1) 2 cost( S∗)
+
+)
+
+.
+
+4.2 Small cost: near-clique reconstruction by linearization 
+
+We use the fixed objective L(T ) = cost (T ) − q(T ). The candidate construction comes from a simple identity for sets of a fixed cardinality. 
+
+Lemma 4.3. Fix a target cardinality t, a set U ⊆ V , and a set D ⊆ U of size |U | − t. Then 
+
+L(U \ D) = KU,t + ∑
+
+> u∈D
+
+(
+
+2dU (u) − 12 d(u) + qu
+
+)
+
+− 2e+(D), (14) 
+
+where 
+
+KU,t =
+
+(t
+
+2
+
+)
+
++ 12
+
+∑
+
+> u∈U
+
+d(u) − 2e+(U ) − q(U )
+
+is independent of D.Proof. Put X = U \ D, so |X| = t. Equation (1) gives 
+
+L(X) = 
+
+(t
+
+2
+
+)
+
++ 12
+
+∑
+
+> u∈X
+
+d(u) − 2e+(X) − q(X).
+
+8Moreover, ∑
+
+> u∈X
+
+d(u) = ∑
+
+> u∈U
+
+d(u) − ∑
+
+> u∈D
+
+d(u), q(X) = q(U ) − q(D),
+
+and 
+
+e+(X) = e+(U ) − ∑
+
+> u∈D
+
+dU (u) + e+(D).
+
+For the last identity, edges between D and X are counted once by ∑ 
+
+> u∈D
+
+dU (u), while edges inside D are counted twice. Substituting these three identities proves (14). Thus, among fixed-cardinality deletions, the linear effect of deleting u is 
+
+σu = 2 dU (u) − 12 d(u) + qu; (15) the only nonlinear correction comes from the term −2e+(D).For each guessed cardinality t ∈ [n], each v ∈ V , let A = Γ +(v) and define the neighborhood 
+
+U = {u ∈ V : dA(u) ≥ t/ 3}; (16) If |U | ≥ t, our procedure outputs the set T of the t vertices of U with the highest score σu.The intuition is as follows. The set A itself may miss vertices of the unknown optimum, but since A is close to S∗, every vertex of S∗ has many positive neighbors in A. Thus, S∗ is entirely contained in the neighborhood U . Conversely, every vertex in U from outside S∗ has many positive edges into S∗, which allows us to upper-bound the number of such extra vertices. This, in turn, allows us to bound the error we make by minimizing the linear approximation to (14) (i.e., by discarding the 2e+(D) term during minimization). 
+
+Lemma 4.4. Suppose 0 < cost (S∗) ≤ |S∗|2 
+
+> 200
+
+. Then, for some pivot v, the candidate constructed with 
+
+t = |S∗| satisfies 
+
+L(T ) ≤ L(S∗) + 64 cost( S∗)2
+
+|S∗|2 .
+
+Proof. By Lemma 4.1(e), choose v ∈ S∗ such that 
+
+|Γ+(v) △ S∗| ≤ 2 cost( S∗)
+
+|S∗| ≤ |S∗|
+
+100 .
+
+Put A = Γ +(v) and form U using (16) with t = |S∗|.For every u ∈ S∗, Lemma 4.1(c) gives 
+
+dA(u) ≥ dS∗ (u) − | S∗ \ A| ≥ |S∗| − 12 − |S∗|
+
+100 ≥ |S∗|
+
+3 .
+
+Thus S∗ ⊆ U . Conversely, every u ∈ U \ S∗ satisfies, by (16), 
+
+dS∗ (u) ≥ dA(u) − | A \ S∗| ≥ |S∗|
+
+3 − |S∗|
+
+100 ≥ |S∗|
+
+4 .
+
+These positive edges cross the cut of S∗, so 
+
+|U \ S∗| |S∗|
+
+4 ≤ e+(S∗, V \ S∗) ≤ 2 cost( S∗).
+
+9In particular, 
+
+|U \ S∗| ≤ 8 cost( S∗)
+
+|S∗| . (17) Recall that both S∗ and T have the same size and, by design, T minimizes the linear part of (14) among all subsets of U . Therefore, by (17), 
+
+L(T ) ≤ L(S∗) + 2 e+(U \ S∗) ≤ L(S∗) + |U \ S∗|2 ≤ L(S∗) + 64 cost( S∗)2
+
+|S∗|2 .
+
+# 5 The intermediate regime 
+
+We now assume the remaining regime applies: 
+
+τ |S∗|2 < cost( S∗) < 1
+
+β
+
+> (
+
+|S∗|
+
+2
+
+> )
+
+. (18) 
+
+5.1 Localization 
+
+The goal of this section is to generate a family of candidate universes, one of which has size Oβ (s)
+
+and omits only a small number of vertices and positive q-weight from the unknown optimum S∗.The algorithm makes a guess s for the size of S∗; one of them will be correct ( s = |S∗|). For each s, define the low-degree set 
+
+Ls =
+
+> {
+
+u ∈ V : d(u) ≤ s − 1 + 100 sβ
+
+> }
+
+. (19) By Lemma 4.1(e), low-degree vertices comprise the majority of S∗ (and in particular, Ls̸ = ∅): 
+
+|S∗ \ Ls| ≤ 2cβ 
+
+100 s < s
+
+100 . (20) We start with a low-degree pivot in S∗ and then repeatedly choose random low-degree pivots from the current cumulative neighborhood. We try all elements of Ls as candidate starting pivots. For a candidate pivot v1 ∈ Ls, we perform a number of independent trials. Each trial starts with the given pivot and runs for k = 6 + 
+
+> ⌈
+
+log 5/4 8
+
+> ατ
+> ⌉
+
+iterations, starting with v1. Set U1 = Γ +(v1). At iteration 
+
+i = 1 , . . . , k − 1, sample vi+1 uniformly from the current cumulative low-degree neighborhood 
+
+Qi = Ui ∩ Ls
+
+and set Ui+1 = Ui ∪ Γ+(vi+1 ). Abort the current trial if Qi = ∅. The number of trials per pivot is 
+
+R0 = 
+
+> ⌈
+
+20 
+
+p0
+
+> ⌉
+
+, p0 = 
+
+> (
+
+β
+
+303 k
+
+> )k−1
+
+. (21) 
+
+Lemma 5.1. Under (18) , with probability at least 1 − e−10 , the family above contains a set U such that 
+
+|S∗ \ U | ≤ αc s , q+(S∗ \ U ) ≤ αq (S∗), |U | ≤ 101 ks β . (22) 10 Moreover, the number of restarts R0 satisfies R0 = 2 O(log 2(1 /β )) .Proof. Fix a first pivot v1 ∈ S∗ ∩ Ls, which exists by (20) . Suppose all pivots chosen so far lie in 
+
+S∗ ∩ Ls, and write 
+
+Xi = S∗ \ Ui, Yi = S∗ ∩ Ui, Ci = Yi ∩ Ls.
+
+Since Yi contains S∗ ∩ Γ+(v1), Lemma 4.1 (c) gives 
+
+|Yi| ≥ s + 1 2 , |Xi| ≤ s − 12 , |Ci| ≥ | Yi| − | S∗ \ Ls| ≥ s
+
+3 .
+
+Every selected pivot belongs to Ls by construction, so 
+
+|Qi| ≤ | Ui| ≤ i · max 
+
+> u∈Ls
+
+|Γ+(u)| ≤ i · 101 sβ . (23) Therefore, conditional on past choices, the next pivot lies in Ci with probability |Ci|/|Qi| ≥ β/ (303 i).
+
+The ideal process. To analyze the successful pivot sequences without conditioning bias, consider momentarily an ideal process wherein the next pivot vi+1 is sampled uniformly from Ci, rather than 
+
+Qi. An uncovered vertex w ∈ Xi enters Ui+1 exactly when w is a positive neighbor of vi+1 , which occurs with probability dCi (w)/|Ci| in this ideal process. Hence 
+
+E[|Xi+1 | | Ui] = |Xi| − e+(Xi, C i)
+
+|Ci| .
+
+By Lemma 4.1(c), e+(Xi, Y i) ≥ | Xi|| Yi|/2, while at most |S∗ \ Ls| · | Xi| of these edges end in Yi \ Ls.Using |Ci| ≤ | Yi|, |Ci| ≥ s/ 3, and |S∗ \ Ls| < s/ 100 ,
+
+E[|Xi+1 | | Ui] ≤ | Xi|
+
+( 12 + |S∗ \ Ls||Ci|
+
+)
+
+≤ 35 |Xi|.
+
+Thus 
+
+E[|Xi|] ≤
+
+( 35
+
+)i−1 s
+
+2 . (24) By Markov’s inequality, Pr [|X6| > s/ 4] ≤ 2
+
+( 35
+
+)5
+
+≤ 16 . The sets Ui increase with i, so the sets 
+
+Xi = S∗ \ Ui decrease. Therefore, on the event |X6| ≤ s/ 4, we have |Xi| ≤ s/ 4 for every i ≥ 6. For any v ∈ Xi on this event, 
+
+dCi (v) ≥ dS∗ (v) − (|Xi| − 1) − | S∗ \ Ls| ≥ s − 12 −
+
+( s
+
+4 − 1
+
+)
+
+− s
+
+100 ≥ s
+
+5 .
+
+Since |Ci| ≤ s, every remaining vertex is captured with probability ≥ 1/5. By linearity of expectation, 
+
+E[q+(Xi+1 )1|X6|≤ s/ 4 | Ui
+
+] ≤ 45 q+(Xi)1|X6|≤ s/ 4.
+
+Consequently, 
+
+E[q+(Xk)1|X6|≤ s/ 4
+
+] ≤
+
+( 45
+
+)k−6
+
+q+(S∗). (25) 11 Success probability of the ideal process. By our choice of k, 
+
+> (
+
+45
+
+> )k−6
+
+≤ ατ 
+
+8 , 
+
+> (
+
+35
+
+> )k−1
+
+≤ 
+
+> (
+
+45
+
+> )k−6
+
+≤ ατ 
+
+8 .
+
+Using c ≥ τ s 2, (24) , and Markov’s inequality, Pr [|Xk| > αc s 
+
+> ]
+
+≤ 116 . For the signed q-weight, use 
+
+q(Xk) ≤ q+(Xk) and, more strongly, Lemma 4.1(f): 
+
+Pr [q+(Xk) > αq (S∗) ∧ | X6| ≤ s/ 4] ≤ (4 /5) k−6q+(S∗)
+
+αq (S∗)
+
+≤ τ
+
+8
+
+> (
+
+1 + 12τ
+
+> )
+
+= τ
+
+8 + 116 < 18 .
+
+All together, the ideal process satisfies the first two inequalities of (22) with probability at least 1/2.
+
+Comparison with the actual process. Fix a pivot sequence that the ideal process can generate. This sequence determines the same sets Ui, Ci, and Qi in both processes. At step i, the ideal process chooses its prescribed next pivot with probability 1/|Ci|, whereas the actual process chooses it with probability 1/|Qi|. Thus the ratio of the probabilities of the entire sequence is 
+
+> k−1∏
+> i=1
+
+|Ci||Qi| ≥
+
+> k−1∏
+> i=1
+
+β
+
+303 i ≥ p0.
+
+Summing this inequality over all good sequences of the ideal process, whose total probability is at least 1/2, shows that one actual trial is good with probability at least p0/2. Hence (21) makes the probability that all trials fail at most e−10 . Finally, (23) gives |Uk| ≤ 101 ks/β . Since 
+
+k = O(log(1 /β )) , p−10 = 2 O(log 2(1 /β )) .
+
+5.2 Recovery: extracting a negative witness 
+
+Fix the true s, and a localization output U satisfying (22) . Let R = S∗ ∩ U, D = S∗ \ U. By Lemma 4.1(d), 
+
+cost( R) ≤ c + |D|| R| ≤ (1 + α)c. 
+
+Moreover, 
+
+q(R) = q(S∗) − q(D) ≥ q(S∗) − q+(D) ≥ (1 − α)q(S∗).
+
+The gap condition (4) gives q(S∗) > (1 + ε)c. Therefore 
+
+L(R) < (1 + α)c − (1 − α)(1 + ε)c = ( −ε + 2 α + αε )c ≤ − 4αc. (26) For T ⊆ U , let xu = 1[u ∈ T ]. Equation (6) gives 
+
+L(x) = ∑
+
+> {u,v }⊆ U
+
+(1 − 2 · 1[uv ∈ E+]) xuxv + ∑
+
+> u∈U
+
+buxu, where bu = 12 d(u) − qu. (27) If some u ∈ U has bu < 0, then necessarily qu > 0 and L({u}) = d(u)2 − qu = bu < 0. Thus this singleton is already a violated dual constraint. Otherwise b ≥ 0 on all of U .In order to detect a violated dual constraint, all that remains is to find T ⊆ U , x = 1[T ],12 minimizing the quadratic in (27) up to error ξ0|U |2, where 
+
+ξ0 = ατ 
+
+4
+
+( β
+
+101 k
+
+)2
+
+. (28) Indeed, because |U | ≤ 101 ks/β and c ≥ τ s 2, this would yield 
+
+ξ0|U |2 ≤ ατ s 2
+
+4 ≤ αc 
+
+4 .
+
+Together with (26), the returned set T ⊆ U satisfies 
+
+L(T ) ≤ min  
+
+> X⊆U
+
+L(X) + ξ0|U |2 < − 15 4 αc < 0.
+
+Let A be the symmetric zero-diagonal matrix with Auv = 1 − 2 · 1[uv ∈ E+] for u̸ = v. We have shown that it suffices to establish the following lemma: 
+
+Lemma 5.2. Let A be a symmetric n × n matrix with zero diagonal and entries in [−1, 1] , and let 
+
+b ∈ Qn
+
+> ≥0
+
+. For 
+
+Φ( x) = 12 xTAx + bTx, x ∈ { 0, 1}n,
+
+and every ξ > 0, one can, with constant success probability, find x ∈ { 0, 1}n such that 
+
+Φ( x) ≤ min  
+
+> y∈{ 0,1}n
+
+Φ( y) + ξn 2
+
+in time 
+
+2poly(1 /ξ ) + poly(1 /ξ )n, 
+
+in the RAM model with unit-cost query access to each entry of A.
+
+5.3 A near-linear dense quadratic subroutine 
+
+We follow the approach from the manuscript of Bonchi, García-Soriano, and Kutzkov [ 9 , Section 5], who used the weak regularity lemma of Frieze and Kannan [ 26 , Theorem 1 and Section 4.2] to design their second local computation algorithm for correlation clustering. 1
+
+Our algorithm works directly with the cut decomposition, used to approximate edge counts between arbitrary subsets with bounded error. We discretize the intersection sizes of a solution with each cut set and group together vertices that are indistinguishable to both the decomposition and a coarsened linear objective. Every resulting LP then has size depending only on ξ.For a generic N × N matrix A′ with entries in [−1, 1] and R, S ⊆ [N ], write 
+
+A′(R, S ) = ∑
+
+> i∈R
+
+∑
+
+> j∈S
+
+A′ 
+
+> ij
+
+= 1RA′1T 
+
+> S
+
+.
+
+Given an accuracy δ > 0, the weak regularity lemma produces, with constant success probability,    
+
+> 1The direct enumeration of all kℓmappings in the argument for Lemma 5.2 of [ 9] is too expensive to achieve the stated running time; the approach we take here circumvents this gap.
+
+13 an implicit decomposition 
+
+˜A =
+
+> w
+
+∑
+
+> r=1
+
+dr1Rr 1T 
+
+> Sr
+
+, w = poly(1 /δ ), (29) such that ∣∣∣∣∣A′(R, S ) −
+
+> w
+
+∑
+
+> r=1
+
+dr|R ∩ Rr| | S ∩ Sr|
+
+∣∣∣∣∣ ≤ δN 
+
+√
+
+|R|| S| ∀R, S ⊆ [N ]. (30) Moreover, the dr satisfy ( w∑
+
+> r=1
+
+d2
+
+> r
+
+)1/2
+
+≤ √27 < 6. (31) Indeed, equation (42) in Section 4.2 of [26] gives 
+
+13
+
+> w
+
+∑
+
+> r=1
+
+|Rr| | Sr|d2 
+
+> r
+
+≤ ∥ A′∥2 
+
+> F
+
+.
+
+The construction ensures |Rr|, |Sr| ≥ N/ 3, while ∥A′∥2 
+
+> F
+
+≤ N 2, and hence ∑ 
+
+> r
+
+d2 
+
+> r
+
+≤ 27 .For constant failure probability, Theorem 1 of [ 26 ] constructs this implicit decomposition in 
+
+˜O(δ−12 ) time and queries into the matrix A′. It describes the cut sets implicitly and does not construct the atoms of the partition that they induce. Evaluating the memberships of all N indices in the 2w cut sets takes N poly(1 /δ ) total time. 
+
+Proof of Lemma 5.2. The assertion is immediate for ξ ≥ 1, so assume 0 < ξ < 1. By decreasing 
+
+ξ by at most a factor of two, we may further assume that it is dyadic and has encoding length 
+
+O(log(1 /ξ )) ; we rename the resulting accuracy parameter ξ.
+
+Removing large linear coefficients. If we fix all xu but one, Φ becomes linear in the remaining coordinate because A is zero on the diagonal. It follows that no optimum contains a coordinate u
+
+with bu ≥ n. Indeed, if xu = 1 and x′ = x − eu, then Φ( x′) − Φ( x) = −bu − ∑  
+
+> v̸=u
+
+Auv xv < 0. Delete these coordinates and let V0 be the remaining set, of size n0 = |V0|. The optimum is unchanged; if 
+
+n0 = 0 , then return x = 0 .
+
+The cut surrogate. Apply the decomposition above to A[V0, V 0] with δ = ξ 
+
+> 4
+
+. Let H consist of all row and column sets Rr, S r, let D = |H| ≤ 2w, and put L = ∑wr=1 |dr| ≤ 6√w. For X ⊆ V0, define 
+
+zH (X) = |X ∩ H| (H ∈ H ), P (z(X)) = 12
+
+> w
+
+∑
+
+> r=1
+
+drzRr (X)zSr (X).
+
+Taking R = S = X in (30) gives the uniform estimate 
+
+∣∣∣∣
+
+12 1T 
+
+> X
+
+A1X − P (z(X)) 
+
+∣∣∣∣ ≤ δn 20
+
+2 . (32) Moreover, for all z, z ′ ∈ [0 , n 0]H,
+
+|P (z) − P (z′)| ≤ Ln 0∥z − z′∥∞, (33) because |ab − a′b′| ≤ n0|a − a′| + n0|b − b′| for a, b, a ′, b ′ ∈ [0 , n 0].14 Thus P (z(X)) approximates the quadratic term 12 1T 
+
+> X
+
+A1X in Φ( 1X ). To minimize the full objective, we enumerate small boxes for the counting vector z(X). Since P depends only on 
+
+z(X), (33) makes it nearly constant within a box. The linear term behaves differently: two sets with the same cut counts may select vertices with very different coefficients bu. We therefore minimize the linear term subject to the box constraints; the box containing an optimum of Φ then yields a near-optimal candidate. To make the size of these LPs independent of n0, we first coarsen b: vertices with the same cut-set memberships and the same rounded coefficient become interchangeable. 
+
+Coarsening and aggregating the linear term. Set 
+
+h = ξn 
+
+8 , bu = h 
+
+> ⌈
+
+bu
+
+h
+
+> ⌉
+
+(u ∈ V0).
+
+Thus 
+
+0 ≤ bT1X − bT1X < h |X| ≤ hn 0 (X ⊆ V0). (34) Because bu < n , the integer bu/h has O(1 /ξ ) possible values. Place two vertices in the same class if they have the same membership vector in the sets of H
+
+and the same value of bu/h . Let C be the collection of nonempty classes, and write bC = hj C for the common rounded coefficient of class C. Then 
+
+|C| ≤ 2D
+
+> (
+
+2 +  
+
+> ⌈
+
+8
+
+ξ
+
+> ⌉)
+
+= 2 poly(1 /ξ ). (35) The classes and their vertex lists are obtained in one scan of V0.
+
+Parameter-sized box LPs. Put η = ξ 
+
+> 4(1+6 w)
+
+. Since L ≤ 6√w ≤ 1 + 6 w, we still have Lη ≤ ξ/ 4.If n0 < 4D/η , exhaustive search takes 2poly(1 /ξ ) time, so assume n0 ≥ 4D/η . Enumerate the axis-parallel grid boxes of side length ∆ = ηn 0/2 in [0 , n 0]D. There are (O(1 /η )) D = 2 poly(1 /ξ ) such boxes. For each box ∏
+
+> H∈H
+
+[tH , t H + ∆] , where t = ( tH )H∈H is its lower-corner vector, solve                 
+
+> minimize ∑
+> C∈C
+> jCyC,
+> subject to 0≤yC≤ | C|(C∈ C ),tH≤∑
+> C∈C
+> C⊆H
+> yC≤tH+ ∆ (H∈ H ).
+> (36)
+
+In this aggregated LP, yC represents how many vertices of class C are selected. By definition, for every C ∈ C and H ∈ H either C ⊆ H or C ∩ H = ∅. Hence ∑ 
+
+> C⊆H
+
+yC is the number of selected vertices in H, i.e., the H-coordinate of the counting vector; the last constraints require this vector to lie in the current box. The LP has 2poly(1 /ξ ) variables and constraints, independently of n.If the LP is feasible, take an optimal basic solution and put ̂ yC = ⌊yC ⌋. At most 2D variables can be strictly between their bounds; otherwise the active aggregate constraints cannot determine a basic solution. Rounding down cannot increase the LP objective and decreases each H-coordinate by at most 0 ≤ ∑ C∈C 
+
+> C⊆H
+
+(yC −̂ yC ) < 2D ≤ ∆, because n0 ≥ 4D/η and ∆ = ηn 0/2. The resulting integral class counts define a set Y ⊆ V0 by taking the prescribed number of arbitrary vertices from each class. At this stage we store only the count vector, rather than materializing Y .15 For every candidate Y , compute only the surrogate 
+
+Ψ( Y ) = P (z(Y )) + bT1Y , (37) which is determined by its class counts. Return the candidate minimizing Ψ; in particular, do not query all entries of A[Y, Y ]. Only after the best count vector has been found do we materialize Y .
+
+Approximation guarantee. Let X⋆ be an optimum solution, which by the first paragraph is contained in V0, and consider the box containing z(X⋆). Its aggregate count vector is feasible for (36). If Y0 is the rounded candidate obtained from an optimal basic solution in this box, then 
+
+bT1Y0 ≤ bT1X⋆ , ∥z(Y0) − z(X⋆)∥∞ ≤ 2∆ = ηn 0.
+
+Let Y be the candidate returned. Using (32), (33), (34), and Ψ( Y ) ≤ Ψ( Y0), we obtain 
+
+Φ( 1Y ) ≤ Ψ( Y ) + δn 20
+
+2
+
+≤ Ψ( Y0) + δn 20
+
+2
+
+≤ P (z(X⋆)) + bT1X⋆ + Lηn 20 + δn 20
+
+2
+
+≤ Φ( 1X⋆ ) + ( δ + Lη )n20 + hn 0
+
+≤ Φ( 1X⋆ ) + ξn 2.
+
+The last inequality uses δ = ξ/ 4, Lη ≤ ξ/ 4, h = ξn/ 8, and n0 ≤ n.
+
+Running time. Constructing the implicit cut decomposition and evaluating all cut signatures costs n0 poly (1 /ξ ). Bucketing the linear coefficients, constructing the nonempty classes, and materializing the answer costs n poly (1 /ξ ) arithmetic operations. After coarsening, b enters the aggregated LPs only through the integers jC ∈ { 0, . . . , ⌈8/ξ ⌉} . There are 2poly(1 /ξ ) boxes, and each aggregated LP has 2poly(1 /ξ ) variables and constraints. Since ξ is dyadic, w = poly (1 /ξ ), and η =
+
+ξ/ (4(1+6 w)) , the coefficients and right-hand sides of these rational LPs have O(log n+ poly (log (1 /ξ ))) 
+
+bits. A weakly polynomial algorithm for linear programming therefore solves all the LPs in time at most 2poly(1 /ξ )(1 + log n)O(1) ≤ 2poly(1 /ξ ) + O(n), This bounds the total running time by 
+
+2poly(1 /ξ ) + n poly(1 /ξ ).
+
+# 6 Putting it all together 
+
+Proof of Theorem 2.1. We may assume that 0 < ε ≤ 1/4 and q+(V ) > 0. The algorithm first tests whether a connected component K is a clique and has q(K) > 0. If so, it returns K, which satisfies 
+
+q(K) > cost( K) = 0 . Otherwise it generates the following candidates: (i) every singleton {u} with qu > 0;(ii) for every s ∈ [n] and v ∈ V , the near-clique candidate of Section 4.2, whenever it is defined; (iii) for every s ∈ [n], every first pivot v1 ∈ Ls, and every localization trial of Section 5.1, the output of the recovery procedure from Section 5.2. 16 It evaluates L(T ) = cost (T ) − q(T ) exactly for every candidate, returning one with L(T ) < 0, if found. If none has negative value, it returns the certificate q/ (1 + ε).To prove correctness, let S∗ be an optimum, with s = |S∗|, c = cost (S∗), and objective value 
+
+ρ∗. The initial test handles the case ρ∗ = 0 , so suppose now that ρ∗ > 0. If ρ∗ ≥ 1/(1 + ε), then Lemma 4.1(a) shows that the returned certificate is feasible. It remains to consider the gap case (4) , which gives L(S∗) < −εc . If c ≥ s(s − 1) /(2 β),Corollary 4.2 gives a positive-weight singleton of ratio at most (1 + β)ρ∗ < 1, and family (i) contains a negative-L candidate. If 0 < c ≤ τ s 2, then (5) gives τ ≤ 1/200 and 64 τ < ε . Lemma 4.4 returns a candidate T with 
+
+L(T ) ≤ L(S∗) + 64 c2
+
+s2 < −εc + 64 τ c < 0,
+
+so family (ii) contains a negative-L candidate. In the remaining case, (18) holds. In one execution of the randomized construction of family (iii), Lemma 5.1 supplies a suitable universe with probability at least 1 − e−10 and, conditional on this event, Lemma 5.2 supplies a negative-L candidate with constant probability. Repeat the entire construction of family (iii) independently a constant number of times and evaluate L(T ) exactly for every returned candidate, as described above. Thus no execution can produce a false violation, while with probability at least 2/3 some execution produces a negative-L candidate. There are polynomially many loops over s and pivots. The localization overhead is 2O(log 2(1 /β )) ,and 1/ξ 0 = poly(1 /ε ). Lemma 5.2 therefore gives total running time 2poly(1 /ε )(n + ⟨q⟩)O(1) .
+
+# 7 Rounding the cluster LP 
+
+We describe how to round any feasible solution z = ( zS )S⊆V of the cluster LP. Our analysis is broadly based on the framework of Cao et al. [ 16 , Sections 2.2 and 6]. In both approaches, one runs cluster-based rounding and a pivot-based rounding (the details of which differ), analyzes the cheaper output through a convex combination, and studies the pivot procedure by assigning budgets to pairs that are released when an endpoint is removed. Cao et al.’s 1.485 analysis uses a factor-revealing SDP whose variables describe the global frequencies of discretized triangle types and whose positive-semidefinite constraints encode covariance and frequency consistency. Our rounding rule is more flexible: rather than switching among a few fixed regimes, the conditional rule (40) lets both the marginal joining probability and the loading on membership in the sampled cluster vary continuously with the LP value. The analyses also differ in how they use the global constraints. The factor-revealing reduction of Cao et al. replaces the surplus of every triangle in a discretization cell by a common lower bound before imposing the global constraints. Instead, we give an explicit certificate made from a single variance computation, with all of the rounding data and the certificate weight given in closed form, and verify the resulting local inequalities directly over the continuous locally feasible region by exact rational arithmetic. 
+
+Theorem 7.1 (Rounding the cluster LP) . There is a randomized polynomial-time algorithm which, given a MinDisagree instance on a complete signed graph and a feasible solution z of (2) , returns a clustering A satisfying 
+
+E[cost( A)] ≤ α0
+
+> ∑
+> S⊆V
+
+cost( S)zS , where α0 := 1 .3865 .
+
+Moreover, if z is given explicitly and zS ≥ ∆ for every S in its support, the algorithm can be implemented in expected time ˜O(n/ ∆2) in the adjacency-list query model. 
+
+17 As in the rounding of Cao et al. [ 16 , Section 2.2], both procedures can be derandomized by the standard method of pessimistic estimators of conditional expectation [4]. 
+
+7.1 The two rounding procedures 
+
+For distinct vertices put 
+
+yuv := ∑
+
+> S⊇{ u,v }
+
+zS , yuvw := ∑
+
+> S⊇{ u,v,w }
+
+zS .
+
+Fixing u, the weights (zS )S∋u form a probability distribution. Thus, if S is sampled from this distribution and Av := 1[v ∈ S], then E[Av] = yuv and E[AvAw] = yuvw .
+
+Using 1 ≥ Pr [X ∨ Y ] = Pr [X] + Pr [Y ] − Pr [X ∧ Y ], we get the local feasibility conditions that every three distinct vertices u, v, w need to satisfy: 
+
+max {0, y uv + yuw − 1, y uv + yvw − 1, y uw + yvw − 1} ≤ yuvw ≤ min {yuv , y uw , y vw }. (38) The LP contribution of a pair uv with LP value y = yuv is ℓ+(y) = 1 − y, ℓ −(y) = y, and therefore 
+
+> ∑
+> S⊆V
+
+cost( S)zS = ∑
+
+> uv ∈
+
+(V 
+
+> 2
+
+)
+
+ℓσ(uv )(yuv ).
+
+We run the two rounding procedures below independently and return the cheaper clustering. For the faster implementation in Theorem 7.1, we instead choose at random which one of the two procedures to run; we return to this variant in the proof of the theorem. 
+
+Cluster-based rounding C. Repeatedly perform the following: First, draw a set with probability proportional to zS . Then, output S intersected with the currently unclustered vertices as a new cluster, if this intersection is nonempty. Repeat until all vertices have been clustered. For a pair 
+
+uv of LP value y = yuv , the probability of ending together is y/ (2 − y) [ 16 , Lemma 6]. Hence the expected disagreement cost, according as the edge is positive or negative is, respectively, 
+
+κ+(y) = 2(1 − y)2 − y , κ−(y) = y
+
+2 − y . (39) The ratio between the expected disagreement cost and the LP cost is 2/(2 − y) ≤ 2 (resp., 
+
+1/(2 − y) ≤ 1) for positive (resp., negative) pairs. Thus, cluster-based rounding performs particularly well on the latter. Pivot rounding, described next, helps balance the tradeoff. 
+
+Conditional pivot rounding P. In one round, choose a uniformly random alive (unclustered) pivot u, sample S ∋ u according to (zS )S∋u, and then independently add every other alive vertex v
+
+with probability 
+
+π(Av, y uv ) := μσ(yuv ) + γσ(yuv ) ( Av − yuv ), Av = 1[v ∈ S], (40) where σ = σ(uv ) is the sign of the pair. Here Av records whether v belongs to the LP cluster S
+
+sampled from the pivot. Since E[Av] = yuv , conditional on the pivot u the probability that v joins the cluster of u is μσ(yuv ), while γσ controls how strongly the decision follows membership in S.Equivalently, the rule is implemented with two coins: after sampling S, add v with probability 
+
+p1(y) := μσ(y) + γσ(y)(1 − y) if v ∈ S, and with probability p0(y) := μσ(y) − γσ(y) y otherwise; the 18 functions below satisfy 0 ≤ p0 ≤ p1 ≤ 1, so this is well defined. A special case of this conditional-affine family is the hybrid pivot rounding in [ 16 , Algorithm 4]: their independent regimes have γ = 0 , whereas their dependent regime has (μ, γ ) = ( y, 1) .
+
+Our rules. We specify the closed-form rules that we use. Write 
+
+λ := α0
+
+2 − α0
+
+= 2773 1227 ≈ 2.26 , ν := 13 6 , q(y) := 
+
+> [
+
+ν(y − 12
+
+> )]
+> [0 ,1]
+
+, (41) where [·][0 ,1] denotes truncation to [0 , 1] . Then we set 
+
+μ+(y) = y + (1 − y)q(y), γ+(y) = 1 − q(y); μ−(y) = min   
+
+> {32
+
+y, 2y − y2}
+
+, γ−(y) = 0 . (42) For a positive pair this is exactly p1(y) = 1 and p0(y) = q(y): every member of the sampled cluster joins, and an outsider is rescued independently with probability q(y). The rescue probability vanishes for y ≤ 12 , where the rule follows the sampled cluster exactly, and reaches 1 at y = 12 + 1 
+
+> ν
+
+= 25 26 ≈ 0.962 ,above which every vertex joins. For a negative pair the decision ignores S and joins with probability 
+
+μ−(y), which equals 32 y for y ≤ 12 and 2y − y2 for y ≥ 12 . The first expression lies in [0 , 34 ] and the second in [ 34 , 1] . Thus both conditional joining probabilities lie in [0 , 1] . In particular μ−(0) = 0 and 
+
+μ+(1) = 1 : pairs of zero LP cost are always decided correctly. If all three vertices are alive and distinct, then at every round 
+
+Muv := Pr[ v joins | u pivot ] = μσ(uv )(yuv ), (43) 
+
+Ju(v, w ) := Pr[ v, w both join | u pivot ] = Muv Muw + γσ(uv )(yuv ) γσ(uw )(yuw )(yuvw − yuv yuw 
+
+> )
+
+. (44) 
+
+7.2 Budgets left for the pivot procedure 
+
+The two procedures are good on different pairs, and we combine their guarantees pairwise. Since the algorithm returns the cheaper clustering, for every ω ∈ [0 , 1] 
+
+E[min {cost( C), cost( P)}] ≤ ω E[cost( C)] + (1 − ω) E[cost( P)] ,
+
+so it suffices to bound the right-hand side. We take ω := α0 
+
+> 2
+
+as an analysis-only parameter: the algorithm runs both procedures and keeps the better clustering. We aim for every pair to contribute at most α0 times its LP cost. By (39) a pair of sign σ and LP value y contributes exactly κσ(y) to E[ cost (C)] , so the amount ωκ σ(y) of its target α0ℓσ(y) is already spent. Dividing what remains by the weight 1 − ω of the pivot procedure leaves it the budget 
+
+Bσ(y) := α0ℓσ(y) − ωκ σ(y)1 − ω , so that ωκ σ(y) + (1 − ω)Bσ(y) = α0ℓσ(y).
+
+Since ω = α0/2, these are explicitly, with λ as in (41), 
+
+B+(y) = 2 λ (1 − y)2
+
+2 − y , B−(y) = λ y(3 − 2y)2 − y , (45) and they satisfy the identity B+(y) + B−(y) = λ for every y, because 2(1 − y)2 + y(3 − 2y) = 2 − y.For a pair e we abbreviate Be := Bσ(e)(ye), κe := κσ(e)(ye) and ℓe := ℓσ(e)(ye). The budget is a bookkeeping quantity, invisible to the algorithm: in the analysis it is a credit attached to the pair 
+
+e and released in the one round in which the fate of e is decided. The whole argument consists 19 in showing that, round by round, the credit released covers the cost incurred; by the calibration identity above, E[cost( P)] ≤ ∑ 
+
+> e
+
+Be is exactly what is needed. 
+
+7.3 Analysis 
+
+Throughout this subsection we fix one round of the pivot procedure and condition on the whole history of the algorithm before that round; let W be the alive set at its start. Every expectation below is conditional on that history, and Eu denotes the expectation conditioned in addition on the pivot of the round being u. The pivot is uniform on W : each u ∈ W occurs with probability 1/|W |.For v ∈ W let 
+
+Xv := 1[v joins the cluster built in this round ],
+
+so that Xu = 1 for the pivot u itself. In this notation, (43) and (44) read, for distinct v, w ∈ W \ { u},
+
+Eu[Xv] = Muv , Eu[XvXw] = Ju(v, w ), (46) 
+
+Decided edges, payments, and released budgets. Call a pair e ∈ (W 
+
+> 2
+> )
+
+decided in this round if at least one of its endpoints joins the cluster. Such a pair leaves the alive set and is settled for good. An undecided pair keeps both endpoints alive. Every pair is decided in exactly one round, and it contributes a disagreement to the final clustering exactly when the random variable 
+
+Pay (e) := 
+
+> {
+
+1[Xv̸ = Xw], e = vw ∈ E+,
+
+XvXw, e = vw ∈ E−,
+
+equals 1 in that round. We attach to e the credit Be of Section 7.2 and release it in the round where 
+
+e is decided; that is, we set 
+
+Rel (e) := Be · 1[Xv = 1 ∨ Xw = 1] , e = vw. 
+
+Over the whole execution the cost of the clustering produced by P is ∑ 
+
+> rounds
+> ∑
+> e
+
+Pay (e), and the credit released is exactly ∑
+
+> e∈
+
+(V 
+
+> 2
+
+) Be.These definitions also cover the pairs containing the pivot, because Xu = 1 : such a pair is decided with certainty. Taking conditional expectations using (46), for distinct v, w ∈ W \ { u},
+
+pay u(vw ) := Eu[Pay (vw )] = 
+
+> {
+
+Muv + Muw − 2Ju(v, w ), vw ∈ E+,Ju(v, w ), vw ∈ E−, (47) 
+
+rel u(vw ) := Eu[Rel (vw )] = (Muv + Muw − Ju(v, w ))Bvw , (48) whereas for a pair containing the pivot, 
+
+pay u(uv ) = 
+
+> {
+
+1 − Muv , uv ∈ E+,Muv , uv ∈ E−, rel u(uv ) = Buv . (49) 
+
+One round in aggregate. For a triangle T ∈ (W 
+
+> 3
+> )
+
+and a pair e ∈ (W 
+
+> 2
+> )
+
+put 
+
+D(T ) := ∑
+
+> u∈T
+> (
+
+rel u(T \ { u}) − pay u(T \ { u})), D(e) := ∑
+
+> u∈e
+> (
+
+rel u(e) − pay u(e)).
+
+20 By (47) – (49) , each of these numbers is determined by the data of T (resp., e) alone: edge signs and LP values. In particular the same triangle contributes the same D(T ) in every round in which its three vertices are still alive; only the index sets in the sums below depend on W . This is what makes a local analysis possible. Averaging over the pivot, 
+
+E
+
+> [ ∑
+> e∈
+
+(W 
+
+> 2
+
+)
+
+> (
+
+Rel (e) − Pay (e))]
+
+= 1
+
+|W |
+
+> ∑
+> u∈W
+> ∑
+> e∈
+
+(W 
+
+> 2
+
+)
+
+> (
+
+rel u(e) − pay u(e)) = 1
+
+|W |  
+
+> (∑
+> T∈
+
+(W 
+
+> 3
+
+)
+
+D(T ) + ∑
+
+> e∈
+
+(W 
+
+> 2
+
+)
+
+D(e)
+
+> )
+
+.
+
+(50) For the second equality, split the inner sum according to whether e contains the pivot. Each triangle collects one contribution to D(T ) for each of its three vertices in the role of a pivot, whereas each endpoint of an edge e contributes once to D(e).We show that the quantity in (50) is nonnegative, i.e., the expected credit released dominates the expected cost incurred in every round. This would easily follow if every D(T ) and every D(e)
+
+were nonnegative, but unfortunately that is not the case. For instance, consider the all-positive triangle with yuv = yuw = yvw = 12 and yuvw = 0 , which satisfies (38) . Here q( 12 ) = 0 , so μ+( 12 ) = 12
+
+and γ+( 12 ) = 1 ; hence Ju(v, w ) = 14 + (0 − 14 ) = 0 at each pivot, the pair opposite the pivot is separated with probability 1, and B+( 12 ) = λ/ 3. Therefore D(T ) = 3   
+
+> (λ
+> 3
+
+− 1
+
+> )
+
+= λ − 3 < 0.
+
+Such a triangle releases less credit than the cost charged to it, and its deficit must be compensated by other triangles or edges. We seek auxiliary quantities V (T ) and V (e) with two properties: they are pointwise lower bounds on D(T ) and D(e), and their total over every alive set is nonnegative. The second property can be forced by writing the total as a sum of expected squares. Indeed, (44) shows that the dependence of D(T ) on the triple value yuvw occurs through the covariances yuvw − yuv yuw .This suggests using a weighted quadratic form in the centered membership indicators. Choose a weight function Θσ(y) for each sign (used only in the analysis). For S ∼ (zS )S∋u, put 
+
+Zu := ∑ 
+
+> v∈W\{ u}
+
+Θσ(uv )(yuv )(1[v ∈ S] − yuv 
+
+> )
+
+.
+
+The cross terms in the expansion of Eu[Z2
+
+> u
+
+] are weighted covariances and are naturally indexed by triangles; the diagonal terms are weighted variances and are naturally indexed by pairs. Al-though individual cross terms may be negative, their sum with the diagonal terms is nonnegative. Accordingly, define for each T = {u, v, w },
+
+V (T ) := 2 ∑
+
+> p∈T
+
+Θσ(pq )(ypq ) Θ σ(pr )(ypr )(yuvw − ypq ypr 
+
+> )
+
+, {q, r } = T \ { p}, (51) 
+
+V (e) := 2 Θ σ(e)(ye)2 ye(1 − ye). (52) 
+
+Lemma 7.2. Suppose that, for every locally feasible signed triangle T and every signed pair e,
+
+D(T ) ≥ V (T ), D(e) ≥ V (e). (53) 
+
+Then E[ cost (P)] ≤ ∑ 
+
+> e
+
+Be. Consequently, the cheaper of C and P has expected cost at most α0 
+
+> ∑
+> e
+
+ℓe.Proof. Fix a round, condition on the history before it, and let W be its alive set. Expanding the square and using E[1[v ∈ S]] = yuv and E[1[v ∈ S]1[w ∈ S]] = yuvw , the cross terms ( v̸ = w) of  
+
+> ∑
+> u∈W
+
+Eu[Z2
+
+> u
+
+] group into triangles and the diagonal terms ( v = w) into pairs: 
+
+> ∑
+> u∈W
+
+Eu[Z2
+
+> u
+
+] = ∑ 
+
+> T∈
+
+(W 
+
+> 3
+
+)
+
+V (T ) + ∑
+
+> e∈
+
+(W 
+
+> 2
+
+)
+
+V (e) ≥ 0. (54) 21 Summing (53) over the triangles and pairs inside W and combining with (54) gives ∑ 
+
+> T
+
+D(T ) +  
+
+> ∑
+> e
+
+D(e) ≥ 0. By (50) , the conditional expected credit released in the round is therefore at least the conditional expected cost incurred in it. This holds for each of at most n rounds and every history, so taking expectations and summing, 
+
+E[cost( P)] = E
+
+> [ ∑
+> rounds
+> ∑
+> e
+
+Pay (e)
+
+> ]
+
+≤ E
+
+> [ ∑
+> rounds
+> ∑
+> e
+
+Rel (e)
+
+> ]
+
+= ∑
+
+> e∈
+
+(V 
+
+> 2
+
+)
+
+Be,
+
+the two equalities holding because each pair is decided in exactly one round, in which it incurs its disagreement, if any, and releases its credit Be.Finally, since min {X, Y } ≤ ωX + (1 − ω)Y , using (39) and the calibration identity of Section 7.2, 
+
+E[min {cost( C), cost( P)}] ≤ ω ∑
+
+> e
+
+κe + (1 − ω) ∑
+
+> e
+
+Be ≤ α0
+
+> ∑
+> e
+
+ℓe.
+
+7.4 The certificate and its verification 
+
+It remains to exhibit weights Θ± for which (53) holds. Put 
+
+Θ+(y) := √ρ y (1 − y)2, Θ−(y) := 0 , with ρ := 1012 25 = 40 .48 . (55) Only products of two weights ever occur in V (T ) and V (e), so the irrationality is immaterial: every inequality to be checked involves ρ rationally, and no arithmetic in Q(√ρ) is required. Taking 
+
+Θ− ≡ 0 is natural here, because γ− ≡ 0 means that the triple value yuvw influences D(T ) only through pivots both of whose incident edges are positive. The statistic of Section 7.3 becomes 
+
+Zu = √ρ ∑ 
+
+> v∈W\{ u}
+> uv ∈E+
+
+yuv (1 − yuv )2(1[v ∈ S] − yuv 
+
+> )
+
+.
+
+Lemma 7.3. For α0 = 2773 2000 , the rules (42) , the exact budgets (45) and the weights (55) , all inequalities of (53) hold. Computer-assisted proof. We first describe how the verifier covers all pair and triangle configurations. The rounding rule has the five closed one-dimensional pieces 
+
+P0 =
+
+> [
+
+0, 12
+
+> ]
+
+, P1 = 
+
+> [
+
+12 , 25 26 
+
+> ]
+
+, P2 = 
+
+> [
+
+25 26 , 1
+
+> ]
+
+for positive pairs ,N0 =
+
+> [
+
+0, 12
+
+> ]
+
+, N1 = 
+
+> [
+
+12 , 1
+
+> ]
+
+for negative pairs .
+
+These intervals cover every possible pair value y ∈ [0 , 1] , and the formulas on adjacent pieces agree at their common endpoint. On each of the five pieces the verifier checks the pair inequality 
+
+D(e) − V (e) ≥ 0, after clearing its positive denominator. These are the five one-dimensional checks needed for the certificate. As a redundant sanity check, the implementation also verifies the four elementary probability inequalities p0 ≥ 0, 1 − p0 ≥ 0, p1 ≥ 0, and 1 − p1 ≥ 0 on each piece. These additional twenty checks are why its log reports 25 one-dimensional polynomial checks. We next consider triangles. Up to relabeling their vertices, the four possible sign types are + + + ,
+
++ + −, + − − , and − − − . Assigning each positive edge to one of P0, P 1, P 2 and each negative edge 22 to one of N0, N 1, again up to relabeling edges of the same sign, gives 
+
+> (
+
+3 + 3 − 13
+
+> )
+
+= 10 ,
+
+> (
+
+3 + 2 − 12
+
+> )
+
+· 2 = 12 , 3
+
+> (
+
+2 + 2 − 12
+
+> )
+
+= 9 ,
+
+> (
+
+2 + 3 − 13
+
+> )
+
+= 4 
+
+closed state boxes of the four respective sign types, for a total of 35 . Consequently, every signed triangle and every choice of its three pair values in [0 , 1] belongs to at least one of these boxes; the harmless overlaps at the rounding breakpoints ensure that no boundary value is omitted. It remains to cover every locally feasible triple value. Write the three pair values as y1, y 2, y 3
+
+and the triple value as t = yuvw . By (44) and (51) , D(T ) − V (T ) is affine in t, so it is enough to prove nonnegativity at both endpoints of the interval (38) . The lower endpoint is the maximum of four affine functions and the upper endpoint is the minimum of three. The feasible y-domain is covered by five tetrahedra on which the lower endpoint has one fixed affine formula (the region where it is zero is split into two tetrahedra), and by three tetrahedra on which the upper endpoint has one fixed affine formula. For each of the 35 state boxes, the verifier intersects the box with each applicable endpoint tetrahedron and substitutes the corresponding endpoint for t. Multiplying D(T ) − V (T ) by the positive quantity ∏
+
+> e
+
+(2 − ye) clears all denominators and leaves a polynomial of total degree at most 11 . Each nonempty intersection is triangulated into rational simplices, and the polynomial is expressed on each simplex in the Bernstein basis. Since the Bernstein basis functions are nonnegative and sum to one, nonnegativity of every Bernstein coefficient certifies nonnegativity throughout the simplex. Whenever this test is inconclusive, the verifier subdivides the simplex and repeats the test. All arithmetic is exact and rational. All checks pass. Thus the pair inequalities hold for every signed pair value, and the triangle inequalities hold for all four sign types, all pair values, and every locally feasible triple value. Only three of the 35 triangle state boxes require any subdivision, to maximum depth 11 . The verifier is in the file verify_rounding.py accompanying this submission; it is a single self-contained script that takes no arguments and uses only the Python standard library. 
+
+Proof of Theorem 7.1. Lemma 7.3 supplies the local inequalities required by Lemma 7.2, giving 
+
+E[cost( A)] ≤ α0
+
+> ∑
+> e
+
+ℓe = α0
+
+> ∑
+> S
+
+cost( S)zS .
+
+Both procedures run in time polynomial in n and the support size of z.Finally, when the rounding is combined with the adjacency-list algorithm of Cao et al. [15] ,we need to use a sharper implementation to maintain the sublinear-time property. To this end, run cluster-based rounding with probability ω = α0/2 and pivot rounding with probability 1 − ω,rather than running both and comparing their outputs. Cluster-based rounding is identical to that of Cao et al. [15] and can be implemented in time ˜O(n/ ∆) . As for pivot-based rounding, with pivot u and alive set W , put Uu = W ∩ ⋃   
+
+> S∋u:zS>0
+
+S. If v / ∈ Uu, then yuv = 0 and the rule never adds v to the cluster of pivot u. If v ∈ Uu, then yuv ≥ ∆, and (42) gives μ+(y) ≥ y and 
+
+μ−(y) = min { 32 y, 2y − y2} ≥ y. Thus a round with pivot u removes at least ∆|Uu| vertices in expectation. Since the covering constraints imply that every vertex belongs to at most 1/∆ sets in the support of z, the sets containing u, the sampled set, all values yuv , and all joining decisions can be processed in time O(|Uu|/∆) . The amortization of Cao et al. [15 , Section 9.2 ] therefore gives expected total time ˜O(n/ ∆2) for pivot rounding, and hence for the randomized choice between the two procedures. 23 References 
+
+[1] K. Ahn, G. Cormode, S. Guha, A. McGregor, and A. Wirth. Correlation clustering in data streams. In ICML ’15: Proceedings of the 32nd International Conference on Machine Learning ,pages 2237–2246, 2015. [2] N. Ailon, M. Charikar, and A. Newman. Aggregating inconsistent information: Ranking and clustering. Journal of the ACM , 55(5), 2008. [3] N. Ailon, R. Begleiter, and E. Ezra. Active learning using smooth relative regret approximations with applications. In Proc. of Conf. on Learning Theory (COLT) , pages 19.1–19.20, 2012. [4] N. Alon and J. H. Spencer. The probabilistic method . John Wiley & Sons, 4th edition, 2016. [5] L. Aronsson, H. Wu, and M. H. Chehreghani. Cold-start active correlation clustering. In 
+
+Proceedings of the Nineteenth ACM International Conference on Web Search and Data Mining, WSDM 2026 , pages 1068–1072. ACM, 2026. doi: 10.1145/3773966.3779377. [6] N. Bansal, A. Blum, and S. Chawla. Correlation clustering. In FOCS ’02: Proceedings of the 43rd IEEE Annual Symposium on Foundations of Computer Science , pages 238–247, 2002. [7] N. Bansal, A. Blum, and S. Chawla. Correlation clustering. Machine Learning , 56:89–113, 2004. [8] S. Böcker and J. Baumbach. Cluster editing. In Proc. of Conf. on Computability in Europe (CiE) , pages 33–44, 2013. [9] F. Bonchi, D. García-Soriano, and K. Kutzkov. Local correlation clustering. Technical report, 2013. arXiv preprint arXiv:1312.5105. [10] F. Bonchi, A. Gionis, and A. Ukkonen. Overlapping correlation clustering. Knowledge and Information Systems , 35:1–32, 2013. [11] F. Bonchi, D. García-Soriano, and E. Liberty. Correlation clustering: from theory to practice. In Proc. of ACM SIGKDD Int. Conf. on Knowledge Discovery and Data Mining , page 1972, 2014. [12] F. Bonchi, A. Gionis, F. Gullo, C. E. Tsourakakis, and A. Ukkonen. Chromatic correlation clustering. ACM Transactions on Knowledge Discovery from Data , 9(4), 2015. [13] F. Bonchi, D. García-Soriano, and F. Gullo. Correlation Clustering . Synthesis Lectures on Data Mining and Knowledge Discovery. Springer, 2022. ISBN 978-3-031-79198-7. [14] N. Cao, V. Cohen-Addad, E. Lee, S. Li, A. Newman, and L. Vogl. Understanding the cluster linear program for correlation clustering. In STOC ’24: Proceedings of the 56th Annual ACM Symposium on Theory of Computing , page 1605–1616, 2024. [15] N. Cao, V. Cohen-Addad, E. Lee, S. Li, D. R. Lolck, A. Newman, M. Thorup, L. Vogl, S. Yan, and H. Zhang. Solving the correlation cluster LP in sublinear time. In STOC ’25: Proceedings of the 57th Annual ACM Symposium on Theory of Computing , pages 1154–1165, 2025. [16] N. Cao, V. Cohen-Addad, E. Lee, S. Li, A. Newman, and L. Vogl. Understanding the cluster linear program for correlation clustering. arXiv:2404.17509, revised version of November 3, 2025. 24 [17] M. Charikar, V. Guruswami, and A. Wirth. Clustering with qualitative information. Journal of Computer and System Sciences , 71(3):360–383, 2005. [18] S. Chawla, R. Krauthgamer, R. Kumar, Y. Rabani, and D. Sivakumar. On the hardness of approximating multicut and sparsest-cut. Comput. Complexity , 15(2):94–114, 2006. ISSN 1016-3328,1420-8954. [19] S. Chawla, K. Makarychev, T. Schramm, and G. Yaroslavtsev. Near optimal LP rounding algorithm for correlation clustering on complete and complete k-partite graphs. In STOC ’15: Proceedings of the 47th Annual ACM Symposium on Theory of Computing , page 219–228, 2015. [20] F. Chierichetti, N. Dalvi, and R. Kumar. Correlation clustering in MapReduce. In KDD ’14: Proceedings of the 20th ACM SIGKDD International Conference on Knowledge Discovery and Data Mining , pages 641–650, 2014. [21] V. Cohen-Addad, S. Lattanzi, S. Mitrović, A. Norouzi-Fard, N. Parotsidis, and J. Tarnawski. Correlation clustering in constant many parallel rounds. In International Conference on Machine Learning , pages 2069–2078. PMLR, 2021. [22] V. Cohen-Addad, E. Lee, and A. Newman. Correlation clustering with Sherali-Adams. In 
+
+FOCS ’22: Proceedings of the 63rd IEEE Annual Symposium on Foundations of Computer Science , pages 651–661, 2022. [23] V. Cohen-Addad, E. Lee, S. Li, and A. Newman. Handling correlated rounding error via preclustering: A 1.73-approximation for correlation clustering. In FOCS ’23: Proceedings of the 64th IEEE Annual Symposium on Foundations of Computer Science , pages 1082–1104, 2023. [24] V. Cohen-Addad, D. R. Lolck, M. Pilipczuk, M. Thorup, S. Yan, and H. Zhang. Combinatorial correlation clustering. In STOC ’24: Proceedings of the 56th Annual ACM Symposium on Theory of Computing , pages 1617–1628, 2024. [25] E. D. Demaine, D. Emanuel, A. Fiat, and N. Immorlica. Correlation clustering in general weighted graphs. Theoretical Computer Science , 361(2):172–187, 2006. [26] A. Frieze and R. Kannan. Quick approximation to matrices and applications. Combinatorica ,19(2):175–220, 1999. [27] D. García-Soriano, K. Kutzkov, F. Bonchi, and C. E. Tsourakakis. Query-efficient correlation clustering. In TheWebConf ’20: Proceedings of The Web Conference 2020 , page 1468–1478, 2020. [28] I. Giotis and V. Guruswami. Correlation clustering with a fixed number of clusters. Theory of Computing , 2:249–266, 2006. [29] M. Grötschel and Y. Wakabayashi. A cutting plane algorithm for a clustering problem. 
+
+Mathematical Programming , 45(1-3):59–96, 1989. [30] M. Grötschel and Y. Wakabayashi. Facets of the clique partitioning polytope. Mathematical Programming , 47(1-3):367–387, 1990. [31] M. Grötschel, L. Lovász, and A. Schrijver. Geometric algorithms and combinatorial optimization ,volume 2 of Algorithms and Combinatorics . Springer-Verlag, Berlin, second edition, 1993. ISBN 3-540-56740-2. doi: 10.1007/978-3-642-78240-4. 25 [32] S. Kim, S. Nowozin, P. Kohli, and C. Yoo. Higher-order correlation clustering for image segmentation. In NIPS ’11: Proceedings of the 25th Annual Conference on Neural Information Processing Systems , pages 1530–1538, 2011. [33] M. Křivánek and J. Morávek. NP-hard problems in hierarchical-tree clustering. Acta Informatica ,23(3):311–323, 1986. [34] Y. Kuroki, A. Miyauchi, F. Bonchi, and W. Chen. Query-efficient correlation clustering with noisy oracle. In NeurIPS ’24: Proceedings of the 38th Annual Conference on Neural Information Processing Systems , 2024. [35] P. Li, H. Dau, G. Puleo, and O. Milenkovic. Motif clustering and overlapping clustering for social network analysis. In INFOCOM ’17: Proceedings of the 2017 IEEE Conference on Computer Communications , 2017. [36] A. Miyauchi, F. Adriaens, F. Bonchi, and N. Tatti. Multilayer correlation clustering. In 
+
+AISTATS ’26: Proceedings of the 29th International Conference on Artificial Intelligence and Statistics , 2026. [37] G. J. Puleo and O. Milenkovic. Correlation clustering with constrained cluster sizes and extended weights bounds. SIAM Journal on Optimization , 25(3):1857–1872, 2015. [38] S. Régnier. Sur quelques aspects mathématiques des problèmes de classification automatique. 
+
+ICC bulletin , 4(3):175–191, 1965. [39] C. Swamy. Correlation clustering: Maximizing agreements via semidefinite programming. In 
+
+SODA ’04: Proceedings of the 15th Annual ACM–SIAM Symposium on Discrete Algorithms ,pages 526–527, 2004. [40] Y. Wakabayashi. Aggregation of binary relations: algorithmic and polyhedral investigations .Phd thesis, University of Augsburg, Germany, 1986. [41] C. Zahn, Jr. Approximating symmetric relations by equivalence relations. Journal of the Society for Industrial and Applied Mathematics , 12(4):840–847, 1964. 
+
+# A Omitted proofs from Section 2 
+
+Proof of Corollary 2.3. It is enough to consider 0 < ε ≤ 1; for larger ε, run the algorithm with accuracy 1. First detect the case ρ∗ = 0 : it occurs precisely when a connected component that is a clique has positive q-weight, and then that component is an optimum. Suppose henceforth that 
+
+ρ∗ > 0. Since q is integral, 12q+(V ) ≤ ρ∗ < n
+
+2 .
+
+Apply Theorem 2.1 to the rescaled vector λq , with internal accuracy ε/ 4. A returned violated set has ρ(T ) < λ , whereas a feasibility certificate implies ρ∗ ≥ λ/ (1 + ε/ 4) . By performing binary search on λ ∈ [1 /(2 q+(V )) , n ], we can maintain a certified lower threshold and a violated upper threshold until their ratio is at most 1 + ε/ 4. Eventually we find a violated set T with 
+
+ρ(T ) ≤ (1 + ε/ 4) 2ρ∗ ≤ (1 + ε)ρ∗.
+
+26 Amplifying each oracle call so that its failure probability is smaller than the reciprocal of a sufficiently large polynomial, a union bound makes all calls correct with probability at least 2/3.
+
+Proof of Corollary 2.4. We use one run of the ellipsoid algorithm to obtain both solutions. Let P
+
+be the feasible region of (3) . Singleton constraints imply qu ≤ d(u)2 ≤ n−12 . Since 0 ∈ P , an optimum has nonnegative objective; every feasible point with ∑ 
+
+> u
+
+qu ≥ 0 also satisfies qu = ∑ 
+
+> v
+
+qv − ∑  
+
+> v̸=u
+
+qv ≥− (n−1) 2 
+
+> 2
+
+. Thus a polynomially bounded box contains an optimum. If G is a disjoint union of cliques, then both optima are zero: return the zero dual vector and the primal solution assigning value 1 to each connected component. Otherwise, choose a connected component C that is not a clique and define ¯qu = 1 /(2 n) for u ∈ C and ¯qu = 0 otherwise. Every set meeting C has cost at least 1/2: a proper nonempty intersection with C has a positive cut edge, while a set containing all of C contains an internal negative pair. Since ¯q(S) ≤ 1/2 for every S, the vector ¯q is dual feasible and has value at least 1/(2 n). Consequently, inverse-polynomial additive precision suffices for a multiplicative guarantee. Run the ellipsoid algorithm in the box, using Theorem 2.1 with internal accuracy η as a separation oracle and amplifying its success probability over all calls. The standard weak separation-to-optimization reduction [ 31 ] finds an accepted vector ̂ q satisfying ∑ 
+
+> û
+
+qu ≥ OPT LP −δ, for an arbitrarily small inverse-polynomial δ > 0; acceptance guarantees that q := ̂ q/ (1 + η) is dual feasible. During the same run, record every cluster constraint q(T ) ≤ cost (T ) returned by the oracle, and let S contain all reported sets together with all singletons. Every recorded constraint is valid because a reported violation is checked exactly. The ellipsoid certificate uses only these constraints and the box, and therefore certifies that the relaxed dual containing only the cluster constraints indexed by S has optimum at most (1 + O(η)) OPT LP +O(δ). Indeed, its relevant optima lie in the same box: q = 0 is feasible, the singleton constraints give the coordinatewise upper bounds, and nonnegative objective then gives the lower bounds above. By LP duality, the restriction of (2) to the variables zS with S ∈ S has the same optimum. It is feasible because S contains all singletons and has polynomial size, so we can solve it exactly to obtain a primal solution of polynomial support. Taking η to be a sufficiently small constant multiple of ε and δ a sufficiently small constant multiple of ε/n gives both claimed inequalities. With the amplification above, they hold simultaneously with probability at least 2/3.27

@@ -6,26 +6,35 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-07-30
-- 运行时间：2026-07-30 22:02:04 UTC
+- 最新运行日期：2026-07-31
+- 运行时间：2026-07-31 21:58:51 UTC
 - 运行状态：成功
-- 本次总论文数：1
-- 精读区：1
-- 速读区：0
+- 本次总论文数：4
+- 精读区：0
+- 速读区：4
 
 ### 今日简报（AI）
-今日聚焦：精读一篇将可变长度语义ID与大语言模型对齐的生成式推荐研究，评分8.0。  
-值得关注：该工作提出VaLiDRec框架，利用LLM对齐的可变长度语义ID提升生成式推荐效果，为个性化推荐提供新思路。  
-建议：普通读者可了解语义ID如何增强推荐的可解释性与多样性，后续可尝试类似思路改进自身推荐模型。
-- 详情：[/202607/30/README](/202607/30/README)
+今日围绕LLM嵌入向量检索、流形优化与文本嵌入模型选择等方向完成多篇论文速读，其中无精读。  
+最值得关注两个方向：高维LLM嵌入的快速近似最近邻搜索，以及文本嵌入模型的实际选型决策框架（均获6.0分）。  
+下一步建议普通读者优先参考文本嵌入模型选型框架，快速落地到业务场景，再深入检索加速细节。
+- 详情：[/202607/31/README](/202607/31/README)
 
 ### 精读区论文标签
-1. [VaLiDRec: Variable-Length LLM-Aligned Semantic IDs for Generative Recommendation](/202607/30/2607.25209v1-validrec-variable-length-llm-aligned-semantic-ids-for-generative-recommendation)  
-   标签：评分：8.0/10、query:ac
-   evidence：使用大模型对齐的聚类生成语义标识
+- 本次无精读推荐。
 
 ### 速读区论文标签
-- 本次无速读推荐。
+1. [Fast and Efficient Approximate Nearest Neighbor Search for High-Dimensional LLM Embeddings](/202607/31/2607.20957v1-fast-and-efficient-approximate-nearest-neighbor-search-for-high-dimensional-llm-embeddings)  
+   标签：评分：6.0/10、query:ac
+   evidence：为大模型嵌入提供高效近似最近邻搜索，支持快速聚类高维文本表示
+2. [Regularized Optimization on Grassmann Manifold: Theory, Algorithm and Applications](/202607/31/2607.21039v1-regularized-optimization-on-grassmann-manifold-theory-algorithm-and-applications)  
+   标签：评分：6.0/10、query:active-clust
+   evidence：正则化谱聚类方法，可作为主动聚类的基础聚类器。
+3. [Choosing a Text Embedding Model: A Practical Benchmarking and Decision Framework](/202607/31/2607.23507v1-choosing-a-text-embedding-model-a-practical-benchmarking-and-decision-framework)  
+   标签：评分：6.0/10、query:ac
+   evidence：在MTEB基准上评测文本嵌入模型的聚类性能，为基于大模型嵌入的聚类提供选择框架
+4. [Approximate Dual Separation for the Cluster LP: a 1.387 approximation for Correlation Clustering](/202607/31/2607.27829v1-approximate-dual-separation-for-the-cluster-lp-a-1387-approximation-for-correlation-clustering)  
+   标签：评分：6.0/10、query:active-clust
+   evidence：相关聚类近似算法可支持带成对约束的主动聚类
 
 
 <div class="dpr-home-promo-card">

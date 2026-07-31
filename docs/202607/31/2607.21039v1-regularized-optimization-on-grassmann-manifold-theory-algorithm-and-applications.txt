@@ -1,0 +1,1204 @@
+Title: Regularized Optimization on Grassmann Manifold: Theory, Algorithm and Applications
+
+URL Source: https://arxiv.org/pdf/2607.21039v1
+
+Published Time: Fri, 24 Jul 2026 00:39:02 GMT
+
+Number of Pages: 14
+
+Markdown Content:
+> 1
+
+# Regularized Optimization on Grassmann Manifold: Theory, Algorithm and Applications 
+
+Zhuan Liang and Zheng Zhai 
+
+Abstract —Spectral methods are among the most widely used techniques for community detection, clustering, and graph learn-ing. Their performance, however, critically depends on the accurate estimation of the underlying spectral subspace and can deteriorate substantially in the presence of noise, outliers, or model perturbations. To address this limitation, we propose a Regularized Projection Matrix Approximation (RPMA) frame-work for robust estimation of rank-(K) projection matrices. RPMA extends classical spectral projection by incorporating a regularization term, producing projection estimates that are more robust, sparse, and interpretable. We formulate the proposed model as an optimization problem on the manifold of rank-(K) projection matrices and exploit its geometric equivalence to the Grassmann manifold. Based on this manifold characterization, we derive the first- and second-order optimality conditions, establish the local stability of the regularized leading eigenspace, and characterize the stability of the critical-point landscape under sufficiently small regulariza-tion. To efficiently solve the resulting nonconvex optimization problem, we develop a Riemannian gradient projection algorithm with backtracking line search, together with a more efficient Cayley–Sherman–Morrison–Woodbury (Cayley–SMW) gradient method that avoids repeated eigendecompositions. Extensive experiments on both synthetic and real-world datasets demonstrate that RPMA substantially improves the recovery accuracy of projection matrices and consistently outper-forms conventional spectral projection methods for community detection and clustering under noisy environments. 
+
+Index Terms —Grassmann Manifold, Optimization, Projection Matrix Approximation 
+
+I. I NTRODUCTION 
+
+# COMMUNITY detection is a fundamental problem in un-supervised learning that has attracted considerable atten-tion from researchers in a wide range of disciplines, including mathematics, statistics, physics, and the social sciences. The goal is to partition n data points into K communities based on their pairwise similarities, which are typically represented by a similarity matrix A ∈ Rn×n. A widely adopted strat-egy for addressing this problem is to first extract a low-dimensional representation from A, and then apply a clustering algorithm, such as k-means or the expectation–maximization (EM) algorithm, to identify the underlying communities. The effectiveness of this approach critically depends on the quality of the extracted representation, which in turn relies on both the structural properties of the similarity matrix and the accuracy of the computational methods used to process it. 
+
+Zhuan Liang and Zheng Zhai are with Department of Statistics, Faculty of Arts and Sciences at Beijing Normal University, Zhuhai. This work was supported by the National Natural Science Foundation of China under Grant of 12301478. Corresponding author: Zheng Zhai. E-mail:zhaizheng@bnu.edu.cn 
+
+A widely adopted paradigm for community detection is spectral clustering. The key idea is to construct a low-dimensional embedding from the leading eigenvectors of the similarity matrix and subsequently apply a clustering algo-rithm, such as k-means, to identify the underlying communi-ties. Owing to its simplicity, scalability, and strong theoretical guarantees, spectral clustering has become one of the most successful approaches for community detection. Nevertheless, its performance critically depends on the quality of the esti-mated spectral subspace. In practice, the observed similarity matrix is often contaminated by noise, outliers, or missing observations, which may substantially deteriorate the accuracy of the spectral embedding and consequently lead to unreliable clustering results. Spectral clustering computes the leading K eigenvectors 
+
+U ∈ Rn×K of the affinity matrix A and performs clustering on the rows of U . However, the embedding U is not unique: for any orthogonal matrix R ∈ RK×K , the transformed embedding U R preserves all pairwise Euclidean distances between rows and therefore yields exactly the same clustering result. Consequently, rather than seeking an optimal embed-ding U , it is more natural to consider the projection matrix 
+
+X = U U ⊤, which is invariant under orthogonal transfor-mations of the embedding, i.e., (U R )( U R )⊤ = U U ⊤. This representation eliminates the rotational ambiguity inherent in spectral embeddings and provides a unique characterization of the underlying K-dimensional subspace. An additional advantage of optimizing over the projection matrix X is that it naturally facilitates the incorporation of desirable structural priors through entrywise regularization. Such regularization effectively reduces the search space to projection matrices that better reflect the intrinsic structure of the clustering problem. To illustrate this point, consider an ideal affinity matrix defined by 
+
+Aij =
+
+(
+
+1, c(i) = c(j),
+
+0, otherwise ,
+
+where c(i) denotes the cluster label of the i-th sample and 
+
+nk is the size of the k-th cluster. The corresponding spectral projection matrix, up to a simultaneous permutation of its rows and columns, is given by 
+
+X =
+
+ 
+
+> 1
+> n1
+
+1n1×n1 0 · · · 00 1 
+
+> n2
+
+1n2×n2 · · · 0
+
+... ... . . . ...
+
+0 0 · · · 1 
+
+> nK
+
+1nK ×nK
+
+ ,
+
+where 1n×n denotes the all-ones matrix. This ideal projection possesses several desirable structural properties: it is entrywise arXiv:2607.21039v1 [cs.LG] 23 Jul 2026 2
+
+nonnegative, every entry is bounded by 1min 1≤k≤K nk , and it exhibits a sparse block-diagonal structure with zero entries between different clusters. These observations suggest that high-quality projection matrices should approximately inherit these properties even in the presence of noise. Therefore, it is natural to incorporate suitable entrywise regularization into the projection matrix approximation framework to promote boundedness, nonnegativity, and sparsity, thereby improving the robustness and interpretability of the recovered spectral projection. Motivated by the special structure of X, we propose a reg-ularized projection matrix approximation (RPMA) framework for recovering low-rank projection matrices: 
+
+min 
+
+> X∈P K
+
+∥X − A∥2F + λR (X). (1) Here, PK = {X ∈ Rn×n : X = X⊤, X 2 = X, tr( X) = 
+
+K} is the set of rank-K orthogonal projection matrices, and 
+
+R(·) is a regularization term that promotes desirable structural properties—such as sparsity, grouping, or smoothness—in the solution X. Since ∥X∥2F = K for all X ∈ P K , the RPMA objective is equivalent (up to a constant) to minimizing 
+
+Fλ(X) = −2⟨X, A ⟩ + λR (X), X ∈ P K .
+
+The proposed model augments the classical projection ap-proximation formulation with a regularization term, thereby encouraging sparse and interpretable projection structures while simultaneously suppressing spurious noise. By choos-ing appropriate regularizers, such as the Huber penalty, the proposed approach is able to effectively mitigate the influence of outliers and recover cleaner projection matrices than those produced by conventional spectral projection methods. The main contributions of this paper are summarized as follows:  
+
+> •
+
+We propose a novel regularized projection matrix approx-imation framework for robust community detection and clustering.  
+
+> •
+
+We establish the geometric properties of the rank-K pro-jection matrix manifold and derive the first- and second-order optimality conditions for the proposed model. Fur-thermore, we characterize the stability of the leading eigenspace and analyze the global landscape of all critical points.  
+
+> •
+
+We develop Riemannian optimization algorithms based on gradient projection and further accelerate the opti-mization by employing Cayley transformations, which avoid the repeated eigendecompositions required by the gradient projection method.  
+
+> •
+
+We provide experiments on synthetic and real dataset demonstrating that the proposed regularization signif-icantly improves the recovery accuracy of projection matrices and enhances clustering performance. 
+
+A. Related works 
+
+The success of clustering heavily depends on the quality and cleanness of the affinity matrix. Numerous approaches have been proposed to refine or distill useful information from such matrices. Among them, low-rank approximation under additional structural constraints stands out as one of the most popular and effective strategies, with wide applications in ma-chine learning and signal processing [1], [2]. The objective is to find the best low-rank approximation of a given matrix that simultaneously satisfies certain structural properties, including non-negativity [3], symmetry, boundedness [4], simplex con-straints [5], and sparsity [6]. Two primary approaches have emerged to achieve this goal. The first enforces structural con-straints directly through matrix factorization with explicit con-straints. Representative methods include non-negative matrix factorization [7], semi-nonnegative matrix factorization [8], bounded low-rank matrix approximation [9], and bounded projection matrix approximation [10]. The second incorporates structural constraints via soft regularization terms added to the objective function, encompassing techniques such as simulta-neous low-rank and sparse matrix approximation [11], [12], [13], [14]. In contrast, our work pursues a distinct objective: rather than learning an embedding, we seek to recover a high-quality group connection matrix through regularized projection matrix approximation. II. C ONSTRAINTS AND PENALTIES 
+
+In this section, we detail several concrete instantiations of the penalty function R(·), each tailored to enforce a distinct structural prior on the solution. Depending on the functional form of R(·), the resulting regularization schemes naturally partition into two fundamental categories: entry-independent 
+
+penalties and entry-dependent penalties. The former apply separable, element-wise operations to X—ideal for promoting local traits such as sparsity, non-negativity, or boundedness. The latter, however, couple multiple entries through global functions, enabling the imposition of holistic properties like row-sum constraints or energy normalization that transcend simple componentwise treatment. Entrywise penalties are applied independently to each ele-ment of the matrix X and are well-suited for enforcing local properties such as non-negativity, boundedness, or sparsity at the individual entry level. These constraints can be readily implemented by specifying R(X) := P 
+
+> i,j
+
+g(Xi,j ) as aseparable function that acts element-wise on X.In contrast, certain structural requirements involve the col-lective behavior of multiple entries rather than isolated el-ements. For instance, constraints like normalizing the sum of each row to a prescribed constant cannot be captured by entrywise operations alone. Such scenarios call for a penalty function that depends on an aggregation of entries—e.g., a function of row-wise sums—thereby necessitating a more global formulation beyond the scope of separable penalties. 
+
+A. Entry-independent Penalties 
+
+Some desired properties can be achieved by employing penalties that act independently on the entries of X. Such properties include boundedness, nonnegativity, and sparsity. We discuss each of these penalties below. 3
+
+a) Bounded Penalty: For the clustering task, the rank-
+
+K approximation of the underlying assignment matrix must be confined to the interval [0 , 1/ min k nk], where nk denotes the number of samples in the k-th cluster. This naturally motivates the introduction of a penalty function that enforces boundedness within [α, β ]. To this end, we adopt a smooth, convex function gα,β (z) as a relaxation of the bounded-indicator function, defined as 
+
+gα,β (z) = (min {z − α, 0})2 + (min {β − z, 0})2. (2) The construction of gα,β (z) reveals that it solely penalizes 
+
+z when it lies outside the range [α, β ]. It can be observed that as λ approaches +∞, λg α,β (z) exhibits behavior akin to that of the indicator function. Moreover, this function is convex, and its derivative is Lipschitz continuous, satisfying 
+
+|g′ 
+
+> α,β
+
+(x1) − g′ 
+
+> α,β
+
+(x2)| ≤ 2|x1 − x2|.
+
+b) Non-negativity Penalty: The non-negativity constraint can be viewed as a one-side boundedness requirement by setting α = 0, β = +∞. Thus, we can consider a non-negativity penalty function as a special case of the bounded penalty in (2). Therefore, we introduce this non-negative penalty function to regularize the projection matrix, which is defined as 
+
+g(z) := (min {z, 0})2. (3) 
+
+c) Sparsity Penalty: The element-wise summation of ab-solute values P 
+
+> i,j
+
+|Xi,j | yields the Lasso penalty ∥X∥1 [15]. However, the absolute value function is non-differentiable at 
+
+0 and fails to satisfy the Lipschitz continuity property. To mitigate this issue, we approximate the absolute value function using the Huber loss [16], [17], which replaces the nonsmooth absolute value with a quadratic function in a neighborhood of the origin. The Huber loss is defined as 
+
+gδ (x) = 12δ min( x2, δ 2) + max(0 , |x| − δ) (4) where δ > 0 is a threshold parameter. It can be readily verified that the Huber function preserves the desirable properties of the absolute value penalty while being both differentiable and Lipschitz continuous everywhere, including at x = 0 .
+
+B. Entry-dependent Penalties 
+
+Some desirable structural properties cannot be enforced by entrywise penalties alone, as they depend on the interac-tions among multiple entries of the projection matrix. Such regularizers are referred to as entry-dependent penalties . A representative example is the row-sum constraint commonly used in graph learning and clustering. 
+
+a) Row-Sum Penalties: Enforcing the row sums of a similarity or projection matrix to equal one is a widely adopted normalization strategy in graph refinement and spectral clus-tering. This constraint can be naturally incorporated into the proposed RPMA framework through the regularization term 
+
+R(X) = ∥X1 − 1∥22,
+
+where 1 denotes the all-ones vector. Minimizing this penalty encourages each row of X to sum to one while allowing small deviations controlled by the regularization parameter. When X is further constrained to be a symmetric projection matrix, it is often desirable to enforce the column-sum con-straint simultaneously. In this case, we employ the symmetric regularizer 
+
+R(X) = ∥X1 − 1∥22 + ∥X⊤1 − 1∥22,
+
+which encourages both the row and column sums of X to be close to one. Since X = X⊤ on the rank-K projection manifold, the two terms are identical. Nevertheless, the above formulation naturally extends to more general matrix optimiza-tion problems in which symmetry is not imposed. III. L OCAL GEOMETRY AND STABILITY PROPERTIES 
+
+It is well known that the set of rank-K projection matrices is diffeomorphic to the Grassmann manifold Gr( K, n ). More-over, Gr( K, n ) can be realized as the quotient of the Stiefel manifold St( K, n ) by the natural right action of the orthogonal group O(K), namely Gr( K, n ) = St( K, n )/O (K) [18]. The manifold of rank-K projection matrices provides a convenient representation for studying the geometric structure of the Grassmann manifold. In this section, we first derive the first-order necessary condition for a critical point. We then establish the second-order condition, which distinguishes critical points as local minimizers or saddle points. Finally, we present a theorem characterizing the stability of the critical points and the global landscape of the optimization problem. 
+
+A. First-Order Condition 
+
+The projection matrix representation provides a convenient description of the tangent space of PK . Specifically, differenti-ating the defining equation X2 = X yields the characterization of the tangent space. 
+
+Lemma 1 (Tangent space characterization) . For any X ∈ P K ,
+
+TX PK = {∆ = ∆ ⊤ : X∆ + ∆ X = ∆ }.
+
+Equivalently, TX PK = {[Ω , X ] : Ω ⊤ = −Ω}, where the Lie bracket is defined as [Ω , X ] := Ω X − XΩ.Proof. Let X ∈ P K (X⊤ = X, X2 = X) and let X(t) ∈ P K
+
+with X(0) = X, ˙X(0) = ∆ . Differentiating X(t)2 = X(t)
+
+and X(t)⊤ = X(t) gives 
+
+X∆ + ∆ X = ∆ , ∆⊤ = ∆ . (1) Thus TX PK ⊆ { ∆ = ∆ ⊤ : X∆ + ∆ X = ∆ }.Conversely, for any symmetric ∆ satisfying (1), the curve 
+
+X(t) = X + t∆ remains in PK to first order; a standard argument shows ∆ ∈ TX PK . Hence the first characterization holds. For the equivalence, let ∆ = XΩ − ΩX with Ω⊤ = −Ω.Then 
+
+X∆ + ∆ X = X(XΩ − ΩX) + ( XΩ − ΩX)X = ∆ ,
+
+using X2 = X, so ∆ satisfies (1). Conversely, given ∆
+
+satisfying (1), choose Ω = [X, ∆] = X∆ − ∆X. Then 
+
+Ω⊤ = −Ω and 
+
+XΩ − ΩX = X(X∆ − ∆X) − (X∆ − ∆X)X = ∆ ,4
+
+since X∆X = 0 from (1). Thus the two forms are equivalent. Based on the tangent-space characterization in Lemma 1, Lemma 2 provides a closed-form representation of the orthog-onal projection operator onto the tangent space. 
+
+Lemma 2 (Orthogonal projection onto the tangent space) . Let 
+
+X ∈ P K and let H ∈ Sn be any symmetric matrix. Then the orthogonal projection of H onto the tangent space TX PK ,with respect to the Frobenius inner product, is given by 
+
+ΠTX PK (H) = XH (I − X) + ( I − X)HX = [ X, [X, H ]] .
+
+Proof. Let X ∈ P K (X⊤ = X, X2 = X) and X(t) ∈ P K
+
+with X(0) = X, ˙X(0) = Ξ . Differentiating X2 = X and 
+
+X⊤ = X gives 
+
+XΞ + Ξ X = Ξ , Ξ⊤ = Ξ .
+
+Equivalently, 
+
+Ξ = XΞ( I − X) + ( I − X)Ξ X. (1) Conversely, for any skew-symmetric Ω, Ξ := [ X, Ω] = XΩ −
+
+ΩX satisfies (1) since X2 = X, hence 
+
+TX PK = {[X, Ω] : Ω ⊤ = −Ω}.
+
+For the projection, define Π( H) := XH (I − X) + ( I −
+
+X)HX ∈ TX PK . Its orthogonal complement is characterized by N = XHX + ( I − X)H(I − X), which commutes with 
+
+X and satisfies ⟨N, [X, Ω] ⟩ = 0 for all skew-symmetric Ω.Finally, 
+
+[X, [X, H ]] = XH + HX − 2XHX = Π( H).
+
+Thus Π( H) = [ X, [X, H ]] is the orthogonal projection onto 
+
+TX PK .Next, we derive the Riemannian first-order optimality con-dition. Recall that the Riemannian gradient is obtained by projecting the Euclidean gradient onto the tangent space of the manifold. Combining the tangent-space characterization in Lemma 1 with the tangent projection operator derived in Lemma 2, we obtain a concise Lie-bracket representation of the Riemannian gradient, which leads directly to the first-order necessary optimality condition on the projection matrix manifold. 
+
+Theorem 1 (Riemannian First-Order Optimality Condition) .
+
+X ∈ P K is a critical point of F if and only if [X, ∇Fλ(X)] = 0. Equivalently, X, A − λ 
+
+> 2
+
+G(X) = 0, where G(X) = g′(Xij ) 
+
+> i,j
+
+.
+
+Proof. For Fλ(X) = −2⟨A, X ⟩ + λ P 
+
+> i,j
+
+g(Xij ), the Eu-clidean gradient is 
+
+∇Fλ(X) = −2A + λG (X), G(X) = ( g′(Xij )) .
+
+By Lemma 2, TX PK = {[X, Ω] : Ω ⊤ = −Ω}. Criticality requires 
+
+0 = DF λ(X)[∆] = ⟨∇ Fλ(X), ∆⟩F
+
+for all ∆ ∈ TX PK . Taking ∆ = [ X, Ω] ,
+
+0 = ⟨∇ Fλ, [X, Ω] ⟩F
+
+=tr(( X∇Fλ − ∇ FλX)Ω) = ⟨[X, ∇Fλ], Ω⟩F
+
+for all skew-symmetric Ω. Hence [X, ∇Fλ(X)] = 0 . Substi-tuting ∇Fλ:
+
+[X, −2A + λG (X)] = 0 ⇐⇒ [X, A − λ 
+
+> 2
+
+G(X)] = 0 .
+
+Conversely, if [X, A − λ 
+
+> 2
+
+G(X)] = 0 , then [X, ∇Fλ(X)] = 0, so ⟨∇ Fλ, [X, Ω] ⟩ = 0 for all skew-symmetric Ω, implying 
+
+DF λ(X)[∆] = 0 for all ∆ ∈ TX PK . Thus X is critical. 
+
+B. Second-Order Condition 
+
+To derive the second-order necessary optimality condition for Fλ, we require the Riemannian Hessian. Consider a smooth curve X(t) ⊂ P K with X(0) = X⋆ and ˙X(0) = Ξ , and define 
+
+φ(t) := Fλ(X(t)) . Since X⋆ is a local critical point, we have 
+
+φ′(0) = ⟨∇ Fλ(X⋆), Ξ⟩ = 0 and φ′′ (0) ≥ 0. Differentiating yields 
+
+φ′(t) = ⟨∇ Fλ(X(t)) , ˙X(t)⟩,
+
+and hence 
+
+φ′′ (0) = ⟨D(∇Fλ)( X⋆)[Ξ] , Ξ⟩ + ⟨∇ Fλ(X⋆), ¨X(0) ⟩.
+
+Because ∇Fλ(X⋆) lies in the normal space NX⋆ PK , the second term reduces to 
+
+⟨∇ Fλ(X⋆), ¨X(0) ⟩ = ⟨∇ Fλ(X⋆), ΠN ( ¨X(0)) ⟩,
+
+where ΠN denotes the orthogonal projection onto the normal space. It is worth noting that ΠN ( ¨X(0)) is precisely the second fundamental form II X (·, ·), which yields a closed-form ex-pression for this normal projection in terms of the tangent velocity ˙X(0) :
+
+II X : TX PK × TX PK → NX PK ,
+
+which encodes the extrinsic curvature of the manifold and plays a central role in the Riemannian Hessian and second-order optimality. Its explicit form is stated in Lemma 3. 
+
+Lemma 3 (Second fundamental form of the Grassmann man-ifold) . For PK with tangent and normal spaces at X ∈ P K
+
+TX PK = {Ξ ∈ Sn : XΞ + Ξ X = Ξ },NX PK = {N ∈ Sn : XN = N X },
+
+the second fundamental form w.r.t. the Euclidean metric is 
+
+II X (Ξ , H ) = −(2 X − I)(Ξ H + HΞ) , Ξ, H ∈ TX PK ,
+
+and in particular II X (Ξ , Ξ) = −2(2 X − I)Ξ 2.Proof. Let X(t) ⊂ P K be a smooth curve with X(0) = X
+
+and ˙X(0) = Ξ . Since X(t)2 = X(t), differentiating twice gives 
+
+X ¨X + ¨XX − ¨X = −2Ξ 2.
+
+Define LX (Z) := XZ + ZX − Z. Then LX ( ¨X) = −2Ξ 2.For Ξ ∈ TX PK , LX (Ξ) = 0 ; for N ∈ NX PK , XN = N X ,so LX (N ) = (2 X − I)N . Since (2 X − I)2 = I, LX is 5
+
+invertible on NX PK with inverse 2X − I. Decomposing ¨X =ΠT ( ¨X) + Π N ( ¨X),
+
+ΠN ( ¨X) = L−1 
+
+> X
+
+(−2Ξ 2) = −2(2 X − I)Ξ 2.
+
+By definition II X (Ξ , Ξ) = ΠN ( ¨X), so II X (Ξ , Ξ) =
+
+−2(2 X − I)Ξ 2. Polarization yields II X (Ξ , H ) = −(2 X −
+
+I)(Ξ H + HΞ) .Lemma 3 enables the characterization of local extrema and saddle points of Fλ on PK via the associated quadratic form of the Riemannian Hessian in Lemma 4. 
+
+Lemma 4 (Second-Order Optimality Conditions for Fλ). Let 
+
+A = A⊤ ∈ Rn×n and g ∈ C2(R). Suppose X⋆ ∈ P K satisfies the first-order condition grad Fλ(X⋆) = 0 . Then for every 
+
+Ξ ∈ TX⋆ PK ,
+
+Hess Fλ(X⋆)[Ξ] , Ξ
+
+= D(∇Fλ)( X⋆)[Ξ] , Ξ − 2 (2 X⋆ − I)∇Fλ(X⋆), Ξ2 .
+
+Consequently: 
+
+(a) Local minimum: 
+
+D(∇Fλ)( X⋆)[Ξ] , Ξ −2 (2 X⋆−I)∇Fλ(X⋆), Ξ2 ≥ 0.
+
+(b) Local maximum: 
+
+D(∇Fλ)( X⋆)[Ξ] , Ξ −2 (2 X⋆−I)∇Fλ(X⋆), Ξ2 ≤ 0.
+
+(c) Saddle point: The quadratic form is indefinite. 
+
+Remark. When λ = 0 , the Euclidean Hessian vanishes, i.e., 
+
+∇2F = 0 , so the definiteness of the Riemannian Hessian is governed entirely by the second term in Lemma 4. In particu-lar, for X⋆ corresponding to the projection onto the subspace spanned by the top-K eigenvectors of A, the Riemannian Hessian quadratic form reduces to 
+
+⟨Hess Fλ(X⋆)[Ξ] , Ξ⟩ = −2⟨(2 X⋆ − I)∇Fλ(X⋆), Ξ2⟩.
+
+A direct computation yields 
+
+⟨Hess Fλ(X⋆)[Ξ] , Ξ⟩ = 2 X
+
+> i∈I K
+
+X
+
+> j∈J K
+
+(λi − λj )(Ξ ij )2, (5) 
+
+where λ1 ≥ · · · ≥ λn are the eigenvalues of A, IK =
+
+{1, . . . , K }, and JK = {K + 1 , . . . , n }. Consequently, if the eigengap λK − λK+1 > 0, then the Hessian is negative definite, and X⋆ is a strict local maximum of Fλ over PK .
+
+Remark. When λ̸ = 0 , the Riemannian Hessian incorporates an additional Euclidean term, λ P 
+
+> i,j
+
+g(Xi,j ), arising from the regularization term in the objective function. Under the assumption that the derivative of g(·) is Lipschitz continuous and its Hessian is uniformly bounded by a constant ℓ > 0, the Riemannian Hessian retains its positive definiteness, provided that both λ and ℓ satisfy suitable conditions (e.g., λ is sufficiently large relative to the curvature of the manifold). This preservation of positive definiteness motivates a rigorous investigation into the stability of the minimizer, as it ensures local convexity and robustness of the solution under small perturbations. C. Stability and Global Landscape 
+
+From (5), for λ = 0 , there is exactly one local minimum and one local maximum, with all other critical points being saddles. Consequently, both the local minimum and maximum are global whenever the spectral gap is present. It is natural to expect that the global landscape of critical points remains stable under small perturbations of the Riemannian Hessian. In what follows, we present a theorem that quantifies the stability of the global minimizer. 
+
+Theorem 2 (Local stability of the leading eigenspace) . Let 
+
+A = A⊤ ∈ Rn×n have eigenvalues λ1 ≥ · · · ≥ λn with K-th eigengap ηK := λK − λK+1 > 0. Let R(X) = P 
+
+> i,j
+
+g(Xij ),where g ∈ C2(R) satisfies 0 ≤ g′′ ≤ ℓ and |g′| ≤ M . Denote by X0 = UK U ⊤ 
+
+> K
+
+the projector onto the leading K-dimensional eigenspace of A. Then there exists c > 0, depending only on 
+
+A, g, n , such that if λ(ℓ + 2 M n ) < 2ηK , the following hold: 
+
+1) There exists a unique critical point X⋆(λ) ∈ P K near 
+
+X0.
+
+2) The map λ 7 → X⋆(λ) is C1 with X⋆(0) = X0.
+
+3) ∥X⋆(λ)−X0∥F ≤ C λ/η K for some C > 0 independent of λ.
+
+4) The Riemannian Hessian of Fλ at X⋆(λ) is positive definite; hence X⋆(λ) is a strict local minimizer on PK .Proof. For λ = 0, F0(X) = −2⟨A, X ⟩. By Ky Fan’s inequality, ⟨A, X ⟩ ≤ PKi=1 λi, with equality iff X = X0;hence X0 is the unique minimizer of F0.The Euclidean gradient is ∇Fλ(X) = −2A + λ∇R(X),where (∇R(X)) ij = g′(Xij ). By Theorem 1, X is critical iff 
+
+[X, ∇Fλ(X)] = 0 . Define 
+
+Φ( X, λ ) := [ X, A − λ 
+
+> 2
+
+∇R(X)] .
+
+Then Φ( X0, 0) = 0 . By orthogonal invariance, take A = Λ = diag( λ1, . . . , λ n). For a tangent vector Ξ = 
+
+ 0 B⊤
+
+B 0
+
+
+
+in the block decomposition Λ = diag(Λ 1, Λ2), one computes 
+
+[Ξ , Λ] = 
+
+ 0 (Λ 2 − Λ1)B⊤
+
+(Λ 1 − Λ2)B 0
+
+
+
+,
+
+so ∥[Ξ , Λ] ∥F ≥ ηK ∥Ξ∥F. Since DX Φ( X0, 0)[Ξ] = [Ξ , A ],the derivative is injective and hence invertible. The implicit function theorem yields a unique smooth branch X⋆(λ) near 
+
+λ = 0 with X⋆(0) = X0. Expanding Φ( X⋆(λ), λ ) = 0 gives 
+
+DX Φ( X0, 0)[ X⋆(λ) − X0] = λ
+
+2 [X0, ∇R(X0)] + O(λ2),
+
+and since ∥DX Φ( X0, 0) −1∥op ≤ η−1 
+
+> K
+
+, we obtain ∥X⋆(λ) −
+
+X0∥F ≤ Cλ/η K .For the Hessian, recall 
+
+⟨Hess Fλ(X0)[Ξ] , Ξ⟩
+
+=⟨∇ 2Fλ(X0)[Ξ] , Ξ⟩ − 2⟨(2 X0 − I)∇Fλ(X0), Ξ2⟩.
+
+At λ = 0 , ∇2F0 = 0 , ∇F0 = −2A, hence 
+
+⟨Hess F0(X0)[Ξ] , Ξ⟩ = 4 X
+
+> i≤K
+
+X
+
+> j>K
+
+(λi − λj )B2 
+
+> ji
+
+≥ 2ηK ∥Ξ∥2F.6
+
+Algorithm 1 Riemannian Gradient Projection Algorithm with Backtracking 
+
+Require: X0 ∈ P K , ηmax > 0, 0 < β, σ < 1 
+
+> 1:
+
+for t = 0 , 1, 2, . . . do  
+
+> 2:
+
+Compute Riemannian gradient Gt =[X, [Xt, ∇Fλ(Xt)]] and set ηt = ηmax . 
+
+> 3:
+
+while true do  
+
+> 4:
+
+Yt = Xt − ηtGt. 
+
+> 5:
+
+Compute Xnew = RPK (Yt). 
+
+> 6:
+
+if Fλ(Xnew ) ≤ Fλ(Xt) − ση t∥Gt∥2F then  
+
+> 7:
+
+Xt+1 = Xnew ; break . 
+
+> 8:
+
+else  
+
+> 9:
+
+ηt ← βη t. 
+
+> 10:
+
+end if  
+
+> 11:
+
+end while  
+
+> 12:
+
+end for 
+
+The difference satisfies 
+
+|⟨ Hess Fλ(X0)[Ξ] , Ξ⟩ − ⟨ Hess F0(X0)[Ξ] , Ξ⟩| ≤λ(ℓ + 2 M n )∥Ξ∥2F,
+
+using 0 ≤ g′′ ≤ ℓ, ∥∇ R(X0)∥F ≤ M n , and ∥Ξ2∥∗ = ∥Ξ∥2F.Thus 
+
+⟨Hess Fλ(X0)[Ξ] , Ξ⟩ ≥  2ηK − λ(ℓ + 2 M n )∥Ξ∥2F.
+
+If λ(ℓ + 2 M n ) < 2ηK , the Hessian is positive definite at X0.By smoothness, it remains positive definite near X0, so X⋆(λ)
+
+is a strict local minimizer. Similarly, replacing the eigengap ηK associated with the leading eigenspace by the minimum spectral gap 
+
+γ := min  
+
+> i̸=j
+
+|λi − λj |
+
+allows the perturbation argument to be applied to every PCA projector. Consequently, the entire critical-point landscape of the unregularized problem is preserved under sufficiently small regularization. 
+
+Corollary 1 (Stability of the critical-point landscape) . Let 
+
+A = A⊤ ∈ Rn×n have simple eigenvalues λ1 > · · · > λ n,and set γ := min i̸=j |λi − λj | > 0. Let R(X) = P 
+
+> i,j
+
+g(Xij ),where g ∈ C2(R), 0 ≤ g′′ ≤ ℓ, and |g′| ≤ M . Then there exists c > 0, depending only on A, g, n , such that if 
+
+λ(ℓ + 2 M n ) < cγ , the following hold: 
+
+1) Each PCA projector of the unregularized problem gives rise to a unique nearby critical point of Fλ, depending smoothly on λ.
+
+2) The critical points of Fλ are in one-to-one correspon-dence with the PCA projectors; hence # Crit( Fλ) =   nK
+
+.
+
+3) The Morse index of every critical point is preserved under perturbation. In particular, the perturbation of the leading eigenspace remains a strict local minimizer, while perturbations of all other PCA projectors remain strict saddle points. 
+
+IV. A LGORITHM 
+
+In this section, we investigate numerical methods for solving optimization problems on the projection matrix manifold PK .In particular, we focus on two widely used approaches: the gradient projection method and the Cayley-transformation-based method. The gradient projection method first performs a Euclidean gradient step and then projects the updated iterate back onto 
+
+PK . This projection requires the computation of a rank-K
+
+eigendecomposition, resulting in a per-iteration complexity of 
+
+O(n2K).Motivated by the Cayley transformation for optimizing on the Stiefel manifold [19], we also consider a Cayley-transformation-based update on the Grassmann manifold. By exploiting the geometric structure of the manifold, the Cayley update preserves feasibility without requiring an eigende-composition. The dominant computational cost arises from forming matrix products of size n × K and computing the inverse of a K × K matrix, yielding an overall complexity of 
+
+O(nK 2) + O(K3) per iteration. Consequently, when n ≫ K,the Cayley-based method is significantly more efficient and scalable than the gradient projection approach. 
+
+A. Gradient Projection Algorithm 
+
+The Euclidean gradient of Fλ(·) is ∇Fλ(X) = −2A +
+
+λG (X), where G(X) =  g′(Xij ) 
+
+> i,j
+
+. Given the current iterate 
+
+Xt, a Riemannian gradient descent step with stepsize ηt > 0
+
+produces 
+
+Yt = Xt − ηt[X, [X, ∇Fλ(Xt)] .
+
+Since Yt generally does not belong to PK , we pull it back onto the feasible set via the optimization: 
+
+Xt+1 = RPK (Yt) = arg min 
+
+> X∈P K
+
+∥X − Y ∥2F. (6) The stepsize ηt is chosen via backtracking line search with parameters 0 < β, σ < 1. Starting from ηmax > 0, we iteratively set ηt ← βη t until the Armijo condition 
+
+Fλ(Xt+1 ) ≤ Fλ(Xt) − ση t∥∇ Fλ(Xt)∥2F (7) holds. Each iteration is dominated by the projection onto PK ,which requires computing the leading K eigenvectors of an 
+
+n × n matrix. A full eigendecomposition costs O(n3), while Krylov/Lanczos methods reduce this to O(n2K) for K ≪ n.The gradient evaluation costs O(n2), so the projection step is the bottleneck. 
+
+B. Cayley Transformation-based Riemannian Gradient Method 
+
+Besides the classical gradient projection method, we con-sider a more efficient approach that constructs a smooth curve directly on the projection manifold. This avoids repeated projections onto the manifold via eigenvalue decompositions at each iteration, thereby significantly reducing computational overhead. Recall that the Grassmann manifold Gr( K, n ) can be viewed as the quotient space of the Stiefel manifold under the 7
+
+Algorithm 2 Cayley–SMW Riemannian Gradient Method 
+
+Require: U ⊤ 
+
+> 0
+
+U0 = IK , τmax > 0, 0 < β, σ < 1 
+
+> 1:
+
+for k = 0 , 1, . . . do  
+
+> 2:
+
+Xk = UkU ⊤
+
+> k
+> 3:
+
+Ξk = ( I − UkU ⊤ 
+
+> k
+
+)∇Fλ(Xk)Uk 
+
+> 4:
+
+if ∥Ξk∥F < tol then  
+
+> 5:
+
+stop  
+
+> 6:
+
+end if 
+
+> 7:
+
+Yk = [ Ξ k, U k ], J =
+
+ 0 IK
+
+−IK 0
+
+ 
+
+> 8:
+
+τk = τmax  
+
+> 9:
+
+while τk > τ min do 
+
+> 10:
+
+Mk = I2K + τk
+
+2 JY ⊤ 
+
+> k
+
+Yk 
+
+> 11:
+
+Solve 
+
+MkZk = JY ⊤ 
+
+> k
+
+Uk
+
+> 12:
+
+eU = Uk − τkYkZk 
+
+> 13:
+
+if Fλ( eU eU ⊤) ≤ Fλ(Xk) − στ k∥Ξk∥2F then  
+
+> 14:
+
+Uk+1 = eU 
+
+> 15:
+
+break  
+
+> 16:
+
+end if  
+
+> 17:
+
+τk ← βτ k 
+
+> 18:
+
+end while  
+
+> 19:
+
+end for  
+
+> 20:
+
+Return X⋆ = U ⋆(U ⋆)⊤
+
+right action of the orthogonal group O(K). The Riemannian gradient of Fλ(X) on Gr( K, n ), evaluated at X = UkU ⊤ 
+
+> k
+
+,admits the representation 
+
+Ξk = ( I − UkU ⊤ 
+
+> k
+
+) ∇Fλ(UkU ⊤ 
+
+> k
+
+) Uk,
+
+where Ξk ∈ TUk Gr( K, n ) denotes the Riemannian gradient in the tangent space at Uk.To perform Riemannian optimization on Gr( K, n ), we construct a Cayley-type retraction based on an orthogonal transformation. Specifically, define the skew-symmetric matrix 
+
+Ωk = UkΞ⊤ 
+
+> k
+
+− ΞkU ⊤ 
+
+> k
+
+, Ω⊤ 
+
+> k
+
+= −Ωk.
+
+Then the Cayley transform generates an orthogonal matrix 
+
+Qk =
+
+
+
+I − τk
+
+2 Ωk
+
+−1 
+
+I + τk
+
+2 Ωk
+
+
+
+,
+
+which preserves orthogonality up to higher-order terms in τk.The updated iterate is given by 
+
+Uk+1 = QkUk,
+
+which ensures Uk+1 ∈ St( K, n ) and consequently 
+
+Uk+1 U ⊤ 
+
+> k+1
+
+∈ Gr( K, n ).
+
+a) Directional derivative: Here, we derive the directional derivative of the Cayley curve at τ = 0 , and quantify the rate of variation of X(τ ) at τ = 0 in terms of the order O(∥Ξ∥2F).
+
+Proposition 1 (Descent Property of the Cayley Curve) . Let 
+
+X = U U ⊤ ∈ P K , Ξ = ( I − U U ⊤)∇Fλ(X)U, 
+
+and define Ω = −ΞU ⊤ + U Ξ⊤ . Consider the Cayley curve 
+
+U (τ ) = 
+
+
+
+I − τ
+
+2 Ω
+
+−1 
+
+I + τ
+
+2 Ω
+
+
+
+U, X(τ ) = U (τ )U (τ )⊤.
+
+Then X(τ ) ∈ P K for all sufficiently small τ , and 
+
+ddτ Fλ(X(τ )) τ =0 
+
+= −2∥Ξ∥2F.
+
+In particular, if Ξ̸ = 0 , then X(τ ) is a strict descent curve for 
+
+Fλ.Proof. Since Ω⊤ = −Ω, the Cayley transform Q(τ ) = ( I − 
+
+> τ
+> 2
+
+Ω) −1(I + τ 
+
+> 2
+
+Ω) is orthogonal. Thus U (τ ) = Q(τ )U satisfies 
+
+U (τ )⊤U (τ ) = IK , so X(τ ) = U (τ )U (τ )⊤ ∈ P K .Differentiating at τ = 0 : using (A−1)′ = −A−1A′A−1 with 
+
+A = I − τ 
+
+> 2
+
+Ω, we get Q′(0) = Ω , hence U ′(0) = Ω U . Since 
+
+Ω = −ΞU ⊤ + U Ξ⊤ and U ⊤Ξ = 0 , we have ΩU = −Ξ, so 
+
+U ′(0) = −Ξ. Differentiating X(τ ) gives 
+
+X′(0) = −ΞU ⊤ − U Ξ⊤.
+
+By the chain rule and symmetry of ∇Fλ(X),
+
+ddτ Fλ(X(τ ))  
+
+> τ=0
+
+= −2⟨∇ Fλ(X)U, Ξ⟩.
+
+Using Ξ = ( I − U U ⊤)∇Fλ(X)U and U U ⊤Ξ = 0 ,
+
+⟨∇ Fλ(X)U, Ξ⟩ = ⟨(I − U U ⊤)∇Fλ(X)U, Ξ⟩ = ∥Ξ∥2F.
+
+Thus the derivative equals −2∥Ξ∥2F. If Ξ̸ = 0 , this is negative, so the Cayley curve along the negative Riemannian gradient is a strict descent direction. Based on this proposition, a suitable step size τ can be se-lected via a backtracking line search, which balances sufficient descent with ease of optimization. Specifically, we initialize τk
+
+with τmax > 0 and iteratively update 
+
+τk ← βτ k, 0 < β < 1,
+
+until the Armijo condition 
+
+Fλ(Uk+1 U ⊤
+
+> k+1
+
+) ≤ Fλ(UkU ⊤ 
+
+> k
+
+) − στ k∥Ξk∥2F
+
+is satisfied for some 0 < σ < 1.
+
+b) A faster approach for the Cayley transformation: 
+
+Noticing that the explicit representation of Qk involve the computation of the inverse n × n matrix  I − τk 
+
+> 2
+
+Ωk
+
+, which cost O(n3). To avoid forming Qk ∈ Rn×n explicitly, we exploit the low-rank structure of Ωk. Define 
+
+Yk = [ Ξ k, U k ] ∈ Rn×2K , J =
+
+ 0 IK
+
+−IK 0
+
+
+
+,
+
+so that 
+
+Ωk = −YkJY ⊤ 
+
+> k
+
+.
+
+Using the Sherman–Morrison–Woodbury formula, the Cay-ley update can be written in low-rank form as 
+
+Uk+1 = Uk − τkYk
+
+
+
+I + τk
+
+2 JY ⊤ 
+
+> k
+
+Yk
+
+−1
+
+JY ⊤ 
+
+> k
+
+Uk.8Ground Truth Noisy Matrix Spectral Projection RPMA  
+
+> Fig. 1. Comparison of the spectral projection estimator and RPMA-S for projection matrix recovery. RPMA-S exploits sparsity regularization to recover a cleaner and sparser projection matrix.
+
+C. Complexity and Convergence Analysis a) Complexity: This implementation only requires the inversion of a 2K × 2K matrix, leading to a per-iteration complexity of 
+
+O(nK 2) + O(K3).
+
+Compared with eigendecomposition-based methods, the computational complexity is reduced from O(n2K) to 
+
+O(nK 2) + O(K3). In typical applications, the embedding dimension (or number of clusters) satisfies K ≪ n, making the proposed approach significantly more efficient in large-scale settings. 
+
+b) Convergence.: Assume that Fλ ∈ C1 has a Lipschitz continuous gradient on the compact manifold PK . Then every accumulation point X⋆ of {Xk} is a stationary point satisfying 
+
+[X⋆, ∇Fλ(X⋆)] = 0 , ∥Ξk∥F → 0.
+
+Furthermore, if X⋆ is a nondegenerate local minimizer with 
+
+Hess PK Fλ(X⋆) ⪰ μI, μ > 0,
+
+then the iterates converge locally linearly to X⋆, i.e., 
+
+∥Xk+1 − X⋆∥F ≤ ρ ∥Xk − X⋆∥F, ρ ∈ (0 , 1) ,
+
+for all sufficiently large k.V. N UMERICAL EXPERIMENT 
+
+In this section, we first perform synthetic experiments to demonstrate the effectiveness of the proposed regularized projection matrix approximation (RPMA) framework. Specif-ically, we show that RPMA can recover the underlying clean projection matrix more accurately than the classical spectral projection estimator in the presence of perturbations. We consider two variants of the RPMA model. The first variant, referred to as RPMA-S, incorporates an entry-wise robust regularization term and is formulated as 
+
+min 
+
+> X∈P K
+
+−2⟨X, A ⟩ + λ X
+
+> i,j
+
+gδ (Xi,j ),
+
+where gδ (·) denotes the Huber loss penalty with parameter 
+
+δ. This formulation aims to exploit the inherent sparsity or regularity of the projection matrix while preserving its rank-
+
+K projection structure. To further incorporate additional structural information, we introduce the structure-enhanced variant RPMA-NS, which is defined as 
+
+min 
+
+> X∈P K
+
+− 2⟨X, A ⟩ + λ X
+
+> i,j
+
+gδ (Xi,j )+ μ X
+
+> i,j
+
+(min {Xi,j , 0})2 + ρ∥X1n − 1n∥22.
+
+The additional two regularization terms enforce non-negativity and the row-sum-to-one constraint, respectively, thereby incor-porating prior structural information of the projection matrix. The coefficients λ, μ, and ρ control the trade-off between data fidelity and structural regularization. We then evaluate the clustering performance of RPMA-S and its structure-enhanced variant, RPMA-NS, on four real-world datasets: COIL20, the AT&T Database of Faces, Semeion, and DIGIT-10. The experiments are organized into balanced-sample and imbalanced-sample settings to assess both the clustering effectiveness and the robustness of the proposed methods under homogeneous and heterogeneous class-size distributions. 1
+
+A. Experiment on synthetic data 
+
+Firstly, we evaluate the recovery capability of the sparse regularized projection approximation (RPMA-S) model. We consider a ground-truth projection matrix X∗ ∈ R40 ×40 with rank K = 4 . Specifically, X∗ consists of four diagonal blocks of size 10 × 10 , where each entry within a block is equal to 1/10 , and all off-block entries are zero. To simulate noisy observations, we construct 
+
+X = X∗ + E, 
+
+where E is a sparse noise matrix. For each entry (i, j ),we independently select it with probability 0.5; if selected, the entry is assigned a random value drawn uniformly from 
+
+[−1, 1] , and otherwise it is set to zero. This procedure produces a highly corrupted observation matrix while preserving the underlying low-rank projection structure. The solutions obtained by the spectral projection estimator and the regularized projection approximation model with the Huber penalty are presented in Figure 1. As can be seen, 
+
+> 1The source code for RPMA-S and RPMA-NS, together with the experi-mental scripts, is publicly available at https://github.com/liangzhuan/RPMA.
+
+91.0e-06 1.0e-05 1.0e-04 1.0e-03 2.0e-03 4.0e-03 8.0e-03 1.6e-02 3.2e-02 6.4e-02                                                                                           
+
+> 0.000
+> 0.010
+> 0.020
+> 0.030
+> 0.040
+> 0.050
+> 0.060
+> 0.070
+> 0.080
+> 0.090
+> 0.592 0.592 0.592 0.592 0.592 0.592 0.592 0.592 0.592 0.592
+> 0.504 0.504 0.504 0.504 0.505 0.507 0.513 0.528 0.559 0.588
+> 0.424 0.423 0.422 0.423 0.424 0.430 0.444 0.477 0.533 0.585
+> 0.368 0.362 0.358 0.361 0.365 0.374 0.396 0.442 0.514 0.583
+> 0.348 0.339 0.332 0.335 0.339 0.350 0.374 0.423 0.502 0.584
+> 0.364 0.342 0.341 0.343 0.346 0.354 0.374 0.419 0.497 0.587
+> 0.375 0.375 0.366 0.366 0.367 0.372 0.387 0.425 0.499 0.592
+> 0.416 0.429 0.394 0.394 0.395 0.398 0.409 0.440 0.507 0.600
+> 1.485 1.480 1.477 1.477 1.476 0.430 0.438 0.463 0.523 0.610
+> 2.340 2.273 2.187 1.491 1.490 1.488 1.490 1.493 0.548 0.624
+
+Recovery Error 
+
+(a) Reconstruction error of RPMA-S, measured by ∥ bX −
+
+X∗∥F, where bX denotes the solution of the Huber-loss-regularized projection approximation model under different settings of the regularization parameter λ and the Huber loss parameter δ.1.0e-06 1.0e-05 1.0e-04 1.0e-03 2.0e-03 4.0e-03 8.0e-03 1.6e-02 3.2e-02 6.4e-02                                                                                           
+
+> 0.000
+> 0.010
+> 0.020
+> 0.030
+> 0.040
+> 0.050
+> 0.060
+> 0.070
+> 0.080
+> 0.090
+> -0.0% -0.0% -0.0% -0.0% -0.0% -0.0% -0.0% -0.0% -0.0% -0.0%
+> 14.8% 14.8% 14.8% 14.8% 14.7% 14.4% 13.4% 10.8% 5.6% 0.8%
+> 28.3% 28.6% 28.7% 28.6% 28.3% 27.4% 25.0% 19.5% 10.1% 1.2%
+> 37.9% 39.0% 39.5% 39.0% 38.4% 36.8% 33.2% 25.4% 13.3% 1.5%
+> 41.3% 42.8% 44.0% 43.5% 42.7% 40.9% 36.9% 28.5% 15.3% 1.4%
+> 38.5% 42.3% 42.4% 42.0% 41.5% 40.3% 36.9% 29.2% 16.1% 0.9%
+> 36.6% 36.7% 38.3% 38.2% 37.9% 37.1% 34.6% 28.2% 15.8% 0.1%
+> 29.8% 27.5% 33.5% 33.5% 33.3% 32.7% 30.9% 25.7% 14.3% -1.2%
+> -150.8% -150.0% -149.5% -149.4% -149.2% 27.4% 26.0% 21.7% 11.6% -3.1%
+> -295.1% -283.8% -269.3% -151.8% -151.6% -151.4% -151.6% -152.2% 7.4% -5.4%
+
+Improvement 
+
+(b) Relative recovery improvement of RPMA-S over the spectral projection estimator, measured by ∥Xspe −X∗∥F−∥ bX−X∗∥F
+
+∥Xspe −X∗∥F , where bX denotes the solution of the Huber-loss-regularized projection approximation model. 
+
+Fig. 2. Performance comparison under different settings, initialized with the top-K eigenvectors of X.TABLE I RECOVERY ERROR (LEFT ) AND RELATIVE IMPROVEMENT OVER SPECTRAL PROJECTION (RIGHT ) FOR DIFFERENT CHOICES OF λ AND δ
+
+Recovery Error ∥ bX − X∗∥F Improvement (%) 
+
+λδ 10 −5 10 −4 10 −3 0.002 0.004 0.008 0.016 0.032 0.064 10 −5 10 −4 10 −3 0.002 0.004 0.008 0.016 0.032 0.064 
+
+0.00 0.592 0.592 0.592 0.592 0.592 0.592 0.592 0.592 0.592 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0.01 0.504 0.504 0.504 0.505 0.507 0.513 0.528 0.559 0.588 15.0 15.0 15.0 15.0 14.0 13.0 11.0 6.0 1.0 0.02 0.423 0.422 0.423 0.424 0.430 0.444 0.477 0.533 0.585 29.0 29.0 29.0 28.0 27.0 25.0 20.0 10.0 1.0 0.03 0.362 0.358 0.361 0.365 0.374 0.396 0.442 0.514 0.583 39.0 39.0 39.0 38.0 37.0 33.0 25.0 13.0 1.0 0.04 0.339 0.332 0.335 0.339 0.350 0.374 0.424 0.502 0.584 43.0 44.0 43.0 43.0 41.0 37.0 28.0 15.0 1.0 0.05 0.342 0.341 0.343 0.346 0.354 0.374 0.419 0.497 0.587 42.0 42.0 42.0 42.0 40.0 37.0 29.0 16.0 1.0 0.06 0.375 0.366 0.366 0.367 0.372 0.387 0.425 0.499 0.592 37.0 38.0 38.0 38.0 37.0 35.0 28.0 16.0 0.0 0.07 0.429 0.394 0.394 0.395 0.398 0.409 0.440 0.507 0.600 28.0 33.0 33.0 33.0 33.0 31.0 26.0 14.0 -0.0 0.08 1.480 1.477 1.477 1.476 0.430 0.438 0.463 0.523 0.610 -150.0 -149.0 -149.0 -149.0 27.0 26.0 22.0 12.0 -0.0 0.09 2.273 2.187 1.491 1.490 1.488 1.490 1.493 0.548 0.624 -284.0 -269.0 -152.0 -152.0 -151.0 -152.0 -152.0 7.0 -0.1 
+
+the spectral projection estimator produces numerous small nonzero entries in the off-diagonal blocks, reflecting the influ-ence of noise on the recovered projection matrix. In contrast, the Huber-regularized model yields a substantially cleaner solution, with most off-diagonal entries effectively suppressed. Consequently, the recovered projection matrix more closely resembles the underlying block-diagonal structure, demon-strating the ability of the regularization term to mitigate noise and enhance recovery accuracy. In addition, we investigate the sensitivity of RPMA-S to the regularization parameter λ and the Huber parameter δ.The recovery performance under different parameter settings is reported in Figure 2a and Figure 2b. We observe that RPMA-S consistently outperforms the spectral projection estimator across a broad range of parameter choices. In particular, with appropriately selected values of λ and δ, the relative improve-ment in recovery accuracy reaches up to 44 .0% . This signif-icant gain confirms the advantage of incorporating sparsity-promoting regularization into the projection approximation framework and provides strong empirical evidence for the effectiveness of the proposed model. Finally, to validate the global convergence property of the Riemannian Gradient method, we initialize X = U U T from a completely different starting point by choosing the first K
+
+canonical basis vectors of Rn, namely, 
+
+U = [ e1, e 2, . . . , e K ],
+
+instead of using the eigenvectors associated with X. This initialization corresponds to a substantially different K-dimensional subspace and therefore provides a stringent test of the algorithm’s global convergence behavior. The recovery error and the improvement for the new initialization is shown in Table I. We can conclude that: 1) When λ is small ( λ < 0.05 ), Table I demonstrate almost the same results compared with Figure 2a and Figure 2b, which validate our global convergence property in The-orem 2. 2) The sparse projection approximation model performs well for relatively small values of δ, and the improve-ment in approximation quality, measured in the Frobe-10                                                                
+
+> TABLE II THE OBJECTIVES AND CONSTRAINTS OF THE BASELINE ALGORITHMS .SDP-1 SDP-2 SDP-U Spectral Proj. SLSA Objectives max
+> X⟨A, X ⟩max
+> X⟨A, X ⟩max
+> X⟨A, X ⟩max
+> X⟨A, X ⟩min
+> X,U ∥X−A∥2
+> F+θ∥X−U U T∥2
+> F
+> Constraints X1n=nK1n,X⪰0,
+> diag( X) = 1n,X≥0
+> ⟨X, E n⟩=n2
+> K ,X⪰0,
+> tr( X) = n, 0≤X≤1
+> X1n=1n,tr( X) = K, X⪰0,X≥0X∈ P K
+> UTU=IK,
+> ∥Xoff ∥0≤η
+
+nius norm, can reach up to 44 .0% . It is worth noting that as δ → 0+, the Huber loss converges uniformly to the ℓ1 norm, thereby promoting sparsity in the resulting solution. 3) As λ increases, the curvature induced by the regu-larization term eventually dominates the spectral gap. Consequently, for λ = 0 .08 and 0.09 , the Cayley–SMW Riemannian Gradient method fails to recover the global optimum when δ is small. However, this phenomenon can be alleviated by increasing δ; for instance, the global optimum is recovered when δ > 0.004 for 
+
+λ = 0 .08 and when δ > 0.064 for λ = 0 .09 . This observation is consistent with Theorem 2, where the sufficient condition for preserving the global minimizer only requires λ ≤ cη K /ℓ = cη K δ.
+
+B. Experiments on Real-World Datasets 
+
+The preceding synthetic experiment demonstrates that the proposed regularized projection matrix approximation can recover a cleaner projection structure from noisy observa-tions. We next evaluate the clustering performance of the two proposed models, RPMA-S and RPMA-NS, on real-world image data. Compared with the SDP and spectral-projection baselines, RPMA-S directly estimates a rank-K
+
+projection matrix and augments the projection-fitting objective with an entrywise Huber penalty, which promotes a sparse and noise-robust projection structure. RPMA-NS further extends RPMA-S by incorporating a one-sided quadratic penalty on negative entries and a row-sum penalty, thereby encouraging entrywise nonnegativity and approximate row-stochasticity in the recovered projection matrix. For comparison, SDP-1 [20] and SDP-2 [20] are used as the SDP baselines in the balanced-sample experiments. Since these formulations rely on equal-cluster-size assumptions, they cannot be directly applied when the class sizes are hetero-geneous. Following the unequal-cluster treatment of SDP-based K-means clustering in [21], we construct a size-flexible variant, denoted by SDP-U, by removing the equal-capacity restriction while retaining the positive-semidefinite, entrywise nonnegative, trace, and row-sum constraints of the standard K-means SDP. SDP-U is therefore used as the SDP baseline in the imbalanced-sample experiments. Spectral projection [22], [23] and SLSA [11] are included in both settings. The objec-tives and constraints of these baseline methods are summarized in Table II. The real-world experiments involve four datasets covering object images, facial images, and handwritten digits. Their main statistics are summarized in Table III. 
+
+> TABLE III SUMMARY OF THE REAL -WORLD DATASETS .
+
+Dataset Classes Samples/Class Total Samples COIL20 20 72 1,440 AT&T Faces 40 10 400 Semeion 10 155 1,550 DIGIT-10 10 200 2,000 
+
+COIL20: COIL20 contains grayscale images of 20 objects photographed from 72 equally spaced viewing directions, giving 1,440 images in total [24]. The continuous viewpoint variation produces substantial within-class appearance changes and makes the dataset suitable for testing whether a clustering method can preserve object identity across different viewing angles. 
+
+AT&T Database of Faces: The AT&T Database of Faces contains 400 images of 40 individuals, with 10 images per subject [25]. The images include variations in expression, pose, illumination, and facial details. The small number of observations per class makes the clustering performance sen-sitive to the quality of the recovered projection matrix. 
+
+Semeion: The Semeion handwritten-digit dataset contains 1,593 samples from digits 0–9, with each digit represented by a 16 × 16 binary image and therefore a 256-dimensional feature vector [26]. To obtain a balanced clustering instance, we randomly select 155 samples from each class, resulting in 1,550 samples in total. 
+
+DIGIT-10: DIGIT-10 is constructed from the UCI Multiple Features handwritten-digit dataset [27]. We use the pixel-average feature view, in which each sample is represented by a 240-dimensional vector. The dataset contains 10 digit classes with 200 samples per class, yielding 2,000 samples in total. For COIL20, AT&T Faces, and DIGIT-10, all available samples in the selected representation are used. For Semeion, the largest equal-sized subset considered in our experiments is used. In all cases, the ground-truth class labels are used only to compute ACC, NMI, and ARI after clustering and are not provided to any clustering method. 
+
+1) Balanced-Sample Experiments: We first evaluate the competing methods under the balanced-sample setting. The experiments use an equal number of samples in every class, namely 72, 10, 155, and 200 samples per class for COIL20, AT&T Faces, Semeion, and DIGIT-10, respectively. Clustering performance is assessed using clustering accuracy (ACC), normalized mutual information (NMI), and adjusted Rand index (ARI). Under the balanced-sample setting, the final labels produced 11                                                                                 
+
+> TABLE IV CLUSTERING PERFORMANCE ON REAL -WORLD DATASETS .Dataset Method ACC NMI ARI COIL20 SDP-1 0.7271 0.8118 0.6762
+> SDP-2 0.6784 0.7803 0.5966 SLSA 0.6799 0.7605 0.6031 Spectral Projection 0.6611 0.7833 0.6159 RPMA-S 0.6875 0.7817 0.6248 RPMA-NS 0.7028 0.7887 0.6436 AT&T Faces SDP-1 0.8225 0.9152 0.7677 SDP-2 0.7800 0.8839 0.6861 SLSA 0.7375 0.8522 0.3902 Spectral Projection 0.8275 0.9144 0.7583 RPMA-S 0.8350 0.9212 0.7812 RPMA-NS 0.8675 0.9275 0.8169
+> Semeion SDP-1 0.4542 0.4461 0.2997 SDP-2 0.4852 0.4527 0.3135 SLSA 0.4510 0.4987 0.1560 Spectral Projection 0.5110 0.4679 0.3243 RPMA-S 0.5141 0.4657 0.3247 RPMA-NS 0.5651 0.5127 0.4003
+> DIGIT-10 SDP-1 0.7590 0.7716 0.6594
+> SDP-2 0.6560 0.6475 0.5353 SLSA 0.6465 0.7418 0.5458 Spectral Projection 0.6630 0.6370 0.5274 RPMA-S 0.7405 0.6664 0.5782 RPMA-NS 0.7145 0.6264 0.5318
+
+by RPMA-NS are obtained through capacity-constrained rounding using the known common cluster size. The ground-truth class labels are used only for performance evaluation and are not involved in either the optimization procedure or the label assignment. The quantitative results are reported in Table IV. Overall, the RPMA-S family exhibits consistently competi-tive performance across the four datasets. RPMA-NS achieves the best results on AT&T Faces and Semeion and remains the second-best method on COIL20 for all three evaluation crite-ria. These results indicate that incorporating nonnegative and stochastic structure can improve the quality of the recovered clustering projection, particularly when the affinity matrix is compatible with the assumed cluster structure. The basic RPMA-S model also performs strongly. It sub-stantially outperforms classical spectral projection on sev-eral datasets and remains especially competitive on DIGIT-10, where it achieves better ACC, NMI, and ARI than the spectral baseline. The fact that RPMA-S outperforms RPMA-NS on this dataset also suggests that the additional structural constraints are not uniformly beneficial for every feature representation and may become restrictive when the input affinity deviates from an ideal block structure. Taken together, these results support the central premise of the proposed framework: directly regularizing a rank-K pro-jection matrix provides an effective alternative to conventional spectral embedding. RPMA-S offers a robust general formu-lation, while RPMA-NS can yield further improvements when nonnegativity, stochasticity, and balanced cluster structure are appropriate for the data. 
+
+2) Imbalanced-Sample Experiments: We next investigate the robustness of the competing methods when the class sizes are heterogeneous. For each dataset, four sampling ratios, 
+
+r ∈ { 20% , 40% , 60% , 80% }, are considered. Let N and K
+
+denote the total number of available samples and the number of classes, respectively. At sampling ratio r, the target subset size is 
+
+Mr = ⌊rN ⌋ .
+
+A class-proportion vector is generated according to 
+
+(π1, . . . , π K ) ∼ Dirichlet ( αimb 1K ) ,
+
+and the resulting proportions are converted into integer class sizes subject to 
+
+mmin ≤ mk ≤ Nk,
+
+> K
+
+X
+
+> k=1
+
+mk = Mr ,
+
+where Nk is the number of available samples in class k. For each sampling ratio, all methods are evaluated using exactly the same sampled subset and affinity matrix. Since the cluster capacities are unknown under the im-balanced setting, capacity-constrained balanced rounding is no longer applicable. Ordinary K-means is therefore used to discretize the continuous representations produced by RPMA-S, RPMA-NS, spectral projection, and SLSA. Consequently, the performance of RPMA-NS in this experiment does not rely on the equal-size prior or on any ground-truth cluster-capacity information.The quantitative results are reported in Table V. Although SDP-1 is highly competitive in the balanced ex-periments, the corresponding unbalanced formulation does not exhibit comparable stability under heterogeneous class sizes. This behavior is especially pronounced on COIL20. As the sampling ratio increases from 20% to 80% , the ACC of SDP-U decreases from 0.6563 to 0.0677 , while its NMI decreases from 0.8035 to 0.0304 and its ARI decreases from 0.7249 to 
+
+0.0503 . Hence, retaining more samples does not lead to an improvement for SDP-U; instead, its performance deteriorates sharply as the imbalanced instance becomes larger. This result indicates that the modified SDP formulation remains sensitive to the interaction between heterogeneous cluster sizes and its structural constraints. In contrast, RPMA-S and RPMA-NS maintain substantially more stable performance over the four sampling ratios. On COIL20, RPMA-NS attains the highest NMI and ARI at every sampling level, while its ACC remains within a relatively narrow range from 0.6759 to 0.7205 . RPMA-S also preserves competitive ACC, NMI, and ARI values as the number of retained samples increases. On AT&T Faces, both variants remain competitive with SDP-U and become particularly effective at the largest sampling ratio. These observations suggest that regularized projection recovery is less dependent on an accurately specified cluster-size model and is therefore better suited to heterogeneous sample distributions. Figure 3 provides a qualitative view of the projection structures recovered by RPMA-S. Across the four sampling levels, the matrices retain a visible concentration of large-magnitude entries around the reordered diagonal and preserve recognizable blockwise patterns. In particular, the projection structure does not collapse as the number of retained samples 12 
+
+TABLE V CLUSTERING PERFORMANCE UNDER THE IMBALANCED -SAMPLE SETTING .
+
+Dataset Sampling ratio SDP-U RPMA-S RPMA-NS Spectral Proj. SLSA 
+
+(a) ACC 
+
+AT&T Faces 20% 0.7250 0.6875 0.6875 0.6875 0.6500 AT&T Faces 40% 0.7125 0.6938 0.7000 0.6813 0.6813 AT&T Faces 60% 0.7667 0.7542 0.7625 0.7333 0.7292 AT&T Faces 80% 0.8156 0.8156 0.8344 0.8156 0.7750 COIL20 20% 0.6563 0.7153 0.7118 0.6458 0.5451 COIL20 40% 0.4757 0.6667 0.7205 0.6267 0.5278 COIL20 60% 0.2662 0.6597 0.6759 0.6852 0.4942 COIL20 80% 0.0677 0.6866 0.6953 0.6814 0.4644 
+
+(b) NMI 
+
+AT&T Faces 20% 0.9138 0.9194 0.9066 0.8960 0.8761 AT&T Faces 40% 0.9081 0.8858 0.8783 0.8899 0.8742 AT&T Faces 60% 0.9068 0.9040 0.8991 0.8974 0.8770 AT&T Faces 80% 0.9156 0.9281 0.9175 0.9235 0.8935 COIL20 20% 0.8035 0.8355 0.8446 0.7963 0.7536 COIL20 40% 0.6672 0.8004 0.8497 0.7991 0.7249 COIL20 60% 0.3596 0.8296 0.8349 0.8090 0.6703 COIL20 80% 0.0304 0.7967 0.8130 0.8033 0.6061 
+
+(c) ARI 
+
+AT&T Faces 20% 0.5274 0.5721 0.4877 0.4491 0.3719 AT&T Faces 40% 0.6832 0.6402 0.6374 0.6122 0.5806 AT&T Faces 60% 0.7423 0.7140 0.7101 0.6843 0.6670 AT&T Faces 80% 0.7722 0.7992 0.7960 0.7941 0.7298 COIL20 20% 0.7249 0.7708 0.7751 0.7120 0.4998 COIL20 40% 0.3023 0.6485 0.7248 0.6315 0.3539 COIL20 60% 0.0658 0.6776 0.6999 0.6575 0.2079 COIL20 80% 0.0503 0.6545 0.6762 0.6584 0.1351 -0.0610 
+
+> 0.211
+
+(a) AT&T Faces, 20% -0.0610  
+
+> 0.211
+
+(b) AT&T Faces, 40% -0.0610  
+
+> 0.211
+
+(c) AT&T Faces, 60% -0.0610  
+
+> 0.211
+
+(d) AT&T Faces, 80% -0.0132 
+
+> 0.0350
+
+(e) COIL20, 20% -0.0132  
+
+> 0.0350
+
+(f) COIL20, 40% -0.0132  
+
+> 0.0350
+
+(g) COIL20, 60% -0.0132  
+
+> 0.0350
+
+(h) COIL20, 80% 
+
+Fig. 3. Reordered RPMA-S projection matrices under different imbalanced sampling ratios. The first and second rows correspond to AT&T Faces and COIL20, respectively. From left to right, the sampling ratios are 20%, 40%, 60%, and 80%. The four panels associated with the same dataset share a common color scale, while the color scales are normalized independently across the two datasets. 13 
+
+increases. This visual evidence is consistent with the quanti-tative results and further illustrates the stability of RPMA–S under unequal class distributions. 
+
+C. Discussion 
+
+The balanced and imbalanced experiments reveal an impor-tant distinction between the competing formulations. Under balanced class sizes, SDP-1 can exploit its equal-capacity assumption effectively and achieves strong performance on several datasets. However, this advantage does not transfer consistently to the unequal-size setting. Although SDP-U relaxes the original size constraint, its sharp deterioration on COIL20 demonstrates that the modified formulation can remain highly sensitive to the class-size configuration and to the scale of the sampled problem. RPMA-S does not require an exact equal-capacity con-straint. Instead, it directly estimates a regularized rank-K
+
+projection matrix whose dominant structure encodes the latent partition. This formulation provides competitive performance in the balanced experiments while remaining stable when the class sizes become heterogeneous. RPMA-NS further promotes nonnegativity and row-stochasticity, which are con-sistent with the properties of an ideal clustering projection. Its consistently strong NMI and ARI under the imbalanced COIL20 experiments indicate that these structural properties help suppress spurious inter-cluster connections without rely-ing on known cluster capacities. Overall, the results demonstrate that the main advantage of the RPMA-S family lies not only in its competitive clustering accuracy, but also in its robustness across substantially differ-ent sampling regimes. RPMA-S provides a flexible general-purpose formulation, whereas RPMA-NS offers additional structural regularization when the affinity matrix is compat-ible with a nonnegative stochastic projection. Their stable behavior under unequal class sizes provides a clear advantage over methods whose performance depends more strongly on balanced-size assumptions. VI. C ONCLUSION 
+
+In this paper, we investigated the sparsed regularized projec-tion matrix approximation (RPMA) framework and developed efficient optimization algorithms with reduced computational complexity. We established sufficient conditions for local opti-mality and characterized the stability of the regularized leading eigenspace and the critical-point landscape. In particular, our analysis reveals how the regularization parameter influences the geometry of the optimization landscape and the persistence of critical points under perturbation. Several promising directions remain for future research. First, it would be worthwhile to investigate a broader class of regularization terms and their impact on clustering accuracy, robustness, and interpretability. Second, developing adaptive strategies for selecting regularization parameters in a data-driven manner is an important practical problem. Finally, it is of considerable theoretical interest to extend the current analysis beyond the sufficient conditions established in this paper, including understanding the behavior of RPMA when these conditions are violated and deriving sharper stability and landscape characterizations under weaker assumptions. REFERENCES [1] Z. Zhang and K. Zhao, “Low-rank matrix approximation with manifold regularization,” IEEE transactions on pattern analysis and machine intelligence , vol. 35, no. 7, pp. 1717–1729, 2012. [2] Z. Zhang, K. Zhao, and H. Zha, “Inducible regularization for low-rank matrix factorizations for collaborative filtering,” Neurocomputing ,vol. 97, pp. 52–62, 2012. [3] J. Pan and N. Gillis, “Generalized separable nonnegative matrix fac-torization,” IEEE transactions on pattern analysis and machine intelli-gence , vol. 43, no. 5, pp. 1546–1561, 2019. [4] O. V. Thanh, N. Gillis, and F. Lecron, “Bounded simplex-structured ma-trix factorization,” in ICASSP 2022-2022 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP) . IEEE, 2022, pp. 9062–9066. [5] M. Abdolali and N. Gillis, “Simplex-structured matrix factorization: Sparsity-based identifiability and provably correct algorithms,” SIAM Journal on Mathematics of Data Science , vol. 3, no. 2, pp. 593–623, 2021. [6] Z. Zhai, M. Wu, J. Xu, and X. Li, “Sparse projection matrix approxi-mation and its applications,” IEEE Signal Processing Letters , vol. 32, pp. 351–355, 2024. [7] D. D. Lee and H. S. Seung, “Learning the parts of objects by non-negative matrix factorization,” Nature , vol. 401, no. 6755, pp. 788–791, 1999. [8] C. H. Ding, T. Li, and M. I. Jordan, “Convex and semi-nonnegative ma-trix factorizations,” IEEE transactions on pattern analysis and machine intelligence , vol. 32, no. 1, pp. 45–55, 2008. [9] R. Kannan, M. Ishteva, and H. Park, “Bounded matrix low rank approximation,” in 2012 IEEE 12th International Conference on Data Mining , 2012. [10] Z. Zhai, H. Chen, and Q. Sun, “Bounded projection matrix approxima-tion with applications to community detection,” IEEE Signal Processing Letters , vol. 30, pp. 957–961, 2023. [11] Z. Zhang, Z. Zhai, and L. Li, “Graph refinement via simultaneously low-rank and sparse approximation,” SIAM Journal on Scientific Computing ,vol. 44, no. 3, pp. A1525–A1553, 2022. [12] H. Ji, S. Huang, Z. Shen, and Y. Xu, “Robust video restoration by joint sparse and low rank matrix approximation,” SIAM Journal on Imaging Sciences , vol. 4, no. 4, pp. 1122–1142, 2011. [13] E. Richard, P.-A. Savalle, and N. Vayatis, “Estimation of simultaneously sparse and low rank matrices,” in Proceedings of the 29th International Coference on International Conference on Machine Learning , 2012, pp. 51–58. [14] F. Nie, X. Wang, M. Jordan, and H. Huang, “The constrained laplacian rank algorithm for graph-based clustering,” in Proceedings of the AAAI conference on artificial intelligence , vol. 30, 2016. [15] R. Tibshirani, “Regression shrinkage and selection via the lasso,” Jour-nal of the Royal Statistical Society Series B: Statistical Methodology ,vol. 58, no. 1, pp. 267–288, 1996. [16] Q. Sun, W.-X. Zhou, and J. Fan, “Adaptive huber regression,” Journal of the American Statistical Association , vol. 115, no. 529, pp. 254–265, 2020. [17] S. Huang and Q. Wu, “Robust pairwise learning with huber loss,” 
+
+Journal of Complexity , vol. 66, p. 101570, 2021. [18] P.-A. Absil, R. Mahony, and R. Sepulchre, Optimization algorithms on matrix manifolds . Princeton University Press, 2008. [19] Z. Wen and W. Yin, “A feasible method for optimization with orthog-onality constraints,” Mathematical Programming , vol. 142, no. 1–2, pp. 397–434, 2013. [20] A. A. Amini and E. Levina, “On semidefinite relaxations for the block model,” The Annals of Statistics , vol. 46, no. 1, pp. 149–179, 2018. [21] Y. Zhuang, X. Chen, and Y. Yang, “Sketch-and-lift: Scalable subsampled semidefinite program for k-means clustering,” in Proceedings of the 25th International Conference on Artificial Intelligence and Statistics , ser. Proceedings of Machine Learning Research, vol. 151. PMLR, 2022, pp. 9214–9246. [22] M. Belkin and P. Niyogi, “Laplacian eigenmaps for dimensionality reduction and data representation,” Neural computation , vol. 15, no. 6, pp. 1373–1396, 2003. [23] U. von Luxburg, “A tutorial on spectral clustering,” Statistics and Computing , vol. 17, no. 4, pp. 395–416, 2007. 14 
+
+[24] S. A. Nene, S. K. Nayar, and H. Murase, “Columbia object image library (COIL-20),” Department of Computer Science, Columbia University, Tech. Rep. CUCS-005-96, Feb. 1996. [Online]. Available: https://cave.cs.columbia.edu/repository/COIL-20 [25] F. S. Samaria and A. C. Harter, “Parameterisation of a stochastic model for human face identification,” in Proceedings of the Second IEEE Workshop on Applications of Computer Vision ,Sarasota, FL, USA, 1994, pp. 138–142. [Online]. Available: https: //www.cl.cam.ac.uk/research/dtg/attarchive/facedatabase.html [26] UCI Machine Learning Repository, “Semeion handwritten digit,” Dataset, 1998, accessed: July 22, 2026. [Online]. Available: https: //archive.ics.uci.edu/dataset/178/semeion+handwritten+digit [27] R. Duin, “Multiple features,” UCI Machine Learning Repository, 1998, accessed: July 22, 2026. [Online]. Available: https://archive.ics.uci.edu/ dataset/72/multiple+features 
+
+Zhuan Liang is currently a graduate student in the Department of Statistics, Faculty of Arts and Sciences, Beijing Normal University, Zhuhai. He received the B.S. degree in Mathematics and Statistics from Shandong University. His current research interests include diffusion models and matrix computations. 
+
+Zheng Zhai is currently an Associate Professor with the Department of Statistics, Faculty of Arts and Sciences, Beijing Normal University, Zhuhai. He received the Ph.D. degree in Computational Mathematics from Zhejiang University. He was a Postdoctoral Researcher with the National University of Singapore and the University of Toronto. His current research interests include diffusion models, matrix computations, optimization on manifolds, and manifold learning.

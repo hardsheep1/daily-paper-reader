@@ -1,0 +1,173 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-07-31T21:56:00.566151+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 0,
+    "deep_cap": 7,
+    "deep_selected": 0,
+    "quick_candidates": 4,
+    "quick_skim_target": 12,
+    "quick_selected": 4
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2607.20957v1",
+      "source": "arxiv",
+      "title": "Fast and Efficient Approximate Nearest Neighbor Search for High-Dimensional LLM Embeddings",
+      "abstract": "The annual SISAP Indexing Challenge benchmarks Approximate Nearest Neighbor Search (ANNS) algorithms under rigorous constraints. This paper presents our submissions for the 2026 edition, addressing both $k$-Nearest Neighbor Graph (kNNG) construction on 1024-dimensional BGE-M3 embeddings (Task 1) and Maximum Inner Product Search (MIPS) on unnormalized Llama-3.2-8B features (Task 2). To optimize construction speed, we utilize Equi-Voronoi Polytopes (EVP) for efficient quantization, supplemented by targeted reranking strategies to maintain high recall. For MIPS, we transform the asymmetric inner product problem into a Euclidean search space via dimensionality augmentation. To reduce query latency and optimize memory access, we introduce a 1D presorting mechanism via Fast Linear Assignment Sorting (FLAS) prior to graph construction. This significantly improves spatial locality and cache hit rates during subsequent graph traversal.   Source Code: https://github.com/Visual-Computing/sisap26-deglib",
+      "authors": [
+        "Nico Hezel",
+        "Kai Uwe Barthel",
+        "Bruno Schilling",
+        "Konstantin Schall",
+        "Andre Moelle",
+        "Klaus Jung"
+      ],
+      "primary_category": "cs.IR",
+      "categories": [
+        "cs.IR"
+      ],
+      "published": "2026-07-23T06:35:12+00:00",
+      "link": "https://arxiv.org/pdf/2607.20957v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Provides efficient ANN search for LLM embeddings, enabling fast clustering of high-dimensional text representations",
+      "llm_evidence_cn": "为大模型嵌入提供高效近似最近邻搜索，支持快速聚类高维文本表示",
+      "llm_evidence": "为大模型嵌入提供高效近似最近邻搜索，支持快速聚类高维文本表示",
+      "canonical_evidence": "为大模型嵌入提供高效近似最近邻搜索，支持快速聚类高维文本表示",
+      "llm_tldr_en": "Presents efficient quantization and augmentation techniques for high-dimensional LLM embeddings, achieving fast kNNG construction and MIPS search on benchmarks. Directly supports scalable clustering of LLM embeddings by reducing nearest-neighbor computation cost.",
+      "llm_tldr_cn": "针对大模型嵌入的高维性，提出基于Equi-Voronoi多面体量化和空间增维的近似最近邻搜索方案，在SISAP基准上显著提升kNNG构建与MIPS查询速度。该方法为百万级LLM嵌入的快速聚类提供了基础支撑，有助于在大规模文本上实现基于LLM的聚类与检索任务。",
+      "llm_tldr": "针对大模型嵌入的高维性，提出基于Equi-Voronoi多面体量化和空间增维的近似最近邻搜索方案，在SISAP基准上显著提升kNNG构建与MIPS查询速度。该方法为百万级LLM嵌入的快速聚类提供了基础支撑，有助于在大规模文本上实现基于LLM的聚类与检索任务。",
+      "llm_tags": [
+        "query:ac"
+      ],
+      "matched_query_tag": "query:ac",
+      "matched_query_text": "clustering using large language models",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.21039v1",
+      "source": "arxiv",
+      "title": "Regularized Optimization on Grassmann Manifold: Theory, Algorithm and Applications",
+      "abstract": "Spectral methods are among the most widely used techniques for community detection, clustering, and graph learning. Their performance, however, critically depends on the accurate estimation of the underlying spectral subspace and can deteriorate substantially in the presence of noise, outliers, or model perturbations. To address this limitation, we propose a Regularized Projection Matrix Approximation (RPMA) framework for robust estimation of rank-$K$ projection matrices. RPMA extends classical spectral projection by incorporating a regularization term, producing projection estimates that are more robust, sparse, and interpretable. We formulate the proposed model as an optimization problem on the manifold of rank-$K$ projection matrices and exploit its geometric equivalence to the Grassmann manifold. Based on this manifold characterization, we derive the first- and second-order optimality conditions, establish the local stability of the regularized leading eigenspace, and characterize the stability of the critical-point landscape under sufficiently small regularization. To efficiently solve the resulting nonconvex optimization problem, we develop a Riemannian gradient projection algorithm with backtracking line search, together with a more efficient Cayley--Sherman--Morrison--Woodbury (Cayley--SMW) gradient method that avoids repeated eigendecompositions. Extensive experiments on both synthetic and real-world datasets demonstrate that RPMA substantially improves the recovery accuracy of projection matrices and consistently outperforms conventional spectral projection methods for community detection and clustering under noisy environments.",
+      "authors": [
+        "Zhuan Liang",
+        "Zheng Zhai"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-07-23T08:19:21+00:00",
+      "link": "https://arxiv.org/pdf/2607.21039v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Regularized spectral clustering method that can serve as base learner for active clustering.",
+      "llm_evidence_cn": "正则化谱聚类方法，可作为主动聚类的基础聚类器。",
+      "llm_evidence": "正则化谱聚类方法，可作为主动聚类的基础聚类器。",
+      "canonical_evidence": "正则化谱聚类方法，可作为主动聚类的基础聚类器。",
+      "llm_tldr_en": "Proposes RPMA, a regularized projection matrix approximation on the Grassmann manifold for robust estimation of rank-K projection matrices, improving spectral clustering robustness and interpretability under noise and outliers.",
+      "llm_tldr_cn": "针对传统谱聚类在噪声和离群点下性能退化的问题，提出正则化投影矩阵逼近（RPMA）框架，在格拉斯曼流形上对秩K投影矩阵进行正则化优化。该方法在经典谱投影基础上引入正则项，使估计更加鲁棒、稀疏且可解释。实验表明，RPMA在社区检测和聚类等任务上能够有效提升对噪声和扰动的鲁棒性，为下游主动聚类提供了更稳定的基聚类算法。",
+      "llm_tldr": "针对传统谱聚类在噪声和离群点下性能退化的问题，提出正则化投影矩阵逼近（RPMA）框架，在格拉斯曼流形上对秩K投影矩阵进行正则化优化。该方法在经典谱投影基础上引入正则项，使估计更加鲁棒、稀疏且可解释。实验表明，RPMA在社区检测和聚类等任务上能够有效提升对噪声和扰动的鲁棒性，为下游主动聚类提供了更稳定的基聚类算法。",
+      "llm_tags": [
+        "query:active-clust"
+      ],
+      "matched_query_tag": "query:active-clust",
+      "matched_query_text": "active learning clustering methods",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.23507v1",
+      "source": "arxiv",
+      "title": "Choosing a Text Embedding Model: A Practical Benchmarking and Decision Framework",
+      "abstract": "Choosing the right text embedding model is one of the most consequential -- and most frequently under-examined -- decisions in building a retrieval or search system, yet the model that tops a leaderboard is rarely the best choice for a given deployment. This report develops a practical, evidence-based framework for embedding model selection, built on a benchmarking study that evaluates T3EM (Text 3 Embedding Model), a commercial API-based embedding model, against a broad set of open-source alternatives on English-language retrieval tasks, and situates these findings within the wider Massive Text Embedding Benchmark (MTEB) landscape spanning classification, clustering, semantic similarity, reranking, pair classification, bitext mining, and summarization. Beyond raw benchmark scores, the report traces the full path from embedding model to retrieved result -- how embeddings are produced, how they are indexed and searched at scale, and how document chunking strategy shapes retrieval quality -- so that model choice can be reasoned about as one decision within a complete retrieval pipeline rather than in isolation. The result is a consolidated set of practical recommendations for selecting an embedding model according to task, latency, cost, and deployment constraints.",
+      "authors": [
+        "Madhav S Baidya"
+      ],
+      "primary_category": "cs.IR",
+      "categories": [
+        "cs.IR",
+        "cs.AI"
+      ],
+      "published": "2026-07-26T07:13:33+00:00",
+      "link": "https://arxiv.org/pdf/2607.23507v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "benchmarks text embedding models on clustering tasks, providing a selection framework for LLM-based embeddings",
+      "llm_evidence_cn": "在MTEB基准上评测文本嵌入模型的聚类性能，为基于大模型嵌入的聚类提供选择框架",
+      "llm_evidence": "在MTEB基准上评测文本嵌入模型的聚类性能，为基于大模型嵌入的聚类提供选择框架",
+      "canonical_evidence": "在MTEB基准上评测文本嵌入模型的聚类性能，为基于大模型嵌入的聚类提供选择框架",
+      "llm_tldr_en": "This paper proposes a practical decision framework for selecting text embedding models, benchmarking a commercial API model against open-source alternatives across MTEB tasks including clustering to guide deployment choices.",
+      "llm_tldr_cn": "针对检索系统中文本嵌入模型选择被忽视的问题，本文提出一个基于证据的决策框架，在MTEB基准上对比商业API模型与开源模型在聚类等多种任务上的表现。实验表明排名靠前的模型未必最适合特定部署场景，需要结合任务特点选择。该研究为利用大模型嵌入进行聚类的模型选择提供了实用指导，但未涉及主动学习。",
+      "llm_tldr": "针对检索系统中文本嵌入模型选择被忽视的问题，本文提出一个基于证据的决策框架，在MTEB基准上对比商业API模型与开源模型在聚类等多种任务上的表现。实验表明排名靠前的模型未必最适合特定部署场景，需要结合任务特点选择。该研究为利用大模型嵌入进行聚类的模型选择提供了实用指导，但未涉及主动学习。",
+      "llm_tags": [
+        "query:ac"
+      ],
+      "matched_query_tag": "query:ac",
+      "matched_query_text": "clustering using large language models",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2607.27829v1",
+      "source": "arxiv",
+      "title": "Approximate Dual Separation for the Cluster LP: a 1.387 approximation for Correlation Clustering",
+      "abstract": "We give an $(1.3865+\\varepsilon)$-approximation for correlation clustering in complete graphs, improving the previous best factor of $1.485+\\varepsilon$ of Cao et al.\\ (STOC'24). Our two key contributions are independent: an efficient approximate separation oracle for the cluster-LP dual and a new rounding scheme.   The dual separation task is the CCMinRatio problem: for signed vertex weights $q$, minimize $cost(S)/q(S)$ over sets with $q(S)>0$; here $cost(S)$ measures the correlation clustering disagreements attributed to $S$ in any clustering in which $S$ is a cluster. We give a randomized $(1+\\varepsilon)$-approximation in time $2^{poly(1/\\varepsilon)}(n+\\langle q\\rangle)^{O(1)}$. Via the ellipsoid method, this yields a $(1+\\varepsilon)$-approximation of the fractional cluster-LP optimum, along with exactly feasible primal and dual solutions certifying its value and a per-instance certificate. The algorithm works directly on the original instance, without a global preclustering: a new localization technique restricts the search to a small universe while preserving a violation, after which weak regularity handles the resulting dense quadratic minimization.   Our rounding scheme retains the cluster-based procedure of Cao et al.\\ but uses a continuous conditional pivot rule whose analysis rests on a single variance inequality with explicit weights and an exact computer-assisted verification of the resulting polynomial inequalities. This also places the integrality gap of the cluster LP in the narrow range [4/3,1.3865].",
+      "authors": [
+        "David García-Soriano",
+        "Antoine Schohn"
+      ],
+      "primary_category": "cs.DS",
+      "categories": [
+        "cs.DS"
+      ],
+      "published": "2026-07-30T08:07:35+00:00",
+      "link": "https://arxiv.org/pdf/2607.27829v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Correlation clustering approximation can support active clustering with pairwise constraints",
+      "llm_evidence_cn": "相关聚类近似算法可支持带成对约束的主动聚类",
+      "llm_evidence": "相关聚类近似算法可支持带成对约束的主动聚类",
+      "canonical_evidence": "相关聚类近似算法可支持带成对约束的主动聚类",
+      "llm_tldr_en": "Gives a (1.3865+ε)-approximation for correlation clustering via a dual separation oracle and rounding scheme, improving prior work. This can serve as a base clustering solver for pairwise-constraint active clustering.",
+      "llm_tldr_cn": "针对相关聚类（Correlation Clustering）的近似算法，给出完全图上的(1.3865+ε)近似，改进自STOC24的1.485+ε。核心贡献包括簇LP对偶的高效近似分离预言机和新的舍入方案，分离任务被归结为CCMinRatio问题，并给出亚指数时间随机近似。该算法可作为主动聚类中处理成对约束的基础聚类工具，但与主动学习查询策略本身无关。",
+      "llm_tldr": "针对相关聚类（Correlation Clustering）的近似算法，给出完全图上的(1.3865+ε)近似，改进自STOC24的1.485+ε。核心贡献包括簇LP对偶的高效近似分离预言机和新的舍入方案，分离任务被归结为CCMinRatio问题，并给出亚指数时间随机近似。该算法可作为主动聚类中处理成对约束的基础聚类工具，但与主动学习查询策略本身无关。",
+      "llm_tags": [
+        "query:active-clust"
+      ],
+      "matched_query_tag": "query:active-clust",
+      "matched_query_text": "active learning clustering methods",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}
