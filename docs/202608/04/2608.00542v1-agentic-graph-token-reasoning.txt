@@ -1,0 +1,570 @@
+Title: Agentic Graph Token Reasoning
+
+URL Source: https://arxiv.org/pdf/2608.00542v1
+
+Published Time: Tue, 04 Aug 2026 00:39:11 GMT
+
+Number of Pages: 15
+
+Markdown Content:
+# Agentic Graph Token Reasoning 
+
+# Zhuoyi Peng 
+
+The Hong Kong University of Science and Technology zpengaf@connect.ust.hk 
+
+# Yi Yang 
+
+The Hong Kong University of Science and Technology imyiyang@ust.hk 
+
+## ABSTRACT 
+
+Graphs model relational data throughout science and industry, from citation networks and protein interactions to product co-purchase graphs. Because the nodes of many such graphs carry rich text, a growing line of work applies large language models (LLMs) to graph analysis. The most graph-native of these methods use graph tokens : a graph encoder compresses a graph view—a subgraph such as a node, its 𝑘 -hop neighbourhood, or a cluster—into a short block of continuous tokens that jointly encodes node attributes and topol-ogy and is read directly by the model. Existing methods, however, use graph tokens in a static single-shot manner: they encode one predefined graph view before the model has even seen the target and never revise it, leaving the model’s step-by-step reasoning abil-ity unused for a task. We introduce agentic graph token reasoning ,which recasts graph tokenization as part of the reasoning process itself. At each step, the model chooses which graph view to encode and at what granularity; a graph encoder is invoked on demand to materialise the corresponding graph tokens; and the resulting block is spliced into the running context. The model thus reasons step by step in the graph token space, and the tokens it reads are trajectory-dependent. We realise this with a three-stage training pipeline: (i) self-supervised tasks that teach the model to read het-erogeneous graph tokens, (ii) a token-robust trajectory stage with a graph-token consistency regulariser, and (iii) preference optimi-sation that rewards trajectories in which the graph-token evidence and the node-text evidence agree, incentivising the model to ground its predictions in the consistency between the two. Across extensive evaluations spanning seven graph domains, our models outperform a broad set of baselines by a large margin and transfer zero-shot to unseen domains without any per-target fine-tuning. Further analy-sis shows that our agentic approach substantially reduces errors on the most challenging samples. More broadly, this work pushes LLM-based graph analysis from static graph-token encoders towards a graph-native agent paradigm. 
+
+## KEYWORDS 
+
+graph neural networks, large language models, agentic reasoning, graph tokens 
+
+## 1 INTRODUCTION 
+
+Graphs are a universal representation for relational data, and in many domains their nodes carry rich text, a paper and its abstract, a product and its description, a protein and its functional annotation. A promising line of recent progress uses large language models to analyse such graphs: one asks a question about the graph (what is this paper’s field? do these two proteins interact?), and the model re-turns the answer. The challenge is that a language model is trained purely on language: aligning graph data with its language space, so that the model can understand a graph at all, is difficult. The technique that has emerged for this is the graph token . Methods such as LLaGA [ 3 ], TEA-GLM [ 36 ], GraphGPT [ 32 ], GraphTransla-tor [ 40 ], and GOFA [ 20 ] run a graph encoder over a graph view 1
+
+around the target and compress it into a short, fixed-length block of continuous tokens that the model reads alongside the question. Their success comes from exactly this compression: the graph is turned into tokens a language model can understand, and the block stays the same length however large the encoded graph view. These methods, however, read the graph using a predefined, static graph-token pattern. Given a target, the graph view to encode, typically the anchor’s 𝑘 -hop neighbourhood or a single global token, is chosen in advance, encoded before the model has even seen the question, and never revised; the model must then produce its answer in a single forward pass (Figure 1a). Everything therefore rests on the quality of that one chosen graph view: it must be neither too narrow to contain the evidence nor so wide that the signal is diluted, and it is committed before the question is known. This raises a basic concern: how can one assume that a predefined, static graph token is sufficient for the language model to read and derive the final answer in one shot? Meanwhile, language models have developed a capability that speaks directly to this problem: agentic reasoning . Rather than an-swering from whatever happens to be in the prompt, a model can now decide what it still needs, act to obtain it, and repeat, a be-haviour typically instilled through large-scale reinforcement learn-ing [ 9 , 16 , 26 ]. The benefit of such iteration is that the context is enriched round by round, each step adding evidence chosen in light of what the previous steps revealed, until it is sufficient to derive the answer, so how much evidence is gathered adapts to how hard the instance is instead of being fixed beforehand. Graph analysis is a natural fit for this, since the evidence a target needs (its own at-tributes, its neighbours, the community around it, look-alike nodes elsewhere) is rarely apparent before one starts looking. Yet current graph-token methods lag far behind this paradigm: they commit to one graph view up front and answer in a single pass, so the model never gets to ask for the evidence it turns out to need. As a result, the capability of language models for graph analysis is far from fully unleashed. Closing this gap calls for a multi-step formulation in which reasoning proceeds over several rounds, each represented by graph tokens, and leads to our research question: 
+
+How can a language model perform step-by-step agentic reasoning via graph tokens? 
+
+We address this question with Agentic Graph Token (AGT) rea-soning (Figure 1b), which turns graph tokenization from a pre-processing step into part of the reasoning process. Given a graph and a task question, the model reasons one step at a time: it emits a discrete action that names a scope and a granularity, from the                 
+
+> 1Agraph view is a subgraph of the full graph, or the full graph itself, including but not limited to the target node, its 𝑘 -hop neighbourhood, or a cluster, forming a graph region for the language model to process. arXiv:2608.00542v1 [cs.LG] 1 Aug 2026 Zhuoyi Peng and Yi Yang
+> (a) Single-shot graph token (prior work)
+> graph G
+> question 𝑄
+> predefined view 𝐺 𝑉
+> Z
+> answer 𝐴
+> fixed
+> 𝑓 GNN
+> 𝑓 LLM
+> (b) Agentic graph token reasoning (ours, AGT)
+> graph G
+> question 𝑄
+> 𝑓 LLM
+> action 𝑎 𝑡
+> selects view 𝐺 𝑉 𝑡
+> ZAGT
+> 𝑡
+> answer 𝐴
+> 𝑓 GNN
+> next step
+> if
+> answer
+
+Figure 1: Single-shot vs. AGT, from the same inputs: a graph G
+
+and a question 𝑄 . (a) Prior graph-token methods encode one predefined view into a graph token Z and answer in a single pass. (b) Ours lets the model emit an action at each step that calls a graph view to encode; the encoder returns an agentic graph-token block that is spliced back into the context, and the loop repeats until the terminating answer action. A fraud check, for example, may read the account’s own text, then its transaction partners, the surrounding community, and look-alike accounts before answering. 
+
+anchor node itself up to a 𝑘 -hop subgraph, a retrieved set of se-mantically similar nodes, or a whole cluster, and a graph encoder is invoked on demand to encode that graph view into a fixed-length block of graph tokens, and the block is spliced into the running context before the next step. The model thereby grows a reasoning trajectory 2 adaptively, each step chosen in light of the reasoning so far, and adaptively terminates to output the task answer. Reasoning thus unfolds in the graph token space rather than in language, in the spirit of reasoning in a continuous latent space [12]. Eliciting this behaviour is non-trivial, chiefly because a model given both prompt text and graph tokens tends to lean on the text and ignore the tokens. We therefore train the model in three stages, each contributing a component that, to our knowledge, is new to graph-token learning: (1) learning to read graph tokens , self-supervised pre-training that aligns the encoder with the language model so it can read the varied token blocks that different actions produce; (2) incentivising reasoning trajectories , trajectory SFT with a graph-token consistency term so the reasoning is driven by to-ken content rather than brittle cues; and (3) graph-text consistency preference , IPO that prefers rollouts which stay consistent with the graph over ones a corrupted anchor text throws off, pushing the policy to ground its answers in the graph.   
+
+> 2Atrajectory is the sequence of interleaved reasoning steps and actions a model produces while solving a query, ending in its answer.
+
+Contributions. Our contributions are threefold. 
+
+• An agentic graph-token reasoning framework. We recast graph tokenization as part of reasoning: the model interleaves its reasoning with on-demand graph-token materialisations in a single sequence, moving graph learning from a static, single-shot paradigm to an agentic one whose intermediate evidence is graph-native rather than verbalised text. 
+
+• A three-stage training recipe. We contribute one targeted de-sign per stage, teaching the model to read graph tokens, keeping its reading grounded in their content, and rewarding trajectories where the graph and text evidence agree. 
+
+• Strong empirical results. Across seven graph domains our model outperforms comparably sized graph-token and agentic baselines on node classification and link prediction, and transfers zero-shot to targets the checkpoint was never trained on. This work pushes LLM-based graph analysis from static graph-token encoders towards a graph-native agent paradigm. 
+
+## 2 RELATED WORK 2.1 Graph learning with large language models 
+
+A large body of work adapts large language models to text-attributed graphs, and the approaches differ mainly in how the graph is pre-sented to the model. Verbalisation methods render local structure as natural-language text that the model reads in the prompt: they serialise a node’s neighbourhood into a description [ 10 , 39 , 42 ], use an LLM to generate explanations or augmented features for a down-stream model [ 7 , 13 ], or select the most informative neighbours to describe [ 21 ]; broad empirical studies compare such text encod-ings [ 4 ]. Such text encodes topology poorly and inflates the context. 
+
+Graph-token methods instead learn a graph encoder that compresses a graph view into structure-aware soft tokens injected into the prompt: LLaGA [ 3], GOFA [ 20 ], TEA-GLM [ 36 ], GraphGPT [ 32 ], GraphTranslator [ 40 ], and GraphPrompter [ 23 ] follow this route, typically attaching a GNN encoder to an open LLM backbone such as LLaMA or Mistral [ 17 , 34 ]. A training-free variant instead per-forms graph in-context learning without any tuning [ 30 ], and com-plementary analyses ask when and why structural prompts help at all [ 15 ]. These representations are graph-native, but the encoded graph view is a fixed template chosen at architecture time, encoded once before the model reads the target, and never revised, so the model cannot request a different graph view as it reasons. A third, recent agentic line lets the model gather evidence over several steps: AgentGL [ 29 ] trains an RL policy that issues text queries and reads back text snippets, and GraphCoT [ 18 ] and GraphSearch [ 22 ] like-wise operate over text renderings of the graph; relatedly, Graph-of-Thoughts [ 2 ] organises the model’s own textual thoughts as a graph rather than analysing input graph data. None of these methods ever re-encodes graph tokens. In short, existing work is either agentic but text-based, or graph-token-based but static. To our knowledge, ours is the first agentic graph-token reasoning framework, in which each reasoning step is itself an on-demand graph-token material-isation, uniting the graph-native representation of graph-token methods with the adaptivity of agentic ones. This also makes it differ fundamentally from any text-based reasoning method, such Agentic Graph Token Reasoning 
+
+Figure 2: Overview of Agentic Graph Token (AGT) reasoning. Stage 1 grounds the block with two self-supervised reading tasks; Stage 2 fits agentic trajectories with a consistency term over perturbed graph tokens; Stage 3 optimises preference pairs in which a text-consistent rollout is correct and a text-corrupted, graph-inconsistent one is wrong, teaching model to prefer the reasoning path where graph token and node text agree. LLM and GNN are jointly optimised in all stages. 
+
+as chain-of-thought prompting [ 37 ] or AgentGL [ 29 ]: each reason-ing step carries graph-topology and node-attribute information in the token block itself, which a purely textual step can convey only clumsily, if at all. 
+
+## 2.2 Reasoning in large language models 
+
+A parallel line of work improves how language models reason. Chain-of-thought prompting [ 37 ] shows that generating intermedi-ate steps in language before the final answer substantially improves multi-step problem solving, and a large family of methods builds on this idea of explicit step-by-step reasoning. Such reasoning, how-ever, is carried out entirely in language. A growing line argues that language is not always the best medium and moves computa-tion off the token stream: pause tokens add latent compute before the model answers [ 8], implicit chain-of-thought internalises the reasoning into hidden states [ 6], and Coconut [ 12 ] lets a model reason in a continuous latent space, showing that a latent state can carry information that a verbalised step cannot. Our setting inherits exactly this tension, but in a graph context, where each reasoning step should convey structural evidence about the graph. Graph tokens are a natural latent medium for such steps, yet how to represent a graph reasoning step efficiently and effectively remains an open question, which this work sets out to address. 
+
+## 3 PRELIMINARIES 
+
+We study learning on a text-attributed graph (TAG) G = (V , E, T ) 
+
+with node set V, edge set E, and node texts T = {𝑡 𝑣 | 𝑣 ∈ V} . A task instance is a question 𝑄 about the graph, with a ground-truth label 𝑦 ∈ Y , and the model returns an answer 𝐴 ∈ Y . The question may concern a node, a node pair, or more generally any graph-defined object whose label depends on the surrounding structure. Unlike a classifier that maps a fixed precomputed feature to its prediction, our model forms 𝐴 from evidence drawn from G at inference time: the target’s own text, its neighbours’ texts, and the surrounding structure. 
+
+Graph tokens via a GNN. The interface to the graph is a graph neural network 𝑓 GNN that maps a graph view 𝐺 𝑉 , a subgraph of G
+
+(or G itself) such as a node, a 𝑘 -hop neighbourhood, or a cluster, to a fixed-size block of soft tokens 
+
+Z = 𝑓 GNN (𝐺 𝑉 ). (1) The block has the same length for every graph view and lies directly in the LLM’s embedding space, so any graph view, from a single node to a large neighbourhood, is summarised by a constant-length set of tokens the language model can read. 
+
+Reading graph tokens with an LLM. A pretrained large language model 𝑓 LLM is the backbone: it consumes accompanying text to-gether with one or more graph-token blocks Z = 𝑓 GNN (𝐺 𝑉 ) and produces the answer. In the simplest, single-shot form used by prior graph-LLMs, a fixed graph view 𝐺 𝑉 is encoded once and read alongside the question 𝑄 ,
+
+𝐴 = 𝑓 LLM (𝑄, Z) , Z = 𝑓 GNN (𝐺 𝑉 ), (2) in one forward pass. Here the graph view is chosen at architecture time, before the model has seen 𝑄 , and never revised. Our departure is exactly in when and which blocks are read: rather than a single prepended block, the model requests blocks step by step during gen-eration, so the graph tokens it reads become trajectory-dependent. Section 4 develops this and contrasts it directly with Eq. equation 2. 
+
+## 4 METHODOLOGY 
+
+Graph analysis needs step-by-step reasoning, and each step should be a graph token. Consider predicting a protein’s func-tion. For a well-characterised protein its own annotation settles it; for a less studied one the function emerges only from its direct Zhuoyi Peng and Yi Yang 
+
+interaction partners; and for a poorly annotated protein the an-swer appears only once the larger pathway or complex it belongs to comes into view. The informative graph view is thus instance-dependent and is not known in advance, so the model has to gather evidence over several steps rather than from one fixed view. A sin-gle graph-token block, fixed before the model has seen the target, cannot match this: it over-encodes easy targets, starves hard ones, and cannot be revised once decoding has begun. Once reasoning is step by step, the evidence each step needs is inherently structural : a neighbourhood, a pathway, a cluster. A graph token encodes such structure natively and compactly, packing node attributes and topol-ogy into a fixed-size block, whereas verbalising the same graph view would inflate the context and bury the topology in text. This makes the graph token the right medium for a reasoning step on a graph. We therefore let the model choose the graph view as it reasons , using the interface of Section 3, where a graph view 𝐺 𝑉 
+
+encodes to a fixed-size block Z = 𝑓 GNN (𝐺 𝑉 ) in 𝑓 LLM ’s embedding space. 
+
+From single-shot to step-by-step graph token reasoning. 
+
+Prior graph-LLMs use the interface of Eq. equation 2 once: a single graph view is fixed, encoded, and read in one forward pass to produce the answer. We instead unroll the computation over 𝑇 
+
+steps and produce the answer only at the end. To begin with, the model is given the graph G and the question 𝑄 , and the context holds the question alone, with no graph tokens yet: 
+
+𝜏 0 = 𝑄. (3) At each step 𝑡 = 1, . . . ,𝑇 , the model reads the context so far and emits a single action 𝑎 𝑡 from the action space A (Table 1), no natural language, only the action itself, which names a graph view 𝐺 𝑉 𝑡 ,where 𝑉 𝑡 = 𝑉 (𝑎 𝑡 ) is determined by the action; a GNN encoder 
+
+𝑓 GNN turns that graph view into the step’s agentic graph-token 
+
+(AGT) block, and the block is appended to the context: 
+
+𝑎 𝑡 ∼ 𝑓 LLM ( · | 𝜏 𝑡 −1), (4) 
+
+ZAGT  
+
+> 𝑡
+
+= 𝑓 GNN  𝐺 𝑉 𝑡 , 𝑉 𝑡 = 𝑉 (𝑎 𝑡 ), (5) 
+
+𝜏 𝑡 =  𝜏 𝑡 −1, 𝑎 𝑡 , ZAGT 
+
+> 𝑡
+
+. (6) The block ZAGT  
+
+> 𝑡
+
+thus depends on the action 𝑎 𝑡 through the graph view 𝐺 𝑉 𝑡 it names. What step 𝑡 +1 conditions on is therefore the token block ZAGT  
+
+> 𝑡
+
+itself, not a verbalisation of 𝐺 𝑉 𝑡 . Crucially, ZAGT 
+
+> 𝑡
+
+is then read at the next step, it is part of the context 𝜏 𝑡 that step 
+
+𝑡 +1 conditions on, so the graph tokens gathered so far steer which graph view is requested next. And because the graph view is chosen anew every step, ZAGT  
+
+> 𝑡
+
+can differ from round to round: the model may zoom in, widen, or jump to a different part of the graph rather than reusing one fixed block. Specifically, if 𝑎 𝑡 is the terminating action, the model outputs the final answer 𝐴 and the loop ends. The number of steps 𝑇 and the graph views visited are chosen by the model, so they vary with 𝑄 .The action set in Table 1 is by no means a complete action space; we choose these actions for their generality across graphs and tasks, and the interface is open, so follow-up work can add its own actions without changing the rest of the method. We give the model this behaviour with three training stages, each initialised from the previous one: Stage 1 aligns the encoder’s tokens with the language model’s embedding space so a block 
+
+Table 1: The action space A used in this work. This is by no means an exhaustive set, but a representative one: we choose these actions for their generality across graphs and tasks.                   
+
+> Action Encoded scope / effect
+> node_token the anchor node 𝑣 itself
+> one_hop_token 𝑣 and its 1-hop neighbours
+> two_hop_token the 2-hop neighbourhood of 𝑣
+> three_hop_token the 3-hop neighbourhood of 𝑣
+> retrieval_token top-𝑘 cosine-similar nodes (star graph)
+> cluster_token the cluster containing 𝑣
+> anchor_text 𝑣 ’s verbatim text (no encoding)
+> cosine_sim cosine similarity (only for link prediction)
+> answer end the episode; emit answer 𝐴
+
+can be read at all; Stage 2 teaches the model to emit graph-token actions and answer from what they return; and Stage 3 sharpens the resulting policy through preference optimisation on its own rollouts. The three training corpora are constructed as detailed in 
+
+Appendix D . We first fix the token interface and encoder, then develop each stage. Figure 2 summarises both the inference-time rollout and the three training stages. 
+
+## 4.1 Stage 1: Learning to read graph tokens 
+
+A graph-token block is a set of continuous vectors that match no word in the language model’s vocabulary, so out of the box the model has no idea what they mean. Stage 1 grounds them: it teaches the model that a block ZAGT carries graph-derived evidence, node content and local structure, rather than text. For each training anchor 𝑣 we build two self-supervised tasks. Text reconstruction 
+
+feeds 𝑣 ’s node_token block and asks the model to reproduce 𝑣 ’s title and abstract, forcing the block to encode content; masked link prediction feeds 𝑣 ’s block together with a candidate 𝑤 and asks 
+
+yes /no whether (𝑣, 𝑤 ) is an edge (every edge touching a validation or test node removed), forcing it to encode local structure. The objective is a cross-entropy over the model’s response tokens, with the graph-token positions masked out, 
+
+L1 = −∑︁  
+
+> 𝑡 ∈ S
+
+log 𝑓 LLM 
+
+𝑦 𝑡 | 𝑦 <𝑡 , ZAGT 
+
+, (7) where S indexes the response tokens and ZAGT is an input rather than a target. This objective updates the graph encoder 𝑓 GNN and the language model 𝑓 LLM jointly, with the mpnet text features and the graph topology held frozen. Unlike prior graph-token methods, which tie the encoder to a single task-specific instruction-tuning objective, these two task-agnostic objectives ground the block on its own content and structure, so one reader transfers across the heterogeneous blocks that different actions later produce. 
+
+## 4.2 Stage 2: Token-robust trajectory SFT 
+
+Reading a single block, as in Stage 1, is not the same as reasoning over a whole sequence of them: acting requires the model to decide which graph view to request next and to combine the blocks it gets back. Moreover, if we simply imitate trajectories on clean encodings, the model tends to latch onto easy surface cues in a block and its Agentic Graph Token Reasoning 
+
+reading collapses the moment the block changes. Stage 2 therefore teaches the model to act , to emit graph-token actions and derive the answer from what they return, while keeping that reading robust, over a corpus of synthesized trajectories, each pairing a training anchor with a variable-length sequence of actions from A (Table 1) and the correct final answer. Training has two phases. A warm-up is ordinary supervised fine-tuning that reproduces each trajectory’s action calls and answer under a token-weighted cross-entropy over the model’s own positions S (the injected blocks are inputs and are excluded), 
+
+LCE = 1
+
+|S| ∑︁ 𝑡 ∈ S 
+
+𝑤 𝑡 CE  ℓ𝑡 , 𝑦 𝑡 
+
+, (8) where 𝑤 𝑡 = 𝜔 on answer tokens and 1 otherwise ( 𝜔 =20 ): upweight-ing the answer tokens keeps the surface format from crowding out the decision. Because warm-up sees only clean encodings, the reading it learns is brittle; a consistency phase repairs this. We form two encodings of each sampled graph view, a clean one and an augmented one that drops its edges with probability 𝑝 ed =0.1 and masks graph tokens with probability 𝑝 tm =0.2, and add a term that aligns their response distributions: 
+
+L2 = Lclean CE + 𝜆 KL KL 
+
+
+
+sg 𝑝 clean  𝑝 aug 
+
+, (9) where 𝑝 clean and 𝑝 aug are the softmaxed response distributions of the two encodings, sg [·] is the stop-gradient that makes the clean encoding a fixed teacher, the KL runs over S, and 𝜆 KL =0.5. Because the augmentations perturb exactly the graph signal, matching the two distributions forces the model to rely on token content that survives perturbation. Both phases update 𝑓 GNN and 𝑓 LLM jointly. 
+
+## 4.3 Stage 3: Graph-text-consistent IPO 
+
+Stages 1 and 2 make the graph tokens readable and robust, but they do not compel the model to use them. The anchor’s own text sits in the prompt and is often enough to guess the label by itself, so the policy can score well while treating the graph tokens as optional, the very shortcut we set out to avoid. Indeed, GraphLLMs are known to lean heavily on node text, to the point that perturbing a few words of it can flip their predictions [ 41 ]. Supervised fine-tuning cannot remove this shortcut: it only imitates correct trajectories and never shows the model a case where the text and the graph point different ways, so it gives no signal about which to trust. Stage 3 supplies that signal by learning from the policy’s own behaviour. Working from the Stage 2 policy’s rollouts, it rewards trajectories in which the graph-token evidence and the node-text evidence agree over ones where they disagree, incentivising the policy to ground its decision in graph-text consistency. We build preference pairs around the consistency between a node’s input text and its graph tokens : the preferred trajectory is one where the two agree, and the dispreferred one is obtained by corrupting the input text so that it disagrees with the graph. For each training anchor 𝑣 we run two greedy rollouts of the current policy: 
+
+• a consistent rollout 𝜏 c on 𝑣 ’s real node text and real graph, where the input text attribute and the graph tokens describe the same node and therefore agree, giving answer 𝐴 c;
+
+• an inconsistent rollout 𝜏 i that corrupts only the input text at-tribute, replacing 𝑣 ’s node text with that of a randomly chosen other node 𝑣 ′ while leaving 𝑣 ’s graph (its neighbours and their texts) unchanged, so the text now disagrees with the graph to-kens, giving answer 𝐴 i.We keep the pair only when all three conditions hold: the consistent answer is correct ( 𝐴 c=𝑦 ), the inconsistent answer is wrong ( 𝐴 i≠𝑦 ), and the two answers differ ( 𝐴 c≠𝐴 i). Such a case is exactly one where making the input text disagree with the graph flips a correct decision, so the answer had to rest on the graph: the consistent rollout shows the graph-grounded behaviour we want and the inconsistent one the text-reliant failure we do not. We therefore set the preference 𝜏 +=𝜏 c ≻ 𝜏 − =𝜏 i, which yields on the order of 300 
+
+pairs per run, and preferring 𝜏 + trains the policy to trust the graph over a misleading anchor text. We optimise the pairs with Identity Preference Optimisation [1], 
+
+L3 = E(𝜏 +,𝜏 − )
+
+
+
+ℎ(𝜏 +) − ℎ(𝜏 − ) − 12𝛽 
+
+2 
+
+,ℎ(𝜏 ) = log 𝑓 LLM (𝜏 | 𝑄 )
+
+𝑓 LLM  
+
+> ref
+
+(𝜏 | 𝑄 ) ,
+
+(10) taking the Stage 2 model as 𝑓 LLM  
+
+> ref
+
+with 𝛽 =0.3. As in the earlier stages, this objective updates the graph encoder 𝑓 GNN and the language model 𝑓 LLM jointly (mpnet features and topology frozen). Unlike preference optimisation that ranks by human or quality judgements, our pairs are constructed to isolate graph-dependence, so the pref-erence directly trains graph-grounding; we use IPO over DPO [ 24 ]because the small pair set is brittle to DPO’s unbounded log-ratio, whereas IPO’s squared objective stays bounded. 
+
+## 5 EXPERIMENTS 5.1 Setup 
+
+Datasets. We use ten text-attributed graphs across four families: citation networks (ogbn-arxiv [ 14 ], arXiv-2023 [ 13 ], and PubMed, Cora, CiteSeer [ 38 ]), Amazon co-purchase and co-review graphs (ogbn-products [ 14 ], Amazon-Computers, Amazon-Photo [ 27 ]), a social graph (Reddit [ 11 ]), and a protein-interaction graph (STRING-db [ 31 ]). Seven are used for in-domain training and evaluation (ogbn-arxiv, ogbn-products, PubMed, Reddit, arXiv-2023, CiteSeer, STRING-db), and a zero-shot study transfers the ogbn-arxiv-trained policy, without any further training, to seven targets it has never seen (Table 3). Per-dataset node text, label spaces, sizes, and sources are given in Appendix B .
+
+Policy and encoder. Qwen2.5-3B-Instruct [ 33 ], hidden = 2,048 .Encoder: mpnet sentence embeddings [ 25 , 28 ] (768-d) + 2-layer GraphSAGE [ 11 ] (hidden 512 , output 768 ) with a cross-attention pool that emits a 128 -token block per action, linearly projected to the backbone’s embedding width (our default). The 3B models train with DDP across 4× RTX 5880 Ada (48 GB); the 7B models train on H800 GPUs. Stage 3 is single-GPU with gradient accumulation. Per-stage training corpora (construction, format, and sizes) are detailed in Appendix D .
+
+Baselines. We compare against a series of baselines: AgentGL-3B and AgentGL-7B [ 29 ] (the RL-trained agentic retrieval base-line), the LLaGA [ 3 ] static-graph-token baseline, the GOFA [ 20 ]graph foundation model, and GNN references (GraphSAGE [ 11 ], Zhuoyi Peng and Yi Yang 
+
+GCN [ 19 ], and GAT [ 35 ]). All of these are run on the same 1,000 -node test samples and the same splits as our method, so every number in Table 2 is measured under one protocol. AgentGL-7B is the strongest reported agent. We additionally re-implement seven same-backbone baselines on our exact splits (both Qwen2.5-3B and 7B): Qwen zero-shot, Qwen chain-of-thought [ 37 ], a graph-to-text SFT model, LLM-GNN [ 5], and the graph-token methods TEA-GLM [ 36 ], GraphGPT [ 32 ], and GraphTranslator [ 40 ]; full details for these are in Appendix C .
+
+## 5.2 Main results 
+
+Our 3B model sets a new state of the art among comparably sized graph LLMs (Table 2). On node classification it leads on six of the seven domains, reaching 73 .0% on ogbn-arxiv and beating the comparably sized AgentGL-3B baseline ( 63 .9% ) by 9.1 points; we show later (Figure 3) that this gain concentrates on the challenging nodes, where the anchor text alone is ambiguous, rather than on the easy ones. On masked link prediction it wins six of the seven domains, trailing only LLaGA on arXiv-2023. In fact LLaGA and GraphTranslator are the only trained graph-LLM baselines that beat ours on any domain (LLaGA on arXiv-2023 LP and CiteSeer NC, GraphTranslator on CiteSeer NC), while the retrieval-based AgentGL and frozen-feature GOFA sit well below. A plain GNN stays ahead of ours only on the two most structure-dominated cases, the homophilous CiteSeer (NC) and the STRING-db (LP) graphs. The advantage is consistent at larger scale. With a Qwen2.5-7B backbone our model tops every node-classification domain (e.g. 
+
+75 .6% on ogbn-arxiv and 80 .1% on ogbn-products) and every link-prediction domain among the same-backbone baselines, so it con-sistently outperforms every same-backbone baseline across both tasks and the approach scales with backbone size. 
+
+## 5.3 Zero-shot transfer 
+
+We use the arxiv checkpoint without any further training to vali-date zero-shot performance. Transfer quality (Table 3) tracks the results: PubMed’s three broad medical categories admit reliable text classification ( 82 .0% ), while the 21-class STRING-db is hardest (37 .4% ). Ours leads on six of the seven transfer targets, trailing only Amazon-Photo (won by GraphTranslator, 48 .4 vs 43 .7), and by large margins over LLaGA, AgentGL, and GOFA. 
+
+## 5.4 Ablations 
+
+Stage components. Table 4 isolates the Stage 2 consistency term (CRJT) from full model; averaged over domains, it is the largest of the training components ( 1.9 points on node classification and 
+
+5.1 on link prediction). CRJT pushes the LM to be invariant to two augmentations (edge-drop and token-mask) that the encoder cannot itself control, forcing the projection head and the LM’s attention into the graph-token block to extract scope-invariant signal. Without it the LM treats graph tokens as a weak prior; with it the model calls cluster_token and three_hop_token far more often at greedy decoding, which translates directly into accuracy. Every domain improves with CRJT, with the largest gains on link prediction (Table 4). 
+
+Action contributions. The lower block of Table 4 removes one action at a time. For node classification the neighbour tokens (1/2/3-hop) matter most: dropping them causes the largest accuracy fall, confirming that the topological signal, not the anchor alone, drives the label. The single-node, retrieval, and cluster tokens each con-tribute smaller amounts; on the 1,000 -node samples several of these node-classification differences are within measurement noise, and we treat them as indicative rather than individually significant. For link prediction the picture shifts, as a link decision rests on comparing the two endpoints: the cosine-similarity action becomes decisive and the single-node token is next most important, both collapsing AUC sharply when ablated (the cosine action costs 32 .6
+
+AUC on ogbn-products, the node token 13 .4 on PubMed). Every action contributes on at least one task, which supports keeping the full action space rather than a fixed subset. 
+
+## 5.5 Is graph token better for reasoning? 
+
+Our central claim is that the medium , encoding each reasoning step as a graph token rather than as text, is what drives the gains, not the agentic loop alone. To test this directly, we build a text-medium ablation that shares our exact agentic framework: the same action space (Table 1), the same step-by-step rollout, and the same Stage 2– 3 training recipe, changing only what each action returns. Stage 1 is skipped for the text medium, since there is no graph-token block to ground. The verbaliser renders the same graph view the encoder would have pooled and is subject to the same 2048 -token context limit used throughout; the serialised views fit within that budget, so the text medium is not penalised by truncation. Instead of an AGT block ZAGT  
+
+> 𝑡
+
+, the encoder is replaced by a verbaliser that serialises the named graph view 𝐺 𝑉 𝑡 into natural-language text spliced into the context. Any gap between the two rows in Table 5 is attributable to the medium alone. In domain the two media stay close (81.0 versus 77.8 on average, a 3.2-point gap), where the anchor text alone often settles the label, but they diverge sharply under transfer. The graph-token medium retains 57 .4% zero-shot accuracy against 28 .1% for the verbalised-text medium, a 29-point gap on the same targets. The verbaliser preserves the same neighbourhood the encoder sees, so the difference is not about which graph view is read but about how it is represented: serialising to text discards the compact structural signal the encoder carries across datasets, which is precisely where out-of-domain accuracy depends on it. Because the text medium keeps our trajectory SFT and rollout unchanged and only forgoes the pooler it has no use for, this gap is an estimate of what the medium contributes. 
+
+Where the errors reduce. The medium’s advantage is spread across nodes, not confined to a few. Figure 3 plots the density of misclassi-fied nodes over node degree for Ours-Token against the AgentGL text agent on PubMed and ogbn-products , each curve scaled to its total error mass. Our error mass on PubMed is about three-fifths of the text agent’s and on ogbn-products about two-thirds, removing roughly 38% and 35% of its errors. Both methods err most on low-degree nodes, where the neighbourhood carries the least signal, yet our curve stays below the text agent across the entire degree range, not only on well-connected hubs. The graph-token medium thus lowers error mass broadly, which is consistent with the transfer gap in Table 5. Appendix E extends this analysis (Figure 5). Agentic Graph Token Reasoning 
+
+Table 2: Main results: in-domain node classification (% accuracy) and masked link prediction (AUC ×100 ). Bold indicates the best result under the same backbone. 3-run average is reported. 
+
+Node classification (% acc) Link prediction (AUC ×100 )Method arxiv prod pub reddit a23 cite STR arxiv prod pub reddit a23 cite STR 
+
+Graph Neural Network 
+
+GraphSAGE 69.2 75.9 88.3 89.8 66.3 76.5 68.5 90.2 79.9 83.9 92.5 86.4 86.4 86.6 GCN 68.8 76.1 86.8 90.5 66.8 76.5 62.8 93.9 90.8 93.2 94.0 85.4 91.0 91.8 GAT 66.9 75.8 84.6 89.5 67.7 78.1 62.4 87.0 88.2 84.7 95.4 87.0 89.5 89.5 
+
+Backbone: Qwen2.5-3B-Instruct 
+
+LLaGA 66.9 71.7 86.5 88.3 62.9 75.9 50.6 82.2 87.8 88.2 88.7 94.7 76.3 79.7 AgentGL 63.9 64.4 89.1 76.6 29.7 71.5 39.8 71.0 61.3 77.9 63.1 72.3 71.1 71.0 GOFA 63.9 65.1 77.9 83.5 41.2 63.0 28.4 79.7 80.7 67.0 73.8 71.6 71.4 56.3 Qwen (zero-shot) 33.0 50.5 74.6 45.5 28.8 58.8 36.3 64.8 72.8 85.6 57.5 73.3 72.7 75.2 Chain-of-Thought 60.4 49.3 82.3 46.2 56.4 61.4 38.7 65.7 75.8 88.1 65.8 74.5 72.9 76.2 Graph2Text-SFT 69.3 75.0 92.9 89.4 73.7 72.3 68.6 83.7 90.5 92.6 94.2 90.8 88.7 85.1 LLM-GNN 48.9 53.2 61.3 50.3 36.0 63.2 33.2 53.1 53.4 53.1 50.9 50.8 52.9 48.5 TEA-GLM 70.4 70.3 89.9 53.5 63.0 50.3 18.5 85.7 94.7 85.8 93.0 86.6 87.9 86.6 GraphGPT 70.3 74.0 93.0 68.3 69.9 52.8 42.3 85.6 93.7 87.9 93.3 86.3 89.4 86.1 GraphTranslator 71.5 73.6 86.7 77.5 69.6 74.5 35.7 84.6 93.4 92.2 95.3 88.8 87.6 87.4 
+
+Ours 73.0 76.8 93.3 96.9 77.5 73.8 69.1 97.7 96.7 96.4 97.8 92.0 96.8 88.5 Backbone: Qwen2.5-7B-Instruct 
+
+LLaGA 68.2 72.6 90.5 92.4 65.4 76.3 51.5 82.3 87.3 88.9 88.7 96.5 75.6 80.3 AgentGL 69.5 65.3 90.8 88.3 58.3 73.8 43.1 74.2 66.6 78.4 62.0 73.8 70.8 71.4 GOFA 67.2 66.8 84.9 85.7 59.2 72.4 34.3 82.9 80.8 69.3 75.2 72.6 73.5 58.3 Qwen (zero-shot) 66.5 47.3 90.1 47.1 65.8 59.6 43.3 92.8 92.3 94.7 76.1 96.6 94.9 85.4 Chain-of-Thought 67.7 50.5 91.2 48.2 59.8 73.3 43.5 93.5 92.8 94.2 78.7 96.4 95.1 86.6 Graph2Text-SFT 70.8 75.8 93.6 93.7 75.5 75.9 69.5 94.5 96.9 95.7 95.7 96.6 95.7 88.0 LLM-GNN 65.8 43.3 77.6 49.9 55.2 58.8 33.9 57.0 52.3 50.8 52.0 51.0 54.1 50.5 InstructGLM 69.8 66.9 88.1 49.5 62.9 72.4 21.5 71.9 73.1 96.2 57.5 90.6 83.3 72.7 TEA-GLM 71.5 74.0 82.1 77.6 59.5 55.2 48.5 87.7 95.5 87.5 93.6 87.1 88.8 86.4 GraphGPT 67.0 72.9 93.4 93.3 67.0 73.8 50.6 64.7 94.2 60.0 76.4 78.1 63.7 77.5 GraphTranslator 74.4 77.8 90.0 79.8 70.1 45.3 39.2 90.1 97.4 91.8 98.0 89.9 93.6 88.9 
+
+Ours 75.6 80.1 95.6 98.2 77.6 78.8 71.3 97.9 98.8 96.7 98.1 96.9 96.7 89.2 
+
+Table 3: Zero-shot accuracy: every method trained only on ogbn-arxiv and evaluated on target with no fine-tuning. 
+
+Method Cora Cite. Pub. prod. a-comp a-photo STR. LLaGA 4.6 19.0 49.0 1.4 4.2 0.4 0.7 AgentGL 42.4 40.4 39.8 36.6 41.2 40.7 21.0 GOFA 26.3 16.9 41.0 11.7 10.3 5.5 1.4 TEA-GLM 49.2 51.9 56.3 35.7 25.4 43.3 20.0 GraphGPT 33.0 40.0 20.5 32.5 36.6 46.6 7.7 GraphTrans. 34.8 51.3 53.0 33.2 38.9 48.4 18.4 
+
+Ours 68.9 54.4 82.0 55.8 53.3 43.7 37.4 
+
+## 5.6 Pareto frontier 
+
+Figure 4 places the methods on the accuracy versus token consump-tion for ogbn-products , with a dashed line tracing the Pareto frontier for each backbone size; we zoom into the informative larger-context region. Our 3B and 7B models occupy the entire high-accuracy end of their frontier while holding a bounded budget 
+
+Figure 3: Error-fraction density over node degree: Ours-Token (orange) versus the AgentGL text agent (blue). A lower curve means fewer and better-placed errors. The full analysis is in Figure 5. 
+
+(near 900 tokens for 4 actions), because each action contributes a fixed-size graph-token block rather than growing with the retrieved text. To make the trade-off explicit we also plot checkpoints con-strained to emit at most one, two, or three actions: the one-action Zhuoyi Peng and Yi Yang 
+
+Table 4: Component ablation (Qwen2.5-3B). N/A marks an action outside a task’s action space.                                                                                                                                  
+
+> Node classification (% acc) Link prediction (AUC ×100 )Configuration arxiv prod pub reddit a23 cite STR arxiv prod pub reddit a23 cite STR
+> Full model 73.0 76.8 93.3 96.9 77.5 73.8 69.1 97.7 96.7 96.4 97.8 92.0 96.8 88.5
+> Training stages
+> w/o Stage 2 consistency (CRJT) 70.5 76.4 93.0 93.2 75.4 72.4 66.4 87.4 92.4 85.2 97.4 91.7 88.5 87.5 w/o Stage 3 (IPO) 71.9 75.9 92.7 95.4 76.3 73.2 68.6 89.5 90.3 88.1 97.2 91.5 89.0 88.1
+> Action space
+> w/o retrieval token 72.8 76.2 92.8 96.0 76.7 72.9 69.0 97.2 96.1 96.0 97.3 91.2 96.4 88.1 w/o cluster token 72.7 75.5 92.7 96.4 77.1 72.8 68.6 97.2 96.0 96.3 97.2 91.1 96.2 86.9 w/o node token 71.8 75.9 92.1 96.5 76.2 72.8 68.5 95.6 86.7 83.0 97.5 90.1 95.0 86.7 w/o neighbour tokens (1/2/3-hop) 70.2 76.2 92.4 96.3 77.1 71.8 68.8 95.4 94.2 94.8 95.7 90.5 96.0 80.1 w/o cosine similarity N/A N/A N/A N/A N/A N/A N/A 97.0 64.1 84.6 97.0 82.6 95.5 85.8
+
+Table 5: Isolating the graph-token medium. Our agentic framework is run with each action returning either ver-balised text (Ours-Text ) or a graph token (Ours-Token ), with identical actions; Δ is the graph-token gain over text. 
+
+AgentGL Ours-Text Ours-Token Δ
+
+In-domain 
+
+arxiv 63.9 71.9 73.0 +1.1
+
+products 64.4 71.3 76.8 +5.5
+
+pubmed 89.1 90.1 93.3 +3.2
+
+average 72.5 77.8 81.0 +3.2
+
+Zero-shot transfer 
+
+pubmed 39.8 32.6 82.0 +49 .4
+
+products 36.6 43.7 55.8 +12 .1
+
+citeseer 40.4 31.8 54.4 +22 .6
+
+STRING-db 21.0 4.3 37.4 +33 .1
+
+average 34.5 28.1 57.4 +29 .3
+
+variant already lands above every baseline, and accuracy climbs by roughly a point as the budget grows to the full trajectory before saturating, so a caller can trade a few tokens for a small accuracy change without leaving the frontier. The retrieval-based AgentGL spends the most context yet trails in accuracy, and the single-pass graph-token baselines are cheaper but several points lower. The full per-dataset analysis is in Appendix F (Figures 6 and 7). 
+
+## 5.7 Understanding the learned policy 
+
+We inspect the trained policy on ogbn-arxiv, where it issues on average 4 actions per trajectory. Three findings emerge. First, the policy is adaptive: trajectory length is stable within ogbn-arxiv but ranges from a single action to the full ladder across datasets, lengthening with how much the node text leaves unresolved, so the model reaches for graph tokens only when the text falls short. Sec-ond, the graph view it chooses to encode carries the discriminative signal the text alone leaves ambiguous. Third, the injected tokens are legible: passed through a Stage 1 reader, a token decodes to the research area of its graph view, and that topical signal is what fixes the label. The activity-recognition paper “gimme signals”, whose abstract reads like signal processing, is a representative case: its tokens decode to computer-vision content and move the prediction to cs.CV . More analysis results are in Appendix I .
+
+Figure 4: Accuracy versus inference tokens on ogbn-products . Blue 3B, orange 7B; Star: ours, circle: baseline, and the dashed line is the Pareto frontier for each size. More results are in Appendix F. 
+
+## 5.8 Further analysis 
+
+More studies are deferred to the appendix for space. Appendix G 
+
+analyses training cost, placing accuracy against total training time and breaking our three-stage pipeline down stage by stage. Appen-dix H reports sensitivity checks on hyperparameters. 
+
+## 6 CONCLUSION 
+
+We introduced Agentic Graph Token (AGT) reasoning , which turns graph token from a one-shot preprocessing step into part of rea-soning: at each step the model names a graph view, an encoder materialises it into a fixed-size graph-token block on demand, and the block is spliced back into the context, so the tokens it reads are chosen as it reasons. A three-stage pipeline teaches the model to read graph tokens, keeps that reading grounded through a consis-tency regulariser, and rewards trajectories whose graph and text evidence agree. Our model outperforms comparably sized graph-token and agentic baselines on graph benchmarks and transfers zero-shot to unrelated domains, with our analyses attributing the gains to the graph-token medium rather than the agentic loop alone. Taken together, the results argue for treating the graph tokens as an instrument the model calls during reasoning rather than a fixed pattern, pushing graph analysis to an effective agentic paradigm. Agentic Graph Token Reasoning 
+
+## REFERENCES 
+
+[1] Mohammad Gheshlaghi Azar, Zhaohan Daniel Guo, Bilal Piot, Remi Munos, Mark Rowland, Michal Valko, and Daniele Calandriello. 2024. A general theoret-ical paradigm to understand learning from human preferences. In International Conference on Artificial Intelligence and Statistics . PMLR, 4447–4455. [2] Maciej Besta, Nils Blach, Ales Kubicek, Robert Gerstenberger, Michal Podstawski, Lukas Gianinazzi, Joanna Gajda, Tomasz Lehmann, Hubert Niewiadomski, Piotr Nyczyk, et al . 2024. Graph of thoughts: Solving elaborate problems with large language models. In Proceedings of the AAAI conference on artificial intelligence ,Vol. 38. 17682–17690. [3] Runjin Chen, Tong Zhao, Ajay Jaiswal, Neil Shah, and Zhangyang Wang. 2024. LLaGA: large language and graph assistant. In Proceedings of the 41st International Conference on Machine Learning . 7809–7823. [4] Zhikai Chen, Haitao Mao, Hang Li, Wei Jin, Hongzhi Wen, Xiaochi Wei, Shuaiqiang Wang, Dawei Yin, Wenqi Fan, Hui Liu, et al . 2024. Exploring the potential of large language models (llms) in learning on graphs. ACM SIGKDD Explorations Newsletter 25, 2 (2024), 42–61. [5] Zhikai Chen, Haitao Mao, Hongzhi Wen, Haoyu Han, Wei Jin, Haiyang Zhang, Hui Liu, and Jiliang Tang. 2024. Label-free node classification on graphs with large language models (llms). In International Conference on Learning Representa-tions , Vol. 2024. 31632–31655. [6] Yuntian Deng, Yejin Choi, and Stuart Shieber. 2024. From explicit cot to implicit cot: Learning to internalize cot step by step. arXiv preprint arXiv:2405.14838 
+
+(2024). [7] Yi Fang, Dongzhe Fan, Daochen Zha, and Qiaoyu Tan. 2024. Gaugllm: Improving graph contrastive learning for text-attributed graphs with large language models. In Proceedings of the 30th ACM SIGKDD Conference on Knowledge Discovery and Data Mining . 747–758. [8] Sachin Goyal, Ziwei Ji, Ankit Singh Rawat, Aditya Krishna Menon, Sanjiv Kumar, and Vaishnavh Nagarajan. [n. d.]. Think before you speak: Training Language Models With Pause Tokens. In The Twelfth International Conference on Learning Representations .[9] Daya Guo, Dejian Yang, Haowei Zhang, Junxiao Song, Peiyi Wang, Qihao Zhu, Runxin Xu, Ruoyu Zhang, Shirong Ma, Xiao Bi, et al . 2025. DeepSeek-R1 incen-tivizes reasoning in LLMs through reinforcement learning. Nature 645, 8081 (2025), 633–638. [10] Jiayan Guo, Lun Du, Hengyu Liu, Mengyu Zhou, Xinyi He, and Shi Han. 2023. Gpt4graph: Can large language models understand graph structured data? an empirical evaluation and benchmarking. arXiv preprint arXiv:2305.15066 (2023). [11] William L. Hamilton, Rex Ying, and Jure Leskovec. 2017. Inductive Representation Learning on Large Graphs. In Advances in Neural Information Processing Systems (NeurIPS) .[12] Shibo Hao, Sainbayar Sukhbaatar, DiJia Su, Xian Li, Zhiting Hu, Jason Weston, and Yuandong Tian. 2024. Training large language models to reason in a contin-uous latent space. arXiv preprint arXiv:2412.06769 (2024). [13] Xiaoxin He, Xavier Bresson, Thomas Laurent, Adam Perold, Yann LeCun, and Bryan Hooi. 2023. Harnessing explanations: Llm-to-lm interpreter for enhanced text-attributed graph representation learning. arXiv preprint arXiv:2305.19523 
+
+(2023). [14] Weihua Hu, Matthias Fey, Marinka Zitnik, Yuxiao Dong, Hongyu Ren, Bowen Liu, Michele Catasta, and Jure Leskovec. 2020. Open graph benchmark: Datasets for machine learning on graphs. Advances in neural information processing systems 
+
+33 (2020), 22118–22133. [15] Jin Huang, Xingjian Zhang, Qiaozhu Mei, and Jiaqi Ma. 2023. Can LLMs Effec-tively Leverage Graph Structural Information through Prompts, and Why? arXiv preprint arXiv:2309.16595 (2023). [16] Aaron Jaech, Adam Kalai, Adam Lerer, Adam Richardson, Ahmed El-Kishky, Aiden Low, Alec Helyar, Aleksander Madry, Alex Beutel, Alex Carney, et al . 2024. Openai o1 system card. arXiv preprint arXiv:2412.16720 (2024). [17] Albert Q Jiang, Alexandre Sablayrolles, Arthur Mensch, Chris Bamford, De-vendra Singh Chaplot, Diego de las Casas, Florian Bressand, Gianna Lengyel, Guillaume Lample, Lucile Saulnier, et al . 2023. Mistral 7B. arXiv preprint arXiv:2310.06825 (2023). [18] Bowen Jin, Chulin Xie, Jiawei Zhang, Kashob Kumar Roy, Yu Zhang, Zheng Li, Ruirui Li, Xianfeng Tang, Suhang Wang, Yu Meng, et al . 2024. Graph chain-of-thought: Augmenting large language models by reasoning on graphs. In Findings of the Association for Computational Linguistics: ACL 2024 . 163–184. [19] Thomas N Kipf and Max Welling. 2016. Semi-supervised classification with graph convolutional networks. arXiv preprint arXiv:1609.02907 (2016). [20] Lecheng Kong, Jiarui Feng, Hao Liu, Chengsong Huang, Jiaxin Huang, Yixin Chen, and Muhan Zhang. 2025. GOFA: A generative one-for-all model for joint graph language modeling. In 13th International Conference on Learning Representations, ICLR 2025 . International Conference on Learning Representations, ICLR, 58209– 58240. [21] Rui Li, Jiwei Li, Jiawei Han, and Guoyin Wang. 2024. Similarity-based neighbor selection for graph llms. arXiv preprint arXiv:2402.03720 (2024). [22] Jiajin Liu, Yuanfu Sun, Dongzhe Fan, and Qiaoyu Tan. 2026. GraphSearch: Agentic Search-Augmented Reasoning for Zero-Shot Graph Learning. arXiv preprint arXiv:2601.08621 (2026). [23] Zheyuan Liu, Xiaoxin He, Yijun Tian, and Nitesh V Chawla. 2024. Can we soft prompt llms for graph learning tasks?. In Companion proceedings of the ACM web conference 2024 . 481–484. [24] Rafael Rafailov, Archit Sharma, Eric Mitchell, Stefano Ermon, Christopher D Manning, and Chelsea Finn. 2023. Direct preference optimization: your lan-guage model is secretly a reward model. In Proceedings of the 37th International Conference on Neural Information Processing Systems . 53728–53741. [25] Nils Reimers and Iryna Gurevych. 2019. Sentence-bert: Sentence embeddings using siamese bert-networks. In Proceedings of the 2019 conference on empirical methods in natural language processing and the 9th international joint conference on natural language processing (EMNLP-IJCNLP) . 3982–3992. [26] Zhihong Shao, Peiyi Wang, Qihao Zhu, Runxin Xu, Junxiao Song, Xiao Bi, Haowei Zhang, Mingchuan Zhang, YK Li, Yang Wu, et al . 2024. Deepseekmath: Pushing the limits of mathematical reasoning in open language models. arXiv preprint arXiv:2402.03300 (2024). [27] Oleksandr Shchur, Maximilian Mumme, Aleksandar Bojchevski, and Stephan Günnemann. 2018. Pitfalls of graph neural network evaluation. arXiv preprint arXiv:1811.05868 (2018). [28] Kaitao Song, Xu Tan, Tao Qin, Jianfeng Lu, and Tie-Yan Liu. 2020. Mpnet: Masked and permuted pre-training for language understanding. Advances in neural information processing systems 33 (2020), 16857–16867. [29] Yuanfu Sun, Kang Li, Dongzhe Fan, Jiajin Liu, and Qiaoyu Tan. 2026. Agentgl: Towards agentic graph learning with llms via reinforcement learning. In Proceed-ings of the 64th Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers) . 25313–25335. [30] Yuanfu Sun, Zhengnan Ma, Yi Fang, Jing Ma, and Qiaoyu Tan. 2025. Graphicl: Unlocking graph learning potential in llms through structured prompt design. In Findings of the Association for Computational Linguistics: NAACL 2025 . 2440– 2459. [31] Damian Szklarczyk, Annika L Gable, David Lyon, Alexander Junge, Stefan Wyder, Jaime Huerta-Cepas, Milan Simonovic, Nadezhda T Doncheva, John H Morris, Peer Bork, et al . 2019. STRING v11: protein–protein association networks with in-creased coverage, supporting functional discovery in genome-wide experimental datasets. Nucleic acids research 47, D1 (2019), D607–D613. [32] Jiabin Tang, Yuhao Yang, Wei Wei, Lei Shi, Lixin Su, Suqi Cheng, Dawei Yin, and Chao Huang. 2024. Graphgpt: Graph instruction tuning for large language models. In Proceedings of the 47th International ACM SIGIR Conference on Research and Development in Information Retrieval . 491–500. [33] Qwen Team. 2024. Qwen2.5 Technical Report. arXiv preprint arXiv:2412.15115 
+
+(2024). [34] Hugo Touvron, Thibaut Lavril, Gautier Izacard, Xavier Martinet, Marie-Anne Lachaux, Timothée Lacroix, Baptiste Rozière, Naman Goyal, Eric Hambro, Faisal Azhar, et al . 2023. Llama: Open and efficient foundation language models. arXiv preprint arXiv:2302.13971 (2023). [35] Petar Veličković, Guillem Cucurull, Arantxa Casanova, Adriana Romero, Pietro Liò, and Yoshua Bengio. 2018. Graph Attention Networks. In International Conference on Learning Representations .[36] Duo Wang, Yuan Zuo, Fengzhi Li, and Junjie Wu. 2024. Llms as zero-shot graph learners: Alignment of gnn representations with llm token embeddings. Advances in neural information processing systems 37 (2024), 5950–5973. [37] Jason Wei, Xuezhi Wang, Dale Schuurmans, Maarten Bosma, Fei Xia, Ed Chi, Quoc V Le, Denny Zhou, et al . 2022. Chain-of-thought prompting elicits reason-ing in large language models. Advances in neural information processing systems 
+
+35 (2022), 24824–24837. [38] Zhilin Yang, William Cohen, and Ruslan Salakhudinov. 2016. Revisiting semi-supervised learning with graph embeddings. In International conference on ma-chine learning . PMLR, 40–48. [39] Ruosong Ye, Caiqi Zhang, Runhui Wang, Shuyuan Xu, and Yongfeng Zhang. 2024. Language is All a Graph Needs. In 18th Conference of the European Chapter of the Association for Computational Linguistics, EACL 2024-Findings of EACL 2024 . Association for Computational Linguistics (ACL), 1955–1973. [40] Mengmei Zhang, Mingwei Sun, Peng Wang, Shen Fan, Yanhu Mo, Xiaoxiao Xu, Hong Liu, Cheng Yang, and Chuan Shi. 2024. Graphtranslator: Aligning graph model to large language model for open-ended tasks. In Proceedings of the ACM Web Conference 2024 . 1003–1014. [41] Qihai Zhang, Xinyue Sheng, Yuanfu Sun, and Qiaoyu Tan. 2025. Trustglm: Eval-uating the robustness of graphllms against prompt, text, and structure attacks. In Proceedings of the 31st ACM SIGKDD Conference on Knowledge Discovery and Data Mining V. 2 . 5912–5923. [42] Jianan Zhao, Le Zhuo, Yikang Shen, Meng Qu, Kai Liu, Michael Bronstein, Zhaocheng Zhu, and Jian Tang. 2023. Graphtext: Graph reasoning in text space. 
+
+arXiv preprint arXiv:2310.01089 (2023). Zhuoyi Peng and Yi Yang 
+
+## A LIMITATIONS AND FUTURE WORK 
+
+The node text features come from a frozen mpnet encoder through-out; a stronger pretrained feature extractor would propagate di-rectly through our jointly trained graph encoder. We did not explore joint NC + LP training extensively in this work; preliminary results suggest that node-classification and link-prediction actions need separate namespaces before the model emits them coherently, and we leave a full joint study to future work. The IPO stage is cur-rently fed only with text-shuffle preference pairs; combining text and graph perturbations into a single pair set is a natural next step. 
+
+## B DATASET DESCRIPTIONS 
+
+We evaluate on the ten text-attributed graphs listed in Section 5.1; each node carries raw text, from which the MPNet features are computed. Following AgentGL [ 29 ], node classification samples 
+
+3,000 training nodes per dataset from the training split and evaluates on a held-out sample of 1,000 test nodes; link prediction trains on 
+
+1,500 positive and 1,500 negative node pairs per dataset and tests on 500 positive and 500 negative pairs. We detail each graph below. 
+
+Citation graphs. ogbn-arxiv is a citation network of arXiv CS pa-pers labelled with 40 subject areas, with the title and abstract as node text; it is our primary in-domain benchmark and the source domain for all zero-shot transfer. arXiv-2023 is a same-label-space ( 40 -class) citation graph of papers published in 2023, used to probe tem-poral distribution shift. PubMed (3 diabetes-related classes), Cora 
+
+(7 machine-learning topics), and CiteSeer (6 computer-science topics) are the standard small citation benchmarks, again with ti-tles/abstracts as node text. 
+
+Co-purchase / co-review graphs. ogbn-products is an Amazon co-purchase graph with product descriptions as node text and 42 prod-uct categories. Amazon-Computers (10 classes) and Amazon-Photo (8 classes) are smaller co-purchase graphs from the same family, used as zero-shot targets. 
+
+Social graph. Reddit is a post-interaction graph with post text as node attributes and community labels. 
+
+Biological graph. STRING-db is a human protein-protein inter-action network built from the STRING database [ 31 ]; node text describes each protein and the 21 labels are COG protein-function classes. It stresses methods on a largely non-text-centric domain where the label depends heavily on graph structure. 
+
+## C BASELINE IMPLEMENTATION DETAILS 
+
+Every same-backbone baseline uses the identical Qwen2.5-3B-Instruct backbone, the identical per-domain splits (the same train/test node splits for node classification and the same candidate pairs for link prediction), and the same MPNet node text-features as our method; they differ only in mechanism. All are re-implemented faithfully to each method’s original design. We verified that no test node or candidate pair appears in any training corpus for any domain, including the alignment corpora. 
+
+Qwen (zero-shot). The frozen backbone is prompted with the target node’s title +abstract and the candidate-category list and asked to emit a single category. No graph structure and no training. 
+
+Qwen (CoT). As zero-shot, but the model is asked to reason step by step before committing to a category (it names the core topic and method, shortlists the likely classes, and eliminates the rest). Text only, no graph, no training. 
+
+Graph2Text-SFT. A supervised baseline that verbalises the anchor node together with its one-hop neighbours as text and fine-tunes the Qwen backbone to predict the label. It uses the graph structure but as serialised text rather than tokens. 
+
+LLM-GNN. Following the LLM-as-annotator recipe, Qwen labels a pool of nodes from text alone; a GraphSAGE classifier is then trained on these pseudo-labels over the graph and evaluated on the held-out test set. 
+
+Graph-token baselines (TEA-GLM, GraphGPT, GraphTranslator). 
+
+These share our token interface: a node’s 𝑘 -hop neighbourhood is pooled by a GraphSAGE encoder over MPNet features and projected to a block of 128 graph-token embeddings that are spliced into the prompt in place of a placeholder span. They differ in what is trained :
+
+• TEA-GLM keeps the LLM frozen and trains only the graph encoder/projector, on a single-token instruction corpus, one 
+
+1-hop graph token per training node plus a direct classifi-cation instruction. 
+
+• GraphGPT uses the same single-token corpus but tunes 
+
+the LLM jointly with the encoder (learning rate 10 −5); it is the tuned counterpart of frozen TEA-GLM. 
+
+• GraphTranslator freezes the LLM and trains a two-stage translator: Stage A aligns graph tokens to an LLM-generated description of the node and its neighbours, following the method’s Producer stage, and Stage B fine-tunes the trans-lator on the downstream task. 
+
+Common training setup. The encoder/projector are trained with graph learning rate 5 × 10 −4, one epoch, gradient accumulation 4,maximum sequence length 2048 , and an answer-token loss weight of 20 . Node-classification corpora are capped at 20 k training samples and link-prediction corpora at 6k, drawn only from the training split. All baselines run on the same hardware as our method. 
+
+Link prediction. For a pair (𝑢, 𝑣 ), each endpoint’s 1-hop subgraph is encoded with the target edge masked from both endpoints , identical to our method. The two token blocks are spliced into a yes/no edge-existence prompt and we score logit (yes ) − logit (no ), reporting AUC over the balanced 1,000 -pair test set. TEA-GLM freezes the LLM, GraphGPT tunes it (learning rate 10 −5), and GraphTranslator uses its two-stage translator; all train on AgentGL’s canonical 1,500 
+
+positive + 1,500 negative training pairs, the same pairs our Stages 2– 3 consume. 
+
+## D PER-STAGE TRAINING CORPUS 
+
+Our three training stages consume distinct corpora, all built from the same per-domain training split; no test node appears in any stage. Node text-features are MPNet embeddings of title +abstract, and graph tokens are produced on the fly by the GraphSAGE en-coder for whichever scope an action requests. We describe each stage’s corpus construction, format, and size below (ogbn-arxiv figures; other domains follow the same recipe). Agentic Graph Token Reasoning 
+
+Stage 1: alignment (learning to read graph tokens). Purpose: ground every kind of graph token so the LM can decode node content and local structure from the token block alone. For each training node we sample one action scope ( 1-, 2-, or 3-hop subgraph pooling, top-
+
+𝐾 MPNet retrieval, or cosine-similarity), encode it to a 128 -token block, and set the target to (i) reconstruct the anchor’s title +abstract and/or (ii) answer a masked link-prediction query, from the tokens alone. Covering all scopes ensures every token type is supervised. Corpus: ≈ 40 k examples, one epoch. 
+
+Stage 2: token-robust trajectory SFT. Purpose: teach free-choice agentic reasoning. Each example is a multi-turn trajectory: the prompt carries the node’s title +abstract and the task; the assistant then emits a sequence of action calls ( node_token , one_hop_token ,
+
+two_hop_token , three_hop_token , retrieval_token , cluster_token ;plus cosine_sim for link prediction), each returning a graph-token block, and finally the answer. The loss is masked to the assistant’s action and answer spans. Corpus: ≈ 9k trajectories, one epoch, max-imum length 2048 . To force the policy to use the tokens rather than lean on the prompt text, training uses consistency-regularized joint training (CRJT): graph tokens are perturbed (token-mask 0.2, edge-drop 0.1) and a KL term (weight 0.5) aligns the clean and perturbed predictions. 
+
+Stage 3: rollout IPO. Purpose: refine the Stage-2 policy with pref-erence optimisation on its own rollouts. For each training node we run two greedy rollouts of the Stage-2 policy: a consistent one on the real node text and graph, and an inconsistent one whose node text is shuffled so that it disagrees with the graph. We keep a pair only when the consistent rollout is correct and the shuffled one is wrong, and prefer the consistent trajectory, so the objective rewards agreement between the graph and text evidence. Preferences are optimised with IPO ( 𝛽 = 0.3, learning rate 3 × 10 −7, gradient accu-mulation 4). No new graph data is introduced, the stage reweights trajectories the model already produces. 
+
+Link prediction. LP shares Stage 1 and re-runs Stages 2–3 on LP-specific corpora built from AgentGL’s canonical training pairs (1,500 positive + 1,500 negative per domain): each example encodes both endpoints’ 1-hop subgraphs with the target edge masked from both, and supervises a yes /no edge decision. 
+
+## E ERROR STRUCTURE ANALYSIS 
+
+To understand where our agentic graph-token policy helps, we com-pare its per-node error structure against AgentGL, the strongest agentic text-retrieval baseline, on the shared 1,000 -node test sam-ples of four datasets: ogbn-arxiv, ogbn-products, PubMed, and Red-dit. Both methods answer the same nodes, so the comparison is paired. Figure 5 plots the error-fraction density over node degree, one panel per dataset: a Gaussian kernel density estimate over the degree of the misclassified nodes, with each curve scaled so its area equals that model’s error mass. A lower curve therefore means fewer errors, and its shape shows on which nodes they fall. On every dataset our error mass sits below AgentGL’s, and on the text-rich graphs the gap is wide. The errors of both methods con-centrate on lower-degree nodes, where the graph signal is scarcest, but our density stays below AgentGL’s across the whole degree range, not merely at the well-connected end. Choosing a graph view to encode thus leaves fewer residual errors than retrieving text, and the improvement is spread across the degree spectrum instead of resting on a few easy hubs. 
+
+## F INFERENCE COST 
+
+A method is only useful if it reaches an answer at a reasonable cost, so we ask how much context each approach spends per node: the average number of tokens the model processes for one query, counting the prompt, every injected graph-token or retrieved-text block, and the generated reasoning. For our method and the agentic and static-token baselines we tokenise the recorded trajectories with the Qwen tokeniser; for the single-pass graph-token baselines we read the budget off their architecture. Figures 6 and 7 place each method on the accuracy versus context plane for every dataset and both backbone sizes. The vertical position is a method’s measured node-classification accuracy from the main table; the horizontal position is its per-query context. For AgentGL we measure the context per dataset, since the amount of text it retrieves varies with the corpus: its budget ranges from about 790 tokens on Reddit to about 1,430 on STRING-db, where the protein descriptions are long, and on the heaviest in-dividual queries it passes 1,600 . Our own budget stays near 900 
+
+tokens on every dataset because each action contributes the same fixed-size block regardless of the graph view it summarises, so the graph evidence never inflates the context the way retrieved text does. The single-pass graph-token baselines are cheaper still, near 
+
+300 tokens, but their accuracy settles several points lower because one static block cannot be revised as the reasoning proceeds. On every dataset except the homophilous CiteSeer, where LLaGA leads at the 3B scale, our method occupies the accuracy-maximal position on the frontier while keeping this bounded budget. 
+
+## G TRAINING-TIME ANALYSIS 
+
+Beyond inference context ( Appendix F ), we compare methods by their one-time training cost. Figure 8 plots ogbn-arxiv node-classification accuracy against total training time for the 3B config-uration. We gauge each method on a single GPU: for our pipeline and the fine-tuned baselines we multiply the number of optimiser steps (corpus size times epochs, over the effective batch) by a mea-sured throughput of about two optimiser steps per second for the 3B backbone; the reinforcement-learning baseline AgentGL is dom-inated by on-policy rollouts and is scaled up per its rollout-heavy recipe; the zero-shot and chain-of-thought baselines need no train-ing. Our full pipeline (Stage 1 alignment on 40 k pairs, Stage 2 trajectory SFT plus consistency regularisation on 9k, and Stage 3 rollout IPO) totals about 2.8 GPU-hours. This sits in the same band as the single-stage fine-tuned baselines and roughly 4× below the RL-trained AgentGL ( ∼ 12 GPU-hours), while reaching the high-est accuracy. The training-free baselines are cheapest but trail in accuracy, chain-of-thought being the strongest among them. Our method thus occupies the accuracy-maximal corner at a moderate, supervised-fine-tuning-level budget. These are single-GPU esti-mates gauged from each method’s configuration and measured per-step throughput, intended as order-of-magnitude comparisons rather than exact wall-clock. Figure 9 breaks our budget down by stage: the Stage 1 alignment pass over 40 k pairs is the largest single Zhuoyi Peng and Yi Yang 
+
+Figure 5: Error-fraction density over node degree, one panel per dataset, using the same conventions as Figure 3. Our density lies below AgentGL’s on all four datasets. 
+
+Figure 6: Accuracy against inference context (part 1 of 2): ogbn-arxiv, ogbn-products, PubMed, Reddit. Colour encodes backbone size (blue = 3B, orange = 7B) and marker encodes method (star = ours, circle = baseline); the horizontal axis is tokens processed per query on a log scale. AgentGL’s context is measured per dataset; the other methods use a method-representative value measured on ogbn-arxiv. Both our variants sit on the accuracy-maximal corner of the frontier at a bounded context near 900 
+
+tokens. 
+
+item at about 1.4 hours, with the trajectory SFT, consistency, and rollout phases together accounting for the remaining 1.4 hours. 
+
+## H SENSITIVITY ANALYSIS 
+
+We study how two pooler design choices affect end-to-end accuracy: the number of tokens each graph-token action emits and the GNN backbone inside the pooler. For each setting we run the full pipeline with the 3B backbone and report node-classification accuracy on the same 1,000 -node test split, across four datasets: two citation graphs (ogbn-arxiv and PubMed), a co-purchase graph (ogbn-products), and a social graph (Reddit). Agentic Graph Token Reasoning 
+
+Figure 7: Accuracy against inference context (part 2 of 2): arXiv-2023, CiteSeer, STRING-db. Same conventions as Figure 6: blue = 3B, orange = 7B; star = ours, circle = baseline. 
+
+Figure 8: Accuracy against total training time (3B configura-tion) on ogbn-arxiv. Our three-stage pipeline (star) reaches the highest accuracy at a moderate, SFT-level budget ( ∼ 2.8
+
+GPU-hours), roughly 4× below the RL-trained AgentGL. Training-free baselines (zero-shot, chain-of-thought) are cheapest but lower in accuracy. Times are single-GPU es-timates gauged from each method’s configuration and a mea-sured per-step throughput. 
+
+Figure 10 varies the per-action token budget. Accuracy rises steeply from 16 to 32 tokens and then flattens: beyond 64 tokens the four datasets move by only a few tenths of a point, and 128 
+
+is at or within noise of the best setting everywhere while ogbn-arxiv still gains slightly at 256 . We use 128 as the default, trading a negligible accuracy change for half the inference context of 256 .Figure 11 varies the GNN backbone at the default 128 tokens. The pooler is robust to this choice, with the three convolutions within about a point and a half on every dataset. GraphSAGE is the strongest or tied-strongest on three of the four datasets and the cheapest of the three, so we adopt it throughout. 
+
+## I TRAJECTORY CASE STUDIES 
+
+The number of actions the policy issues is not fixed. Across datasets a trajectory runs from a single action to the full ladder, and the length grows with how much the node’s own text leaves unresolved. 
+
+Figure 9: Per-stage training-time breakdown of our three-stage 3B pipeline (Stage 2 shown as its trajectory-SFT and consistency phases). The Stage 1 alignment pass over 40 kpairs is the largest single cost; the trajectory SFT, consistency regularisation, and rollout IPO phases are comparatively cheap, for a total of about 2.8 GPU-hours. 
+
+Figure 10: Per-action token budget vs. full-pipeline NC ac-curacy ( 3B) on four datasets (note the independent 𝑦 -axis per panel). Accuracy saturates by roughly 64 –128 tokens; the starred point marks the 128 -token default. 
+
+We walk through four correct predictions, one at each observed length. Zhuoyi Peng and Yi Yang 
+
+Figure 11: GNN backbone vs. full-pipeline NC accuracy ( 3B, 
+
+128 tokens per action; note the independent 𝑦 -axis per panel). The three convolutions stay within about a point and a half; GraphSAGE (blue) is the default. 
+
+One action. A Reddit post reading “recently got into japanese knives and this 120mm wa-petty is my favorite” (gold chefknives )is unambiguous from its text alone. The policy issues a single 
+
+anchor_text echo of the post and stops; no graph token is needed. 
+
+Two actions. A PubMed article, “altered glycolytic and oxidative capacities of skeletal muscle contribute to insulin resistance” (gold 
+
+Type 2 diabetes ), is clearly metabolic but its label is one of a few closely related diabetes classes. The policy reads the anchor text and then a cluster_token for the community it sits in, whose members pin down the specific class. 
+
+Three actions. An ogbn-products item, “Brother high-speed label printer with wireless networking” (gold Office Products ), could as easily be filed under electronics. The policy escalates: 
+
+anchor_text , then a cluster_token for the product community, then a one_hop_token for the item’s co-purchase neighbourhood; the co-purchased office equipment settles it on Office Products 
+
+instead of a generic electronics label. 
+
+Four actions (Figure 12). The longest of our case studies is the 
+
+ogbn-arxiv paper “gimme signals: discriminative signal encoding for multimodal activity recognition” (gold cs.CV ), whose title alone reads like signal processing. Figure 12 traces the four steps. The policy first echoes the abstract with anchor_text , which leaves the label unresolved. It then issues a cluster_token for the paper’s community; passed through the Stage-1 reader (below), that token decodes to “deep learning for image classification with multiple la-bels.” Still not settled, it widens to a three_hop_token , whose token reads back as “deep learning for image captioning,” and closes with a second cluster_token that again decodes to image-classification content. All three graph tokens land in computer-vision methodol-ogy, so the model answers cs.CV rather than a signal-processing label. 
+
+Reading the injected tokens. To check what the policy actually re-covers from a graph token, we decode it with a Stage 1 reader, a copy of the aligned model asked to describe a node from its pooled token alone (using the Stage 1 encoder, not the preference-tuned one). For the arxiv paper above (Figure 12), its three_hop_token and 
+
+cluster_token decode to computer-vision text, for instance “deep learning for image classification” and “image captioning,” none of which echoes the paper’s own signal-processing wording. What the reader recovers is the research area of the encoded graph view, not a verbatim copy, and this topical signal is what pulls the prediction toward cs.CV . The behaviour is consistent across nodes: an albert 
+
+language-model paper decodes to text-generation content and a knowledge-graph-embedding paper to machine-learning method-ology, each landing in the right area without reproducing the title. The pooled token thus carries enough topical structure to place the node, though not enough to reconstruct its text. In each case the policy spends more graph tokens exactly when the text is least sufficient, and the graph view it chooses to encode carries the discriminative signal. Agentic Graph Token Reasoning 
+
+Query paper: “gimme signals: discriminative signal encod-ing for multimodal activity recognition” gold label cs.CV 
+
+> the text alone reads like signal processing
+
+1. anchor_text 
+
+> echo the paper’s own title and abstract
+
+2. cluster_token 
+
+> pooled community token
+
+3. three_hop_token 
+
+> pooled 3-hop neighbourhood token
+
+4. cluster_token 
+
+> re-encode the community
+
+predicted label: cs.CV (computer vision, not signal processing) 
+
+Stage-1 reader decodes this token as: 
+
+“deep learning for image classification with multiple labels” 
+
+Stage-1 reader decodes this token as: 
+
+“deep learning for image captioning” 
+
+Stage-1 reader decodes this token as: 
+
+“deep learning for image classification” (same community, re-encoded) 
+
+Figure 12: Agentic trajectory for one ogbn-arxiv node and what a Stage-1 reader recovers from each injected graph token. The policy escalates from the paper’s own text to pooled community and neighbourhood tokens; decoding those tokens back to text shows they carry computer-vision content (the discriminative signal for cs.CV ), recovering the research area of that neighbourhood, not a verbatim copy.

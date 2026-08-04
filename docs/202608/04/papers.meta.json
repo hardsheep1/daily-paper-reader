@@ -1,0 +1,39 @@
+{
+  "label": "2026-08-04",
+  "date": "2026-08-04",
+  "generated_at": "2026-08-04T22:08:56",
+  "count": 2,
+  "papers": [
+    {
+      "paper_id": "202608/04/2608.00357v1-dynamic-surveys-using-llms-to-blend-qualitative-depthquantitative-structure-and-collaborative-interaction",
+      "section": "deep",
+      "title_en": "Dynamic Surveys: Using LLMs to Blend Qualitative Depth,Quantitative Structure, and Collaborative Interaction",
+      "authors": "Kehua Lei, Aidan Ladenburg, Zahra Petiwala, Zili Wang, Dishita Jhawar, Ipsita Bisht, Ansh Kumar, David T. Lee",
+      "date": "2026-08-01",
+      "pdf": "https://arxiv.org/pdf/2608.00357v1",
+      "score": "8.0",
+      "evidence": "大语言模型驱动的定性回答实时聚类，并用用户反馈交互优化",
+      "tldr": "传统问卷依赖开放式或封闭式问题，难以同时获得丰富定性洞察和可靠定量数据，在探索性研究中尤为明显。为此，本文提出Dynamic Surveys：一种基于LLM的交互式调查平台，实时将定性回答聚类，并引导受访者对聚类打分、排序，同时反思自己的观点与整体趋势的异同，自动生成可读报告。两项共93人的实地研究显示，相比传统工具，Dynamic Surveys带来更深刻、更丰富的反馈，并显著提升参与感和社区归属感。这一设计为兼顾定性深度与定量结构的调查平台开辟了新路径。",
+      "tags": "query:ac",
+      "abstract_en": "Surveys are a powerful tool for collecting data and eliciting insights on social phenomena, and are critical in product design, marketing, scientific research. However, traditional open-ended and closed-ended question formats limit researchers' ability to capture data that combines both the richness of qualitative insights and the analytical rigor of quantitative data. To address these problems, we propose Dynamic Surveys, a survey platform that uses Large Language Models (LLMs) to dynamically cluster qualitative responses in real time and to elicit quantitative ratings and rankings on those clusters and qualitative reflections on how their views compare to broader respondent trends, especially helpful in early-stage or exploratory research settings. This process generates a report showing survey creators and respondents the clustered responses as well as each cluster's rank, rating distribution, and follow-up reflections. To evaluate Dynamic Surveys, we conducted two field studies with 93 participants over a 2-month period. In the first study, 52 students provided input for a career workshop, while in the second, 41 students gave feedback on gaps in their academic curriculum. Of these, 44 respondents filled out a survey on their experience using Dynamic Surveys. We also shared the generated report with 4 individuals who were interested in the insights for their work, and interviewed them to understand their perspectives on the results and any contextual risks they saw in the platform design. Our findings suggest that Dynamic Surveys not only provide richer and deeper insights into responses compared with traditional survey tools, but also increase engagement and foster a sense of community. We discuss broader implications for the design of survey platforms that blend qualitative depth with quantitative structure, facilitating richer insights and offering more collaborative interactions.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202608/04/2608.00542v1-agentic-graph-token-reasoning",
+      "section": "quick",
+      "title_en": "Agentic Graph Token Reasoning",
+      "authors": "Zhuoyi Peng, Yi Yang",
+      "date": "2026-08-01",
+      "pdf": "https://arxiv.org/pdf/2608.00542v1",
+      "score": "6.0",
+      "evidence": "大模型对图簇令牌进行智能体推理，连接大模型与聚类",
+      "tldr": "现有图token方法仍采用静态单次编码，目标未看就固定图视图且从不修订，未利用LLM逐步推理。本文提出智能体图token推理，将图token化作为推理步骤，模型逐步选择图视图并生成token。经三阶段训练，在七个图领域大幅超越基线，并可零样本迁移。此工作推动LLM图分析从静态编码转向图原生智能体范式。",
+      "tags": "query:ac",
+      "abstract_en": "Graphs model relational data throughout science and industry, from citation networks to product co-purchase graphs. Because the nodes of many such graphs carry rich text, a growing line of work applies large language models (LLMs) to graph analysis. The most graph-native of these methods use graph tokens: a graph encoder compresses a graph view, such as a node, its k-hop neighbourhood, or a cluster, into a short block of continuous tokens that jointly encodes node attributes and topology and is read directly by the model. Existing methods, however, use graph tokens in a static single-shot manner: they encode one predefined graph view before the model has even seen the target and never revise it, leaving the model's step-by-step reasoning ability unused. We introduce agentic graph token reasoning, which recasts graph tokenization as part of the reasoning process itself. At each step, the model chooses which graph view to encode and at what granularity; a graph encoder is invoked on demand to materialise the corresponding graph tokens; and the resulting block is spliced into the running context. The model thus reasons step by step in the graph token space, and the tokens it reads are trajectory-dependent. We realise this with a three-stage training pipeline: (i) self-supervised tasks that teach the model to read heterogeneous graph tokens, (ii) a token-robust trajectory stage with a graph-token consistency regulariser, and (iii) preference optimisation that rewards trajectories in which the graph-token evidence and the node-text evidence agree. Across evaluations spanning seven graph domains, our models outperform a broad set of baselines by a large margin and transfer zero-shot to unseen domains without any per-target fine-tuning. More broadly, this work pushes LLM-based graph analysis from static graph-token encoders towards a graph-native agent paradigm.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}
