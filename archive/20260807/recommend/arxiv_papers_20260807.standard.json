@@ -1,0 +1,178 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-08-07T02:18:32.952132+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 0,
+    "deep_cap": 7,
+    "deep_selected": 0,
+    "quick_candidates": 4,
+    "quick_skim_target": 12,
+    "quick_selected": 4
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2607.26628v1",
+      "source": "arxiv",
+      "title": "Understanding Context Sampling in TabPFN on Small Tabular Datasets",
+      "abstract": "TabPFN performs classification through in-context learning: it conditions on a set of labeled training rows (the context, or prototypes) and predicts test labels without gradient updates. On small tabular datasets, practitioners must still choose the context size and which rows constitute the context. We study how these choices affect prediction stability, accuracy, and selection cost using repeated context sampling on 15 OpenML datasets. Specifically, we investigate (i) whether larger contexts reduce prediction variability across random draws, (ii) whether accuracy depends on preserving the training distribution or on feature-space coverage, and (iii) whether expensive selection methods such as K-Means and farthest-point sampling provide benefits over uniform random sampling.   We find that larger contexts are both more accurate and substantially more stable, with AUC coefficient of variation decreasing from roughly 6 to 18% at k=16 to 1 to 4% at larger context sizes on datasets with room for improvement. Although accuracy correlates with distribution representativeness in random contexts, controlled experiments show that matching feature means alone can reduce accuracy by up to 0.5 AUC because it reduces context diversity. Mixed-effects analysis identifies diversity and coverage, rather than feature-mean matching, as the stronger predictor of accuracy (diversity beta=+0.23, p=3x10^-12; feature-mean shift beta=-0.01, p=0.71). K-Means and farthest-point sampling achieve similar accuracy to random selection while requiring two to three orders of magnitude more selection cost. These results show that random sampling succeeds because it provides feature-space coverage in expectation, not because it reproduces the underlying data distribution.",
+      "authors": [
+        "Mohammed Abdullah"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-07-29T08:54:45+00:00",
+      "link": "https://arxiv.org/pdf/2607.26628v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Studies selection methods (K-Means, farthest-point sampling) for context sampling, directly relevant to query strategies in active clustering.",
+      "llm_evidence_cn": "研究上下文采样中选择方法（K-Means、最远点采样）的效果，与主动聚类的查询策略直接相关。",
+      "llm_evidence": "研究上下文采样中选择方法（K-Means、最远点采样）的效果，与主动聚类的查询策略直接相关。",
+      "canonical_evidence": "研究上下文采样中选择方法（K-Means、最远点采样）的效果，与主动聚类的查询策略直接相关。",
+      "llm_tldr_en": "This paper investigates how context size and sampling methods affect prediction stability and accuracy in TabPFN, comparing random, K-Means, and farthest-point selection on 15 OpenML datasets.",
+      "llm_tldr_cn": "本文研究了TabPFN在小表格数据上上下文采样策略的影响，比较了随机、K-Means和最远点采样等方法在15个OpenML数据集上的表现。结果表明，较大的上下文不一定降低变异性，且昂贵的采样方法并非总是更优。这些发现为主动学习中样例选择与查询策略设计提供了实证参考。",
+      "llm_tldr": "本文研究了TabPFN在小表格数据上上下文采样策略的影响，比较了随机、K-Means和最远点采样等方法在15个OpenML数据集上的表现。结果表明，较大的上下文不一定降低变异性，且昂贵的采样方法并非总是更优。这些发现为主动学习中样例选择与查询策略设计提供了实证参考。",
+      "llm_tags": [
+        "query:active-clust"
+      ],
+      "matched_query_tag": "query:active-clust",
+      "matched_query_text": "query strategy for active clustering",
+      "matched_requirement_id": "req-11",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2608.03129v1",
+      "source": "arxiv",
+      "title": "Beyond Average Performance: Dynamic Instance Clustering and Specialized Algorithm Design in LLM-Assisted Evolutionary Search",
+      "abstract": "Large Language Model-assisted Evolutionary Search (LES) has emerged as a powerful paradigm for automated algorithm design. However, existing LES methods primarily optimize for average performance, inherently directing search effort toward instances that contribute most to this metric while leaving others poorly served, resulting in weak tail robustness and limited real-world reliability. To address this limitation, we propose Dynamic Instance Clustering and Specialized Algorithm Design (DyCA), an LES framework with a feature-free, structure-aware mechanism for constructing reliable algorithm portfolios under heterogeneous instance distributions. DyCA treats instance clustering as a co-evolving component within the search process, reusing accumulated evaluation data as feature-free signals to progressively partition instances with similar algorithmic response patterns. The uncovered clusters decompose the mixed objective into a set of structure-aware sub-objectives, thereby enabling finer-grained and more adaptive guidance for specialized algorithm design. Experimental results across four algorithm design tasks with heterogeneous instances demonstrate that DyCA outperforms state-of-the-art LES baselines, improving tail robustness by an average of 15.2\\% and overall performance by 7.1\\% while maintaining competitive head performance.",
+      "authors": [
+        "Qinglong Hu",
+        "Qingfu Zhang",
+        "Fei Liu",
+        "Xialiang Tong",
+        "Kun Mao",
+        "Mingxuan Yuan"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-08-04T04:59:48+00:00",
+      "link": "https://arxiv.org/pdf/2608.03129v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "LLM-assisted search with dynamic instance clustering, relevant to clustering using LLMs",
+      "llm_evidence_cn": "结合LLM与动态实例聚类，与利用大模型聚类相关",
+      "llm_evidence": "结合LLM与动态实例聚类，与利用大模型聚类相关",
+      "canonical_evidence": "结合LLM与动态实例聚类，与利用大模型聚类相关",
+      "llm_tldr_en": "This paper proposes DyCA, an LLM-assisted evolutionary search framework that treats dynamic instance clustering as a co-evolving component to build specialized algorithm portfolios, improving tail robustness under heterogeneous instance distributions.",
+      "llm_tldr_cn": "针对LLM辅助进化搜索中仅优化平均性能导致尾部实例性能差的问题，本文提出DyCA框架，将动态实例聚类作为协同进化组件，以无特征、结构感知的方式为异构实例分布构建专用算法组合。实验表明该方法能显著提升尾部实例的鲁棒性，使算法组合在真实异构场景下更加可靠。这项研究展示了聚类思想在LLM驱动算法设计中的价值。",
+      "llm_tldr": "针对LLM辅助进化搜索中仅优化平均性能导致尾部实例性能差的问题，本文提出DyCA框架，将动态实例聚类作为协同进化组件，以无特征、结构感知的方式为异构实例分布构建专用算法组合。实验表明该方法能显著提升尾部实例的鲁棒性，使算法组合在真实异构场景下更加可靠。这项研究展示了聚类思想在LLM驱动算法设计中的价值。",
+      "llm_tags": [
+        "query:ac"
+      ],
+      "matched_query_tag": "query:ac",
+      "matched_query_text": "clustering using large language models",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2608.03565v1",
+      "source": "arxiv",
+      "title": "Enhancing Tabular Learners with Context-Aware Semantic Embeddings",
+      "abstract": "While modern tabular learners excel at capturing statistical patterns, they frequently operate in a semantic vacuum, treating textual features as discrete symbols, ignoring the rich semantics inherent in feature names or cell entries. We propose CASE (Context-Aware Semantic Embeddings), a novel framework that bridges the gap between the semantic understanding of Large Language Models (LLMs) and the statistical capabilities of tabular learners. Unlike existing methods that embed rows in isolation, CASE utilizes a contextualization strategy: we pre-fill the KV cache of a custom-trained Gemma 3-based Tabular Language Model with a representative sample of rows to establish a persistent anchor of the dataset's semantics. This ensures that generated row embeddings are dynamically contextualized, resolving semantic ambiguities and anchoring representations in domain-specific context. Our experiments across several benchmarks (CARTE, TextTab, and TabArena) demonstrate that CASE substantially improves the performance of tabular learners on semantically rich datasets, particularly in low-data regimes.",
+      "authors": [
+        "Günther Schindler",
+        "Maximilian Schambach",
+        "Johannes Höhne"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.LG"
+      ],
+      "published": "2026-08-04T12:29:37+00:00",
+      "link": "https://arxiv.org/pdf/2608.03565v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "LLM-based semantic embeddings for tabular data, transferable to clustering tasks",
+      "llm_evidence_cn": "基于LLM的表格数据语义嵌入，可迁移至聚类任务",
+      "llm_evidence": "基于LLM的表格数据语义嵌入，可迁移至聚类任务",
+      "canonical_evidence": "基于LLM的表格数据语义嵌入，可迁移至聚类任务",
+      "llm_tldr_en": "Paper proposes CASE to generate context-aware semantic embeddings for tabular data by pre-filling the LLM KV cache with a representative row sample, bridging LLM semantics and statistical learners, useful for downstream tasks like clustering.",
+      "llm_tldr_cn": "表格学习器通常将文本特征视为离散符号，忽略了特征名和单元值中的丰富语义。本文提出CASE（上下文感知语义嵌入）框架，利用Gemma 3定制表格语言模型，并通过预填KV缓存以代表性行样本锚定数据集语义，从而生成上下文相关的行嵌入。实验表明该嵌入能显著提升表格预测的性能，同时该语义嵌入方法也可作为聚类等下游任务的特征表示，为大模型用于聚类提供了有力支撑。",
+      "llm_tldr": "表格学习器通常将文本特征视为离散符号，忽略了特征名和单元值中的丰富语义。本文提出CASE（上下文感知语义嵌入）框架，利用Gemma 3定制表格语言模型，并通过预填KV缓存以代表性行样本锚定数据集语义，从而生成上下文相关的行嵌入。实验表明该嵌入能显著提升表格预测的性能，同时该语义嵌入方法也可作为聚类等下游任务的特征表示，为大模型用于聚类提供了有力支撑。",
+      "llm_tags": [
+        "query:ac"
+      ],
+      "matched_query_tag": "query:ac",
+      "matched_query_text": "clustering using large language models",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2608.04390v1",
+      "source": "arxiv",
+      "title": "EdgeLM: Edge Demonstrations for Language Models' Table Understanding",
+      "abstract": "Large language models (LLMs) perform table-centric prediction through in-context learning, making demonstration selection critical to performance. Existing retrieval methods prioritize similarity to the query, but similar demonstrations often reinforce the model's likely prediction rather than reveal the distinctions needed for difficult decisions. We propose EdgeLM, a retrieval framework that instead selects edge evidence, demonstrations that are both relevant to the query and informative about the decision boundary. EdgeLM retrieves two complementary forms of edge evidence by selecting data edges, nearby examples with different ground-truth labels, and model edges, similar examples previously misclassified by the deployed model. EdgeLM requires neither model retraining nor task-specific engineering. Across five data wrangling tasks, fifteen datasets, and five open-weight and proprietary LLMs, EdgeLM consistently achieves the best or near-best performance in every setting, while ablations show that the two forms of edge evidence provide complementary benefits. Our code and datasets are publicly available at https://github.com/soroushomidvar/EdgeLM.",
+      "authors": [
+        "Soroush Omidvartehrani",
+        "Mohammadamin Habibollah",
+        "Mohammadreza Daviran",
+        "Davood Rafiei"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.DB"
+      ],
+      "published": "2026-08-05T02:45:24+00:00",
+      "link": "https://arxiv.org/pdf/2608.04390v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Selection of informative edge demonstrations with LLMs, analogous to active learning query strategies",
+      "llm_evidence_cn": "利用LLM选择信息丰富的边缘演示，类似于主动学习查询策略",
+      "llm_evidence": "利用LLM选择信息丰富的边缘演示，类似于主动学习查询策略",
+      "canonical_evidence": "利用LLM选择信息丰富的边缘演示，类似于主动学习查询策略",
+      "llm_tldr_en": "EdgeLM proposes a retrieval framework that selects edge evidence (data edges and model edges) to help LLMs make difficult table decisions, showing performance gains without fine-tuning; the principle extends to active clustering query strategies.",
+      "llm_tldr_cn": "在表格理解任务中，已有的演示检索方法偏向于与查询相似的数据，往往强化模型已有的预测，难以区分困难样本。EdgeLM提出选择‘边缘证据’的检索框架，同时利用数据边缘（近邻异标签样本）和模型边缘（相似但被误分类的样本）来帮助LLM决策。实验显示该策略显著提升了表格预测准确率，且无需微调。这种基于决策边界的信息选择思想也可借鉴到主动聚类中的成对查询策略设计。",
+      "llm_tldr": "在表格理解任务中，已有的演示检索方法偏向于与查询相似的数据，往往强化模型已有的预测，难以区分困难样本。EdgeLM提出选择‘边缘证据’的检索框架，同时利用数据边缘（近邻异标签样本）和模型边缘（相似但被误分类的样本）来帮助LLM决策。实验显示该策略显著提升了表格预测准确率，且无需微调。这种基于决策边界的信息选择思想也可借鉴到主动聚类中的成对查询策略设计。",
+      "llm_tags": [
+        "query:active-clust"
+      ],
+      "matched_query_tag": "query:active-clust",
+      "matched_query_text": "query strategy for active clustering",
+      "matched_requirement_id": "req-11",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

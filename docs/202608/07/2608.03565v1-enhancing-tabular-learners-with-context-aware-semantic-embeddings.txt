@@ -1,0 +1,535 @@
+Title: Enhancing Tabular Learners with Context-Aware Semantic Embeddings
+
+URL Source: https://arxiv.org/pdf/2608.03565v1
+
+Published Time: Wed, 05 Aug 2026 01:00:45 GMT
+
+Number of Pages: 21
+
+Markdown Content:
+# Enhancing Tabular Learners with Context-Aware Semantic Embeddings 
+
+Günther Schindler Maximilian Schambach Johannes Höhne 
+
+SAP SE 
+
+{firstname.lastname}@sap.com 
+
+Abstract 
+
+While modern tabular learners excel at capturing statistical patterns, they frequently operate in a semantic vacuum, treating textual features as discrete symbols, ignoring the rich semantics inherent in feature names or cell entries. We propose CASE 
+
+(Context-Aware Semantic Embeddings), a novel framework that bridges the gap between the semantic understanding of Large Language Models (LLMs) and the statistical capabilities of tabular learners. Unlike existing methods that embed rows in isolation, CASE utilizes a contextualization strategy: we pre-fill the KV cache of a custom-trained Gemma 3-based Tabular Language Model with a representative sample of rows to establish a persistent anchor of the dataset’s semantics. This ensures that generated row embeddings are dynamically contextualized, resolving semantic ambiguities and anchoring representations in domain-specific context. Our experiments across several benchmarks (CARTE, TextTab, and TabArena) demonstrate that CASE substantially improves the performance of tabular learners on semantically rich datasets, particularly in low-data regimes. Inference code is available at: https://github.com/SAP-samples/case .
+
+1 Introduction 
+
+Many real-world tabular prediction tasks include rich textual information such as descriptive column headers, semantically meaningful categoricals or free-text columns alongside numeric and date-like features. The dominance of tabular learners such as Gradient Boosted Decision Trees (GBDTs) and recent in-context learners like TabPFN [ 15 ] stem from their ability to find statistical patterns in the feature space. However, these models operate in a semantic vacuum: they rely entirely on the provided features to infer relationships, often treating categorical values as discrete symbols and lacking native support for free-text columns. In contrast, Large Language Models (LLMs) possess vast world knowledge acquired during pre-training, allowing them to recognize concepts, hierarchical relationships, and domain-specific nuances that may not be explicitly found in a single table. How-ever, one key drawback hinders using LLMs as tabular predictors natively: table serialization and tokenization is comparably inefficient, resulting in very long context-sequences even for relatively small table sizes, limiting how many relevant rows can be provided as context, especially for large datasets. In the past, this has severely limited the performance of LLM-based tabular predictors. The challenge lies in effectively combining the semantic power of LLMs with the statistical reasoning of tabular learners. Conventional approaches either use heuristic featurization of string or text columns, such as TF-IDF or other n-gram features as used in AutoGluon or the Skrub library, or generate cell- or row-level embeddings in isolation [ 27 , 19 ]. While useful, these methods suffer from a lack of distributional semantic awareness: A single row processed in a vacuum lacks the anchor points necessary to resolve ambiguity or interpret values relative to the rest of the dataset. We introduce CASE (Context-Aware Semantic Embeddings) to bridge this gap. First, we train a custom Tabular Language Model (TLM) via continued pretraining of a series of Gemma 3 mod-               
+
+> Preprint. arXiv:2608.03565v1 [cs.AI] 4 Aug 2026 CatBoost RealMLP ConTextTab TabICLv2 TabPFN-2.6
+> 50
+> 55
+> 60
+> 65
+> 70
+> 75
+> 80
+> 85
+> Score
+> +2.90 +6.10 +2.40 +6.60 +6.80
+> Classification (Accuracy)
+> CatBoost RealMLP ConTextTab TabICLv2 TabPFN-2.6
+> 50
+> 55
+> 60
+> 65
+> 70
+> 75
+> 80
+> 85
+> Score  +8.10 +11.90
+> +3.80
+> +19.10 +13.10
+> Regression ( R2)
+> w/o CASE w/ CASE (ours)
+
+Figure 1: Our proposed Context-Aware Semantic Embeddings (CASE) boost prediction quality of tabular learners on semantically rich benchmarks (CARTE [18] and TextTab [22]). els [ 28 ] using a column-imputation objective. We apply the loss only to target-column tokens while conditioning on all feature tokens, aligning next-token prediction with tabular prediction. This yields task-specific representations that capture both the semantic structure of the table and the underlying target distribution. Next, utilizing this semantic embedder, we employ a “Context Priming” strategy: By pre-filling the model’s KV cache with a representative sample of rows, including feature as well as target columns from the table’s train split, we establish a persistent semantic manifold tailored to the specific dataset. This primed state ensures that when an individual row is embedded, its representation is not merely a translation of its strings, but a contextualized vector positioned relative to the table’s global semantics and predictive task. We then combine the obtained embeddings with tabular learners to achieve both statistical and semantic grounding: thus, our approach offers a best-of-both-worlds paradigm: the table-tuned LLM acts as a sophisticated feature engineer with semantic grounding, while the downstream statistical learner performs the heavy lifting of statistical pattern detection and prediction. By projecting the high-dimensional CASE into a lower dimensional space via Principal Component Analysis (PCA), we provide a computationally efficient way to infuse world reasoning into any tabular pipeline. 
+
+2 Related Work 
+
+Tabular Learning Baselines: Tabular prediction has historically been dominated by GBDTs such as XGBoost, LGBM, or CatBoost [ 2, 17 , 23 ]. While robust, these models lack cross-task transferability and require significant per-dataset hyperparameter optimization and retraining. Early deep learning architectures like FT-Transformer [9] and XTab [31] explored transformer-based encoders, but only recent deep learning architectures, such as CARTE, RealMLP, or TabM [ 18 , 16 , 10 ], have achieved parity with GBDTs, however, also require re-training and hyperparameter tuning on each table. 
+
+In-Context Learning (ICL): Tabular ICL was pioneered by TabPFN [ 14 ], which showed trans-formers could perform in-context classification on small datasets. This paradigm has evolved from row-level encodings to more scalable cell-based methods like TabPFNv2, TabICL, Mitra, and Con-TextTab [ 15 , 24 , 25 , 30 , 27 ]. While these models excel at structural pattern matching, they often treat values as abstract tokens, overlooking the latent semantic richness inherent in the data. While ConTextTab uses semantic embeddings natively, these embeddings are obtained cell-wise using a small sentence embedder and are subsequently contextualized by the ICL model. The model itself, however, is not trained on semantic prediction tasks like LLMs but rather on in-context learning target prediction which may limit its ability for advanced semantic reasoning . 
+
+LLMs and Table Semantics: Models like TabLLM, LIFT, TabuLa, and TabGemma [ 12 , 4, 8, 26 ]leverage the world knowledge of LLMs to add semantics to tabular predictions. These methods excel in low-data regimes where semantic priors compensate for sparse signals, though they often struggle with numeric-heavy datasets and longer context sizes. Fundamentally, due to the comparably inefficient tokenization, even recent large-context window LLMs may not fit a full table into their context, while table-native ICLs now scale to 10’s or 100’s of thousand context rows. Other works have also explored LLM- or knowledge graph-based enrichment of conventional tabular learners [ 18 , 19 ]. 2TLM Training   
+
+> Train Corpus
+> Sample Table & Target
+> Header Token Feature Token Target Token End-of-cell (EOC) Token End-of-row (EOR) Token ...
+> 🔥 Autoregressive Large Language Model
+> [EOR] Serialize & Tokenize
+> Beginning-of-target (BOT) Token
+> [EOR] [EOR] [BOT] [BOT]
+
+Figure 2: Illustration of our proposed Tabular Language Model (TLM) architecture with table serialization and target-imputation objective during training. 
+
+3 Methodology 
+
+We introduce CASE, a framework that enhances tabular learners with context-aware semantic embeddings. At its core, we develop a Tabular Language Model (TLM) derived from the Gemma 3 decoder-only family, pretrained via a custom table serialization and an in-context target prediction objective. By leveraging this TLM, we extract row representations that are contextualized, i.e. conditioned on the table’s specific semantic distribution and its predictive task. These semantic embeddings are subsequently compressed and fused with the native features to be used together with any downstream tabular learner, combining the rich world knowledge of language models with the statistical precision and predictive capabilities of specialized tabular architectures. 
+
+3.1 Tabular Language Model Pretraining 
+
+To extract context-aware row representations, we perform continued pretraining on a diverse suite of tabular prediction tasks synthesized from a large-scale collection of real-world datasets. Following the paradigm of TabuLa [ 8], we frame tabular data as a conditional sequence modeling problem. Tables are serialized into token sequences where a long-context LLM is trained to predict a designated target column, causally conditioned on the preceding feature tokens and the broader dataset context. By casting tabular prediction as an autoregressive generative process, the model learns to synthesize its internal world knowledge with observed statistical patterns. This results in embeddings that are inherently task-aligned and grounded in the table’s specific semantic. An overview of this pretraining architecture is illustrated in Figure 2. 
+
+Table Serialization and Tokenization: We serialize each table row into a linear token sequence. Every cell is first cast to a canonical string, tokenized, and concatenated in column order. Cells are separated by a dedicated cell-separator token, and each row is terminated with an end-of-row token. That is, for a table consisting of F features X and a target y with N rows, we define a serialization function S(·) that transforms a table into a continuous token sequence, beginning with the header sequence H, which establishes the semantic identity of the columns. The header sequence is obtained by concatenating the tokenized column headers ck, adding end-of-cell (EOC) tokens in between and finalizing the sequence with an end-of-row (EOR) token: 
+
+H = c1 ∥ [EOC] ∥ c2 ∥ [EOC] ∥ · · · ∥ cF +1 ∥ [EOC] ∥ [EOR] , (1) where ∥ denotes concatenation along the sequence axis. Following the header, each row ri of the table is serialized by concatenating the tokenized feature values vi,k and the final target value yi,separated by the Beginning-of-Target (BOT) marker: 
+
+S(ri) = vi, 1 ∥ [EOC] ∥ · · · ∥ vi,F ∥ [EOC] ∥ [BOT] ∥ yi ∥ [EOR] . (2) The total input sequence S obtained from the table is the concatenation of the header sequence and all row sequences: 
+
+S = H ∥ S (r1) ∥ · · · ∥ S (rN ) . (3) Throughout, numerical targets are normalized into a scientific notation (for example, 3141.592 becomes +3.1416e+03) and other data types are natively handled by the LLM’s tokenizer. 3Extract row embedding     
+
+> Table enrichment
+> Cache Pre fi ll
+> Context
+> ❄TLM
+> Serialize, tokenize, & concat
+> Query row ... Contextualized Row Embedding
+> ... ...
+> ...
+> ...
+> Train data
+> Extract Row Embeddings
+> Fit & Transform PCA Concat
+> Preprocess
+
+Figure 3: Overview of our proposed context-aware semantic embedding-based table enrichment pipeline. We pre-fill the KV cache of a table-native pretrained LLM using a context subsample of the training data. Rows are embedded using the contextualized [BOT] token of the sequence. For enrichment of the feature matrix X, individual rows are embedded, PCA-transformed and appended to the (potentially preprocessed) feature matrix. 
+
+Training Objective: We initialize our model from the pretrained Gemma 3 checkpoint (without instruction-tuning), which supports a 128k-token context window, and continue pretraining the model on a tabular imputation objective. Given an input table with feature-target split, our approach is trained using a supervised objective where the next-token prediction loss is computed exclusively over target tokens. Let Itarget be the set of indices in S corresponding to the tokens of the target values 
+
+{y1, . . . , y N }. The training objective minimizes the target-masked negative log-likelihood, 
+
+L(θ) = − X
+
+> t∈I target
+
+log P (st | s<t ; θ) , (4) with respect to the model weights θ. This objective forces the model to predict target tokens from the 
+
+[BOT] embedding conditioned on its preceding context. Note that, due to the autoregressive nature of the used LLM and the use of causal attention masking, every target cell is used as a training sample and the approach does not require a fixed context-query split unlike table-native approaches such as TabPFN – practically increasing the effective batch size as well as conditioning the model on different effective context lengths within a single training step. 
+
+Training Data: We train our approach on the large-scale real-world T4 table corpus [ 8]. Similar to previous works [ 27 , 21 , 20 ], we generate tabular prediction tasks from these unlabeled datasets: For each training step, we draw a table from the corpus, uniformly sample 256 rows, and designate one column as the prediction target while using the remaining columns as conditioning features. 
+
+Training Setting: We train different base model sizes (270M, 1B, 4B, and 12B parameters) for 8500 
+
+steps with a batch size of 128, corresponding to roughly 280 million rows in total. We uses Adam with a learning rate of 10 −6. We do not apply dropout or weight decay. To balance throughput and context utilization, we cap inputs at 16k tokens during training and truncate longer sequences. 
+
+3.2 Table Enrichment via Context-Aware Semantic Embeddings 
+
+Given a table corresponding to a predictive task with features X and target y, our goal is to perform semantic enrichment of X as part of a tabular data featurization pipeline usable with any tabular predictor. To this end, we leverage the contextualized row-wise embeddings obtained from our pretrained TLM. An overview of the proposed approach is given in Figure 3. 
+
+Context Priming and Contextualized Encoding: As opposed to creating isolated, row-wise embeddings for each row of the table, as investigated in previous works [ 11 , 19 ], our goal is to establish a global semantic context for the row embeddings, grounding each embedding within the table’s context and predictive task. To this end we employ a context priming strategy: First, a random subset of rows is sampled as context C, containing both features X and targets y
+
+from the task’s train split, serialized and passed through the previously trained TLM. Second, the 4Table 1: Evaluation results on the investigated benchmarks, reporting rank (Rk), accuracy (Acc) and (soft-clipped) R 2 in percent for classification and regression.                                                                                                                            
+
+> All CARTE TextTab TabArena
+> Model Rk Acc R2Rk Acc R2Rk Acc R2Rk Acc R2
+> TabICLv2 w/ CASE 2.7 86.5 76.1 1.3 81.0 77.5 2.9 85.7 68.2 4.0 88.3 78.5 AutoGluon 3.1 85.6 73.9 2.6 78.8 73.7 3.7 83.5 67.5 3.4 88.1 79.9 ConTextTab 3.8 85.1 71.2 3.2 77.1 72.4 3.9 84.4 58.8 4.4 87.6 77.8 RealMLP 4.0 84.8 70.8 4.5 74.6 68.6 4.0 82.0 68.3 3.6 88.4 79.7 CatBoost 4.2 85.2 69.9 4.7 76.3 68.3 3.6 83.7 65.4 3.8 88.2 79.0 TabPFN-2.6 4.3 84.2 64.8 6.7 70.7 59.9 4.6 81.5 63.8 1.8 88.7 80.5
+> TabICLv2 4.5 84.3 61.1 6.9 70.5 55.3 4.5 82.5 60.2 2.1 88.7 79.9 XGBoost 5.3 84.2 69.1 5.7 73.5 66.9 5.1 81.4 65.4 5.1 87.9 78.8 Naive 8.5 70.1 -3.5 9.0 53.0 -1.7 8.6 70.4 -5.5 8.1 75.0 -7.3
+
+resulting KV cache is retained as a permanent prefix, distilling the table’s semantic distribution for all subsequent row encodings. Finally, each target row ri is passed through the model, reusing the pre-filled KV cache. We extract the row embedding ei from the final hidden layer at the final [BOT] 
+
+token position. This embedding captures the integrated semantic summary of the record before the prediction would be made by the LLM, conditioning the embedding both on the global semantic context as well as the underlying predictive task. This is crucially different to existing approaches, which perform either cell- or row-wise, uncontextualized and target-agnostic embeddings. 
+
+Table Enrichment: In order to enrich the input feature matrix X with the obtained embeddings, the goal is to append the row embeddings along the feature axis as additional numerical features. However, the obtained row embeddings are high-dimensional, with embedding dimension up to 
+
+d = 4096 for a Gemma 3 12B-based TLM. To reduce the dimensionality, preventing memory or performance issues when appended to the feature matrix for the tabular learners, we apply a Principal Component Analysis (PCA) to the set of embeddings {e1, . . . , en}, reducing them to d′
+
+components. The final enriched feature matrix is: XT = [ Xorg ∥ PCA( E)] , where Xorg are the original, potentially preprocessed features, depending on the tabular learner used. To prevent data leakage, PCA components are fitted solely on the training distribution. These frozen components are subsequently applied to test-row embeddings during the inference phase. 
+
+4 Experiments and Results 
+
+Evaluation: We evaluate our approach across three distinct benchmark suites: CARTE [ 18 ], TextTab [ 22 ], and the single-fold variant of TabArena [ 7 ]. Our focus lies on CARTE and TextTab as they are specifically designed to emphasize semantic relationships in tabular data, aligning with the core motivation of our work. Conversely, TabArena serves as a numerics-heavy baseline, included to test the robustness of our approach in environments where statistical signals dominate over semantic ones. All benchmarks cover both classification and regression tasks. Throughout, we report mean accuracy for classification and mean (soft-clipped) R 2 for regression tasks, respectively, following previous works [27]. 
+
+Baselines: We compare against a diverse set of state-of-the-art baselines, covering conventional per-dataset trained and HPO-tuned ones (XGBoost, CatBoost, and RealMLP), tabular in-context learners (TabPFN-2.6, TabICLv2, and ConTextTab), and the AutoGluon framework, using the “best“ preset with a 4 h time limit [ 6]. In particular, note that we combine the table-tuned baselines (GBDTs and RealMLP) with the AutoGluon feature preprocessor which includes some text feature handling via n-gram features for free text or high-cardinal features. We perform ablations with other forms of text featurization in the subsequent sections. Additional details on the used baselines are provided in Appendix A. 
+
+Default setup: For our primary evaluation of CASE, we utilize the custom Gemma 3 12B-based TLM with a context priming window of k = 128 rows (with a maximum of 32k tokens) and a PCA-reduced latent space of d′ = 32 for the feature fusion. 54.1 Tabular Learners benefit from semantic enrichment via CASE 
+
+We evaluate the efficacy of the CASE framework by enriching the input features for five prominent tabular learning architectures, spanning conventional as well as recent deep learning baselines, both per-table tuned as well as in-context learning approaches. Namely, we evaluate CatBoost, RealMLP, TabPFN-2.6, TabICLv2, and ConTextTab, representing best-in-class models in each category. The results on the semantics-heavy CARTE and TextTab benchmarks, covering a total of 20 classifi-cation and 51 regression tasks, are shown in Figure 1. 
+
+Quantitative Gains: We observe that CASE yields a large accuracy uplift ranging from 2.9% to 6.80% in classification tasks, and a remarkable R 2 gain between 3.8% and 19.1% in regression tasks. These results suggest that our novel approach towards semantic embeddings successfully capture latent dependencies that are inaccessible to all investigated models, regardless of their architecture. 
+
+Synergy with Semantic Models: Notably, even ConTextTab – which natively incorporates cell-wise text embeddings using a pretrained Sentence Transformer – benefits significantly from CASE. This indicates that our target-aware, contextualized embeddings provide a more nuanced representation of tabular relationships that complement general-purpose sentence embedding used in current models. 
+
+Revitalizing ICL Models: A key finding is that CASE successfully boost performance of recent tabular ICL models without native text handling like TabICLv2 and TabPFN-2.6. While these models excel at numerically dominated benchmarks, as we will observe later, they exhibit inconsistent performance out-of-the-box on semantically rich ones. The addition of CASE-enriched features establishes a new performance ceiling. By bridging the “semantic gap” for these models, our approach successfully combines the predictive power of tabular ICLs with semantic reasoning of LLMs. 
+
+4.2 In-Depth Analysis of CASE 
+
+Next, we study the overall performance of CASE on CARTE, TextTab, but also TabArena, and evaluate the synergy of CASE in combination with TabICLv2 [ 25 ] as the overall best-performing model from our previous evaluation. For preprocessing, we adhere to TabICL’s recommended configurations of Skrub’s TableVectorizer to ensure a fair comparison with established statistical pipelines. The main results are summarized in Table 1. We provide additional details and investigate the statistical significance of our findings in Appendix B. 
+
+Performance on Semantic Benchmarks: As previously indicated, on the semantically rich CARTE and TextTab benchmarks, our approach largely outperforms all existing baselines. On CARTE, we observe a leading gap of over 2 percentage points in accuracy and almost 4 percentage points in R2 over AutoGluon, which ensembles and stacks a multitude of model architectures and involves significant training and tuning for each dataset. Similarly, on TextTab, TabICLv2 with CASE has a more than 2 percentage points lead in terms of accuracy while being competitive with SOTA on regression tasks. This substantial margin of improvement over TabICLv2, AutoGluon, and ConTexTab suggests that, for datasets where column headers and textual features carry deep external meaning, the infusion of LLM-based world knowledge combined with a table-native target-aware training of the TLM is more effective than pure statistical feature engineering or isolated LLM embeddings. 
+
+Boundaries of Semantic Priming: While showcasing significant improvements on semantically rich benchmarks, we observe a small performance trade-off on the numerics-heavy TabArena benchmark, where the raw statistical learners (TabICLv2 and AutoGluon) maintain a lead. This is expected, as TabArena is a numerics-heavy suite where the primary predictive signals are numerical rather than semantic. While the drop in performance of TabICLv2 with CASE over the default TabICLv2 is small, it is statistically significant, as we investigate in more detail in Appendix B. However, this also highlights the specialized nature of CASE: it acts as a modular semantic enhancer that can be used selectively. 
+
+Sample Efficiency and Few-Shot Performance: To investigate the effectiveness of CASE in the few-shot and low-data regime, we provide a comparison using subsampled training splits of the CARTE benchmark. That is, we subsampled the CARTE training splits ranging from 128 to 8k rows while keeping the test split untouched. To rigorously account for the inherent variance of random context selection, each evaluation is repeated over 5 independent runs using different random seeds. 6128 256 512 1024 2048 4096 8192 
+
+> Train set size
+> 60.0%
+> 65.0%
+> 70.0%
+> 75.0%
+> 80.0%
+> Accuracy
+> TabICLv2 w/ CASE
+> TabICLv2 w/o CASE
+> ConTextTab
+> AutoGluon
+> RealMLP
+
+(a) Average accuracy across classification tasks. 128 256 512 1024 2048 4096 8192  
+
+> Train set size
+> 40.0%
+> 50.0%
+> 60.0%
+> 70.0%
+> R2
+> TabICLv2 w/ CASE
+> TabICLv2 w/o CASE
+> ConTextTab
+> AutoGluon
+> RealMLP
+
+(b) Average R 2 across regression tasks. 
+
+Figure 4: Impact of Context-Aware Semantic Embeddings (CASE) on predictive performance of varying subsamples of the train splits from the CARTE benchmark using a fixed test set. 0 128 256 512 1k 2k 4k 8k 16k 
+
+> Number of Context Tokens
+> 74.0%
+> 76.0%
+> 78.0%
+> 80.0%
+> 82.0%
+> Accuracy
+> TabICLv2
+> TabICLv2 w/ CASE-270m
+> TabICLv2 w/ CASE-1B
+> TabICLv2 w/ CASE-4B
+> TabICLv2 w/ CASE-12B
+
+(a) Average accuracy across classification tasks. 0 128 256 512 1k 2k 4k 8k 16k  
+
+> Number of Context Tokens
+> 50.0%
+> 55.0%
+> 60.0%
+> 65.0%
+> 70.0%
+> 75.0%
+> R2
+> TabICLv2
+> TabICLv2 w/ CASE-270m
+> TabICLv2 w/ CASE-1B
+> TabICLv2 w/ CASE-4B
+> TabICLv2 w/ CASE-12B
+
+(b) Average R 2 across regression tasks. 
+
+Figure 5: Performance across CARTE and TextTab for TabICLv2 enriched with CASE embeddings across varying parameter counts and context window utilization. The solid lines in Figure 4 represent the mean performance, while the shaded bands illustrate the absolute minimum and maximum boundaries across all runs. Our results indicate that in low-data regimes, CASE is highly dominant, outperforming state-of-the-art baselines by a large margin. Furthermore, the performance loss for smaller train sizes seems to be less strong as for conventional predictors. This suggests that the semantic priors embedded in the KV-primed representations provide a critical advantage when statistical signals are sparse, likely benefiting from the pretrained LLM’s world knowledge. Furthermore, we observe a powerful synergy between the constituent models: the TLM generates rich, high-dimensional latent representations that can be effectively leveraged by the tabular learning model. 
+
+4.3 Ablations 
+
+We conduct a series of ablation experiments on the CARTE and TextTab benchmarks to validate our core hypotheses regarding the model architecture, parameter and context scaling, as well as feature representations. Throughout, we use TabICLv2 as the final predictor, as previously discussed. To understand the scaling laws governing CASE, we investigate how both parameter count and context length influence the quality of the resulting embeddings. In Figure 5, we evaluate CASE variants across four model scales – 270M, 1B, 4B, and 12B parameters – and nine context depths, ranging from 128 tokens to 16k tokens (including a 0 context baseline). Again, we account for the variance of random context selection by evaluating over 5 independent runs using different random seeds. The solid lines in Figure 5 represent the mean performance, while the shaded bands illustrate the absolute minimum and maximum boundaries across all runs. 
+
+Model Scaling: Our results reveal that all CASE configurations – regardless of base model scale or utilized context – consistently outperform the vanilla TabICLv2 baseline. We observe a robust, monotonic relationship between parameter count of the TLM base model and predictive performance: 7as the model size increases from 270M to 12B, the quality of the semantic embeddings improves across both classification and regression tasks as reflected by the increased performance. This aligns with established scaling laws for LLMs, suggesting that larger models possess a richer latent “world model” that allows for more precise mapping of tabular values to their underlying concepts. 
+
+Context Scaling: Across all base TLM variants, we observe a significant leap in performance when transitioning from 0 context tokens (corresponding to uncontextualized row embeddings) to 1k tokens. This “contextual leap” validates our hypothesis that a minimal semantic anchor is necessary to resolve the inherent ambiguity of isolated rows or cell values. Interestingly, even uncontextualized embeddings (0 context tokens) provide a substantial boost over the TabICLv2 baseline, indicating that the zero-shot semantic recognition of individual features is, on its own, already valuable. 
+
+Robustness to Random Selection: Crucially, each of our 5 independent evaluation runs draws a completely distinct subset of context rows with entirely randomized permutations in row ordering. Despite this shuffling, the resulting min/max variance bands visualized in Figure 5 are notably tight. The marginal fluctuations in downstream performance demonstrate that CASE is remarkably stable and resilient to the stochasticity of context row selection. This indicates that the model successfully distills the global data distributions and semantic structure from the anchor data regardless of the specific layout or samples encountered during inference. 
+
+Saturation and Complementary Reasoning: While performance continues to slightly improve as context scales up to 32k tokens, we observe a diminishing marginal return beyond the initial 1k boost. This is somewhat unexpected. As larger models should be able to leverage much larger context windows, one would have expected this saturation point to shift towards larger number of context tokens for larger base model sizes. Maybe, this saturation suggests a synergy between the embedding model and the tabular learner: Our tuned TLM acts as a high-level “reasoner” that requires only a small representative sample of rows to ground the tables’ semantics. Once the model has resolved the individual row’s context, the statistical heavy lifting is effectively offloaded to the downstream tabular learner, which processes the full training set. This synergy allows CASE to remain computationally efficient, as it only requires a comparably small context KV cache. However, these findings may also suggest further room for improvements, e.g. in pretraining, to more effectively leverage the larger context windows of the larger TLM base models. 
+
+Standalone Generative Prediction and Architectural Analysis: While CASE is primarily designed to augment downstream tabular learners, the generative pre-training of the underlying TLM makes the model also usable as a standalone few-shot predictor. In Figure 6, we evaluate this capability by comparing the vanilla TabICLv2, the CASE-enriched TabICLv2, and the standalone CASE-TLM (decoder-only 12B) on CARTE classification tasks. As a standalone model, the decoder-only TLM demonstrates strong predictive performance that scales monotonically with the number of context rows. Notably, given only 8 context rows, our TLM outperforms TabICLv2 (given the full train split) across the CARTE classification tasks. However, note that CARTE contains exclusively binary classification targets. This confirms that the model has successfully learned to predict target tokens from its context. However, the TLM stays behind TabICLv2 with CASE, confirming the complementary nature of the two approaches. Note that standalone regression was not evaluated, as standard decoder-only models do not natively support continuous value regression without specialized head fine-tuning. Moreover, we compare different LLM architectures: In the literature, encoder-decoder (e.g., T5) or encoder-only (e.g., BERT) architectures are more conventional choices for embedding generation. To validate our choice of a decoder-only backbone, we trained encoder-decoder variants using the 
+
+T5Gemma2 architecture [ 29 ] under an identical training budget and training objective. As illustrated in Figure 6, while the encoder-decoder variants also scale with context, they consistently and largely under perform relative to the decoder-only models. 
+
+Impact of Contextualization: To isolate the benefit of the proposed KV-cache priming, we compare CASE ( k = 128 ) against a non-contextualized row-embedding baseline ( TabICL[Row-Embedding] ,
+
+k = 0 ) as well as cell-level embeddings ( TabICL [Cell-Embedding] ) obtained via a standard Sentence Transformer, all-MiniLM-L6-v2 , similar to related works [ 27 ]. We compare this against the default TabICLv2 model as well as combining TabICLv2 with Skrub’s TF-IDF-based featurizer. The results are depicted in Table 2. 88 16 32 64 128 256 
+
+> Number of context rows
+> 65.0%
+> 67.5%
+> 70.0%
+> 72.5%
+> 75.0%
+> 77.5%
+> 80.0%
+> Accuracy
+> TabICLv2 w/ CASE
+> TabICLv2 w/o CASE
+> Decoder-only (12b)
+> Encoder-Decoder (1b-1b)
+> Encoder-Decoder (4b-4b)
+
+Figure 6: Architectural Comparison on CARTE classi-fication tasks, comparing the predictive capabilities of table-tuned LLMs with different architectures. Table 2: Feature encoding ablations re-sults on the CARTE and TextTab bench-marks, depicting mean accuracy for clas-sification and R2 for regression tasks, as well as mean rank across all tasks.                             
+
+> Model Rank Acc R2
+> TabICL [TF-IDF + CASE] 1.97 83.1 75.5
+> TabICL [Default + CASE] 3.38 82.5 73.9 TabICL [Row-Embedding] 3.52 81.7 73.7 TabICL [Cell-Embedding] 4.28 81.2 72.0 TabICL [CASE w/o Xorg ]4.41 82.1 71.7 TabICL [Gemma3] 4.48 81.8 72.5 TabICL [TF-IDF] 4.76 80.9 69.7 TabICL [Default] 7.06 75.9 56.4
+
+The significantly degraded performance of the non-contextualized variant as compared to the full CASE approach confirms that row-level semantics are inherently distributional. Without the provided semantic context, the model fails to resolve the semantic ambiguities potentially present in an isolated row. Similarly, using cell-level embeddings shows marginal improvements over TF-IDF-based embeddings, but consistently lags behind our contextualized row embedding approach. 
+
+Importance of Tabular-Specific LLMs: Further, we replaced the specialized table-tuned TLM backbone with an off-the-shelf Gemma-3-12B model [ 28 ], validating our pretraining objective and table-native tuning. The results are again depicted in Table 2. While again showing slight improvements as compared to conventional TF-IDF features, the significant performance drop compared to CASE underscores that generic LLMs, while possessing vast world knowledge, require table-native adaptations to correctly interpret the structural and relational nuances of tabular data. 
+
+Role of Statistical Preprocessing: Finally, we evaluate the synergy between traditional preprocess-ing and semantic enhancement by comparing TabICLv2 with and without TF-IDF features using Skrub’s TableVectorizer . Our results demonstrate that while classical statistical techniques re-main a robust baseline, the addition of CASE consistently yields performance gains regardless of the preprocessing used. To isolate the contribution of our embeddings, we further evaluate a variant using only CASE features ( TabICL [CASE w/o Xorg ]). We find that standalone embeddings serve as high-utility features; however, the inclusion of the original Xorg features yields the strongest results. 
+
+5 Conclusions 
+
+Limitations and Future Work: While CASE demonstrate significant potential, our current imple-mentation has some limitations to be addressed in future works. First, as our framework is built upon a table-tuned Gemma model, it inherits constraints applicable to all table-serialization based approaches combined with LLMs: a lack of permutation equivariance with respect to both row and column ordering (which we, however, find empirically not to be statistically significant in Appendix F), and the limited numerical inductive bias inherent in token-based language models. Also, our current context priming strategy relies on uniform random sampling to populate the KV cache, which is inherently stochastic and may omit critical anchor rows that define the table’s distribution. However, we empirically find the random context sampling not to be statistically significant in Appendix G This motivates further research into developing LLM architectures specifically optimized for tabular structures, for example adapting recent approaches for permutation-invariant attention patterns and positional encodings [ 5]. Furthermore, using PCA to project the high-dimensional embeddings into a compact latent space may be suboptimal. Future works could investigate non-linear manifold learning techniques which may better preserve the subtle semantic variances in the data. While the use of a language model increases the computational footprint during feature extraction, our KV-cache priming strategy ensures that this overhead remains significantly lower than traditional AutoML pipelines or exhaustive hyperparameter searches (see Appendix D for a detailed runtime discussion). Finally, while utilizing open-source benchmarks carries a theoretical risk of data contamination from the LLM backbone or continued pretraining, our empirical analyses suggest that performance gains 9are driven by genuine semantic reasoning rather than memorization (see Appendix E for semantic corruption tests). We discuss potential data contamination in detail in Appendix C and further validate our findings in Appendix I on the recently introduced STRABLE benchmark [ 1 ], which corroborates the strong performance improvements observed on CARTE and TextTab. 
+
+Summary: In this work, we introduced CASE, a framework designed to bridge the historical divide between the vast semantic world knowledge of LLMs and the rigorous statistical inductive biases of specialized tabular learners. At the heart of our contribution is a pretrained, table-tuned LLM which functions as a few-shot semantic engine for structured data. By employing a novel KV-cache priming strategy, CASE enables the generation of target-aware row representations that are no longer processed in a semantic vacuum, but are instead anchored within the specific statistical and domain distribution of the parent table. Our empirical evaluation across the CARTE and TextTab benchmarks demonstrates that CASE substantially advances performance baselines for semantically rich tabular data. The framework is particularly potent in the low-data regime, where the LLM’s learned priors compensate for the lack of sufficient statistical signals. By demonstrating that decoder-only architectures can serve as efficient, context-aware embedding engines, we provide a scalable blueprint for building foundation models for tabular data. 
+
+Acknowledgements 
+
+We would like to thank Johannes Hoffart and Markus Kohler for their insightful comments and suggestions throughout the development of this work. We thank Myung Jun Kim for providing valuable feedback and expertise on this contribution. 
+
+References 
+
+[1] Gioia Blayer, Myung Jun Kim, Félix Lefebvre, Lennart Purucker, Alan Arazi, Eilam Shapira, Roi Reichart, Frank Hutter, Marine Le Morvan, David Holzmüller, and Gaël Varoquaux. Strable: Benchmarking tabular machine learning with strings, 2026. URL https://arxiv.org/abs/2605.12292 .[2] Tianqi Chen and Carlos Guestrin. XGBoost: A scalable tree boosting system. In Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining , KDD ’16, pages 785–794, 2016. ISBN 978-1-4503-4232-2. [3] Wei-Lin Chiang, Lianmin Zheng, Ying Sheng, Anastasios Nikolas Angelopoulos, Tianle Li, Dacheng Li, Hao Zhang, Banghua Zhu, Michael Jordan, Joseph E Gonzalez, et al. Chatbot Arena: An open platform for evaluating llms by human preference. arXiv preprint arXiv:2403.04132 , 2024. [4] Tuan Dinh, Yuchen Zeng, Ruisu Zhang, Ziqian Lin, Michael Gira, Shashank Rajput, Jy-yong Sohn, Dimitris Papailiopoulos, and Kangwook Lee. LIFT: Language-interfaced fine-tuning for non-language machine learning tasks. Advances in Neural Information Processing Systems , 35:11763–11784, 2022. [5] Beni Egressy and Jan Stühmer. Set-LLM: A permutation-invariant LLM. In The Thirty-ninth Annual Conference on Neural Information Processing Systems .[6] Nick Erickson, Jonas Mueller, Alexander Shirkov, Hang Zhang, Pedro Larroy, Mu Li, and Alexander Smola. AutoGluon-Tabular: Robust and accurate AutoML for structured data. arXiv preprint arXiv:2003.06505 ,2020. [7] Nick Erickson, Lennart Purucker, Andrej Tschalzev, David Holzmüller, Prateek Mutalik Desai, David Salinas, and Frank Hutter. Tabarena: A living benchmark for machine learning on tabular data. In The Thirty-ninth Annual Conference on Neural Information Processing Systems Datasets and Benchmarks Track , 2025. [8] Joshua P Gardner, Juan Carlos Perdomo, and Ludwig Schmidt. Large scale transfer learning for tabular data via language modeling. In The Thirty-eighth Annual Conference on Neural Information Processing Systems , 2024. [9] Yury Gorishniy, Ivan Rubachev, Valentin Khrulkov, and Artem Babenko. Revisiting deep learning models for tabular data. Advances in Neural Information Processing Systems , 34:18932–18943, 2021. [10] Yury Gorishniy, Akim Kotelnikov, and Artem Babenko. TabM: Advancing tabular deep learning with parameter-efficient ensembling. In International Conference on Learning Representations , 2025. 
+
+10 [11] Léo Grinsztajn, Edouard Oyallon, Myung Jun Kim, and Gaël Varoquaux. Vectorizing string entries for data processing on tables: when are larger language models better? arXiv preprint arXiv:2312.09634 ,2023. [12] Stefan Hegselmann, Alejandro Buendia, Hunter Lang, Monica Agrawal, Xiaoyi Jiang, and David Sontag. TabLLM: Few-shot classification of tabular data with large language models. In International Conference on Artificial Intelligence and Statistics , pages 5549–5581. PMLR, 2023. [13] Steffen Herbold. Autorank: A Python package for automated ranking of classifiers. Journal of Open Source Software , 5(48):2173, 2020. doi: 10.21105/joss.02173. URL https://doi.org/10.21105/ joss.02173 .[14] Noah Hollmann, Samuel Müller, Katharina Eggensperger, and Frank Hutter. TabPFN: A transformer that solves small tabular classification problems in a second. In The Eleventh International Conference on Learning Representations , 2023. [15] Noah Hollmann, Samuel Müller, Lennart Purucker, Arjun Krishnakumar, Max Körfer, Shi Bin Hoo, Robin Tibor Schirrmeister, and Frank Hutter. Accurate predictions on small data with a tabular foundation model. Nature , 637(8045):319–326, 2025. [16] David Holzmüller, Léo Grinsztajn, and Ingo Steinwart. Better by default: Strong pre-tuned MLPs and boosted trees on tabular data. Advances in Neural Information Processing Systems , 37:26577–26658, 2024. [17] Guolin Ke, Qi Meng, Thomas Finley, Taifeng Wang, Wei Chen, Weidong Ma, Qiwei Ye, and Tie-Yan Liu. LightGBM: A highly efficient gradient boosting decision tree. In Advances in Neural Information Processing Systems , 2017. [18] Myung Jun Kim, Leo Grinsztajn, and Gael Varoquaux. CARTE: Pretraining and transfer for tabular learning. In Forty-first International Conference on Machine Learning , 2024. [19] Félix Lefebvre, Myung Jun Kim, and Gaël Varoquaux. Knowledge-rich embeddings for tabular learning. In EurIPS 2025 Workshop: AI for Tabular Data , 2025. [20] Junwei Ma, Nour Shaheen, Alex Labach, Amine Mhedhbi, Frank Hutter, Anthony L Caterini, and Valentin Thomas. Generalization can emerge in tabular foundation models from a single table. In EurIPS Workshop on AI for Tabular Data , 2025. [21] Junwei Ma, Valentin Thomas, Rasa Hosseinzadeh, Hamidreza Kamkari, Alex Labach, Jesse C Cresswell, Keyvan Golestan, Guangwei Yu, Maksims Volkovs, and Anthony L Caterini. TabDPT: Scaling tabular foundation models. Advances in Neural Information Processing Systems , 2025. [22] Martin Mráz, Breenda Das, Anshul Gupta, Lennart Purucker, and Frank Hutter. Towards benchmarking foundation models for tabular data with text. In ICML 2025 Workshop on Foundation Models for Structured Data (FMSD) , 2025. [23] Liudmila Prokhorenkova, Gleb Gusev, Aleksandr Vorobev, Anna Veronika Dorogush, and Andrey Gulin. CatBoost: Unbiased boosting with categorical features. Advances in Neural Information Processing Systems , 31, 2018. [24] Jingang Qu, David Holzmüller, Gaël Varoquaux, and Marine Le Morvan. TabICL: A tabular foundation model for in-context learning on large data. In International Conference on Machine Learning , 2025. [25] Jingang Qu, David Holzmüller, Gaël Varoquaux, and Marine Le Morvan. TabICLv2: A better, faster, scalable, and open tabular foundation model. In International Conference on Machine Learning , 2026. [26] Günther Schindler, Maximilian Schambach, Michael Medek, and Sam Thelin. Tabgemma: Text-based tabular ICL via LLM using continued pretraining and retrieval. In EurIPS 2025 Workshop: AI for Tabular Data , 2025. [27] Marco Spinaci, Marek Polewczyk, Maximilian Schambach, and Sam Thelin. ConTextTab: A semantics-aware tabular in-context learner. In The Thirty-ninth Annual Conference on Neural Information Processing Systems , 2025. [28] Gemma Team, Aishwarya Kamath, Johan Ferret, Shreya Pathak, Nino Vieillard, Ramona Merhej, Sarah Perrin, Tatiana Matejovicova, Alexandre Ramé, Morgane Rivière, et al. Gemma 3 technical report. arXiv preprint arXiv:2503.19786 , 2025. 
+
+11 [29] Biao Zhang, Paul Suganthan, Gaël Liu, Ilya Philippov, Sahil Dua, Ben Hora, Kat Black, Gus Martins, Omar Sanseviero, Shreya Pathak, Cassidy Hardin, Francesco Visin, Jiageng Zhang, Kathleen Kenealy, Qin Yin, Xiaodan Song, Olivier Lacombe, Armand Joulin, Tris Warkentin, and Adam Roberts. T5gemma 2: Seeing, reading, and understanding longer. arXiv preprint arXiv:2512.14856 , 2025. [30] Xiyuan Zhang, Danielle C Maddix, Junming Yin, Nick Erickson, Abdul Fatir Ansari, Boran Han, Shuai Zhang, Leman Akoglu, Christos Faloutsos, Michael W Mahoney, et al. Mitra: Mixed synthetic priors for enhancing tabular foundation models. In Advances in Neural Information Processing Systems , 2025. [31] Bingzhao Zhu, Xingjian Shi, Nick Erickson, Mu Li, George Karypis, and Mahsa Shoaran. XTab: Cross-table pretraining for tabular transformers. In Proceedings of the 40th International Conference on Machine Learning , 2023. 
+
+12 A Baseline Details 
+
+TabICLv2: We use the model from the official tabicl package at version 2.0.3 using its default feature preprocessing if not marked otherwise specifically. 
+
+TabPFN: We use the model from the official tabpfn package at version 7.1.1, corresponding to the TabPFN-2.6 checkpoint, using its default feature preprocessing if not marked otherwise specifically. 
+
+AutoGluon: We evaluate AutoGluon v1.5 with its native feature encoder. We use the best_quality 
+
+preset with a per-dataset time limit of 4 h running on a 40-core node with 320 GB RAM and a single H100 GPU. 
+
+ConTextTab: We evaluate ConTextTab v1.1.2 using the reference implementation and checkpoint 1.We set a context size of 8k samples and evaluate with 8-fold bagging. 
+
+Pytabkit models: We use the pytabkit [16 ] for evaluating XGBoost, CatBoost, and RealMLP. We evaluate these models with ensembled hyperparameter optimization across 5-fold inner cross-validation (HPO-CV). For the HPO variants, we use the recently added tabarena search spaces proposed in [7]. 
+
+Naive: We use the Naive predictor from sklearn v1.5.2, estimating the median for regression tasks or the majority class in the case of classification tasks. 
+
+A.1 Feature preprocessing 
+
+If available, we use the default feature preprocessing of the individual baselines investigated. For Naive, XGBoost, CatBoost, and RealMLP, we use the preprocessor from AutoGluon. For TF-IDF features, we use Skrub’s TableVectorizer , which uses a pass-through for low-cardinal and numerical features to be handled natively by TabICL, and the TF-IDF-based StringEncoder for high-cardinal features with more than 40 classes, using a fixed seed. Note that the TableVectorizer also applies PCA to the obtained features, downcasting them to 30 dimensions. Finally, note that these features are calculate per column. That is, if the table contains 10 high-cardinal or free text features, the approach appends 300 additional features after the transform. 
+
+B Additional results 
+
+In the following, we provide additional results on both the semantically rich benchmarks (CARTE and TextTab) as well as the numerics-heavy TabArena. We report critical difference (CD) diagrams, as well as win-ratios and ELO scores. For the calculation of the Elo scores, we utilize the implementation of TabArena [ 7], which itself is based on ChatBot Arena’s implementation [3]. For all ranking results (aside from those used in the critical difference diagrams), we use a robust ranking algorithm. That is, models that lie within 0.1 percentage points (in terms of either accuracy or R2) are considered ties. The same robustification also applies to our Elo score and win-ratio calculations. For the critical difference (CD) diagrams, we use the autorank library [ 13 ]. So as not to influence the statistical guarantees of the significance test used, we do not alter or robustify its internal rank calculation. Hence, the ranks shown in the CD diagrams can slightly deviate from those shown in the result tables or figures. 
+
+> 1github.com/SAP-samples/contexttab
+
+13 B.1 Semantically Rich Benchmarks 
+
+For the CARTE and TextTab benchmarks, the CD diagram, win ratios and ELO score plots are depicted in Figure 7. As before, we observe that TabICL with our proposed CASE enrichment significantly outperforms all baselines. For all single-model baselines, this difference is statistically significant. While our approach also outperforms AutoGluon, as previously denoted in terms of absolute performance and mean rank, now also shown in terms of win ratio and Elo scores, the difference is not quite statistically significant, as denoted in the CD diagram. However, note that AutoGluon ensembles and stacks a multitude of models, requiring extensive tuning for each dataset, while TabICL with CASE performs on-the-fly predictions following the in-context paradigm. Finally, a one-vs-one comparison of per-task results using TabICLv2 with and without CASE, shown in Figure 8, show that the gains in absolute performance are substantial in many cases. Overall, also these extended results underline the superior performance of our approach, setting a new state of the art for semantically rich datasets. CD 123456789
+
+> Random forest TabICLv2 TabPFN-2.6 XGBoost CatBoost RealMLP ConTextTab AutoGluon TabICLv2 w/ CASE (ours)
+
+(a) Critical difference diagram. 0.76 0.61 0.93 0.83 0.80 0.17 0.86 0.89 0.24 0.27 0.82 0.49 0.76 0.11 0.80 0.68 0.38 0.68 0.85 0.69 0.79 0.13 0.83 0.82 0.06 0.13 0.11 0.06 0.37 0.04 0.39 0.11 0.14 0.44 0.24 0.94 0.72 0.11 0.76 0.85 0.20 0.20 0.18 0.58 0.25 0.07 0.37 0.27 0.82 0.86 0.85 0.93 0.86 0.90 0.92 0.90 0.13 0.18 0.15 0.59 0.18 0.58 0.07 0.27 0.11 0.31 0.14 0.86 0.13 0.68 0.08 0.65 0.0 0.2 0.4 0.6 0.8 1.0 Win Ratio TabICLv2 w/ CASE (ours) AutoGluon ConTextTab RealMLP CatBoost XGBoost TabPFN-2.6 TabICLv2 Random forest Model A TabICLv2 w/ CAS… AutoGluon ConTextTab RealMLP CatBoost XGBoost TabPFN-2.6 TabICLv2 Random forest Model B 
+
+(b) Win ratios. TabICLv2 w/ CASE (ours) AutoGluon ConTextTab RealMLP CatBoost XGBoost TabPFN-2.6 TabICLv2 Random forest Model 900 1,000 1,100 1,200 1,300 1,400 1,500 1,600 1,700 1,800 Elo Score 1655 1489 1422 1317 1314 1198 1112 1105 1000 1,000 1,200 1,400 1,600 Elo (c) ELO scores. 
+
+Figure 7: Critical difference diagrams, win ratios and ELO scores for the semantic-heavy CARTE and TextTab benchmarks. ELO scores are normalized to Random Forest at 1000 ELO. 
+
+Figure 8: Per-task accuracy (left) and R 2 scores (right) on CARTE and TextTab comparing TabICLv2 with (y-axis) and without CASE (x-axis). On-diagonal scores indicate identical performance while above-diagonal scores indicate that performance is better when using CASE instead of the default. 14 B.2 TabArena 
+
+As a robustness check, we also show extended results for the numerics-heavy TabArena benchmark in Figure 9. As previously discussed, we observe a performance drop when using CASE with numerics-heavy semantic-scarce dataset. This drop is statistically significant, as shown in the CD diagram. While we observe this drop throughout, in terms of mean rank as well as win ratios and Elo scores, these ranking metrics to some degree hide the differences in the absolute values of the performance metrics: while we have seen substantial gains on semantically rich datasets also in terms of absolute scores, the absolute drop in performance on TabArena is relatively small (albeit statistically significant), as shown in Figure 10. This hints at the problem of reporting or relying on single metrics for model comparisons, in particular ranking- or win-based ones: a tiny, but consistent, improvement may result in much better rank or Elo scores while hiding that the absolute improvement may be incremental. CD 123456789
+
+> Random forest XGBoost ConTextTab CatBoost TabICLv2 w/ CASE (ours) AutoGluon RealMLP TabICLv2 TabPFN-2.6
+
+(a) Critical difference diagram. 0.55 0.57 0.75 0.37 0.24 0.49 0.24 0.63 0.29 0.47 0.75 0.29 0.14 0.45 0.10 0.57 0.27 0.35 0.61 0.29 0.12 0.27 0.12 0.45 0.20 0.14 0.29 0.18 0.12 0.18 0.06 0.24 0.37 0.53 0.61 0.73 0.25 0.45 0.16 0.69 0.65 0.61 0.69 0.76 0.65 0.57 0.39 0.76 0.35 0.35 0.53 0.69 0.37 0.20 0.12 0.53 0.57 0.69 0.73 0.86 0.65 0.43 0.67 0.80 0.18 0.24 0.45 0.63 0.14 0.12 0.29 0.04 0.0 0.2 0.4 0.6 0.8 1.0 Win Ratio TabPFN-2.6 TabICLv2 AutoGluon RealMLP TabICLv2 w/ CASE (ours) CatBoost ConTextTab XGBoost Random forest Model A TabPFN-2.6 TabICLv2 AutoGluon RealMLP TabICLv2 w/ CAS… CatBoost ConTextTab XGBoost Random forest Model B 
+
+(b) Win ratios. TabPFN-2.6 TabICLv2 AutoGluon RealMLP TabICLv2 w/ CASE (ours) CatBoost ConTextTab XGBoost Random forest Model 900 950 1,000 1,050 1,100 1,150 1,200 1,250 1,300 1,350 1,400 1,450 1,500 Elo Score 1381 1347 1237 1223 1187 1179 1131 1081 1000 1,000 1,100 1,200 1,300 Elo (c) ELO scores. 
+
+Figure 9: Critical difference diagrams, win ratios and ELO scores for the numerics-heavy TabArena benchmarks. ELO scores are normalized to Random Forest at 1000 ELO. 
+
+Figure 10: Per-task accuracy (left) and R 2 scores (right) on TabArena comparing TabICLv2 with (y-axis) and without CASE (x-axis). On-diagonal scores indicate identical performance while above-diagonal scores indicate that performance is better when using CASE instead of the default. 
+
+Performance Trade-offs & Analysis: As detailed in Table 6, performance scales predictably with dimensionality: Classification accuracy remains stable across settings (varying by only ∼ 0.6% 
+
+15 across k = 16 to 256 ), whereas regression metrics ( R2) benefit noticeably from higher dimensions (+0 .6% on CARTE, +1 .4% on TextTab moving from k = 16 to k = 128 ). 
+
+C Data Contamination and Leakage Analysis 
+
+As CASE leverages the pretrained Gemma 3 backbone and utilizes the T4 dataset [ 8] for continued pretraining, we proactively address the potential for data contamination:. Given that our evaluation benchmarks – CARTE, TextTab, and TabArena – are open-source, there is a risk that samples from these datasets were present in the LLM’s original pretraining corpus or the T4 collection which we used for continued pretraining of the TLM. 
+
+T4 Contamination Study: Related work [ 27 ] conducted a systematic search for overlap between the T4 training set and the CARTE benchmark. By performing string similarity matching on unique combinations of column names and cell values, and found no evidence of CARTE samples within the T4 dataset. This suggests that the performance gains observed via CASE are not the result of direct leakage during our continued pretraining phase. 
+
+Backbone Memorization: While the exact composition of the Gemma 3 pretraining data is propri-etary, our empirical results suggest that the model has not memorized these benchmarks in a way that bypasses tabular reasoning. As shown in our various ablations, the model’s predictive accuracy is highly sensitive to the number of context rows provided in the KV cache. If the model were relying on memorized labels, we would expect a high baseline performance with zero or minimal context; instead, we observe a clear monotonic improvement as more in-context information is provided. This behavior indicates that the model is actively conditioning on the provided tabular distribution at inference time rather than retrieving stored labels from its weights. 
+
+D Computational Efficiency and Runtime Analysis 
+
+While integrating a Tabular Language Model (TLM) into tabular learning pipelines introduces additional computational overhead compared to shallow feature extraction, CASE is explicitly designed to maintain a practical trade-off between rich semantic context and runtime throughput. 
+
+Architectural Optimizations: The efficiency of CASE relies on two key architectural principles: 1. KV-Cache Context Priming: Background row representations and table-level semantics are processed and cached during fit() . At prediction time, context rows do not need to be re-encoded, avoiding redundant forward passes. 2. Generation-Free Inference: Unlike standard LLM applications that rely on autoregressive token sampling—the dominant computational bottleneck in LLM inference—CASE extracts target representations from the final hidden states in a single, fast forward pass without invoking the language modeling head. 
+
+Online Prediction vs. Offline Fitting Trade-off: A key advantage of CASE is the isolation of heavy neural compute to the offline fitting phase ( fit() ). At inference time ( predict() ), CASE projects row embeddings into a fixed k = 32 PCA feature budget regardless of the number of text columns (C) in the input table. In contrast, standard TF-IDF pipelines typically extract up to 32 n-gram components per text column , expanding the downstream feature space to 32 × C. For tables with numerous textual attributes, this dramatic expansion increases the attention complexity of downstream tabular architectures (such as TabICL). 
+
+Empirical Latency Benchmarks: To quantitatively evaluate throughput and predictive quality, we benchmarked TabICL, TabICL [TF-IDF], and TabICL [CASE-12B] across subsampled training set sizes N ∈ { 128 , 256 , 512 , 1024 , 2048 , 4096 , 8192 } on 11 classification tasks from the CARTE benchmark while keeping the test evaluation sets fixed. All experiments were conducted on a single NVIDIA H100 GPU. As illustrated in Figure 11, CASE consistently defines the Pareto-optimal frontier for the prediction latency. 16 10 2 10 3
+
+> Prediction Latency per Row (ms)
+> 0.55
+> 0.60
+> 0.65
+> 0.70
+> 0.75
+> 0.80
+> 0.85
+> Accuracy
+> TabICL
+> TabICL [TF-IDF]
+> TabICL [CASE-12B]
+
+(a) Online Prediction Latency per Row (ms): CASE achieves superior predictive quality while maintaining faster online inference than TF-IDF due to a constant downstream feature dimension budget. 10 0 10 1 10 2
+
+> Fit Latency (s)
+> 0.55
+> 0.60
+> 0.65
+> 0.70
+> 0.75
+> 0.80
+> 0.85
+> Accuracy
+> TabICL
+> TabICL [TF-IDF]
+> TabICL [CASE-12B]
+
+(b) Offline Fit Latency (s): Heavy backbone compute is isolated to training time, scaling predictably with sample size. 
+
+Figure 11: Predictive Quality vs. Computational Cost Trade-offs on CARTE. Pareto frontiers demonstrate that CASE offers highly competitive inference latency while improving predictive performance over non-semantic baselines. CD   
+
+> 1234
+> TabICL [CASE, corrupted]
+> TabICL [corrupted] TabICL
+> TabICL [CASE]
+> Critical Difference Diagram (Friedman-Nemenyi Ranks, α=0.05, p=0.00)
+> 27/07/2026, 09:10 visualization-7.svg
+
+Figure 12: Critical Difference Diagram under Semantic Corruption. Across CARTE and TextTab benchmarks ( α = 0 .05 ), standard TabICL [CASE] achieves a significantly superior performance rank compared to all non-semantic or corrupted configurations. 
+
+E Impact of Semantic Corruption and Necessity of Semantic Signals 
+
+To rigorously evaluate whether CASE leverages true semantic understanding or merely exploits statistical patterns, we conducted a semantic corruption test .
+
+Experimental Setup: We designed a deterministic character-substitution transformer that applies a consistent substitution cipher across all column headers and string/textual/categorical cell values. Numerical values and overall row/column structure remain identical. This completely strips away real-world domain semantics (e.g., column headers like "Age" or cell values like "Doctor" ) while preserving identical categorical frequencies. We evaluate two baseline pipelines on CARTE and TextTab benchmarks under both original and corrupted regimes: 1. TabICL : Pure non-semantic baseline utilizing TF-IDF encoding. 2. TabICL [CASE] : Combined pipeline integrating CASE-12B semantic embeddings with TF-IDF. 
+
+Statistical Impact and Analysis: As shown in the Critical Difference diagram (Fig. 12) and Table 3, three key insights emerge regarding when and why CASE provides performance gains: • Performance Degradation upon Corruption: When semantics are corrupted, the mean rank of TabICL [CASE, corrupted] drops sharply from 1.3 to 3.0, returning to a level statistically indistinguishable from the baseline TabICL model ( 2.3). • Statistical Superiority of Uncorrupted CASE: The Friedman test followed by a post-hoc Nemenyi test ( α = 0 .05 ) places TabICL [CASE] in its own distinct rank group. • Robustness of Non-Semantic Baselines: Standard TabICL exhibits virtually identical performance between uncorrupted ( 78 .3% Acc, 73 .9% R2) and corrupted ( 77 .7% Acc, 73 .4% R2) datasets on CARTE, as expected for TF-IDF representations. 17 Table 3: Semantic Corruption Performance Degradation. Disruption of textual semantics drops TabICL [CASE] back to pure non-semantic baseline performance (TabICL), confirming that CASE gains its predictive power via genuine semantic reasoning.                                          
+
+> All CARTE TextTab Model Rank Rank Acc (%) R2(%) Rank Acc (%) R2(%) TabICL [CASE] 1.31.380 .877 .51.686 .268 .9
+> TabICL 2.32.278 .373 .92.584 .154 .5
+> TabICL [corrupted] 2.72.877 .773 .42.484 .063 .8
+> TabICL [CASE, corrupted] 3.03.278 .272 .22.584 .263 .6CD
+> 12345
+> TabICL [CASE, seed=12345]
+> TabICL [CASE, seed=123]
+> TabICL [CASE, seed=42]
+> TabICL [CASE, seed=1337]
+> TabICL [CASE, seed=0]
+> Critical Difference Diagram (Friedman-Nemenyi Ranks, α=0.05, p=0.62)
+> 22/07/2026, 10:11 visualization-4.svg
+> fi le:///Users/I559170/Downloads/visualization-4.svg 1/1
+
+Figure 13: Critical difference diagrams for CARTE and TextTab benchmarks using different seeds for column permutations. 
+
+Conclusion: When CASE Helps: These results confirm that CASE’s performance gains are strictly driven by genuine semantic density . When semantic information is present, CASE lifts performance substantially (e.g., +2 .5% classification accuracy and +3 .6% R2 on CARTE); when semantic information is absent or destroyed, CASE gracefully degrades to standard non-semantic tabular modeling baseline performance. 
+
+F Impact of Column Order Permutation 
+
+CASE is not column permutation equivariant. To evaluate whether the order of input columns impacts the downstream embedding quality, we conducted an ablation study over 5 distinct column ordering seeds using the CASE-12B model. 
+
+Statistical Equivalence via CD Diagrams: We performed a Friedman test followed by a post-hoc Nemenyi test ( α = 0 .05 ) across CARTE and TextTab benchmarks to construct Critical Difference (CD) diagrams for the different column ordering seeds. In the resulting CD diagram (Fig 13), all 5 seed variants are connected by a single, continuous critical difference bar. This confirms that there is no statistically significant difference in overall performance ranks across any of the column permutations. 
+
+Performance Stability: As shown in Table 4, performance across both CARTE and TextTab benchmarks remains exceptionally tight across all seeds. For instance, the average classification accuracy on CARTE fluctuates within a minimal margin of 81 .0% ± 0.2% , while the overall average rank varies by only ±0.1.These results demonstrate that while CASE is architecturally non-equivariant to column permutations, its learned semantic representations are practically invariant to column ordering. 
+
+G Impact of Random Context Selection 
+
+CASE relies on a randomly selected context to prefill the KV cache. To evaluate whether CASE exhibits instability due to stochastic context selection, we evaluated the CASE-12B model across 5 independent evaluation runs. Each run draws a completely distinct random sample of context rows with a randomized permutation of row order. 
+
+Statistical Equivalence via CD Diagrams: To test whether random context selection leads to statistically significant performance variations, we performed a Friedman test followed by a post-hoc Nemenyi test ( α = 0 .05 ) across all benchmark datasets. The resulting Critical Difference (CD) diagram connects all 5 context selection seeds under a single continuous critical difference bar. This 18 Table 4: Robustness to Column Order Permutation. Performance across 5 random column ordering seeds using CASE-12B with TabICLv2. Ranks and metrics show negligible variance. 
+
+All CARTE TextTab Column Seed Rank Rank Acc R2 Rank Acc R2 Seed 0 2.3 2.4 81 .3 77 .4 2.2 86 .1 68 .9
+
+Seed 42 2.5 2.7 80 .8 77 .5 2.0 86 .2 68 .9
+
+Seed 123 2.7 2.6 81 .1 77 .5 3.0 85 .8 67 .8
+
+Seed 1337 2.5 2.5 81 .0 77 .6 2.6 85 .9 67 .8
+
+Seed 12345 2.6 2.6 80 .7 77 .5 2.6 85 .9 66 .6
+
+Mean ± Std 2.5 ± 0.1 2.6 ± 0.1 81 .0 ± 0.2 77 .5 ± 0.1 2.5 ± 0.4 86 .0 ± 0.2 68 .0 ± 1.0CD  
+
+> 12345
+> TabICL [CASE, seed=1337]
+> TabICL [CASE, seed=0]
+> TabICL [CASE, seed=123]
+> TabICL [CASE, seed=12345]
+> TabICL [CASE, seed=42]
+> Critical Difference Diagram (Friedman-Nemenyi Ranks, α=0.05, p=0.07)
+> 23/07/2026, 08:26 visualization-5.svg
+
+Figure 14: Critical difference diagrams for CARTE and TextTab benchmarks using different seeds for random context selection. statistically confirms that varying the random seed for context row selection produces no significant difference in overall model performance. 
+
+Performance Stability: As detailed in Table 5, performance across all context selection seeds remains remarkably stable. The overall average rank stays tightly bounded around 2.5 ± 0.2, with average accuracy on CARTE showing a tight standard deviation of only 0.2% (80 .7% ± 0.2% ). Similarly, regression performance ( R2) varies by a maximum of 0.3% across all runs on CARTE and TextTab. These results indicate that CASE effectively distills the broader underlying semantic distribution of the tabular dataset rather than over-indexing on specific, high-leverage context examples or arbitrary row arrangements. Table 5: Robustness to Random Context Selection. Performance across 5 random context sampling seeds using CASE-12B with the skrub preprocessor on TabICL. Ranks and metrics show negligible variance. 
+
+All CARTE TextTab Context Seed Rank Rank Acc R2 Rank Acc R2 Seed 0 2.7 2.8 80 .8 77 .4 2.4 85 .9 68 .3
+
+Seed 42 2.3 2.5 80 .8 77 .5 1.9 86 .2 68 .9
+
+Seed 123 2.5 2.4 80 .7 77 .6 3.0 85 .6 67 .9
+
+Seed 1337 2.9 2.8 80 .5 77 .3 3.0 85 .9 67 .7
+
+Seed 12345 2.4 2.4 80 .9 77 .6 2.2 85 .9 68 .6
+
+Mean ± Std 2.5 ± 0.2 2.6 ± 0.2 80 .7 ± 0.2 77 .5 ± 0.1 2.5 ± 0.5 85 .9 ± 0.2 68 .3 ± 0.5
+
+H Sensitivity to PCA Dimension Reduction 
+
+To evaluate how embedding dimensionality affects downstream prediction quality, we conducted an ablation study over the number of Principal Component Analysis (PCA) components ( k ∈{16 , 32 , 64 , 128 , 256 }) used to compress CASE representations. 
+
+Statistical Ranking via CD Diagrams: We evaluated ranking performance across CARTE and TextTab benchmarks using a Friedman test followed by a post-hoc Nemenyi test ( α = 0 .05 ). As 19 CD   
+
+> 12345
+> TabICL [CASE, components=16]
+> TabICL [CASE, components=32]
+> TabICL [CASE, components=64]
+> TabICL [CASE, components=128]
+> TabICL [CASE, components=256]
+> Critical Difference Diagram (Friedman-Nemenyi Ranks, α=0.05, p=0.00)
+> 27/07/2026, 09:42 visualization-8.svg
+> fi le:///Users/I559170/Downloads/visualization-8.svg 1/1
+
+Figure 15: Critical Difference Diagram across PCA Dimensions. Higher PCA dimensions ( k =128 , 256 ) yield statistically significant rank improvements across CARTE and TextTab benchmarks (α = 0 .05 ). illustrated in the Critical Difference (CD) diagram (Fig. 15), increasing the target dimension yields progressive performance gains: • High-Dimensional Regimes ( k ∈ { 128 , 256 }): Models using 128 and 256 components achieve the best overall ranks ( 1.9), significantly outperforming lower-dimensional settings ( k ∈ { 16 , 32 }). • Standard Default ( k = 32 ): Our default setting of 32 components forms a statistically equivalent clique with k = 16 and k = 64 .Table 6: Ablation on PCA Embedding Dimensions. Increasing PCA components monotonicially improves representation expressiveness while k = 32 serves as a strong default. 
+
+All CARTE TextTab Configuration Rank Rank Acc (%) R2 (%) Rank Acc (%) R2 (%) TabICL [CASE, k = 256 ] 1.9 1.6 81 .3 77 .8 2.4 86 .3 69 .0
+
+TabICL [CASE, k = 128 ] 1.9 1.8 81 .0 77 .7 1.9 86 .2 69 .6
+
+TabICL [CASE, k = 64 ] 2.2 2.1 80 .7 77 .7 2.5 86 .1 69 .6
+
+TabICL [CASE, k = 32 ] 2.8 2.8 80 .8 77 .5 2.6 86 .2 68 .9
+
+TabICL [CASE, k = 16 ] 3.4 3.4 80 .7 77 .2 3.4 85 .8 68 .2
+
+I Evaluation on STRABLE Benchmark 
+
+To further assess the generalization of CASE on string-heavy tabular datasets, we extend our empirical evaluation to the recently introduced STRABLE benchmark suite [ 1]. STRABLE evaluates tabular learners across a diverse collection of classification and regression tasks characterized by high-cardinality unstructured text and complex string features. We evaluate TabICLv2 augmented with CASE-12B against established tabular baselines, special-ized string-tabular models (such as ConTextTab), and automated machine learning frameworks (AutoGluon). Table 7: Performance comparison on the STRABLE benchmark suite. Models are ordered by overall mean rank across all classification and regression tasks. Best performance is highlighted in 
+
+bold .
+
+Model Name Overall Rank (↓) Accuracy (%) (↑) R2 (%) (↑)
+
+TabICLv2 [CASE-12B] 2.0 76.3% 72.8% 
+
+AutoGluon 2.3 75.7% 69.9% ConTextTab 2.8 74.6% 69.2% RealMLP 3.3 71.9% 68.0% TabPFN-2.6 5.0 65.3% 54.8% TabICLv2 5.5 65.1% 49.1% Naive 6.7 56.0% –4.7% CASE-12B achieves the top overall rank ( 2.0 ) across the benchmark, outperforming domain-specific string pipelines like ConTextTab as well as strong AutoML ensembles like AutoGluon. Integrating 20 CASE-12B into TabICLv2 provides a large performance boost over standard TabICLv2, lifting classification accuracy from 65 .1% to 76 .3% (+11 .2% ) and regression R2 from 49 .1% to 72 .8% 
+
+(+23 .7% ). Critical Difference (CD) diagram analysis ( α = 0 .05 ) confirms that TabICLv2 [CASE-12B] is statistically superior to all evaluated baselines, with AutoGluon being the only competitor within the critical distance threshold. 21

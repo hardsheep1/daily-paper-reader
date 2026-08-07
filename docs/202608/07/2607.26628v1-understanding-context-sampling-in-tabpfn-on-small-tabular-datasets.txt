@@ -1,0 +1,491 @@
+Title: Understanding Context Sampling in TabPFN on Small Tabular Datasets
+
+URL Source: https://arxiv.org/pdf/2607.26628v1
+
+Published Time: Thu, 30 Jul 2026 00:37:10 GMT
+
+Number of Pages: 12
+
+Markdown Content:
+# Understanding Context Sampling in TabPFN on Small Tabular Datasets 
+
+Mohammed Abdullah Department of AI & Data Science Anna University 
+
+2023176026@student.annauniv.edu 
+
+July 30, 2026 
+
+Abstract 
+
+TabPFN classifies by in-context learning: it conditions on a set of labeled training rows (the con-text, or prototypes) and predicts test labels without gradient updates. On small tabular datasets, where TabPFN is designed to be used, the practitioner still chooses how large that context is and which rows go into it. We ask how much those choices matter. Using repeated random sub-sampling on 15 small OpenML datasets, we study three linked questions: (i) how variable predictions are across different random contexts of the same size, and whether larger contexts are more stable; (ii) whether accuracy tracks how well a sampled context preserves the full training distribution; and (iii) whether more expensive selection (K-Means, farthest-point sampling) buys anything over uniform random selection once the context is representative. We find that larger contexts are both more accurate and markedly more stable (the coefficient of variation of AUC falls from roughly 6–18% at k=16 to 1–4% at the largest k on the datasets with room to improve). Accuracy does correlate with how well a random context preserves the training distribution, but a controlled ex-periment overturns the causal reading: when we construct contexts that match the feature means closely, accuracy drops substantially (by up to 0.5 AUC), because that construction also destroys diversity. Controlled experiments and a mixed-effects analysis point to diversity and coverage, rather than feature-mean matching, as the factor that predicts accuracy (diversity β = +0 .23 ,
+
+p = 3 × 10 −12 ; feature-mean shift β = −0.01 , p = 0 .71 once diversity is included). This also ex-plains why K-Means and farthest-point selection, which are diverse but not distribution-preserving, match uniform random while costing two to three orders of magnitude more. Random sampling works because it covers the feature space in expectation, not because it matches its distribution. We report effect sizes and confidence intervals throughout. 
+
+Keywords: in-context learning, TabPFN, prototype sampling, context diversity, coverage, context stability, small data 
+
+## 1 Introduction 
+
+Prototype selection is a fundamental inference-time decision in TabPFN [1], a prior-data fitted network [2]: the model conditions on a chosen set of labeled rows (the context) and predicts in a single forward pass, the tabular instance of the in-context learning paradigm popularized by large language models [3, 4]. Prototype and instance selection have a long history in nearest-neighbor learning [5], and sophisticated selection methods (clustering, coverage heuristics) have been proposed; yet it remains unclear whether their gains come from the selection algorithm or simply from selecting a subset that is representative of the training data. We investigate this on small tabular datasets, the regime TabPFN targets, where we can afford many repeated draws and isolate the effect of the context from confounds of scale. We study three connected questions, on 15 small OpenML datasets: 
+
+H1 (Stability). Different random contexts of the same size k yield different predictions; the spread of accuracy across random draws shrinks as k grows. 1arXiv:2607.26628v1 [cs.LG] 29 Jul 2026 H2 (What makes a context good). We ask whether accuracy is driven by how well the context preserves the training distribution (representativeness) or by how well it covers the feature space (diversity). A correlation initially suggests representativeness; a controlled experiment shows the causal factor is diversity. 
+
+H3 (Selection cost). Expensive selection methods (K-Means, FPS) add little accuracy over uniform random selection despite far higher cost. These are mechanistic questions about how TabPFN responds to its context, and together they form a single account: context size controls reliability (H1), diversity and coverage (not distribution matching) explain which contexts succeed (H2), and this explains why cheap random sampling, which covers the space in expectation, is hard to beat (H3). We answer them with repeated random sub-sampling, controlled construction of contexts with targeted geometry, and two supporting stress tests (duplicating and dropping part of the context). Our contribution is to identify context diversity, rather than representativeness or the choice of selection algorithm, as what a small-data context needs, and to reach that conclusion through a controlled experiment that overturns the more obvious correlational story. 
+
+## 2 Related Work 
+
+In-context learning and TabPFN. In-context learning, in which a model adapts to a task from examples placed in its input without weight updates, was popularized by large language models [3] and has since been surveyed extensively [4]. Prior-data fitted networks (PFNs) bring this paradigm to supervised learning by meta-training a transformer to perform Bayesian inference in a forward pass [2]; TabPFN applies it to tabular classification and regression [1]. Our study takes TabPFN as given and asks a downstream question its design raises but does not answer: how the in-context set should be chosen on small data. 
+
+Prototype and instance selection. Choosing a small subset of training examples is a classical problem in nearest-neighbor learning, where prototype selection methods aim to shrink the reference set while preserving accuracy [5]. Clustering- and coverage-based selectors are standard tools: k-means++ seeding [6] and farthest-point / k-center sampling [7] both spread selected points across the input space. We evaluate exactly these families as context selectors for TabPFN and find that, at matched budget, they do not beat uniform random enough to justify their cost. 
+
+Coverage, diversity, and coresets. A parallel line of work formalizes “covering” a dataset with a small set. Determinantal point processes model diverse subsets through a volume (log-determinant) objective [8]; coreset constructions seek small weighted subsets that approximate a learning objective [9], and coverage-driven selection has been used directly for active learning [10]. These motivate the geometric diversity/coverage descriptors we use, and our controlled experiments provide evidence that, for TabPFN on small data, such coverage rather than distributional fidelity is what tracks accuracy. 
+
+Data valuation and compression. Related efforts ask which data are valuable or how to compress a dataset: data-valuation methods score individual examples by their marginal contribution [12], and dataset distillation synthesizes tiny training sets that reproduce full-data performance [11]. Our aim is narrower and diagnostic: rather than propose a new selection or synthesis method, we isolate 
+
+which property of a context drives TabPFN’s accuracy, using controlled construction and mixed-effects inference [14]. 
+
+Benchmark data. All experiments use public tasks from OpenML [15], which supplies the standardized, citable datasets that make the study reproducible. 
+
+## 3 Setup 
+
+We use TabPFN v3 with ignore_pretraining_limits=True . Each dataset is split 80/20 (stratified, fixed split seed). A context of size k is formed by selecting k training rows and fitting TabPFN on exactly those rows ( clf.fit(X[idx], y[idx]) ); the held-out 20% is the test set throughout. We 2report ROC AUC (one-vs-rest macro for the multiclass dataset). For the stability and correlational analyses we draw 20 independent random contexts per k. For the causal analyses in H2 we additionally construct contexts with targeted geometry (Section on the controlled test) rather than sampling them; for selection-method and stress tests we use three or more seeds. Table 1: Datasets (all small; public OpenML [15]). Dataset rows features classes diabetes 768 8 2credit-g 1000 20 2vehicle 846 18 4wdbc 569 30 2breast-w 699 9 2blood-transfusion 748 4 2ionosphere 351 34 2sonar 208 60 2glass 214 9 6australian 690 14 2heart-statlog 270 13 2segment 2310 18 7waveform-5000 5000 40 3spambase 4601 57 2kc1 2109 21 2
+
+Context descriptors. Let the full training set have standardized feature matrix X ∈ Rn×m
+
+with column means ¯X, and let a context C of size k have feature rows {xi}i∈C with mean ¯XC . We characterize C with two families of measures. 
+
+Representativeness (how close to the full distribution): the total-variation distance between the context’s class distribution pC and the full class distribution p, and the mean absolute per-feature mean shift, 
+
+class_tv = 12
+
+X
+
+> c
+
+|pc − pC,c |, feat_shift = 1
+
+m
+
+> m
+
+X
+
+> j=1
+
+¯XC,j − ¯Xj . (1) Smaller values mean C looks more like the whole training set. 
+
+Diversity / coverage (how much of the space C spans): the mean pairwise Euclidean distance among context rows and the log-determinant of the context covariance ΣC (a volume), 
+
+diversity = 1
+
+|C|2
+
+X
+
+> i,i ′∈C
+
+∥xi − xi′ ∥2, logdet_cov = log det  ΣC + εI . (2) These are standard geometric coverage measures. Mean pairwise distance summarizes spread, and the covariance log-determinant is the standard volume of the region a point set occupies (it appears, for example, in determinantal point processes [8] and coreset constructions [9, 10]). The two families can vary independently, and separating them is the crux of H2. 
+
+## 4 H1: Context Stability 
+
+For each k we drew 20 independent random contexts and recorded the resulting test AUC. Table 2 reports the mean ± 95% CI, and Table 3 the coefficient of variation CV = σ/μ , a scale-free measure of variability, as a percentage. Figure 1 plots mean AUC and CV against k.
+
+What we observe. On every one of the 15 datasets, variability across random contexts falls as k
+
+grows. On datasets with accuracy headroom (diabetes, credit-g, sonar, kc1, waveform, and others) the CV drops from roughly 6–18% at k=16 to about 1–4% at the largest k; datasets already near ceiling (breast-w, segment) start low and still shrink. Mean AUC rises with k in parallel. So on small data 3Table 2: Mean ROC AUC ± 95% CI across 20 random contexts per k. Dashes: k=256 exceeds the training-set size on the smallest datasets. Dataset k=16 k=32 k=64 k=128 k=256 
+
+diabetes .738 ±.042 .788 ±.034 .834 ±.008 .858 ±.006 .872 ±.005 
+
+credit-g .648 ±.030 .678 ±.027 .734 ±.021 .774 ±.013 .808 ±.008 
+
+vehicle .763 ±.022 .870 ±.007 .920 ±.008 .946 ±.005 .960 ±.002 
+
+wdbc .955 ±.024 .980 ±.004 .987 ±.004 .990 ±.002 .995 ±.001 
+
+breast-w .988 ±.003 .989 ±.003 .992 ±.002 .993 ±.002 .994 ±.001 
+
+blood-transfusion .628 ±.033 .644 ±.027 .670 ±.015 .690 ±.012 .698 ±.011 
+
+ionosphere .882 ±.035 .957 ±.010 .972 ±.004 .980 ±.002 .984 ±.001 
+
+sonar .744 ±.036 .776 ±.032 .823 ±.016 .899 ±.008 —glass .824 ±.080 .854 ±.018 .917 ±.013 .950 ±.005 —australian .862 ±.029 .906 ±.007 .916 ±.006 .923 ±.005 .932 ±.004 
+
+heart-statlog .824 ±.026 .847 ±.018 .854 ±.015 .869 ±.006 —segment .950 ±.010 .980 ±.004 .991 ±.001 .994 ±.001 .996 ±.001 
+
+waveform-5000 .829 ±.023 .891 ±.019 .945 ±.005 .962 ±.002 .969 ±.001 
+
+spambase .913 ±.012 .945 ±.008 .966 ±.003 .976 ±.001 .981 ±.001 
+
+kc1 .709 ±.058 .746 ±.029 .778 ±.017 .796 ±.014 .816 ±.007 16 32 64 128 256     
+
+> context size k
+> 0.60
+> 0.65
+> 0.70
+> 0.75
+> 0.80
+> 0.85
+> 0.90
+> 0.95
+> 1.00
+> mean ROC AUC
+> Accuracy rises with k
+> australian
+> blood-transfusion
+> breast-w
+> credit-g
+> diabetes
+> glass
+> heart-statlog
+> ionosphere
+> kc1
+> segment
+> sonar
+> spambase
+> vehicle
+> waveform-5000
+> wdbc
+> 16 32 64 128 256
+> context size k
+> 0.0
+> 2.5
+> 5.0
+> 7.5
+> 10.0
+> 12.5
+> 15.0
+> 17.5
+> coefficient of variation (%)
+> Variability falls with k
+> H1: Larger contexts are more accurate and more stable
+
+Figure 1: Mean AUC (left) rises with context size k; the coefficient of variation across 20 random draws (right) falls with k on every dataset. the context size is not only an accuracy knob but a reliability knob: a small context makes the model’s answer depend heavily on which rows happened to be drawn, and enlarging the context removes most of that dependence. The most variable configuration we saw was kc1 at k=16 (CV 17 .8% ); at k=16 
+
+diabetes AUC over 20 draws ranged from 0.503 to 0.839. 
+
+## 5 H2: What makes a context good, representativeness or diversity? 
+
+H2 as we first posed it, that a context which preserves the full training distribution scores higher, turns out to be the wrong reading of a real correlation. This section builds the case in three steps: the correlation (observed), a controlled test that overturns its causal interpretation, and a disentangling experiment that identifies context diversity/coverage , not distribution matching, as the factor that actually tracks accuracy. Using the 20 random draws per k from H1, we first ask whether the draws that better preserve the full training distribution score higher. For each draw we computed two distances to the full training set: the total-variation distance between class distributions ( class_tv ) and the mean absolute standardized 4Table 3: Coefficient of variation ( CV = σ/μ , %) of ROC AUC across the same 20 random contexts. CV falls as k grows on every dataset. Dataset k=16 k=32 k=64 k=128 k=256 
+
+diabetes 12.9 9.7 2.1 1.7 1.3 credit-g 10.5 9.0 6.5 3.8 2.1 vehicle 6.5 1.9 2.1 1.1 0.5 wdbc 5.8 0.8 0.8 0.6 0.2 breast-w 0.6 0.8 0.4 0.4 0.2 blood-transfusion 11.9 9.5 5.2 4.0 3.5 ionosphere 8.9 2.3 1.0 0.5 0.3 sonar 11.0 9.3 4.5 1.9 —glass 8.6 4.6 3.3 1.3 —australian 7.7 1.8 1.4 1.3 1.0 heart-statlog 7.1 4.7 4.0 1.5 —segment 1.5 1.0 0.2 0.1 0.1 waveform-5000 6.2 4.9 1.3 0.5 0.3 spambase 2.9 2.0 0.7 0.3 0.3 kc1 17.8 8.9 5.0 4.0 1.9 feature-mean shift ( feat_shift ). Table 4 reports Pearson r, Spearman ρ, and linear R2 per dataset, pooled over k.0.8 0.7 0.6 0.5 0.4 0.3 0.2 0.1 0.0 
+
+> Pearson r (feature-mean shift vs AUC)
+> waveform-5000
+> credit-g
+> vehicle
+> spambase
+> segment
+> ionosphere
+> sonar
+> australian
+> glass
+> diabetes
+> wdbc
+> blood-transfusion
+> heart-statlog
+> kc1
+> breast-w
+> More feature shift -> lower AUC
+> (negative = as hypothesized)
+> australian
+> blood-transfusion
+> breast-w
+> credit-g
+> diabetes
+> glass
+> heart-statlog
+> ionosphere
+> kc1
+> segment
+> sonar
+> spambase
+> vehicle
+> waveform-5000
+> wdbc
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> mean ROC AUC
+> Representative contexts do better (correlation)
+> most representative third
+> least representative third
+> H2: Accuracy tracks how well the context matches the full data
+
+Figure 2: The correlational step (later overturned as causal). Left: Pearson correlation between feature-mean shift and AUC across random draws per dataset (all negative). Right: mean AUC of the most- vs. least-representative third of random draws. This association is real but confounded with diversity, as the controlled experiment shows. 
+
+The correlation. Across random draws, the direction predicted by H2 holds everywhere: all 15 correlations in Table 4 are negative (further from the full distribution → lower AUC), and in Table 5 the most-representative third of draws beats the least-representative third on all 15 datasets. feat_shift 
+
+is the stronger predictor (pooled Pearson −0.55 , R2 = 0 .31 ), and it is strong on several datasets, including waveform-5000 ( r = −0.83 , R2 = 0 .68 ), credit-g ( r = −0.80 ), vehicle ( r = −0.79 ), and spambase ( r = −0.78 ), while weaker near ceiling (breast-w) or on noisy datasets (kc1, heart-statlog). Taken alone, this looks like support for H2. It is not, and the rest of this section explains why. 5Table 4: Correlation between distribution distance and AUC (all draws pooled over k, per dataset). Negative values mean that a context further from the full distribution scores lower, as hypothesized. 
+
+class_tv feat_shift 
+
+Dataset Pearson Spearman R2 Pearson Spearman R2
+
+diabetes −0.31 −0.45 0.10 −0.52 −0.73 0.27 credit-g −0.53 −0.43 0.28 −0.80 −0.83 0.63 vehicle −0.71 −0.78 0.51 −0.79 −0.78 0.63 wdbc −0.24 −0.35 0.06 −0.39 −0.59 0.15 breast-w −0.18 −0.16 0.03 −0.18 −0.27 0.03 blood-transfusion −0.08 −0.18 0.01 −0.31 −0.27 0.09 ionosphere −0.26 −0.51 0.07 −0.63 −0.84 0.39 sonar −0.53 −0.54 0.28 −0.60 −0.66 0.36 glass −0.57 −0.63 0.33 −0.56 −0.69 0.32 australian −0.34 −0.26 0.11 −0.57 −0.68 0.32 heart-statlog −0.07 −0.23 0.01 −0.30 −0.26 0.09 segment −0.77 −0.84 0.59 −0.74 −0.82 0.55 waveform-5000 −0.71 −0.80 0.51 −0.83 −0.92 0.68 spambase −0.39 −0.49 0.15 −0.78 −0.89 0.60 kc1 −0.08 −0.27 0.01 −0.29 −0.38 0.08 pooled (z-scored) −0.38 −0.46 0.14 −0.55 −0.64 0.31 Table 5: Mean AUC of the most- vs. least-representative third of random draws, split by class_tv .The most-representative third wins on all 15 datasets. Dataset most repr. least repr. ∆
+
+vehicle 0.953 0.825 +0 .127 
+
+sonar 0.858 0.746 +0 .112 
+
+waveform-5000 0.956 0.867 +0 .088 
+
+glass 0.942 0.864 +0 .077 
+
+credit-g 0.752 0.678 +0 .074 
+
+diabetes 0.851 0.791 +0 .060 
+
+. . . (remaining 9 datasets ∆ from +0 .027 down to +0 .004 )
+
+breast-w 0.994 0.990 +0 .004 
+
+5.1 A controlled test overturns the causal reading 
+
+Correlation among random draws cannot separate cause from confound. We therefore constructed 
+
+contexts at target representativeness levels rather than waiting for random draws to vary: a greedy procedure that adds rows to keep the running feature-mean as close as possible to the full-data mean (“high” representativeness, very low feat_shift ), a uniform “random” baseline, and a farthest-from-centroid procedure (“low” representativeness, high feat_shift ), all with the class ratio matched. These constructed contexts are designed to isolate causal factors, not to model practical sampling strategies; their purpose is to move one geometric property at a time. If representativeness caused accuracy, the low-shift contexts should score highest. The opposite happens (Table 6). Forcing low feat_shift reduces accuracy substantially, to 0.49 on diabetes and 0.39 on blood-transfusion, far below random, while the high-shift contexts are as good as or better than random. On most datasets the high-vs-low effect is large and runs contrary to the original hypothesis (Cohen’s d up to −22 .6, Cliff’s δ = −1.0 on six datasets). So matching the marginal feature means does not cause good performance; when isolated, it usually degrades it. The pattern is dominant but not universal: on 9 of 15 datasets forcing low shift reduces accuracy (large negative d, δ = −1.0 on 6), with the most dramatic drops on spambase ( 0.68 vs. 0.98 ), waveform 6Table 6: Controlled representativeness at k=128 (15 contexts each, mean ROC AUC ± 95% CI). Forcing low feature-mean shift (“high repr.”) reduces accuracy substantially; d and δ are the high-vs-low effect sizes. Dataset high repr. random low repr. Cohen d Cliff δ
+
+diabetes .488 ±.027 .859 ±.009 .861 ±.003 −9.1 −1.00 
+
+credit-g .601 ±.024 .765 ±.016 .708 ±.008 −3.0 −0.97 
+
+vehicle .910 ±.007 .945 ±.004 .906 ±.006 +0 .3 +0 .26 
+
+wdbc .991 ±.001 .992 ±.002 .980 ±.001 +4 .8 +1 .00 
+
+breast-w .963 ±.001 .994 ±.001 .992 ±.001 −22 .6 −1.00 
+
+blood-transfusion .389 ±.016 .694 ±.009 .732 ±.004 −14 .2 −1.00 
+
+ionosphere .966 ±.002 .980 ±.003 .972 ±.003 −1.2 −0.55 
+
+sonar .908 ±.004 .893 ±.005 .897 ±.003 +1 .6 +0 .76 
+
+glass .953 ±.006 .950 ±.005 .931 ±.002 +2 .4 +0 .99 
+
+australian .777 ±.029 .925 ±.007 .929 ±.003 −3.5 −1.00 
+
+heart-statlog .866 ±.003 .872 ±.006 .868 ±.004 −0.2 −0.09 
+
+segment .975 ±.003 .994 ±.001 .969 ±.005 +0 .7 +0 .40 
+
+waveform-5000 .699 ±.015 .963 ±.002 .936 ±.007 −10 .2 −1.00 
+
+spambase .677 ±.036 .977 ±.001 .967 ±.002 −5.6 −1.00 
+
+kc1 .530 ±.022 .797 ±.016 .661 ±.014 −3.4 −0.98 
+
+(0.70 vs. 0.96 ), and the originals. A handful of near-ceiling datasets (sonar, glass, wdbc) show small positive effects. The reason for the dominant pattern is a confound: our low-shift construction also reduces the diversity of the context (rows are chosen to cancel each other’s deviations, so they cluster). The correlation in Table 4 arose because, among random draws, a more shifted draw also tends to be a less diverse one. To find which factor actually matters, we must vary them independently. 
+
+5.2 Disentangling shift from diversity 
+
+We built six construction methods spanning the ( feat_shift , diversity) plane, ranging from a low-shift/low-diversity clump, to a low-shift/ high -diversity set (extremes paired to cancel in the mean), to high-shift/high-diversity farthest-point sampling. For each context we recorded feat_shift , diversity (mean pairwise distance), and coverage (log-determinant of the context covariance) alongside AUC. We then computed partial correlations: the association of each factor with AUC while holding the other fixed (Table 7). 
+
+What we observe. Diversity is the factor that survives in aggregate. Pooled across datasets, diversity’s partial correlation with AUC (controlling for shift) is +0 .22 and its standardized coefficient 
+
++0 .23 , whereas feature-mean shift’s partial correlation (controlling for diversity) is −0.01 and its coefficient −0.01 , essentially zero. The per-dataset picture is mixed rather than unanimous: diversity’s partial correlation is positive on nine of fifteen datasets (strong on ionosphere +0 .83 , diabetes +0 .60 ,wdbc +0 .56 ) and negative on a few (australian, glass, heart-statlog), so the effect is directionally dominant, not universal. Coverage (log-det of the context covariance) tracks AUC about as strongly as pairwise diversity on the datasets where either does (e.g. r = 0 .72 on vehicle, 0.69 on diabetes, 0.67 
+
+on segment). The controlled construction (Table 6) remains the cleaner evidence: the low-shift/high-diversity set scores well while the low-shift/low-diversity clump scores poorly. We therefore correct H2. The representativeness–accuracy correlation is real but not causal : it is a shadow of a diversity–accuracy relationship, because shifted random draws tend also to be narrow ones. What a small-data context needs appears to be coverage of the feature space , not a close match to the marginal feature distribution. This also explains the cross-method observation that K-Means and FPS, which are far from distribution-preserving but cover the space well, match or beat random (H3): they succeed through diversity, the factor that matters, not through representativeness, the factor that does not. Formal inference. To test this with proper accounting for dataset-level variation, we fit a 7Table 7: Correlation of context geometry with AUC (all six construction methods pooled, per dataset). “shift |div” is the partial correlation of feature-mean shift with AUC controlling for diversity, and vice versa; β are standardized regression coefficients from AUC ∼ shift + diversity.                                                                                                       
+
+> Dataset r(shift) r(div) shift |div div |shift βshift βdiv
+> diabetes +0 .49 +0 .67 +0 .34 +0 .60 +0 .27 +0 .57
+> credit-g +0 .13 +0 .35 +0 .09 +0 .34 +0 .08 +0 .34
+> vehicle −0.62 +0 .39 −0.67 +0 .49 −0.61 +0 .38
+> wdbc +0 .00 +0 .46 −0.37 +0 .56 −0.40 +0 .69
+> breast-w +0 .40 +0 .57 −0.02 +0 .45 −0.03 +0 .59
+> blood-transfusion +0 .26 +0 .17 +0 .20 +0 .03 +0 .24 +0 .04
+> ionosphere −0.65 +0 .62 −0.84 +0 .83 −0.66 +0 .63
+> sonar −0.11 −0.07 −0.15 −0.12 −0.17 −0.13
+> glass −0.49 +0 .02 −0.56 −0.31 −0.66 −0.32
+> australian +0 .13 −0.33 +0 .08 −0.32 +0 .08 −0.32
+> heart-statlog −0.11 −0.26 −0.15 −0.28 −0.15 −0.28
+> segment +0 .36 +0 .41 −0.12 +0 .25 −0.36 +0 .75
+> waveform-5000 +0 .27 +0 .10 +0 .34 +0 .24 +0 .38 +0 .25
+> spambase +0 .53 +0 .48 +0 .26 +0 .05 +0 .46 +0 .08
+> kc1 +0 .02 −0.23 +0 .50 −0.54 +1 .09 −1.20
+> pooled (z-scored) +0 .04 +0 .22 −0.01 +0 .22 −0.01 +0 .23
+
+linear mixed-effects model [14] over all 945 constructed contexts from the 15 datasets, AUC ∼ diversity + shift + (1 | dataset ),
+
+with predictors and outcome z-scored within dataset. Diversity is a highly significant predictor ( β =+0 .23 , SE 0.03 , p = 3 × 10 −12 , 95% CI [+0 .16 , +0 .29] ), while feature-mean shift is not significant once diversity is in the model ( β = −0.01 , SE 0.03 , p = 0 .71 , 95% CI [−0.08 , +0 .05] ). A random-slope variant (diversity slope varying by dataset) agrees on the sign and significance of diversity (β = +0 .25 , p = 0 .004 ); shift is small and, if anything, negative ( β = −0.09 , p = 0 .008 ), the opposite of what representativeness would predict. With 15 dataset groups the random-slope covariance is well-conditioned, unlike the six-dataset pilot. The pooled effect is smaller than that pilot suggested (β = 0 .23 vs. 0.47 ), which we read as regression to a more reliable estimate on the broader sample. We say “appears to be” deliberately: the per-dataset partial correlations are mixed (Table 7), our diversity and coverage measures are geometric proxies, and the evidence is a controlled association across constructions, not a randomized single-factor intervention. The claim we stand behind is the aggregate one, that diversity predicts accuracy and feature-mean shift does not, and it is backed by the controlled test and the mixed-effects model. 
+
+## 6 H3: Selection Cost 
+
+At a fixed budget of k=128 we compared uniform random selection against K-Means (nearest training point to each centroid, using k-means++ seeding [6]) and farthest-point sampling (FPS, the classic 2-approximation to k-center [7]), three seeds each. Table 8 reports mean AUC and the mean time to 
+
+choose the prototypes (separate from inference). 
+
+What we observe. Across all 15 datasets, accuracy differences between the three methods are small, within about one to three AUC points, and not in a consistent direction (K-Means marginally ahead on some, FPS or random on others). The 95% confidence intervals overlap across methods on most datasets; on credit-g, where K-Means led random by about one point, the intervals ( 0.755 ±.068 
+
+vs. 0.745 ±.057 ) overlap heavily, so that gap is not distinguishable from seed noise. Meanwhile the compute cost differs sharply: random selection took on the order of 0.0003 s versus ∼0.22 s for K-Means, roughly three orders of magnitude. Given near-equal accuracy, the extra machinery of K-Means or FPS bought little over drawing rows at random. 82.5 2.0 1.5 1.0 0.5 0.0 0.5 1.0 1.5 
+
+> context diversity (z-scored)
+> 6
+> 4
+> 2
+> 0
+> 2
+> AUC (z-scored within dataset)
+
+More diverse context -> higher AUC 
+
+> australian
+> blood-transfusion
+> breast-w
+> credit-g
+> diabetes
+> glass
+> heart-statlog
+> ionosphere
+> kc1
+> segment
+> sonar
+> spambase
+> vehicle
+> waveform-5000
+> wdbc
+> australian
+> blood-transfusion
+> breast-w
+> credit-g
+> diabetes
+> glass
+> heart-statlog
+> ionosphere
+> kc1
+> segment
+> sonar
+> spambase
+> vehicle
+> waveform-5000
+> wdbc
+> 0.75
+> 0.50
+> 0.25
+> 0.00
+> 0.25
+> 0.50
+> 0.75
+> partial correlation with AUC
+
+Diversity survives; shift does not 
+
+> diversity | shift
+> shift | diversity
+
+H2 corrected: diversity/coverage drives accuracy, not representativeness Figure 3: H2 corrected. Left: across all constructed contexts, AUC tends to rise with context diversity (z-scored within dataset). Right: partial correlations per dataset. Diversity controlling for shift (green) is positive on most datasets, while shift controlling for diversity (red) is near zero or negative. In aggregate (pooled and mixed-effects) diversity is the factor that survives. australian 
+
+> blood-transfusion
+> breast-w
+> credit-g
+> diabetes
+> glass
+> heart-statlog
+> ionosphere
+> kc1
+> segment
+> sonar
+> spambase
+> vehicle
+> waveform-5000
+> wdbc
+> 0.60
+> 0.65
+> 0.70
+> 0.75
+> 0.80
+> 0.85
+> 0.90
+> 0.95
+> 1.00
+> mean ROC AUC
+
+Accuracy: methods nearly tied      
+
+> random
+> kmeans
+> fps
+> random kmeans fps
+> 10 3
+> 10 2
+> 10 1
+> mean selection time (s, log)
+> 0.0003s
+> 0.2225s
+> 0.0384s
+
+Cost: random is orders of magnitude cheaper 
+
+H3: Expensive selection adds little over random 
+
+Figure 4: Selection methods at k=128 . Accuracy is nearly tied across methods (left); selection cost differs by two to three orders of magnitude (right). This ties back to H2. K-Means and FPS already maximize context diversity, by spreading proto-types across clusters or across the feature space, which is exactly the factor H2 identifies as driving accuracy. They perform similarly to random not despite ignoring distribution matching, but because random already supplies comparable coverage in expectation. The methods differ mainly in cost, not in the property that matters. 
+
+## 7 Supporting: Redundancy and Robustness 
+
+Starting from a random context of k=128 , we either duplicated a fraction of its rows (adding no new information) or dropped a fraction of them. 
+
+Redundancy. Duplicating rows had little effect on most of the 15 datasets: on 13 of them AUC stayed within about 1.5 points up to 70% duplication. The clear exception was blood-transfusion, where duplication steadily hurt ( 0.686 → 0.583 ), with kc1 and glass showing milder declines ( ≈−0.015 ). So duplicate context rows are mostly harmless when the signal is strong, but on weak-signal datasets they skew the context and degrade predictions. 
+
+Robustness. Dropping rows degraded accuracy gradually rather than sharply. Removing 50% 9Table 8: Selection methods at k=128 (mean ROC AUC ± 95% CI over three seeds). Dataset random AUC K-Means AUC FPS AUC diabetes .869 ±.016 .883 ±.007 .877 ±.004 
+
+credit-g .745 ±.057 .755 ±.068 .712 ±.024 
+
+vehicle .947 ±.004 .944 ±.014 .947 ±.004 
+
+wdbc .994 ±.003 .987 ±.004 .994 ±.001 
+
+breast-w .994 ±.004 .995 ±.001 .992 ±.002 
+
+blood-transfusion .686 ±.008 .720 ±.009 .725 ±.007 
+
+ionosphere .978 ±.004 .974 ±.007 .960 ±.003 
+
+sonar .893 ±.004 .895 ±.007 .896 ±.004 
+
+glass .952 ±.005 .938 ±.016 .929 ±.016 
+
+australian .924 ±.012 .934 ±.005 .929 ±.008 
+
+heart-statlog .855 ±.020 .863 ±.005 .868 ±.007 
+
+segment .995 ±.002 .995 ±.001 .997 ±.001 
+
+waveform-5000 .968 ±.001 .958 ±.006 .968 ±.005 
+
+spambase .971 ±.005 .975 ±.007 .966 ±.001 
+
+kc1 .800 ±.012 .790 ±.019 .771 ±.018 
+
+selection time (mean over datasets): 
+
+random ≈ 0.0003 s FPS ≈ 0.04 s K-Means ≈ 0.22 sof a 128-row context cost under 1 AUC point on the stronger datasets (breast-w, diabetes, segment, wdbc) and more on the small or weak ones (sonar −0.076 , glass −0.045 , blood-transfusion −0.071 ). This is consistent with H1: with fewer rows the context covers less of the space and predictions get both worse and noisier. 
+
+## 8 Discussion 
+
+The results fit together into one account of context sampling on small data. H1 shows that a small context makes TabPFN’s prediction unstable, since the answer depends on which rows were drawn, and that enlarging the context removes most of that instability while also raising accuracy. H2 asks why some contexts are better, and the controlled experiments give a sharper answer than the initial correlation suggested: what matters is the context’s diversity / coverage of the feature space, not how closely it matches the training distribution. Matching the marginals, when forced in isolation, actually hurts (because it reduces coverage); diversity is the factor that survives once the two are separated. H3 then follows naturally: uniform random sampling covers the space well in expectation, so it already captures the factor that matters, and the more expensive selection methods (also diverse, but no more so in ways that help) add little accuracy at much higher cost. A larger k helps in the same terms: more rows cover more of the space and are less subject to an unlucky, narrow draw. Taken together, on small tabular datasets the useful things to control are the size and diversity of the context, not its distributional fidelity and not the sophistication of the selection algorithm. Uniform random sampling at a sufficiently large k is a strong and cheap default because it delivers both. 
+
+## 9 Conclusion 
+
+We investigated what makes an in-context training set good for TabPFN on small tabular datasets. (1) Larger contexts are both more accurate and substantially more stable, with the coefficient of variation of AUC falling several-fold as k grows. (2) Accuracy correlates with how representative a random context is, but a controlled experiment overturns that reading: constructing contexts to match the feature means lowers accuracy (by up to 0.5 AUC), and once we disentangle the two factors, context 10 diversity/coverage predicts accuracy (mixed-effects β = +0 .23 , p = 3 ×10 −12 ) while feature-mean shift does not ( β = −0.01 , p = 0 .71 ). (3) K-Means and farthest-point selection, diverse but not distribution-preserving, match random within about one AUC point at two to three orders of magnitude more cost. The practical recommendation is direct: use a sufficiently large random context and spend no effort on expensive selection. The scientific takeaway is that what a small-data context needs appears to be coverage of the feature space, not fidelity to its distribution. Random sampling succeeds because it provides that coverage for free. 
+
+## 10 Limitations 
+
+Several limitations bound how far these conclusions should be read. The most important concerns the strength of the causal claim. Our evidence that diversity, not representativeness, drives accuracy comes from controlled constructions, partial correlations, and a mixed-effects model. This is stronger than a raw correlation, but it is still an association over a designed set of contexts rather than a randomized intervention on a single factor. The per-dataset partial correlations are mixed (positive on nine of fifteen datasets), so the diversity effect is directionally dominant in aggregate but not universal; we say diversity “appears to be” the driver accordingly. Diversity and coverage are themselves measured with geometric proxies (mean pairwise distance, covariance log-determinant), and a different proxy could shift the details. The scope of the evidence is also narrow in ways worth stating plainly. We study fifteen small tabular datasets (roughly 200–5000 rows), so the findings may not extend to much larger, higher-dimensional, or non-tabular data, and the strength of H2 on any single dataset depends on its having AUC headroom. We use a single model (TabPFN v3); whether the same context behavior holds for other in-context tabular learners is untested. We compare three selection methods (random, K-Means, FPS), so a method specifically optimized for context quality, for instance an active-learning-style informativeness criterion [13], could behave differently. Our representativeness descriptors are two coarse distances (class-TV, feature-mean shift), and richer divergences (e.g. MMD, per-feature KL) might explain more; we leave those to future work. Finally, all runs used a single consumer GPU (RTX 4060), so the selection-time comparison reflects that setup and would differ on other hardware. 
+
+## Reproducibility 
+
+All experiments are fully reproducible. The complete source code, experiment scripts, analysis scripts, and figure-generation pipeline are available at: 
+
+https://github.com/mohammed1916/tabmx 
+
+The raw outputs of every experiment are stored under experiments/results/ , including exp14_ context_sampling_*.json , exp15_controlled_*.json , and exp16_disentangle_*.json . All tables and figures in this paper are generated directly from these result files using the provided analysis scripts ( analyze_exp14.py , analyze_exp15.py , analyze_exp16.py , mixed_effects_exp16.py , and 
+
+generate_paper2_figures.py ), ensuring that every reported number is derived automatically from the logged experiment outputs. All datasets are publicly available through OpenML. Dataset identifiers, random seeds, train/test splits, and experiment configurations are recorded in the result files. Experiments were performed using TabPFN v3 on an NVIDIA RTX 4060 GPU. 
+
+## References 
+
+[1] Hollmann, N., Müller, S., Purucker, L., Krishnakumar, A., Körfer, M., Hoo, S. B., Schirrmeister, R. T., & Hutter, F. (2025). Accurate predictions on small data with a tabular foundation model. 
+
+Nature , 637(8045), 319–326. DOI: 10.1038/s41586-024-08328-6. 11 [2] Müller, S., Hollmann, N., Pineda Arango, S., Grabocka, J., & Hutter, F. (2022). Transformers can do Bayesian inference. In International Conference on Learning Representations (ICLR) .[3] Brown, T. B., Mann, B., Ryder, N., Subbiah, M., et al. (2020). Language models are few-shot learners. Advances in Neural Information Processing Systems (NeurIPS) , 33, 1877–1901. [4] Dong, Q., Li, L., Dai, D., Zheng, C., et al. (2024). A survey on in-context learning. In Proceedings of the 2024 Conference on Empirical Methods in Natural Language Processing (EMNLP) .[5] García, S., Derrac, J., Cano, J. R., & Herrera, F. (2012). Prototype selection for nearest neigh-bor classification: taxonomy and empirical study. IEEE Transactions on Pattern Analysis and Machine Intelligence , 34(3), 417–435. [6] Arthur, D., & Vassilvitskii, S. (2007). k-means++: the advantages of careful seeding. In Proceed-ings of the 18th Annual ACM–SIAM Symposium on Discrete Algorithms (SODA) , 1027–1035. [7] Gonzalez, T. F. (1985). Clustering to minimize the maximum intercluster distance. Theoretical Computer Science , 38, 293–306. [8] Kulesza, A., & Taskar, B. (2012). Determinantal point processes for machine learning. Foundations and Trends in Machine Learning , 5(2–3), 123–286. [9] Feldman, D. (2020). Introduction to core-sets: an updated survey. arXiv preprint arXiv:2011.09384 .[10] Sener, O., & Savarese, S. (2018). Active learning for convolutional neural networks: a core-set approach. In International Conference on Learning Representations (ICLR) .[11] Wang, T., Zhu, J.-Y., Torralba, A., & Efros, A. A. (2018). Dataset distillation. arXiv preprint arXiv:1811.10959 .[12] Ghorbani, A., & Zou, J. (2019). Data Shapley: equitable valuation of data for machine learning. In Proceedings of the 36th International Conference on Machine Learning (ICML) , 2242–2251. [13] Settles, B. (2009). Active learning literature survey. Computer Sciences Technical Report 1648, University of Wisconsin–Madison. [14] Bates, D., Mächler, M., Bolker, B., & Walker, S. (2015). Fitting linear mixed-effects models using lme4. Journal of Statistical Software , 67(1), 1–48. [15] Vanschoren, J., van Rijn, J. N., Bischl, B., & Torgo, L. (2013). OpenML: networked science in machine learning. ACM SIGKDD Explorations Newsletter , 15(2), 49–60. 12

@@ -1,0 +1,575 @@
+Title: EdgeLM: Edge Demonstrations for Language Models' Table Understanding
+
+URL Source: https://arxiv.org/pdf/2608.04390v1
+
+Published Time: Thu, 06 Aug 2026 00:24:25 GMT
+
+Number of Pages: 15
+
+Markdown Content:
+## EDGE LM: Edge Demonstrations for Language Models’ Table Understanding 
+
+Soroush Omidvartehrani 
+
+University of Alberta, Canada 
+
+s.omidvartehrani@ualberta.ca 
+
+Mohammadamin Habibollah 
+
+University of Alberta, Canada 
+
+mhabibol@ualberta.ca 
+
+Mohammadreza Daviran 
+
+University of Alberta, Canada 
+
+daviran@ualberta.ca 
+
+Davood Rafiei 
+
+University of Alberta, Canada 
+
+drafiei@ualberta.ca 
+
+Abstract 
+
+Large language models (LLMs) perform table-centric prediction through in-context learning, making demonstration selection critical to per-formance. Existing retrieval methods prioritize similarity to the query, but similar demonstra-tions often reinforce the model’s likely predic-tion rather than reveal the distinctions needed for difficult decisions. We propose E DGE LM, a retrieval framework that instead selects edge evidence, demonstrations that are both relevant to the query and informative about the decision boundary. E DGE LM retrieves two complemen-tary forms of edge evidence by selecting data edges, nearby examples with different ground-truth labels, and model edges, similar examples previously misclassified by the deployed model. EDGE LM requires neither model retraining nor task-specific engineering. Across five data wrangling tasks, fifteen datasets, and five open-weight and proprietary LLMs, E DGE LM con-sistently achieves the best or near-best perfor-mance in every setting, while ablations show that the two forms of edge evidence provide complementary benefits. Our code and datasets are publicly available at https://github.c om/soroushomidvar/EdgeLM .
+
+1 Introduction 
+
+Tables are widely used for analysis, decision mak-ing, and machine learning, but real-world tabu-lar data rarely comes ready for use. Values may be missing, records that refer to the same entity may not match, and related columns across tables may use different names or formats. Before the data can be used reliably, practitioners must detect erroneous cells, identify duplicate entities, align schemas, fill missing values, and flag anomalous records. These operations, collectively known as 
+
+data wrangling , are fundamental to ensuring data quality and directly affect the reliability of down-stream analytics, machine learning models, and AI systems. Automating data wrangling remains challeng-ing because different tasks require different forms of reasoning over heterogeneous tables. Deter-mining whether a cell is erroneous, whether two records refer to the same entity, or whether two at-tributes should be aligned often requires reasoning over relationships among cells, rows, and columns rather than individual values in isolation. Conse-quently, existing systems typically rely on task-specific rules, handcrafted features, weak supervi-sion, or separately trained models (Mahdavi et al., 2019; Mahdavi and Abedjan, 2020; Li et al., 2020). Although effective in specialized settings, these ap-proaches require substantial engineering effort and often generalize poorly across new tasks, schemas, and domains. LLMs offer a promising alternative by leverag-ing pretrained knowledge to tackle diverse data wrangling tasks with a single model (Narayan et al., 2022; Li et al., 2024b; Zhang et al., 2024a). How-ever, their performance depends critically on the demonstrations provided during in-context learn-ing or the examples seen during fine-tuning (Min et al., 2022; Zhao et al., 2021; Liu et al., 2022a). This raises a fundamental question: what makes a demonstration effective across diverse table-centric prediction tasks? 
+
+Selecting demonstrations is far from straightfor-ward. Including many rows can exceed the context budget while diluting relevant evidence, whereas manually curated examples do not scale to unseen tables and queries. Random sampling and diversity-based selection often ignore the query (Su et al., 2023), while similarity-based retrieval favors ex-amples that resemble the query (Liu et al., 2022a; Rubin et al., 2022) but often fails to expose the evidence that distinguishes competing prediction. For example, two entity pairs may appear nearly identical except for a subtle mismatch that changes the label, or a candidate cell value may look plau-sible yet violate a dependency elsewhere in the 1arXiv:2608.04390v1 [cs.CL] 5 Aug 2026 row. If all retrieved demonstrations support the same prediction, they reinforce the likely answer without revealing where the decision boundary lies. Effective demonstrations should therefore be not only relevant, but also discriminative of the local decision boundary .We hypothesize that demonstrations near deci-sion boundaries provide the missing discriminative signal. Similar examples establish the local context, whereas boundary examples reveal the evidence that distinguishes competing predictions. Moti-vated by this observation, we propose E DGE LM, a task-agnostic framework for selecting demonstra-tions for structured prediction over tabular data. EdgeLM augments similarity-based retrieval with 
+
+edge evidence : demonstrations that are both rele-vant to the query and informative about the local decision boundary. We instantiate edge evidence through two complementary perspectives: the data edge , which retrieves neighboring examples from different gold labels, and the model edge , which retrieves nearby examples that the deployed LLM predicts incorrectly, using them as corrective ev-idence. The selected demonstrations fit within a fixed prompt budget and require neither model re-training nor task-specific engineering. We evaluate EdgeLM on five representative data wrangling tasks, fifteen datasets, and five open-weight and proprietary LLMs. Across nearly all task–model combinations, EdgeLM achieves the best performance or performs within one standard deviation of the best result. Ablation studies further show that the data edge and model edge provide complementary benefits across different allocations of the demonstration budget. 
+
+2 Related Work 
+
+2.1 LLMs for Table Understanding and Data Wrangling 
+
+Large language models have substantially broad-ened the range of tabular reasoning tasks that can be addressed with a single underlying model. Early work adapted language models to tables through table-aware pretraining (Yin et al., 2020; Herzig et al., 2020; Liu et al., 2022b; Borisov et al., 2023), while more recent approaches leverage instruction tuning and general-purpose LLMs (Li et al., 2024b; Zhang et al., 2024b,a). Other methods improve table understanding through multi-step reasoning and retrieval, such as Chain-of-Table (Wang et al., 2024) and TableRAG (Chen et al., 2024). Mean-while, studies of serialization and row–column or-dering have shown that LLM performance is highly sensitive to the context presented to the prompt (Sui et al., 2024; Liu et al., 2024; Habibollah and Rafiei, 2026; Yang et al., 2022; Fang et al., 2024). LLMs have also been applied to individual data wrangling tasks, including data cleaning (Naeem et al., 2024), entity resolution (Peeters and Bizer, 2023; Peeters et al., 2024), anomaly detection (Li et al., 2024a), and missing-value imputation (Wang et al., 2025). Across these and related tabular and database problems, existing approaches commonly rely on task or schema-specific prompts, retrieval strategies, or adaptation techniques (Nan et al., 2023; He et al., 2025; Daviran et al., 2026). In contrast, we study demonstration selection itself as a task-agnostic problem, using a unified formula-tion that spans multiple data wrangling tasks while keeping the model, prompt structure, and inference procedure fixed. 
+
+2.2 Demonstration Selection for In-Context Learning 
+
+The choice of demonstrations has a substantial impact on in-context learning (Min et al., 2022; Zhao et al., 2021). Existing methods primarily op-timize demonstration selection for relevance, cov-erage, or uncertainty. Similarity-based retrieval selects examples that resemble the input query (Liu et al., 2022a; Rubin et al., 2022), whereas diversity-based methods seek broader coverage of the in-put or output space (Su et al., 2023; Levy et al., 2023). Other approaches combine relevance and diversity, iteratively refine the selected set, or ex-plicitly balance label distributions (Qin et al., 2024; Omidvartehrani and Rafiei, 2026; Tran et al., 2025). Uncertainty-guided methods instead identify glob-ally informative examples for annotation or prompt-ing (Diao et al., 2024; Mavromatis et al., 2024). Our work addresses a complementary question: 
+
+which nearby demonstrations are most informa-tive for distinguishing competing predictions? Ex-isting retrieval methods favor examples that are representative of the query but do not explicitly retrieve demonstrations that lie near local decision boundaries or reveal systematic errors made by the deployed model. EdgeLM fills this gap by re-trieving demonstrations that are both relevant and discriminative through complementary data-edge 
+
+and model-edge evidence. 2Table 1: Representative table-centric prediction tasks under the unified prediction formulation.                              
+
+> Task Instance xLabels YτQuestion ( f∗
+> τ)†
+> ED (ti[Aj], t i){error ,clean }Cell corrupted? EM (t, t ′){match ,non-match }Same entity? SM (A, A ′){match ,non-match }Same attribute? DI (ti, A T)dom( AT)Which value? AD ti{normal ,anomaly }Anomalous?
+> †The exact statement of each is given in Appendix A.
+
+3 Preliminary 
+
+Before presenting E DGE LM, we introduce a uni-fied formulation for prediction over structured tabular data that abstracts away individual tasks. Although our evaluation focuses on data wran-gling tasks, the formulation naturally extends to a broader class of table-centric prediction problems. 
+
+Unified Prediction Formulation. We consider prediction problems defined over one or more rela-tional tables. Given a query instance extracted from the tables, the objective is to predict its unknown label. This abstraction encompasses a broad range of table-centric prediction problems, including data wrangling, table understanding, and related struc-tured prediction tasks. Formally, let τ denote a prediction task with instance space Xτ and finite label space Yτ . Given a query instance x ∈ X τ , the goal is to predict 
+
+y = f ∗ 
+
+> τ
+
+(x) ∈ Y τ ,
+
+where f ∗ 
+
+> τ
+
+: Xτ → Y τ is the unknown task-specific decision function. The form of the query instance depends on the application. It may correspond to a cell, a tuple, a pair of tuples, a pair of attributes, an entire table, or any other structured object derived from one or more relational tables. Let D denote a table with schema R = {A1, . . . , A m}, where each tuple ti ∈D contains attribute values ti[Aj ]. Tasks involving multiple tables additionally assume a second table 
+
+D′ with schema R′.Table 1 illustrates five representative data wran-gling tasks that instantiate this formulation. These tasks serve as evaluation benchmarks throughout the paper, but the formulation itself is considerably more general. 
+
+Retrieval-Augmented Prediction. Rather than adapting the language model to each task, we per-form prediction through in-context learning using a frozen LLM M. The central design choice is therefore not the language model itself, but which labeled instances are retrieved and rendered as demonstrations. For each task, we assume access to a labeled reference pool 
+
+Pτ ⊆ X τ × Y τ ,
+
+whose elements are labeled instances drawn from the same application domain as the query. De-pending on the application, they may correspond to labeled cells, tuples, tuple pairs, attribute pairs, completed tuples, or other structured objects. Given a query instance x, a retrieval function 
+
+σ(x, Pτ ) selects a set of k instances S ⊆ P τ .
+
+Each retrieved instance is rendered as an in-context demonstration and included together with x in the prompt supplied to M. The model predicts 
+
+ˆy = arg max 
+
+> y∈Y τ
+
+pM(y | x, S),
+
+and the prediction is considered correct when ˆy =
+
+f ∗ 
+
+> τ
+
+(x).
+
+Goal. Rather than modifying the underlying lan-guage model M, we focus on selecting the demon-stration set S. Our objective is to improve predic-tion accuracy solely through demonstration selec-tion, while keeping the language model, prompts, and task formulation fixed. Specifically, we seek a retrieval function σ that selects demonstrations that are both relevant to the query and informative about the local decision boundary of the unknown deci-sion function f ∗ 
+
+> τ
+
+. Although our experiments focus on data wrangling, the proposed retrieval strategy applies to any table-centric prediction problem that can be solved through in-context learning from la-beled examples. 
+
+4 Edge-Aware Demonstration Selection 
+
+Section 3 formulated demonstration selection as the problem of retrieving examples that are both relevant to the query and informative about the local decision boundary of the unknown decision function f ∗ 
+
+> τ
+
+. Because this boundary is not directly observable, E DGE LM approximates it using two complementary signals: label variation in the lo-cal data neighborhood and errors made by the de-ployed language model. Similarity-based retrieval preserves relevance to the query, while these two forms of edge evidence expose distinctions that conventional nearest-neighbor retrieval may over-look. The first signal comes from the labeled data. Nearby instances with different ground-truth labels 3indicate that competing outcomes occur within the same local region of the instance space. We call demonstrations selected from such local label con-trasts data-edge demonstrations . The second signal comes from the deployed model. Nearby instances that the model predicts incorrectly identify regions where its approximation of f ∗ 
+
+> τ
+
+diverges from the ground truth. We call these model-edge demonstra-tions . Thus, data edges characterize local variation in the task labels, whereas model edges character-ize the model’s local failure modes (see Figure 1). Both components use the same task-specific sim-ilarity function as conventional retrieval and dif-fer only in how they select from the ranked can-didates. Given a total demonstration budget K,EDGE LM allocates Kdata positions to local label contrast and Kmodel positions to model-specific er-rors, with Kdata + Kmodel = K. The two sets are combined into a single prompt, as summarized in Figure 2. The following subsections describe how each source of edge evidence is constructed and how the resulting demonstrations are assembled. 
+
+4.1 Data Edge: Local Label Contrast 
+
+The data-edge component seeks demonstrations that introduce label contrast without sacrificing rel-evance. For a query x, we rank the labeled pool Pτ
+
+by similarity to x and define Nw(x) as the neigh-borhood containing the top w ranked instances. Re-stricting selection to Nw(x) ensures that any intro-duced contrast remains local to the query. A conventional similarity-based strategy would select the Kdata nearest instances. This set may, however, be label-homogeneous even when other labels occur slightly farther away within the same neighborhood. For instance, the nearest entity pairs may all have the label match , repeatedly reinforc-ing that prediction without showing which subtle differences would instead imply non-match . Such demonstrations establish similarity but provide lit-tle evidence about the distinction between compet-ing outcomes. EDGE LM intervenes only when the nearest-neighbor set fails to represent the label contrast available locally. We first inspect the Kdata near-est instances. If they already cover the maximum number of distinct labels that can be represented under the available budget and among the labels observed in NW (x), they are retained unchanged. Otherwise, the instances in NW (x) are partitioned by their ground-truth labels, with instances within each label group ordered by similarity to x. The  
+
+> (a) Similar examples, different labels (b) Close examples model got wrong
+> Figure 1: Two complementary sources of edge evidence in EDGE LM: (a) nearby examples with different labels, and (b) nearby examples that the LLM previously predicted incor-rectly.
+
+groups are ordered by the similarity of their nearest member and visited in round-robin order, select-ing the most similar remaining instance from each group until Kdata instances have been chosen. We denote the resulting sequence by Sdata (x).This procedure applies to both binary and multi-class tasks. Importantly, its objective is not to bal-ance the labels globally, but to expose label contrast within the query’s local neighborhood. If NW (x)
+
+contains only one label, no local contrast is avail-able and the procedure reduces to ordinary nearest-neighbor selection. 
+
+4.2 Model Edge: Query-Local Error Retrieval 
+
+The model-edge component provides a complemen-tary, model-specific view of the boundary. Even when the labeled neighborhood contains little label contrast, nearby examples on which the deployed model fails can reveal distinctions that the model has not learned to make reliably (Kadavath et al., 2022). Because different language models may fail on different instances of the same task, this evidence captures local weaknesses that cannot be obtained from the labeled data alone. Before test-time inference, we evaluate the model zero-shot on every labeled instance 
+
+(xi, y i) ∈ P τ . Let ˆyzs  
+
+> i
+
+denote the prediction ob-tained using the same task instruction and inference procedure as at test time, but without demonstra-tions: M(xi, ∅). We then construct the model-specific error pool: 
+
+EM,τ = {(xi, ˆyzs  
+
+> i
+
+, y i) : ( xi, y i) ∈ P τ , ˆyzs 
+
+> i
+
+̸ = yi}
+
+. The error pool is constructed once for each model, task, and dataset using only the labeled reference pool; test instances are never involved. 1
+
+> 1Appendix C quantifies the cost of this step and shows that the added per-query retrieval stays within a small factor of plain similarity retrieval and well under a millisecond.
+
+4Attributes                      
+
+> /Labels /
+> ŷ
+> yGround truth
+> Model output
+> q1
+> Legend
+> q1
+> t1
+> t2
+> t3
+> t4
+> t5
+> t4t3
+> Data Edge
+> Once per dataset and model
+> ?
+> Labeled pool Rank pool by similarity to the query Prompt
+> LLM
+> Model-mistake bucket (ŷ ≠ y)
+> t2yŷ
+> t5yŷ
+> t1yŷ
+> t5
+> t3
+> t6
+> t4
+> ...
+> ...
+> ...
+> Query
+> Queries
+> Task Description
+> Data Edge Demonstrations
+> Model Edge Demonstrations
+> t4
+> t3
+> t5
+> q1?
+> Demonstrations
+> ...
+> Prompt
+> q2?
+> q3?
+> ...
+> ...
+> ...
+> ...
+> ...
+> ...
+> ...
+> ...
+> ...
+> ...
+> ...
+> ...
+> Preparation Query-Specific Edge Retrieval Prediction
+> Model Edge
+> t5yŷ
+> Examples predicted incorrectly before
+> q4?...
+> Edge Demonstrations: K data + K model
+> Examples with different gold labels
+
+Figure 2: Overview of E DGE LM. Before inference, the LLM is evaluated zero-shot on the labeled pool to identify model-specific errors. For each test query, pool instances are ranked by similarity. E DGE LM selects locally contrasting examples from the query neighborhood (data edge) and retrieves similar model errors from the precomputed error pool (model edge). The two sets are combined into a single prompt and passed to the LLM. 
+
+For a query x, we rank the instances in EM,τ by their similarity to x and select the Kmodel near-est errors. The resulting sequence, denoted by 
+
+Smodel (x), contains model failures that are locally relevant to the query rather than arbitrary errors from elsewhere in the instance space. Each selected error is rendered as a corrective demonstration containing the original instance, the model’s incorrect zero-shot prediction, and the cor-responding ground-truth label. This format explic-itly exposes the distinction that the model previ-ously failed to make. These examples should not be interpreted as known boundary points of the underlying function f ∗
+
+τ ; rather, they identify local regions where the deployed model disagrees with the available supervision. The complete prompt format is provided in Appendix A. 
+
+4.3 Edge Prompt Construction 
+
+For each query x, E DGE LM concatenates the data-edge and model-edge sequences: Sedge (x) = 
+
+Sdata (x) ∥ S model (x), where ∥ denotes sequence concatenation. Data-edge demonstrations pre-cede model-edge demonstrations in all experi-ments. To avoid redundancy, instances already selected for Sdata (x) are excluded when construct-ing Smodel (x), ensuring that no instance occupies multiple prompt positions. The total demonstra-tion budget K is divided according to a fixed 
+
+Kdata : Kmodel ratio, whose sensitivity is exam-ined in Section 5.4. Instances in Sdata (x) are rendered as standard input–answer demonstrations. Each instance in 
+
+Smodel (x) additionally includes the model’s in-correct zero-shot prediction before presenting the ground-truth answer. The final prompt consists of the task instruction, the combined edge demonstra-tions, and the query instance, in that order. The prompt is then supplied to the LLM to obtain the prediction. 
+
+5 Experiments 
+
+This section, together with the supporting appen-dices, presents a comprehensive evaluation of our proposed demonstration selection framework. The experiments aim to answer four main questions: (1) Without any fine-tuning, does drawing demon-strations from the decision boundary beat zero-shot, random, label-diverse, and similarity selec-tion, does that advantage hold across tasks, datasets, model families and scales, and where does it weaken (§5.2, Appendix B)? (2) Does each of the two edge views help on its own, or is one of them carrying the gain (§5.3)? (3) How much does the gain depend on how the demonstration budget is divided between the two views (§5.4)? (4) Is the method robust to hyperparameters, the budget K
+
+and the selection window w, and what does it cost to run (Appendices C and D)? 
+
+5.1 Datasets and Experimental Setup 
+
+Table 2 summarizes the datasets. They vary in do-main, size, and number of attributes, and are widely used in data wrangling studies (Zhang et al., 2024a; Mahdavi et al., 2019; Li et al., 2020; Narayan et al., 2022; Köpcke et al., 2010; Koutras et al., 2021; Vanschoren et al., 2014; Mahdavi and Abed-jan, 2020), providing a diverse testbed. Each 5dataset is subsampled to at most 2,500 instances and split 80 /20 into a demonstration pool and a test set; the pool is the only source of demon-strations, and both subsample and split are fixed by a common random seed, so all methods and models are evaluated on identical test instances. We evaluate five LLMs of varying sizes from five families: three open-weight (Qwen2.5-7B, Llama-3.1-8B, Mistral-Nemo-12B) and two proprietary (GPT-4o-mini, Gemini-3.1-flash-lite). On every model we compare five demonstration-selection strategies: zero-shot (no demonstrations), random 
+
+(drawn uniformly from the pool), diverse (drawn to balance the label space), similarity (the query’s nearest neighbors), and E DGE LM (ours). Prior task-specific systems couple the choice of demon-strations with other design choices, such as a tai-lored prompt, a specialised model, or per-task tun-ing, and are typically developed for one or a few tasks; the demonstration strategy is therefore one ingredient among several, and its individual effect is hard to read off directly. Because our aim is to measure the effect of demonstration selection on its own, we hold everything else fixed: within each model the five strategies use an identical prompt template, label space, demonstration pool, and test set, and differ only in which demonstrations oc-cupy the K slots. Unless otherwise specified, each uses K = 5 demonstrations, and we report accu-racy and F1 (weighted F1 for the multi-class DI). Each configuration is averaged over three seeds, the open-weight models run on a single H100 GPU on an HPC cluster, and the proprietary models are queried through their providers’ APIs. 
+
+5.2 Consistency Across Models and Tasks 
+
+Table 3 reports the performance of five models across different demonstration-selection strategies. Across all models and tasks, E DGE LM achieves the highest F1 or performs comparably to the best method in nearly every setting. Its boundary-aware demonstrations are at least as effective as the best alternative on every task and every model, and usu-ally strictly better, whereas the choice of which baseline comes closest changes from task to task and model to model. The four baselines fall in a consistent order. Zero-shot is the weakest on average and the most volatile. It can be respectable when the task matches the model’s pretraining (GPT-4o-mini reaches 0.850 F1 on SM) yet collapse on the next task (the same model scores only 0.226 on DI).                                                  
+
+> Table 2: The 15 datasets. #inst is the task’s instance (cell for ED, record pair for EM, column pair for SM, row for DI, record for AD).
+> Task Dataset Domain #attr #inst ED Beers beer catalog 11 26,510 Flights flight times 716,632 Hospital hospital quality 20 20,000 EM Amazon-Google software 311,460 DBLP-ACM bibliographic 412,363 Walmart-Amazon retail products 510,242 SM ChEMBL-Join chemical assays 21,200 OpenData-Join open data 21,200 TPC-DI-Join finance 21,188 DI Splice DNA sequences 60 3,190 DiabetesPima clinical 8768 BalanceScale balance scale 4625 AD KDD-DoS DoS attacks 41 391,458 KDD-Probe probing attacks 41 4,107 KDD-RareAttack rare attacks 41 1,178
+
+Random improves on zero-shot by supplying the task format but adds no targeted signal. Diver-sity balances the label space and adds one piece of targeted structure, guaranteeing that every label appears, lifting the rare-class F1 above random on the imbalanced tasks. For example on anomaly detection, diversity beats random on all three open models (Qwen2.5-7B 0.593 vs. 0.557 , Llama-3.1-8B 0.575 vs. 0.551 , Mistral-Nemo-12B 0.576 vs. 
+
+0.549 ). Yet without locality it still trails similarity on the tasks whose decision is local, and it never ap-proaches edge. Similarity is the strongest baseline, as expected, because near-neighbors share surface features with the query, and it leads some schema-matching and anomaly-detection cells. Neverthe-less, similarity is systematically beaten on the tasks whose decision is not local; on error detection, EDGE LM improves F1 by 0.107 –0.127 across the three open models, while on entity matching the improvement reaches 0.069 . E DGE LM keeps sim-ilarity’s locality where it helps and adds bound-ary and mistake demonstrations where it does not. It exceeds the diversity baseline in all 25 model– task combinations, indicating that label diversity alone, without locality and model-specific correc-tions, does not close the gap. Across tasks, the size of the gain tracks the head-room the strongest baseline leaves. Anomaly de-tection, whose minority (anomaly) class is rare and easily missed, shows the largest improve-ments, where edge lifts F1 over similarity by 
+
++0 .212 (Qwen2.5-7B), +0 .170 (Llama-3.1-8B) and +0 .099 (Mistral-Nemo-12B), and over zero-6Table 3: Demonstration selection across different mod-els. Each cell is F1 / weighted F1 (Accuracy in paren-theses), and bold marks the best F1 per row and any within seed-to-seed standard deviation of it, i.e. a tie.                                                         
+
+> Task Zero-shot Random Diversity Similarity Edge
+> Qwen2.5-7B
+> ED .322 (.813) .237 (.778) .251 (.795) .279 (.784) .388 (.819)
+> EM .701 (.941) .643 (.907) .658 (.908) .738 (.945) .772 (.955)
+> SM .796 (.886) .807 (.886) .820 (.891) .888 (.926) .896 (.935)
+> DI .326 (.414) .573 (.568) .543 (.540) .588 (.591) .583 (.578)
+> AD .141 (.720) .557 (.734) .593 (.759) .628 (.793) .840 (.924)
+> Llama-3.1-8B
+> ED .286 (.669) .345 (.816) .412 (.822) .474 (.771) .581 (.849)
+> EM .457 (.668) .463 (.729) .483 (.709) .558 (.855) .627 (.900)
+> SM .789 (.875) .800 (.866) .799 (.869) .910 (.936) .936 (.955)
+> DI .090 (.210) .482 (.495) .468 (.482) .586 (.594) .591 (.603)
+> AD .346 (.741) .551 (.742) .575 (.697) .810 (.906) .980 (.990)
+> Mistral-Nemo-12B
+> ED .236 (.857) .321 (.798) .349 (.814) .344 (.756) .471 (.818)
+> EM .660 (.906) .591 (.859) .605 (.863) .651 (.898) .670 (.911)
+> SM .786 (.870) .823 (.872) .854 (.901) .787 (.836) .872 (.907)
+> DI .409 (.551) .524 (.539) .493 (.501) .502 (.501) .502 (.501) AD .369 (.780) .549 (.641) .576 (.668) .756 (.848) .855 (.916)
+> GPT-4o-mini
+> ED .391 (.775) .341 (.803) .363 (.814) .529 (.821) .544 (.881)
+> EM .767 (.955) .693 (.915) .711 (.923) .793 (.955) .788 (.957)
+> SM .850 (.907) .843 (.904) .830 (.896) .913 (.941) .948 (.964)
+> DI .226 (.283) .553 (.540) .545 (.537) .555 (.556) .609 (.607)
+> AD .427 (.792) .645 (.817) .654 (.820) .889 (.941) .955 (.978)
+> Gemini-3.1-flash-lite
+> ED .437 (.908) .478 (.906) .732 (.927) .774 (.960) .834 (.963)
+> EM .781 (.951) .795 (.952) .806 (.957) .843 (.968) .871 (.976)
+> SM .921 (.946) .954 (.967) .938 (.955) .978 (.985) .984 (.989)
+> DI .645 (.704) .734 (.749) .728 (.728) .770 (.771) .799 (.802)
+> AD .699 (.863) .768 (.888) .803 (.898) .983 (.992) .991 (.996)
+
+shot by as much as +0 .699 . Error detection be-haves the same way, with edge ahead of similarity by roughly 0.11 to 0.13 F1 on the open models. At the other extreme, schema matching is close to satu-rated, similarity already clearing 0.91 F1 on Llama-3.1-8B, GPT-4o-mini and Gemini-3.1-flash-lite, so edge’s gains there are small ( +0 .006 to +0 .085 )and occasionally a tie, but never a loss. These improvements are concentrated in F1 rather than accuracy. For instance, on Qwen2.5-7B anomaly detection, edge raises F1 from 0.141 to 0.840 while accuracy moves only from 0.720 to 0.924 , confirm-ing that the method recovers the minority class that imbalance-blind accuracy hides. Grouping by model type sharpens the scaling pic-ture. On the open 7 to 12B models, whose baselines leave ample room, edge delivers its largest margins and wins or ties all five tasks on Llama-3.1-8B. On the two proprietary models the baselines are stronger, especially similarity (Gemini-3.1-flash-lite already reaches 0.978 on SM and 0.983 on AD), so the absolute margins compress; yet edge still finishes best or tied on all five tasks for Gemini-3.1-flash-lite and on four of five for GPT-4o-mini, including a clear DI win ( +0 .054 F1) that none of the open models achieve. The benefit therefore does not depend on a weak model, as the baseline improves, edge’s advantage narrows but does not reverse. Finally, the table exposes why a single baseline cannot be trusted in practice. Each baseline has a task at which it looks competitive, but none car-ries that strength across the suite. Zero-shot is close to the top on GPT-4o-mini entity matching yet worst by a wide margin on that model’s data imputation; random posts the best data-imputation score on Mistral-Nemo-12B yet sits 0.306 F1 be-low edge on the same model’s anomaly detection; the label-diverse baseline climbs above similarity on Mistral-Nemo schema matching ( 0.854 versus 
+
+0.787 ) yet is mid-pack elsewhere; similarity domi-nates schema matching and anomaly detection yet is overtaken on error detection and entity matching. A practitioner committing to any one rule would win a task and lose others, and the winning choice shifts from model to model. E DGE LM is the only strategy at or above the best baseline on every task of every model, removing the need to guess which selection rule fits a given model–task pair. 
+
+5.3 Ablation Study 
+
+We isolate the two edge components by letting each one alone fill the entire budget and comparing it with the same randomly drawn demonstrations (Ta-ble 4). This construction is preferable to leave-one-out for two reasons. First, assigning the full budget to each component reveals its standalone effect. In a complete edge prompt, a component may occupy only a few slots or contribute little, or even noth-ing, for a particular dataset or model. Removing it would therefore produce only a small change and could understate its value. Second, we compare each component with K random demonstrations rather than with the full edge prompt after remov-ing that component’s examples, ensuring that both prompts contain exactly K demonstrations. Oth-erwise, the prompts would differ in length, con-founding the content of the examples with their 
+
+number and making it possible to attribute a gain to quantity rather than to the examples themselves. Table 4 shows that both components are effective in isolation, with each improving over the random baseline on all five tasks. The improvements range 7Table 4: Ablation. F1 / Weighted F1 for each component alone versus K random, with the gain over random in parentheses.                    
+
+> Random Edge component alone Task F1 Data edge Model edge ED 0.345 0.474 (+0.129) 0.543 (+0.198) EM 0.463 0.558 (+0.095) 0.572 (+0.109) SM 0.800 0.910 (+0.110) 0.856 (+0.056) DI 0.482 0.587 (+0.105) 0.531 (+0.049) AD 0.551 0.810 (+0.259) 0.851 (+0.300)
+
+from +0 .095 to +0 .259 F1 for the data edge and from +0 .049 to +0 .300 for the model edge. Their relative strength depends on the task; the data edge contributes most to schema matching and data im-putation, where a contrasting neighbor sharpens the decision boundary, whereas the model edge contributes most to error and anomaly detection, where correcting the model’s own mistakes is most informative. As neither component is redundant, EDGE LM combines them. 
+
+5.4 Hyperparameter Robustness 
+
+EDGE LM exposes one substantive hyperparame-ter: how the K-demonstration budget is divided between the data-edge and the model-edge com-ponents. Table 5 sweeps every split of the K = 5 
+
+budget on each dataset, from all data edge ( 5/0) to all model edge ( 0/5), and compares the best split per dataset with a single fixed 2/3 default. The method is insensitive to this choice. The oracle-best split, selected per dataset, improves over the fixed 2/3 default by only +0 .010 F1 on average and by at most +0 .043 , and on five of the fifteen datasets the 2/3 default is already optimal. The interior splits ( 4/1, 3/2, 2/3) lie within a few thousandths of one another, and F1 degrades only at the extremes, where one component is removed entirely ( 5/0 or 0/5). This mirrors the ablation of Section 5.3, where both components contribute, so discarding either one costs accuracy, but the exact ratio between them does not. This robustness is a practical advantage. Be-cause F1 is flat across the interior allocations, ap-plying E DGE LM to a new dataset or model needs no grid search over the split and no labeled data beyond the demonstration pool it already relies on. A single fixed default recovers nearly all of the ac-curacy. The gains in Table 3 therefore do not rest on tuning this hyperparameter; they reflect what 
+
+the edge demonstrations are, not a search over how to weight them. Beyond this split, we examine 
+
+Table 5: Allocation robustness. F1 (weighted F1 for the multi-class DI) at each data-edge/model-edge split of the K = 5 budget, per dataset; the shaded cell is the best split and ∆ is its gain over the fixed 2/3 default. The best split beats 2/3 by only +0 .010 F1 on average, so E DGE LM is insensitive to the allocation. Rows are grouped by task (top to bottom: ED, EM, SM, DI, AD).                                                                                                                  
+
+> Data edge / Model edge Dataset 5/0 4/1 3/2 2/3 1/4 0/5 ∆2/3 Beers 0.703 0.820 0.865 0.913 0.907 0.886 +0.000 Fligh. 0.563 0.644 0.660 0.669 0.673 0.581 +0.004 Hosp. 0.131 0.145 0.152 0.164 0.170 0.163 +0.006 A.-G. 0.473 0.493 0.481 0.472 0.436 0.444 +0.021 D.-A. 0.737 0.820 0.824 0.823 0.791 0.682 +0.001 W.-A. 0.465 0.576 0.554 0.583 0.589 0.590 +0.007 ChEM. 0.885 0.914 0.923 0.906 0.904 0.829 +0.017 OpenD. 0.928 0.917 0.946 0.949 0.926 0.832 +0.000 TPC-D. 0.916 0.918 0.939 0.970 0.974 0.908 +0.004 Balan. 0.567 0.565 0.608 0.565 0.563 0.558 +0.043 Diab. 0.672 0.686 0.687 0.655 0.550 0.520 +0.032 Splice 0.517 0.609 0.583 0.590 0.598 0.515 +0.019 DoS 0.854 0.934 0.954 0.982 0.974 0.916 +0.000 Probe 0.784 0.958 0.962 0.977 0.934 0.831 +0.000 Rare 0.816 0.949 0.960 0.982 0.938 0.806 +0.000
+
+the sensitivity to the two remaining numeric hy-perparameters, the demonstration budget K and the selection window w, in Appendix D, where the advantage over both baselines stays stable across a wide range of each. 
+
+6 Conclusion 
+
+We revisited demonstration selection for in-context table understanding and argued that its usual ob-jective, similarity to the query, is poorly suited to instances near a decision boundary, where the nearest neighbors tend to share the query’s likely label and reinforce it rather than expose the distinc-tion the model must make. We instead proposed selecting edge demonstrations that lie close to a boundary, located from two complementary views, the labeled data and the deployed model’s predic-tions. Casting five data wrangling tasks as one pre-diction problem, we evaluated on fifteen datasets and five LLMs, both open-source and proprietary. EDGE LM consistently outperforms the other se-lection strategies, and its two views prove comple-mentary and robust to how the budget is divided. A demonstration’s position relative to the decision boundary can therefore matter more than how close it is to the query, making boundary-aware retrieval a simple and general lever for in-context learning. 8Limitations 
+
+EDGE LM draws its demonstrations from a labeled pool and the frozen model’s own predictions, so it assumes a modest amount of task supervision; where no labels exist, neither view of the boundary can be built. We consider this requirement light, since only a small pool is needed and no fine-tuning is performed. Our study also stays within tabular data wrangling under a single prediction abstrac-tion; because the method depends only on retrieval over a labeled pool and the frozen model, with no task-specific component, extending it to streaming or online settings and to non-tabular structured data is a natural direction for future work. 
+
+References 
+
+Vadim Borisov, Kathrin Seßler, Tobias Leemann, Mar-tin Pawelczyk, and Gjergji Kasneci. 2023. Language models are realistic tabular data generators. In In-ternational Conference on Learning Representations (ICLR) .Si-An Chen, Lesly Miculicich, Julian Martin Eisen-schlos, Zifeng Wang, Zilong Wang, Yanfei Chen, Yasuhisa Fujii, Hsuan-Tien Lin, Chen-Yu Lee, and Tomas Pfister. 2024. TableRAG: Million-token table understanding with language models. In Advances in Neural Information Processing Systems (NeurIPS) ,volume 37. CMS. 2019. Hospital compare. https://data.cms .gov/provider-data/ . U.S. Centers for Medicare and Medicaid Services. Mohammadreza Daviran, Brian Lin, and Davood Rafiei. 2026. Sql-exchange: Transforming sql queries across domains. Proc. VLDB Endow. , 19(6):1291–1304. Shizhe Diao, Pengcheng Wang, Yong Lin, Rui Pan, Xi-ang Liu, and Tong Zhang. 2024. Active prompting with chain-of-thought for large language models. In 
+
+Proceedings of the 62nd Annual Meeting of the As-sociation for Computational Linguistics (Volume 1: Long Papers) , pages 1330–1350, Bangkok, Thailand. Association for Computational Linguistics. Xi Fang, Weijie Xu, Fiona Anting Tan, Jiani Zhang, Ziqing Hu, Yanjun Qi, Scott Nickleach, Diego Socol-insky, Srinivasan Sengamedu, and Christos Faloutsos. 2024. Large language models (llms) on tabular data: Prediction, generation, and understanding–a survey. 
+
+arXiv preprint arXiv:2402.17944 .Mohammadamin Habibollah and Davood Rafiei. 2026. Synsql: Synthesizing relational databases for robust evaluation of text-to-sql systems. arXiv preprint arXiv:2604.27261 .Xinrui He, Yikun Ban, Jiaru Zou, Tianxin Wei, Curtiss Cook, and Jingrui He. 2025. LLM-forest: Ensemble learning of LLMs with graph-augmented prompts for data imputation. In Findings of the Association for Computational Linguistics: ACL 2025 , pages 6921–6936, Vienna, Austria. Association for Compu-tational Linguistics. Jonathan Herzig, Paweł Krzysztof Nowak, Thomas Müller, Francesco Piccinno, and Julian Martin Eisen-schlos. 2020. TaPas: Weakly supervised table pars-ing via pre-training. In Proceedings of the 58th An-nual Meeting of the Association for Computational Linguistics (ACL) , pages 4320–4333. Saurav Kadavath, Tom Conerly, Amanda Askell, Tom Henighan, Dawn Drain, Ethan Perez, Nicholas Schiefer, Zac Hatfield-Dodds, Nova DasSarma, Eli Tran-Johnson, et al. 2022. Language models (mostly) know what they know. arXiv preprint arXiv:2207.05221 .Pradap Konda, Sanjib Das, Paul Suganthan G. C., An-Hai Doan, Adel Ardalan, Jeffrey R. Ballard, Han Li, Fatemah Panahi, Haojun Zhang, Jeff Naughton, Shishir Prasad, Ganesh Krishnan, Rohit Deep, and Vi-jay Raghavendra. 2016. Magellan: Toward building entity matching management systems. Proceedings of the VLDB Endowment , 9(12):1197–1208. Hanna Köpcke, Andreas Thor, and Erhard Rahm. 2010. Evaluation of entity resolution approaches on real-world match problems. Proceedings of the VLDB Endowment , 3(1-2):484–493. Christos Koutras, George Siachamis, Andra Ionescu, Kyriakos Psarakis, Jerry Brons, Marios Fragkoulis, Christoph Lofi, Angela Bonifati, and Asterios Katsi-fodimos. 2021. Valentine: Evaluating matching tech-niques for dataset discovery. In 2021 IEEE 37th In-ternational Conference on Data Engineering (ICDE) ,pages 468–479. IEEE. Itay Levy, Ben Bogin, and Jonathan Berant. 2023. Di-verse demonstrations improve in-context composi-tional generalization. In Proceedings of the 61st An-nual Meeting of the Association for Computational Linguistics (ACL) , pages 1401–1422. Aodong Li, Yunhan Zhao, Chen Qiu, Marius Kloft, Padhraic Smyth, Maja Rudolph, and Stephan Mandt. 2024a. Anomaly detection of tabular data using LLMs. arXiv preprint arXiv:2406.16308 .Peng Li, Yeye He, Dror Yashar, Weiwei Cui, Song Ge, Haidong Zhang, Danielle Rifinski Fainman, Dong-mei Zhang, and Surajit Chaudhuri. 2024b. Table-gpt: Table fine-tuned gpt for diverse table tasks. Proceed-ings of the ACM on Management of Data , 2(3):1–28. Xian Li, Xin Luna Dong, Kenneth Lyons, Weiyi Meng, and Divesh Srivastava. 2012. Truth finding on the deep web: Is the problem solved? Proceedings of the VLDB Endowment , 6(2):97–108. Yuliang Li, Jinfeng Li, Yoshihiko Suhara, AnHai Doan, and Wang-Chiew Tan. 2020. Deep entity matching with pre-trained language models. Proceedings of the VLDB Endowment , 14(1):50–60. 
+
+9Jiachang Liu, Dinghan Shen, Yizhe Zhang, Bill Dolan, Lawrence Carin, and Weizhu Chen. 2022a. What makes good in-context examples for GPT-3? In 
+
+Proceedings of Deep Learning Inside Out (DeeLIO 2022): The 3rd Workshop on Knowledge Extrac-tion and Integration for Deep Learning Architectures ,pages 100–114. Qian Liu, Bei Chen, Jiaqi Guo, Morteza Ziyadi, Zeqi Lin, Weizhu Chen, and Jian-Guang Lou. 2022b. TAPEX: Table pre-training via learning a neural SQL executor. In International Conference on Learning Representations (ICLR) .Tianyang Liu, Fei Wang, and Muhao Chen. 2024. Re-thinking tabular data understanding with large lan-guage models. In Proceedings of the 2024 Confer-ence of the North American Chapter of the Associ-ation for Computational Linguistics: Human Lan-guage Technologies (NAACL-HLT) , pages 450–482. Mohammad Mahdavi and Ziawasch Abedjan. 2020. Baran: Effective error correction via a unified context representation and transfer learning. Proceedings of the VLDB Endowment , 13(12):1948–1961. Mohammad Mahdavi, Ziawasch Abedjan, Raul Cas-tro Fernandez, Samuel Madden, Mourad Ouzzani, Michael Stonebraker, and Nan Tang. 2019. Raha: A configuration-free error detection system. In Pro-ceedings of the 2019 International Conference on Management of Data , pages 865–882. Costas Mavromatis, Balasubramaniam Srinivasan, Zhengyuan Shen, Jiani Zhang, Huzefa Rangwala, Christos Faloutsos, and George Karypis. 2024. Cov-erICL: Selective annotation for in-context learning via active graph coverage. In Proceedings of the 2024 Conference on Empirical Methods in Natural Language Processing , pages 21268–21286, Miami, Florida, USA. Association for Computational Lin-guistics. Sewon Min, Xinxi Lyu, Ari Holtzman, Mikel Artetxe, Mike Lewis, Hannaneh Hajishirzi, and Luke Zettle-moyer. 2022. Rethinking the role of demonstrations: What makes in-context learning work? In Proceed-ings of the 2022 Conference on Empirical Methods in Natural Language Processing (EMNLP) , pages 11048–11064. Zan Ahmad Naeem, Mohammad Shahmeer Ahmad, Mohamed Eltabakh, Mourad Ouzzani, and Nan Tang. 2024. Retclean: Retrieval-based data cleaning us-ing llms and data lakes. Proceedings of the VLDB Endowment , 17(12):4421–4424. Linyong Nan, Yilun Zhao, Weijin Zou, Narutatsu Ri, Jaesung Tae, Ellen Zhang, Arman Cohan, and Dragomir Radev. 2023. Enhancing text-to-SQL capa-bilities of large language models: A study on prompt design strategies. In Findings of the Association for Computational Linguistics: EMNLP 2023 , pages 14935–14956, Singapore. Association for Computa-tional Linguistics. Avanika Narayan, Ines Chami, Laurel Orr, and Christo-pher Ré. 2022. Can foundation models wrangle your data? Proceedings of the VLDB Endowment ,16(4):738–746. Michiel O. Noordewier, Geoffrey G. Towell, and Jude W. Shavlik. 1991. Training knowledge-based neural networks to recognize genes in dna sequences. In 
+
+Advances in Neural Information Processing Systems (NIPS) , pages 530–536. Soroush Omidvartehrani and Davood Rafiei. 2026. Ldi: Localized data imputation for text-rich tables. 
+
+Preprint , arXiv:2506.16616. Ralph Peeters and Christian Bizer. 2023. Using Chat-GPT for entity matching. In Proceedings of the 27th European Conference on Advances in Databases and Information Systems (ADBIS) , pages 221–230. Ralph Peeters, Aaron Steiner, and Christian Bizer. 2024. Entity matching using large language models. arXiv preprint arXiv:2310.11244 .Chengwei Qin, Aston Zhang, Chen Chen, Anirudh Da-gar, and Wenming Ye. 2024. In-context learning with iterative demonstration selection. In Findings of the Association for Computational Linguistics: EMNLP 2024 , pages 7441–7455. Ohad Rubin, Jonathan Herzig, and Jonathan Berant. 2022. Learning to retrieve prompts for in-context learning. In Proceedings of the 2022 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies (NAACL-HLT) , pages 2655–2671. Robert S. Siegler. 1976. Three aspects of cognitive development. Cognitive Psychology , 8(4):481–520. Jack W. Smith, James E. Everhart, W. C. Dickson, William C. Knowler, and Robert S. Johannes. 1988. Using the ADAP learning algorithm to forecast the onset of diabetes mellitus. In Proceedings of the An-nual Symposium on Computer Application in Medical Care , pages 261–265. Salvatore J. Stolfo, Wei Fan, Wenke Lee, Andreas Pro-dromidis, and Philip K. Chan. 2000. Cost-based modeling for fraud and intrusion detection: Results from the JAM project. In Proceedings of the DARPA Information Survivability Conference and Exposition (DISCEX) , pages 130–144. Hongjin Su, Jungo Kasai, Chen Henry Wu, Weijia Shi, Tianlu Wang, Jiayi Xin, Rui Zhang, Mari Ostendorf, Luke Zettlemoyer, Noah A. Smith, and Tao Yu. 2023. Selective annotation makes language models better few-shot learners. In International Conference on Learning Representations (ICLR) .Yuan Sui, Mengyu Zhou, Mingjie Zhou, Shi Han, and Dongmei Zhang. 2024. Table meets LLM: Can large language models understand structured table data? a benchmark and empirical study. In Proceedings of the 17th ACM International Conference on Web Search and Data Mining (WSDM) .
+
+10 Nhat Tran, Diane Litman, Benjamin Pierce, Richard Correnti, and Lindsay Clare Matsumura. 2025. Im-proving in-context learning example retrieval for classroom discussion assessment with re-ranking and label ratio regulation. In Proceedings of the 20th Workshop on Innovative Use of NLP for Building Educational Applications (BEA 2025) , pages 752– 764, Vienna, Austria. Association for Computational Linguistics. Joaquin Vanschoren, Jan N Van Rijn, Bernd Bischl, and Luis Torgo. 2014. Openml: networked science in machine learning. ACM SIGKDD Explorations Newsletter , 15(2):49–60. Jianwei Wang, Kai Wang, Ying Zhang, Wenjie Zhang, Xiwei Xu, and Xuemin Lin. 2025. On llm-enhanced mixed-type data imputation with high-order message passing. arXiv preprint arXiv:2501.02191 .Zilong Wang, Hao Zhang, Chun-Liang Li, Julian Martin Eisenschlos, Vincent Perot, Zifeng Wang, Lesly Mi-culicich, Yasuhisa Fujii, Jingbo Shang, Chen-Yu Lee, and Tomas Pfister. 2024. Chain-of-table: Evolving tables in the reasoning chain for table understanding. In International Conference on Learning Representa-tions (ICLR) .Jingfeng Yang, Aditya Gupta, Shyam Upadhyay, Luheng He, Rahul Goel, and Shachi Paul. 2022. TableFormer: Robust transformer modeling for table-text encoding. In Proceedings of the 60th Annual Meeting of the Association for Computational Lin-guistics (ACL) , pages 528–537. Pengcheng Yin, Graham Neubig, Wen-tau Yih, and Se-bastian Riedel. 2020. TaBERT: Pretraining for joint understanding of textual and tabular data. In Proceed-ings of the 58th Annual Meeting of the Association for Computational Linguistics (ACL) , pages 8413–8426. Haochen Zhang, Yuyang Dong, Chuan Xiao, and Masa-fumi Oyamada. 2024a. Jellyfish: Instruction-tuning local large language models for data preprocessing. In Proceedings of the 2024 Conference on Empirical Methods in Natural Language Processing (EMNLP) ,pages 8754–8782. Tianshu Zhang, Xiang Yue, Yifei Li, and Huan Sun. 2024b. TableLlama: Towards open large general-ist models for tables. In Proceedings of the 2024 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies (NAACL-HLT) , pages 6024– 6044. Tony Z. Zhao, Eric Wallace, Shi Feng, Dan Klein, and Sameer Singh. 2021. Calibrate before use: Improv-ing few-shot performance of language models. In 
+
+Proceedings of the 38th International Conference on Machine Learning (ICML) , pages 12697–12706. 
+
+A Prompt Templates 
+
+Every task shares one few-shot scaffold: the task instruction, a <solved examples> block, and the query. EDGE LM fills the block with data-edge (label-diverse) and model-edge demonstration (cases the frozen model itself answered wrong zero-shot, shown wrong →right); “..." marks further demonstrations of the same component omitted for brevity. The examples are slices drawn from the real datasets. 
+
+Prompt Skeleton 
+
+> <task instruction ends by asking for a JSON answer> Solved examples: # data edge, label-diverse <diverse demo, label A> Answer: {<gold JSON>} <diverse demo, label B> Answer: {<gold JSON>} ... # model edge, wrong->right <a case the model got wrong zero-shot> A tempting but WRONG answer: {<wrong JSON>} Answer: {<gold JSON>} ... Now solve: <query content>
+
+Error Detection 
+
+> Task: decide whether the TARGET cell value is a data error (typo, format violation, or value inconsistent with the rest of its column and row). Answer in JSON: {"error": "yes"} or {"error": "no"}. Solved examples: Column: city Target cell value: ’birmingham’ Row: index: 1 | provider_number: 10018 | name: callahan eye foundation hospital | address_1: 1720 university blvd | city: birmingham | state: al | zip: 35233 | ... Answer: {"error": "no"} ... Column: city Target cell value: ’birminghxm’ Row: index: 5 | provider_number: 10018 | name: callahan eye foundation hospital | address_1: 1720 university blvd | city: birminghxm | state: al | zip: 35233 | ... Answer: {"error": "yes"} ... Column: city Target cell value: ’boaz’ Row: index: 57 | provider_number: 10005 | name: marshall medical center south | address_1: 2505 u s highway 431 north | city: boaz | state: al | zip: 35957 | ... A tempting but WRONG answer: {"error": "yes"} Answer: {"error": "no"} ... Now solve: Column: city Target cell value: ’fxorence’ Row: index: 80 | provider_number: 10006 | name: eliza coffee memorial hospital | address_1: 205 marengo street | city: fxorence | state: al | zip: 35631 | ...
+
+Entity Matching 
+
+> Task: decide whether the two records refer to the same real-world entity. Answer in JSON: {"label": "match"} or {"label": "non-match"}. Solved examples: Entity A: title: emergent semantics and the multimedia semantic web | authors: william i. grosky , farshad
+
+11 fotouhi , d. v. sreenath | venue: sigmod record | year: 2002 Entity B: title: emergent semantics and the multimedia semantic web | authors: w. i. grosky , d. v. sreenath , f. fotouhi | venue: acm sigmod record | year: 2002 Answer: {"label": "match"} ... Entity A: title: the aditi deductive database system | authors: kotagiri ramamohanarao , david b. kemp | venue: vldb j. | year: 1994 Entity B: title: space optimization in deductive databases | authors: divesh srivastava , s. sudarshan | venue: acm transactions on database systems ( tods ) | year: 1995 Answer: {"label": "non-match"} ... Entity A: title: web caching for database applications with oracle web cache | authors: jordan parker , jesse anton , zheng zeng | venue: sigmod conference | year: 2002 Entity B: title: form-based proxy caching for database-backed web sites | authors: qiong luo , jeffrey f. naughton | venue: very large data bases | year: 2001 A tempting but WRONG answer: {"label": "match"} Answer: {"label": "non-match"} ... Now solve: Entity A: title: mining association rules between sets of items in large databases | authors: r. agrawal , t. imielinski , a. swami | venue: sigmod conference | year: 1993 Entity B: title: mining association rules between sets of items in large databases | authors: rakesh agrawal , tomasz imielinski , arun swami | venue: international conference on management of data | year: 1993 
+
+Schema Matching 
+
+Task: decide whether Column A and Column B refer to the same attribute (would map to each other in schema matching). Answer in JSON: {"label": "match"} or {"label": "non-match"}. Solved examples: Column A: tid Values: 12052 | 22226 | 104729 | 80001 | 50185 Column B: assays_td Values: 50597 | 22229 | 104729 | 80001 Answer: {"label": "match"} ... Column A: assay_id Values: 1 | 2 | 3 | 4 | 5 Column B: assays_cnfdnc_scr Values: 1 | 0 Answer: {"label": "non-match"} ... Column A: doc_id Values: 11087 | 684 | 15453 | 17841 | 17430 Column B: assay_id Values: 1 | 2 | 3 | 4 | 5 A tempting but WRONG answer: {"label": "match"} Answer: {"label": "non-match"} ... Now solve: Column A: assay_organism Values: Homo sapiens | Mus musculus | Rattus norvegicus Column B: assays_organism Values: Homo sapiens | Sus scrofa | Bos taurus 
+
+Data Imputation 
+
+Task: impute the missing value (marked <MISSING>) using the labeled reference rows. Answer in JSON: {"value": "<answer>"}. Solved examples: preg: 1.0 | plas: 97.0 | pres: 66.0 | skin: 15.0 | insu: 140.0 | mass: 23.2 | pedi: 0.487 | age: 22.0 -> class: <MISSING> Answer: {"value": "tested_negative"} ... preg: 6.0 | plas: 148.0 | pres: 72.0 | skin: 35.0 | insu: 0.0 | mass: 33.6 | pedi: 0.627 | age: 50.0 -> class: <MISSING> 
+
+Answer: {"value": "tested_positive"} ... preg: 3.0 | plas: 180.0 | pres: 64.0 | skin: 25.0 | insu: 70.0 | mass: 34.0 | pedi: 0.271 | age: 26.0 -> class: <MISSING> A tempting but WRONG answer: {"value": "tested_positive"} Answer: {"value": "tested_negative"} ... Now solve: preg: 7.0 | plas: 159.0 | pres: 64.0 | skin: 0.0 | insu: 0.0 | mass: 27.4 | pedi: 0.294 | age: 40.0 -> class: <MISSING> The value must be one of: tested_negative, tested_positive 
+
+Anomaly Detection 
+
+Task: decide whether the data record is a normal record or an anomaly (an outlier inconsistent with typical records). Answer in JSON: {"label": "normal"} or {"label": "anomaly"}. Solved examples: duration: 0 | protocol_type: tcp | service: http | flag: SF | src_bytes: 301 | dst_bytes: 351 | ... Answer: {"label": "normal"} ... duration: 0 | protocol_type: tcp | service: private | flag: S0 | src_bytes: 0 | dst_bytes: 0 | ... Answer: {"label": "anomaly"} ... duration: 0 | protocol_type: icmp | service: ecr_i | flag: SF | src_bytes: 520 | dst_bytes: 0 | ... A tempting but WRONG answer: {"label": "normal"} Answer: {"label": "anomaly"} ... Now solve: duration: 0 | protocol_type: tcp | service: http | flag: SF | src_bytes: 317 | dst_bytes: 820 | ... 
+
+B Per-Dataset Results 
+
+Table 6 gives the per-dataset numbers behind the per-task averages of Table 3 for Llama-3.1-8B. EDGE LM attains the best or tied-best F1 on 13 of the 15 datasets, and its margins are largest ex-actly where the similarity baseline is weakest. For example, on the three anomaly-detection datasets it lifts F1 from 0.78 –0.85 to 0.98 and accuracy from 
+
+0.89 –0.93 to 0.99 . These tasks have a genuine lo-cal decision boundary that the contrast pair and the corrected mistakes make explicit, so the extra structure translates directly into both metrics. On a few datasets Edge ties the similarity base-line on F1 and accuracy alike (Amazon-Google at 
+
+0.473 /0.853 , BalanceScale at 0.567 /0.579 , Splice at 0.517 /0.530 ). These are lookup-like instances where the answer already lies in the nearest neigh-bor and there is no local boundary to sharpen, so Edge matches it by construction instead of risking a regression. Two datasets favor a baseline, and on both it is the label-diverse baseline that overtakes Edge. On DBLP-ACM, the frozen model already matches these canonical bibliographic records almost per-fectly without demonstrations ( 0.855 F1 / 0.946 
+
+accuracy). The diverse baseline nudges F1 up to 12 0.894 (0.963 accuracy), while Edge’s boundary and mistake demonstrations add surface-form pat-terns that slightly perturb an already-correct default (0.824 F1 / 0.941 accuracy) rather than helping. On Hospital the diverse baseline leads outright ( 0.221 
+
+F1 / 0.798 accuracy), ahead of other techniques. Hospital is extremely imbalanced (about 2.5% of cells are errors) and its errors are subtle single-character corruptions; because errors are so rare, a query’s nearest neighbors are almost always clean, so both similarity and Edge’s locally label-diverse contrast surface mostly clean rows and push the model toward the majority “clean” label, whereas balancing the label space across the whole pool, exactly what the diverse baseline does, is the one strategy that reliably surfaces error examples. 
+
+C Computational Cost 
+
+Relative to plain similarity retrieval, E DGE LM adds computation in only two places: a one-time construction of the model-error pool and a slightly heavier per-query retrieval. We separate the cost into language-model calls and retrieval, a set of vector operations that we measure directly on the demonstration pool. In terms of language-model calls, the selection strategies are identical at inference. Each query issues a single K-shot call, and E DGE LM places the same number of demonstrations in the prompt as similarity, random, or diverse selection, so the dominant cost is unchanged. The only additional calls E DGE LM incurs are a one-time construction of the model-error pool, a zero-shot pass over the demonstration pool, that is |pool | calls. These are made once, reused for every subsequent query, and grow linearly with the pool, so amortised over a deployment they add nothing to the per-query call count; similarity, random, and diverse selection make no such calls. The retrieval step differs only in vector opera-tions, and only mildly. Random selection draws K
+
+indices from the pool with no similarity computa-tion and no ranking, so its cost is essentially zero. Diverse selection needs no similarity computation and no sort; it partitions the pool by label ( O(N ))and draws a label-balanced sample, so its cost is of the same negligible order as random selection. Sim-ilarity retrieval computes the query-to-pool simi-larities ( O(N d ) for a pool of N examples in d
+
+dimensions) and sorts them to take the K nearest (O(N log N )). E DGE LM reuses that same rank-ing, then (i) groups the top-w neighbors by label and selects round-robin across the groups to obtain the label-diverse demonstrations ( O(w)), and (ii) performs a second nearest-neighbor search over the smaller error pool, adding one more similarity-and-sort of O(Ned + Ne log Ne) with Ne ≤ N . Both methods are thus dominated by the same O(N d )
+
+similarity computation and O(N log N ) sort; edge adds only a second, smaller sort and a constant-time grouping. Table 7 reports the measured per-query retrieval latency as the pool grows. The overhead is a small constant factor and, like similarity retrieval, scales linearly with the pool; at a pool of 2,000 edge re-trieval takes 0.13 ms against 0.06 ms for similarity, and even at a pool of 8,000 it stays under half a millisecond. Since every strategy issues one K-shot call per query, this sub-millisecond difference in vector operations does not affect the number of model calls, which is what governs the end-to-end cost. A final cost is optional. The split of the budget between the two components, the data edge and the model edge, is itself a hyperparameter, but one we fix rather than tune. Section 5.4 shows the method is insensitive to it. Should one nonetheless wish to tune it per dataset or model, the cost is a one-time, offline pass. We set aside a small stratified fraction of the demonstration pool as a held-out slice and, for each of the K candidate allocations, score that slice under the gated selection, keeping the one with the highest held-out accuracy. This reuses the already-mined error pool, so it requires no further mining; its only cost is O(K|H|) language-model calls for a held-out slice of size |H|, a small capped fraction of the pool, again incurred once and amor-tised over all queries. Overall, the per-query language-model cost is identical across selection strategies, the added re-trieval work is a second sort over a smaller pool and stays sub-millisecond, and the only extra language-model work is a one-time, pool-linear mining pass. The overhead of E DGE LM is therefore modest and confined to a one-time setup. 
+
+D Sensitivity to the Demonstration Budget and the Selection Window 
+
+We sweep K ∈ { 3, 5, 8, 10 } and w ∈ { 5, 10 , 20 ,
+
+50 , 100 } on all fifteen datasets with Llama-3.1-8B. Because the grid spans 20 configurations over 15 
+
+datasets, and each cell re-scores the full test set, 13 Table 6: Per-dataset results for Llama-3.1-8B. Each cell is F1 / weighted F1 (Accuracy in parentheses); bold marks the best F1 per row.                                                                                  
+
+> Task Dataset Zero-shot Random Diversity Similarity Edge ED Beers (Mahdavi et al., 2019) 0.379 (0.759) 0.448 (0.873) 0.542 (0.863) 0.726 (0.909) 0.907 (0.973)
+> Flights (Li et al., 2012) 0.373 (0.696) 0.390 (0.805) 0.472 (0.807) 0.565 (0.787) 0.665 (0.858)
+> Hospital (CMS, 2019) 0.104 (0.553) 0.197 (0.769) 0.221 (0.798) 0.132 (0.617) 0.171 (0.717) EM Amazon-Google (Köpcke et al., 2010) 0.277 (0.602) 0.353 (0.732) 0.302 (0.649) 0.473 (0.853) 0.473 (0.853)
+> DBLP-ACM (Köpcke et al., 2010) 0.855 (0.946) 0.765 (0.902) 0.894 (0.963) 0.737 (0.891) 0.824 (0.941) Walmart-Amazon (Konda et al., 2016) 0.237 (0.455) 0.272 (0.553) 0.253 (0.516) 0.465 (0.821) 0.583 (0.905)
+> SM ChEMBL-Join (Koutras et al., 2021) 0.723 (0.842) 0.729 (0.825) 0.732 (0.839) 0.885 (0.919) 0.923 (0.947)
+> OpenData-Join (Koutras et al., 2021) 0.812 (0.882) 0.821 (0.872) 0.812 (0.865) 0.928 (0.951) 0.946 (0.964)
+> TPC-DI-Join (Koutras et al., 2021) 0.833 (0.902) 0.850 (0.901) 0.852 (0.903) 0.916 (0.938) 0.937 (0.955)
+> DI BalanceScale (Siegler, 1976) 0.006 (0.056) 0.494 (0.528) 0.499 (0.493) 0.567 (0.579) 0.567 (0.579)
+> DiabetesPima (Smith et al., 1988) 0.176 (0.344) 0.616 (0.628) 0.649 (0.652) 0.672 (0.673) 0.687 (0.701)
+> Splice (Noordewier et al., 1991) 0.087 (0.231) 0.336 (0.328) 0.257 (0.301) 0.517 (0.530) 0.517 (0.530)
+> AD KDD-DoS (Stolfo et al., 2000) 0.203 (0.703) 0.641 (0.790) 0.618 (0.726) 0.852 (0.928) 0.982 (0.992)
+> KDD-Probe (Stolfo et al., 2000) 0.600 (0.815) 0.605 (0.760) 0.616 (0.731) 0.784 (0.888) 0.977 (0.988)
+> KDD-RareAttack (Stolfo et al., 2000) 0.236 (0.706) 0.405 (0.677) 0.492 (0.633) 0.794 (0.902) 0.981 (0.991)
+
+Table 7: Per-query retrieval latency (milliseconds, av-eraged over the five tasks) as the demonstration pool grows. Edge reuses similarity’s ranking and adds a sec-ond sort over the smaller error pool; both scale linearly with the pool. Random selection needs no similarity computation or sort and is omitted (its cost is ≈ 0).                      
+
+> Pool size Similarity (ms) Edge (ms) Overhead (ms) 250 0.010 0.029 +0.019 500 0.018 0.040 +0.022 1,000 0.032 0.067 +0.035 2,000 0.060 0.126 +0.066 4,000 0.093 0.233 +0.141 8,000 0.192 0.463 +0.271
+
+this experiment is considerably larger than the main comparison; we therefore run it with a single seed. Figure 3 reports the F1 gain of edge selection over random and similarity baselines. Against ran-dom selection (Figure 3a) all cells are positive and the task-averaged gain, shown in the overall panel, stays between +0 .186 and +0 .215 across the en-tire grid. Against the stronger similarity baseline (Figure 3b) the task-averaged gain stays between 
+
++0 .066 and +0 .077 , a spread of about 0.01 over a grid that varies K by more than a factor of three and w by a factor of twenty. The per-task picture is equally stable. Over similarity, error detection ranges from +0 .106 to +0 .155 and anomaly detec-tion from +0 .082 to +0 .159 , while entity matching stays within +0 .047 to +0 .079 and schema match-ing within +0 .012 to +0 .050 .Two patterns are worth noting. First, the gains are essentially unaffected by w. Once the gate has identified a boundary among its nearest neighbors, the label-diverse demonstrations already lie inside that neighborhood, so widening w selects much the same examples. Data imputation, which is multi-class, is the only task that shifts with w, and only slightly. Second, the only non-positive cells are in data imputation (F1 gain from −0.015 to +0 .032 ). Its two lookup-style datasets (BalanceScale and Splice) take an all-diverse allocation at the smaller budgets, so the diverse set coincides with the K
+
+nearest neighbors and edge reduces to similarity se-lection; as the budget grows the mistake component re-enters and the gain turns positive. The method is therefore insensitive to both hy-perparameters. No setting of (K, w ) in this range alters the conclusion that edge selection beats both baselines, and the task-averaged advantage varies by less than one F1 point. This is what lets the main experiments fix a single small budget, K = 5 ,without tuning it per task or per model. 14 Error Detection 
+
+K \ w 5 10 20 50 100 3 +0.222 +0.222 +0.222 +0.222 +0.222 
+
+5 +0.252 +0.252 +0.252 +0.252 +0.252 
+
+8 +0.235 +0.235 +0.235 +0.235 +0.235 
+
+10 +0.280 +0.280 +0.280 +0.280 +0.280 
+
+Entity Matching 
+
+K \ w 5 10 20 50 100 3 +0.134 +0.134 +0.134 +0.134 +0.134 
+
+5 +0.168 +0.168 +0.168 +0.168 +0.168 
+
+8 +0.198 +0.198 +0.198 +0.198 +0.198 
+
+10 +0.214 +0.214 +0.214 +0.214 +0.214 
+
+Schema Matching 
+
+K \ w 5 10 20 50 100 3 +0.075 +0.075 +0.075 +0.075 +0.075 
+
+5 +0.115 +0.115 +0.115 +0.115 +0.115 
+
+8 +0.143 +0.143 +0.143 +0.143 +0.143 
+
+10 +0.145 +0.145 +0.145 +0.145 +0.145 
+
+Data Imputation 
+
+K \ w 5 10 20 50 100 3 +0.125 +0.124 +0.121 +0.121 +0.124 
+
+5 +0.084 +0.087 +0.085 +0.086 +0.084 
+
+8 +0.122 +0.125 +0.120 +0.114 +0.113 
+
+10 +0.101 +0.101 +0.098 +0.120 +0.117 
+
+Anomaly Detection 
+
+K \ w 5 10 20 50 100 3 +0.380 +0.380 +0.380 +0.380 +0.380 
+
+5 +0.438 +0.438 +0.438 +0.438 +0.438 
+
+8 +0.375 +0.375 +0.375 +0.375 +0.375 
+
+10 +0.315 +0.315 +0.315 +0.315 +0.315 
+
+Overall 
+
+K \ w 5 10 20 50 100 3 +0.187 +0.187 +0.186 +0.186 +0.187 
+
+5 +0.211 +0.212 +0.212 +0.212 +0.211 
+
+8 +0.214 +0.215 +0.214 +0.213 +0.213 
+
+10 +0.211 +0.211 +0.211 +0.215 +0.214 
+
+0 +0.44 
+
+F1 gain (a) Gain over random selection. Error Detection 
+
+K \ w 5 10 20 50 100 3 +0.134 +0.134 +0.134 +0.134 +0.134 
+
+5 +0.106 +0.106 +0.106 +0.106 +0.106 
+
+8 +0.138 +0.138 +0.138 +0.138 +0.138 
+
+10 +0.155 +0.155 +0.155 +0.155 +0.155 
+
+Entity Matching 
+
+K \ w 5 10 20 50 100 3 +0.056 +0.056 +0.056 +0.056 +0.056 
+
+5 +0.077 +0.077 +0.077 +0.077 +0.077 
+
+8 +0.047 +0.047 +0.047 +0.047 +0.047 
+
+10 +0.079 +0.079 +0.079 +0.079 +0.079 
+
+Schema Matching 
+
+K \ w 5 10 20 50 100 3 +0.012 +0.012 +0.012 +0.012 +0.012 
+
+5 +0.022 +0.022 +0.022 +0.022 +0.022 
+
+8 +0.035 +0.035 +0.035 +0.035 +0.035 
+
+10 +0.050 +0.050 +0.050 +0.050 +0.050 
+
+Data Imputation 
+
+K \ w 5 10 20 50 100 3 -0.011 -0.011 -0.015 -0.015 -0.012 
+
+5 +0.000 +0.003 +0.002 +0.002 -0.000 
+
+8 +0.028 +0.032 +0.026 +0.020 +0.019 
+
+10 +0.000 +0.000 -0.002 +0.019 +0.016 
+
+Anomaly Detection 
+
+K \ w 5 10 20 50 100 3 +0.144 +0.144 +0.144 +0.144 +0.144 
+
+5 +0.159 +0.159 +0.159 +0.159 +0.159 
+
+8 +0.124 +0.124 +0.124 +0.124 +0.124 
+
+10 +0.082 +0.082 +0.082 +0.082 +0.082 
+
+Overall 
+
+K \ w 5 10 20 50 100 3 +0.067 +0.067 +0.066 +0.066 +0.067 
+
+5 +0.073 +0.073 +0.073 +0.073 +0.073 
+
+8 +0.074 +0.075 +0.074 +0.073 +0.073 
+
+10 +0.073 +0.073 +0.073 +0.077 +0.076 
+
+0 +0.16 
+
+F1 gain 
+
+(b) Gain over similarity selection. 
+
+Figure 3: F1 gain of E DGE LM over random and similarity selection across the demonstration budget K (rows) and the selection window w (columns), for Llama-3.1-8B on all fifteen datasets. 
+
+15
