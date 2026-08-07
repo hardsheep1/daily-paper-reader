@@ -1,69 +1,8 @@
 {
   "label": "2026-08-07",
   "date": "2026-08-07",
-  "generated_at": "2026-08-07T02:21:35",
-  "count": 4,
-  "papers": [
-    {
-      "paper_id": "202608/07/2607.26628v1-understanding-context-sampling-in-tabpfn-on-small-tabular-datasets",
-      "section": "quick",
-      "title_en": "Understanding Context Sampling in TabPFN on Small Tabular Datasets",
-      "authors": "Mohammed Abdullah",
-      "date": "2026-07-29",
-      "pdf": "https://arxiv.org/pdf/2607.26628v1",
-      "score": "6.0",
-      "evidence": "研究上下文采样中选择方法（K-Means、最远点采样）的效果，与主动聚类的查询策略直接相关。",
-      "tldr": "TabPFN 在小型表格数据上通过上下文学习进行分类，其中上下文的大小与构成会显著影响预测稳定性与准确率。本文在 15 个 OpenML 数据集上进行重复上下文采样，发现更大的上下文既更准确又更稳定，AUC 变异系数从 k=16 时的约 6-18% 降至大上下文时的 1-4%。仅匹配训练特征均值会牺牲上下文多样性、使 AUC 下降最多 0.5，混合效应模型表明多样性/覆盖率的重要性远高于均值匹配。K-Means 与远点采样并未优于随机采样且成本高 2-3 个数量级，说明随机抽样之所以成功是因其在期望中提供特征空间覆盖。",
-      "tags": "query:active-clust",
-      "abstract_en": "TabPFN performs classification through in-context learning: it conditions on a set of labeled training rows (the context, or prototypes) and predicts test labels without gradient updates. On small tabular datasets, practitioners must still choose the context size and which rows constitute the context. We study how these choices affect prediction stability, accuracy, and selection cost using repeated context sampling on 15 OpenML datasets. Specifically, we investigate (i) whether larger contexts reduce prediction variability across random draws, (ii) whether accuracy depends on preserving the training distribution or on feature-space coverage, and (iii) whether expensive selection methods such as K-Means and farthest-point sampling provide benefits over uniform random sampling.   We find that larger contexts are both more accurate and substantially more stable, with AUC coefficient of variation decreasing from roughly 6 to 18% at k=16 to 1 to 4% at larger context sizes on datasets with room for improvement. Although accuracy correlates with distribution representativeness in random contexts, controlled experiments show that matching feature means alone can reduce accuracy by up to 0.5 AUC because it reduces context diversity. Mixed-effects analysis identifies diversity and coverage, rather than feature-mean matching, as the stronger predictor of accuracy (diversity beta=+0.23, p=3x10^-12; feature-mean shift beta=-0.01, p=0.71). K-Means and farthest-point sampling achieve similar accuracy to random selection while requiring two to three orders of magnitude more selection cost. These results show that random sampling succeeds because it provides feature-space coverage in expectation, not because it reproduces the underlying data distribution.",
-      "source": "arxiv",
-      "selection_source": "fresh_fetch"
-    },
-    {
-      "paper_id": "202608/07/2608.03129v1-beyond-average-performance-dynamic-instance-clustering-and-specialized-algorithm-design-in-llm-assisted-evolutionary-search",
-      "section": "quick",
-      "title_en": "Beyond Average Performance: Dynamic Instance Clustering and Specialized Algorithm Design in LLM-Assisted Evolutionary Search",
-      "authors": "Qinglong Hu, Qingfu Zhang, Fei Liu, Xialiang Tong, Kun Mao, Mingxuan Yuan",
-      "date": "2026-08-04",
-      "pdf": "https://arxiv.org/pdf/2608.03129v1",
-      "score": "6.0",
-      "evidence": "结合LLM与动态实例聚类，与利用大模型聚类相关",
-      "tldr": "现有LLM辅助进化搜索（LES）过度聚焦平均性能，忽视异构实例下的尾端鲁棒性。为此提出DyCA框架，通过复用评估数据、以特征无关方式动态聚类实例，将混合目标分解为结构感知子目标，引导专用算法设计。在四个异构任务上，DyCA将尾端鲁棒性平均提升15.2%，总体性能提升7.1%，同时保持头部性能竞争力。",
-      "tags": "query:ac",
-      "abstract_en": "Large Language Model-assisted Evolutionary Search (LES) has emerged as a powerful paradigm for automated algorithm design. However, existing LES methods primarily optimize for average performance, inherently directing search effort toward instances that contribute most to this metric while leaving others poorly served, resulting in weak tail robustness and limited real-world reliability. To address this limitation, we propose Dynamic Instance Clustering and Specialized Algorithm Design (DyCA), an LES framework with a feature-free, structure-aware mechanism for constructing reliable algorithm portfolios under heterogeneous instance distributions. DyCA treats instance clustering as a co-evolving component within the search process, reusing accumulated evaluation data as feature-free signals to progressively partition instances with similar algorithmic response patterns. The uncovered clusters decompose the mixed objective into a set of structure-aware sub-objectives, thereby enabling finer-grained and more adaptive guidance for specialized algorithm design. Experimental results across four algorithm design tasks with heterogeneous instances demonstrate that DyCA outperforms state-of-the-art LES baselines, improving tail robustness by an average of 15.2\\% and overall performance by 7.1\\% while maintaining competitive head performance.",
-      "source": "arxiv",
-      "selection_source": "fresh_fetch"
-    },
-    {
-      "paper_id": "202608/07/2608.03565v1-enhancing-tabular-learners-with-context-aware-semantic-embeddings",
-      "section": "quick",
-      "title_en": "Enhancing Tabular Learners with Context-Aware Semantic Embeddings",
-      "authors": "Günther Schindler, Maximilian Schambach, Johannes Höhne",
-      "date": "2026-08-04",
-      "pdf": "https://arxiv.org/pdf/2608.03565v1",
-      "score": "6.0",
-      "evidence": "基于LLM的表格数据语义嵌入，可迁移至聚类任务",
-      "tldr": "现代表格学习器擅长捕捉统计模式，却常把文本特征当作离散符号，忽略特征名与单元格中的语义，陷入语义真空。CASE框架提出上下文感知语义嵌入，通过用代表性样本行预填充Gemma 3表格语言模型的KV缓存，建立数据集语义锚点，使行嵌入具备动态上下文。在CARTE、TextTab和TabArena等基准上，CASE显著提升了语义丰富表格数据的下游学习性能，尤其在小样本低数据场景中。该工作有效弥合了大模型语义理解与表格统计学习之间的鸿沟，为表格数据智能化提供了新思路。",
-      "tags": "query:ac",
-      "abstract_en": "While modern tabular learners excel at capturing statistical patterns, they frequently operate in a semantic vacuum, treating textual features as discrete symbols, ignoring the rich semantics inherent in feature names or cell entries. We propose CASE (Context-Aware Semantic Embeddings), a novel framework that bridges the gap between the semantic understanding of Large Language Models (LLMs) and the statistical capabilities of tabular learners. Unlike existing methods that embed rows in isolation, CASE utilizes a contextualization strategy: we pre-fill the KV cache of a custom-trained Gemma 3-based Tabular Language Model with a representative sample of rows to establish a persistent anchor of the dataset's semantics. This ensures that generated row embeddings are dynamically contextualized, resolving semantic ambiguities and anchoring representations in domain-specific context. Our experiments across several benchmarks (CARTE, TextTab, and TabArena) demonstrate that CASE substantially improves the performance of tabular learners on semantically rich datasets, particularly in low-data regimes.",
-      "source": "arxiv",
-      "selection_source": "fresh_fetch"
-    },
-    {
-      "paper_id": "202608/07/2608.04390v1-edgelm-edge-demonstrations-for-language-models-table-understanding",
-      "section": "quick",
-      "title_en": "EdgeLM: Edge Demonstrations for Language Models' Table Understanding",
-      "authors": "Soroush Omidvartehrani, Mohammadamin Habibollah, Mohammadreza Daviran, Davood Rafiei",
-      "date": "2026-08-05",
-      "pdf": "https://arxiv.org/pdf/2608.04390v1",
-      "score": "6.0",
-      "evidence": "利用LLM选择信息丰富的边缘演示，类似于主动学习查询策略",
-      "tldr": "大语言模型通过上下文学习处理表格任务时，演示选择至关重要。现有检索方法偏重与查询的相似性，但相似演示常强化模型已有预测，难以区分困难决策。EdgeLM 提出检索边界证据，选择既相关又具判别信息的演示，包括数据边界与模型边界两种互补形式，无需重训或任务定制。在五个数据整理任务、十五个数据集及五种模型中，EdgeLM 均取得最优或接近最优性能。",
-      "tags": "query:active-clust",
-      "abstract_en": "Large language models (LLMs) perform table-centric prediction through in-context learning, making demonstration selection critical to performance. Existing retrieval methods prioritize similarity to the query, but similar demonstrations often reinforce the model's likely prediction rather than reveal the distinctions needed for difficult decisions. We propose EdgeLM, a retrieval framework that instead selects edge evidence, demonstrations that are both relevant to the query and informative about the decision boundary. EdgeLM retrieves two complementary forms of edge evidence by selecting data edges, nearby examples with different ground-truth labels, and model edges, similar examples previously misclassified by the deployed model. EdgeLM requires neither model retraining nor task-specific engineering. Across five data wrangling tasks, fifteen datasets, and five open-weight and proprietary LLMs, EdgeLM consistently achieves the best or near-best performance in every setting, while ablations show that the two forms of edge evidence provide complementary benefits. Our code and datasets are publicly available at https://github.com/soroushomidvar/EdgeLM.",
-      "source": "arxiv",
-      "selection_source": "fresh_fetch"
-    }
-  ],
+  "generated_at": "2026-08-07T21:26:48",
+  "count": 0,
+  "papers": [],
   "errors": []
 }
