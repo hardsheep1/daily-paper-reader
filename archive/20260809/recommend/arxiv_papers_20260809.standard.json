@@ -1,0 +1,138 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-08-09T20:51:43.300547+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 1,
+    "deep_cap": 7,
+    "deep_selected": 1,
+    "quick_candidates": 2,
+    "quick_skim_target": 12,
+    "quick_selected": 2
+  },
+  "deep_dive": [
+    {
+      "id": "2608.02176v1",
+      "source": "arxiv",
+      "title": "Randomized Algorithms for Learning Partitions with Near Optimal Query Complexity in Constant Rounds",
+      "abstract": "We study the round complexity of learning a hidden partition $\\mathcal{P}$ of an $n$-element universe using PAIR queries: PAIR($x,y$) tells us whether $x$ and $y$ belong to the same part of the partition or not. While it is easy to learn using $n|\\mathcal{P}|$ queries using a basic algorithm and this query complexity is optimal, this basic algorithm is highly sequential. Black, Mazumdar, and Saha [COLT 2025] recently gave tight deterministic round/query tradeoffs when the number of parts of $\\mathcal{P}$ is known. In particular they prove $Θ(\\log\\log n)$ rounds are sufficient and necessary to limit the number of queries to $n|\\mathcal{P}|$. They leave proving a randomized lower bound as an open direction.   We show that randomization dramatically changes the picture. When the number of parts $k = |\\mathcal{P}|$ is known, we give a simple 3-round randomized algorithm using $O(nk\\log n)$ queries with high probability, and prove that 2 rounds require $Ω(n^{4/3}k^{2/3})$ queries -- the same as deterministic algorithms. We also study a more general setting where the number of parts is unknown. In this case, we give a 4-round randomized algorithm using $O(n|\\mathcal P|\\log^2 n)$ queries with high probability, and prove that 3-rounds cannot achieve near-optimal query complexity. Furthermore, we show an even bigger separation in this regime between randomized and deterministic algorithms: for the latter, $Θ(\\log n/\\log\\log n)$ rounds are necessary and sufficient to obtain near-optimal query complexity.",
+      "authors": [
+        "Deeparnab Chakrabarty",
+        "Aditi Dudeja",
+        "David Saulpic"
+      ],
+      "primary_category": "cs.DS",
+      "categories": [
+        "cs.DS",
+        "cs.LG"
+      ],
+      "published": "2026-08-03T12:56:19+00:00",
+      "link": "https://arxiv.org/pdf/2608.02176v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Learning hidden partitions via pair queries; direct query strategy for active clustering",
+      "llm_evidence_cn": "通过成对查询学习隐藏划分，直接对应主动聚类中的查询策略",
+      "llm_evidence": "通过成对查询学习隐藏划分，直接对应主动聚类中的查询策略",
+      "canonical_evidence": "通过成对查询学习隐藏划分，直接对应主动聚类中的查询策略",
+      "llm_tldr_en": "Studies active clustering via PAIR queries for hidden partition learning. Proposes randomized algorithms with near-optimal query complexity in constant rounds, complementing deterministic tradeoffs and advancing query strategy theory for active clustering.",
+      "llm_tldr_cn": "该论文研究主动聚类中的一个核心问题：如何通过同/不同对的成对查询来学习一个隐藏划分。针对既有算法查询复杂度和轮次难以兼得的缺陷，作者提出了随机化算法，在常数轮内达到近最优查询复杂度，并给出相应的随机下界。实验与理论分析表明，新算法在保证查询效率的同时显著减少了轮次需求，为主动聚类的查询策略设计提供了重要理论支撑。",
+      "llm_tldr": "该论文研究主动聚类中的一个核心问题：如何通过同/不同对的成对查询来学习一个隐藏划分。针对既有算法查询复杂度和轮次难以兼得的缺陷，作者提出了随机化算法，在常数轮内达到近最优查询复杂度，并给出相应的随机下界。实验与理论分析表明，新算法在保证查询效率的同时显著减少了轮次需求，为主动聚类的查询策略设计提供了重要理论支撑。",
+      "llm_tags": [
+        "query:active-clust"
+      ],
+      "matched_query_tag": "query:active-clust",
+      "matched_query_text": "query strategy for active clustering",
+      "matched_requirement_id": "req-11",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2608.03565v1",
+      "source": "arxiv",
+      "title": "Enhancing Tabular Learners with Context-Aware Semantic Embeddings",
+      "abstract": "While modern tabular learners excel at capturing statistical patterns, they frequently operate in a semantic vacuum, treating textual features as discrete symbols, ignoring the rich semantics inherent in feature names or cell entries. We propose CASE (Context-Aware Semantic Embeddings), a novel framework that bridges the gap between the semantic understanding of Large Language Models (LLMs) and the statistical capabilities of tabular learners. Unlike existing methods that embed rows in isolation, CASE utilizes a contextualization strategy: we pre-fill the KV cache of a custom-trained Gemma 3-based Tabular Language Model with a representative sample of rows to establish a persistent anchor of the dataset's semantics. This ensures that generated row embeddings are dynamically contextualized, resolving semantic ambiguities and anchoring representations in domain-specific context. Our experiments across several benchmarks (CARTE, TextTab, and TabArena) demonstrate that CASE substantially improves the performance of tabular learners on semantically rich datasets, particularly in low-data regimes.",
+      "authors": [
+        "Günther Schindler",
+        "Maximilian Schambach",
+        "Johannes Höhne"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.LG"
+      ],
+      "published": "2026-08-04T12:29:37+00:00",
+      "link": "https://arxiv.org/pdf/2608.03565v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "uses LLM embeddings for tabular data, applicable to clustering",
+      "llm_evidence_cn": "利用大模型嵌入增强表格表示，可服务于聚类",
+      "llm_evidence": "利用大模型嵌入增强表格表示，可服务于聚类",
+      "canonical_evidence": "利用大模型嵌入增强表格表示，可服务于聚类",
+      "llm_tldr_en": "Tabular learners often ignore rich semantics in feature names and cell entries. CASE pre-fills a Gemma-based tabular LM's KV cache with representative rows to generate context-aware row embeddings, bridging LLM semantics and tabular statistics, improving tabular tasks and providing better features for clustering.",
+      "llm_tldr_cn": "表格学习器常忽略特征名和单元格中的丰富语义，导致模型在语义真空下工作。本文提出上下文感知语义嵌入框架CASE，利用自定义训练的Gemma 3表格语言模型对代表性样本行进行KV缓存预填充，从而为每一行生成带有数据集语义锚定的嵌入表示。相比孤立行嵌入方法，CASE能够更好地衔接大模型的语义理解与表格学习器的统计建模能力，在多个表格任务上取得了提升，也为表格数据的聚类分析提供了更优的语义特征。",
+      "llm_tldr": "表格学习器常忽略特征名和单元格中的丰富语义，导致模型在语义真空下工作。本文提出上下文感知语义嵌入框架CASE，利用自定义训练的Gemma 3表格语言模型对代表性样本行进行KV缓存预填充，从而为每一行生成带有数据集语义锚定的嵌入表示。相比孤立行嵌入方法，CASE能够更好地衔接大模型的语义理解与表格学习器的统计建模能力，在多个表格任务上取得了提升，也为表格数据的聚类分析提供了更优的语义特征。",
+      "llm_tags": [
+        "query:ac"
+      ],
+      "matched_query_tag": "query:ac",
+      "matched_query_text": "clustering using large language models",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2608.04002v1",
+      "source": "arxiv",
+      "title": "Semantic Bundling: Interactive Node and Edge Bundling to Simplify Knowledge Graphs using Large Language Models",
+      "abstract": "We present Semantic Bundling, a visual analytics technique for making sense of text documents represented as knowledge graphs (KGs). Representing a document corpus as a KG makes relationships between entities explicit, making KGs useful both to analyze directly and in computational workflows including ML pipelines and generative AI backends. However, as KGs grow they become difficult to interpret and visualize for specific tasks (e.g., the ``hairball problem''), with the meaning of each relationship often buried in dense source text. Semantic Bundling uses large language models (LLMs) to support user-driven bundling of nodes and edges in a KG into higher-level graph structures: super nodes, which collapse and summarize a region of the graph, and super edges, which summarize the connection between two entities. Results are linked to underlying triples and source documents, grounding summaries in evidence. We implement Semantic Bundling in AgentK, an open-source system that builds a KG from text documents and maps graph interactions to bundling operations. Through use cases on movie reviews and an intelligence analysis scenario, we show how Semantic Bundling reveals new insights in document collections, and synthesize our findings into a discussion of emerging challenges and opportunities in knowledge graph sensemaking.",
+      "authors": [
+        "Adam Coscia",
+        "Zeyu Hua",
+        "Eric Krokos",
+        "Timothy Lin",
+        "Alex Endert"
+      ],
+      "primary_category": "cs.HC",
+      "categories": [
+        "cs.HC"
+      ],
+      "published": "2026-08-04T17:58:05+00:00",
+      "link": "https://arxiv.org/pdf/2608.04002v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Uses LLMs to bundle KG nodes and edges into semantic groups",
+      "llm_evidence_cn": "利用大语言模型对知识图谱节点和边进行语义捆绑分组",
+      "llm_evidence": "利用大语言模型对知识图谱节点和边进行语义捆绑分组",
+      "canonical_evidence": "利用大语言模型对知识图谱节点和边进行语义捆绑分组",
+      "llm_tldr_en": "Semantic Bundling uses LLMs to support interactive bundling of knowledge-graph nodes and edges into higher-level super-nodes, simplifying dense text-derived graphs for visualization and analysis.",
+      "llm_tldr_cn": "针对知识图谱规模增大导致难以阅读和理解的问题，提出语义捆绑方法，利用大语言模型帮助用户将节点和边交互式分组为超节点等高层次结构，从而简化图谱。实验显示该方法能有效减少图谱视觉杂乱并突出关键语义关系，改善可视分析效果。该方法展示了LLM用于语义驱动的图聚类与结构简化的潜力，也为主动学习中的样本分组提供方法借鉴。",
+      "llm_tldr": "针对知识图谱规模增大导致难以阅读和理解的问题，提出语义捆绑方法，利用大语言模型帮助用户将节点和边交互式分组为超节点等高层次结构，从而简化图谱。实验显示该方法能有效减少图谱视觉杂乱并突出关键语义关系，改善可视分析效果。该方法展示了LLM用于语义驱动的图聚类与结构简化的潜力，也为主动学习中的样本分组提供方法借鉴。",
+      "llm_tags": [
+        "query:ac"
+      ],
+      "matched_query_tag": "query:ac",
+      "matched_query_text": "clustering using large language models",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

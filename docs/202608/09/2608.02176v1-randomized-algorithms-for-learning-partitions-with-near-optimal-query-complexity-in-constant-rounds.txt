@@ -1,0 +1,1019 @@
+Title: Randomized Algorithms for Learning Partitions with Near Optimal Query Complexity in Constant Rounds
+
+URL Source: https://arxiv.org/pdf/2608.02176v1
+
+Published Time: Tue, 04 Aug 2026 02:22:45 GMT
+
+Number of Pages: 26
+
+Markdown Content:
+# Randomized Algorithms for Learning Partitions with Near Optimal Query Complexity in Constant Rounds ∗
+
+Deeparnab Chakrabarty Dartmouth College 
+
+deeparnab@dartmouth.edu 
+
+Aditi Dudeja The Chinese University of Hong Kong (Shenzhen) 
+
+aditidudeja@cuhk.edu.cn 
+
+David Saulpic CNRS and Universit´ e Paris Cit´ e
+
+david.saulpic@irif.fr 
+
+Abstract 
+
+We study the round complexity of learning a hidden partition P of an n-element universe using PAIR queries: PAIR( x, y ) tells us whether x and y belong to the same part of the partition or not. While it is easy to learn using n|P| queries using a basic algorithm and this query complexity is optimal, this basic algorithm is highly sequential. Black, Mazumdar, and Saha [COLT 2025] recently gave tight deterministic round/query tradeoffs when the number of parts of P is known. In particular they prove Θ(log log n) rounds are sufficient and necessary to limit the number of queries to n|P| . They leave proving a randomized lower bound as an open direction. We show that randomization dramatically changes the picture. When the number of parts 
+
+k = |P| is known, we give a simple 3-round randomized algorithm using O(nk log n) queries with high probability, and prove that 2 rounds require Ω( n4/3k2/3) queries – the same as deterministic algorithms. We also study a more general setting where the number of parts is unknown. In this case, we give a 4-round randomized algorithm using O(n|P| log 2 n) queries with high probability, and prove that 3-rounds cannot achieve near-optimal query complexity. Furthermore, we show an even bigger separation in this regime between randomized and deterministic algorithms: for the latter, Θ(log n/ log log n) rounds are necessary and sufficient to obtain near-optimal query complexity. Thus, for partition learning, randomization yields a stark improvement in round complexity of algorithms with near optimal query complexity. 
+
+> ∗
+
+This work began at Dagstuhl Seminar 26131, “New Trends in Clustering”. We thank the organizers for inviting us, and to the staff of Schloss Dagstuhl for providing a productive research environment. arXiv:2608.02176v1 [cs.DS] 3 Aug 2026 1 Introduction 
+
+We consider the following learning problem in the query access model. We are given a finite universe U of n elements. There is a hidden partition P of U that we have to learn. We have access to PAIR queries: for any pair of elements {x, y } ⊆ U , the PAIR query on ( x, y ) reveals whether they are in the same part of P or not. It is easy to obtain an O(n|P| )-query algorithm by repeatedly picking an arbitrary unclassified element and performing (simultaneously) PAIR query with every other unclassified element to learn the part containing that element. Furthermore, it is known that this query complexity is optimal [14, 21, 19]. However, the above algorithm is highly 
+
+adaptive/sequential and proceeds in |P| − 1 rounds of question and answers, where the questions made in a round depends on the answers obtained in the previous rounds. A one round algorithm is also called a non-adaptive algorithm. In this paper, we are interested in understanding what is the fewest rounds of queries any algorithm which maintains (nearly) optimal query complexity can learn in. The above learning problem arises in many scenarios. One application is in clustering where the PAIR queries are known as “same-set queries” [24, 5, 20, 21]: the goal is to find a clustering of objects only based on questions to a user about pairs of objects. This may be a clustering of pictures of animals, and the user may choose to cluster them according to the background color, the genus of the animals or their species, etc; the clustering algorithm would therefore only have access to “same-set queries” provided by the user, and cannot assume any other structural information. A closely related motivation comes from crowd-sourced entity resolution in databases, where the goal is to partition records according to the real-world entities they represent. In that setting, a natural crowd question asks whether two records refer to the same entity, and many works [27, 26, 14, 22] study the question of how to select such crowd questions. In both examples, query-complexity corresponds to the “cost” (in dollars paid to the user or the crowd) of the algorithm while the round-complexity corresponds to the “execution time” of the algorithm assuming a batch of questions are answered in a unit amount of time. It is therefore important to understand the trade-offs between query and round complexity. Black, Mazumdar, and Saha (abbreviated to BMS, henceforth) addressed the above question in their nice paper [9] which gives the optimal answer for deterministic algorithms with the assumption that the number of parts 1 k := |P| is known to the algorithm; we return to this assumption shortly. First, for any r ≥ 1, they describe a r-round deterministic algorithm to learn the partition which makes 8 n1+ 12r −1 k1− 12r −1 many queries. In particular, this implies 2 a ⌈log log n⌉-round deterministic algorithm to learn a hidden partition of at most k parts making O(nk )-queries. Second, they show that any r-round deterministic algorithm, even with the knowledge of the number of parts, k,must make Ω 
+
+ 1 
+
+> r
+
+· n1+ 12r −1 k1− 12r −1
+
+
+
+queries. In particular, this rules out eO(nk )-query 3 algorithms in < 0.9 log log n rounds. They remark that it is open to establish such a lower bound for arbitrary 
+
+randomized algorithms. Our first result shows that there is no such lower bound, showing a stark contrast between deter-ministic and randomized algorithms.               
+
+> 1kcould be an upper bound on |P| , but the query complexity is in terms of knot |P| .
+> 2all logs are base 2
+> 3As is usual, we use eO(f(n)) to denote ≤f(n) log Cf(n) for some constant C, for large enough n
+
+1Result 1. We give a simple 3-round randomized algorithm that given a parameter k, learns a hidden partition P with at most k parts making O(nk log n) many PAIR queries whp (see Theorem 2.1). Complementing the above, we show that any 2-round randomized algorithm which succeeds with probability ≥ 0.51 in learning a partition with k parts, must make Ω( n4/3k2/3) many queries (see Theorem 3.2). 
+
+Note that BMS already implies a 2-round deterministic algorithm with the query complexity of our lower bound. This shows that the “power of randomization” surprisingly kicks in at the third round, and not before that. We also note that before our work, [8] showed that a non-adaptive (that is 1 round) algorithm, deterministic or randomized, must make Ω( n2) queries. 
+
+Unknown Number of Parts. As noted above, the BMS algorithm needs to know k, (an upper bound on) the number of parts of |P| , and so does our randomized algorithm alluded to in the above result. This raises the following question: what can one say about the round-complexity when the algorithm does not know anything about |P| ? Do things drastically change? Apart from being an interesting scientific question, not knowing |P| is in fact a natural assumption in many applications; for instance, in the clustering application the algorithm, or even the user, may not a priori know how many clusters there are. Note that the trivial, O(n|P| )-query algorithm described in the first paragraph of this paper doesn’t need to know |P| ; so the query complexity is unchanged. However, for algorithms proceeding in a small number of rounds, not knowing |P| raises a tension: if our query complexity is supposed to be eO(n|P| ), then in any round, we cannot afford to make more than eO(nk ′) queries, where k′
+
+is the current lower bound on |P| that our algorithm can deduce from the answers seen so far. In particular, the algorithm cannot make more than eO(n)-queries in the first round. We show that for randomized algorithms one extra round suffices, and is indeed necessary, if we want near-optimal query complexity. 
+
+Result 2. We give a simple 4-round randomized algorithm that, for any partition P, learns it making O(n|P| log 2 n)-many PAIR queries whp (see Theorem 2.6). The algorithm does not know anything about |P| .Complementing the above, we show that any 3-round randomized algorithm that learns any partition P with probability ≥ 9/10 , must make Ω( n4/3|P| 2/3)-queries in some round with con-stant probability on some partition |P| (see Theorem 3.8). This rules out a 3-round randomized algorithm which learns any partition P making eO(n|P| )-many PAIR queries whp. 
+
+At this point, we also should remark about the round-complexity of deterministic algorithms for reconstructing partitions when |P| is unknown and which have near optimal query complexity of 
+
+eO(n|P| ). Although deterministic algorithms are not the main focus of this paper, we discover an exponential gap in the round complexity of near optimal query complexity algorithm between the settings of known number of parts and unknown number of parts. This is in contrast to the randomized case where our results above imply a gap of one extra round. While the results of BMS [9] imply Θ(log log n) rounds are necessary and sufficient when |P| is known, we show that when |P| is not known, the round complexity is Θ(log n/ log log n). In particular, there is a simple algorithm (Theorem 4.1) making eO(n|P| ) queries running in 
+
+l log n 
+
+> log log n
+
+m
+
+rounds, and any 2algorithm having query complexity n|P| log c n for any constant c must proceed (Theorem 4.6) in Ω(log n/ log log n) rounds. This, and some more nuanced results, can be found in Section 4. 
+
+Subset Queries. BMS [9] also consider the partition learning problem with the stronger “subset queries”: given a subset S ⊆ U , a query Q(S) returns the number of parts the elements of S lie in. More precisely, Q(S) = P  
+
+> P∈P
+
+min(1 , |P ∩ S|). When S is a pair of elements, Q(S) is 1 iff the PAIR query answers YES and is 2 iff the PAIR query answers NO. The paper studies the power of such queries for “small subsets”, in particular, when the subset S needs to have |S| ≤ s for some parameter s. Since O(s2) PAIR queries simulate a subset query of size s, the query complexity of the partition learning problem 4 is Ω( nk s2 ). BMS give a randomized algorithm which learns the partition in log log n rounds making eO( nk s2 ) s-bounded subset queries, while their above lower bound proves a matching round-complexity for deterministic algorithms. Our final result, which is an easy corollary of our results above and a non-adaptive randomized algorithm in [9], is that we can shrink the number of rounds to 3 and 4 in the known |P| and unknown |P| case, respectively. 
+
+Result 3. When |P| is known, there is a 3-round randomized algorithm that makes with high probability eO(nk/s 2)-many s-bounded subset queries and learns the partition P. When |P| is unknown, there is a 4-round randomized algorithm with the same guarantee. 
+
+1.1 Our Techniques. 
+
+Algorithms. For our algorithms, the starting point is the ability of random sampling to build 
+
+nets – a small subset of elements which hits any large enough set in a set system. Here, it means that a small random sample of elements will hit all large enough parts of the partition: formally, sampling eO(T ) points hits with high probability every part of size at least n/T . Therefore, if 
+
+k = |P| (or an upper bound on |P| ) is known, then in one round one can sample ≈ √nk points and be guaranteed to contain an element from every part of size ≥ pn/k . So, in round one, we perform all pairwise queries among these sampled elements to learn the local partitioning of this random subset. In the second round, using at most one representative from each part of this local partitioning, we can learn the complete parts in which these representatives lie with ≤ nk queries, thereby learning every part of size ≥ pn/k . Since there are (at most) k parts, the number of “unclassified” elements at this point is therefore ≤ k · pn/k = √nk . By performing a third round of all pair-wise queries between these unclassified points gives us the simple 3-round eO(nk ) query algorithm to recover the partition. Note that the above algorithm needs to know k, and in particular if k = ω(√n), it makes ω(n)queries in the first round. However, if we do not know k, then in the first round we cannot make more than eO(n) queries since the number of parts could be O(1). At this point, one idea is to 
+
+estimate k in one round using eO(n) queries, and then apply the above algorithm to get a 4-round algorithm. Unfortunately, with a budget of eO(n) queries, one cannot estimate k well in one round: any non-adaptive, possibly randomized, algorithm making eO(n) queries cannot distinguish between two partitions, one with k = n0.01 parts and another with k = n0.5 parts (see Section A). Nonetheless, we can obtain a 4-round randomized algorithm by morally doing the above. The point is that we don’t really need a good estimate of k; what we need a lower bound k′ on k which may be quite far from the true value but still actionable in three subsequent rounds. Indeed, when  
+
+> 4It is also easy to show an Ω( n) lower bound for large s; so the lower bound should be thought of as max( n, nk/s 2).
+
+3using the 3 round algorithm with a value k′, potentially ≪ |P| , the risk is that there remains many unclassified elements in the last round. All those items however are in small parts – with size less than pn/k ′, as we sketched above. Thus, our estimate k′ need only satisfy that only a few elements are in small parts, or more precisely, that at most √nk elements, where k is the true |P| , are in parts with size ≤ pn/k ′. We now show how to do this again by random sampling. The main observation is this. For any integer s, let Us be the elements contained in parts of size [s, 2s). If |Us| = Ω( n/s ), then note the following: (i) k ≥ Ω( n/s 2), (ii) a random subset R ⊆ U of size O(s) hits Us, and (iii) for each x ∈ R, one can be reasonably sure x ∈ Us by making PAIR queries with x and O(n/s ) random other elements and seeing Θ(1) successes. The first round of our algorithm, for every s which is a power of 2, implements (ii) & (iii) using O(n)-many PAIR queries, and notes s∗ to be the smallest s for which we get a hit with Us∗ . Due to (i) above, we can use k′ = Ω   ns∗2
+
+ as a lower bound. Furthermore, we can assert that the number of elements P in parts of size ≤ s∗ = pn/k ′ is at most eO(√nk ), where k is the true number of parts. To see this, note that for any s < s ∗ we have |Us| = O(n/s ) and by definition, we have |Us| ≤ 2ks . Multiplying and taking square-roots, we get |Us| ≤ O(√nk ). Since P is the union of at most O(log n) many 
+
+Us’s, we have |P | ≤ eO(√nk ), which is what we desired. 
+
+Lower Bounds. We show that even with knowledge of k, any 2-round randomized algorithm must make Ω( n4/3k2/3) queries matching the deterministic upper and lower bounds of BMS [9], hence formalizing that randomization only helps with three rounds. The main idea is inspired by the r-round deterministic lower bound in [9]. The deterministic lower bound follows via an “adversary argument” where an adversary forms the partition on the fly responding to the queries made, trying to hid a “key feature” till requisite number of rounds go by. For randomized lower bounds, we need to commit to a distribution of partitions; however, we can argue that only 2-rounds of queries cannot reveal enough information to detect the “key feature”. To give more details, we construct a distribution over partitions, with either 2 k + 1 or 2 k + 2 parts, as follows. We first split the universe into k roughly equal parts U1, . . . , U k, and each Ui identifies a suitably sized subset Ri, and forms parts Ui \ Ri and Ri. It is instructive to think of every element 
+
+x ∈ U choosing ux ∈ [i] at random, and an independent rx ∈ { 0, 1} at random, and x ∈ Ui if ux = i
+
+and x ∈ Ri if ux = i, r x = 1. Let R = ∪ki=1 Ri. One then samples a pair ( a, b ) ∈ R × R and in the DOUBLETON world, we pluck {a, b } out and form its own part and in the SINGLETON world we pluck it out and form two parts: {a} and {b}. Any successful algorithm must query the pair (a, b ). This is the “key feature” alluded in the previous paragraph and this is the same as in [9]. The size of |R| is so chosen that (a) the first round queries Q1 have very few pairs with endpoints in the same Ri, and (b) nevertheless there is a lot of uncertainty among the choice of ( a, b ). In particular, condition (a) allows one to formalize the idea that the answer to the first round queries doesn’t really decrease the uncertainty induced by part (b). We leave the details to Section 3.1. When k is unknown , we show that 3-rounds do not suffice even with randomness. The lower-bound builds on that for the known-k case, with a slight twist to force the first round to use at most 
+
+eO(n4/3) queries. The whole argument is then to show that such a small number of queries is basically useless to the algorithm. To force a small number of queries in the first round, the hard distribution is built as follows: with probability 1 /2, it is the trivial partition with a single part. With the remaining probability, it is the hard instance for known k described above, with k = n0.67 .In fact, we prove that any 3-round algorithm must make Ω( n4/3|P| 2/3) many queries. 4To prove the 3-round lower bound, we show that the first round reveals information only about a tiny number of parts; and that after the second round, a and b are indistinguishable in a large set of items (just as in the case for known-k). For the first round: we say that an item x is “revealed” in the first round either if there are more than k/ 3 queries of the form ( x, y ) involving x, or if there is even one query ( x, y ) wth ux = uy = i, that is, the endpoints are in the same Ui. A i ∈ { 1, ..., k }
+
+is revealed if there is one item x revealed with ux = i. We show that if k = n0.67 , then only o(k)many i’s are revealed (as long as |Q1| = o(n4/3). For all revealed i’s, we disclose the Ui to the algorithm. Now, in the second round, the remaining randomness is the following: all values of r are still fresh – as items are revealed solely based on their value of u; and, as each item was compared against 
+
+k/ 3 other items, there is still a lot of randomness in the choice of the u values. This allows us to show that, even conditioned on the answer to the first round of queries, the set R′ of points x such that rx = 1 and all for all queries ( x, y ), ux̸ = uy is still a (1 − o(1)) fraction of the items with 
+
+rx = 1 – both because of the remaining randomness on u’s, and because the algorithm mostly hits points with rx = 1 with tiny probability. Further, a and b are in this set, and the argument about the third round mimics that of the second round in the known k case. 
+
+1.2 Related Works 
+
+Partition learning and round complexity. The works most relevant to ours is the line of works on learning partitions from pairwise oracle access. Reyzin and Srivastava [25] studied the equivalent problem of learning connected components of a hidden graph from membership queries, and Liu and Mukherjee [19] proved tight adaptive query bounds for learning graph partitions. As mentioned earlier, Black, Mazumdar, and Saha [9] initiate the systematic study of round complexity for this problem in the known |P| setting; to our knowledge, our work is the first to consider the round/query tradeoff question in the unknown |P| setting. Interestingly, some papers, such as [20, 21] do consider the learning problems in the unknown |P| case, but they do not study the tradeoff question. The partition learning has also been studied in other query models. We already mentioned the subset-query algorithms [8] which, given a subset S, tells how many parts S hits. This is the weak subset query;[8] also study the strong subset query model where one gets the sub-partition of S as well. Interestingly, this doesn’t give too much more power. The weak subset query is also called a rank -query by [12] (since it is the rank of S in the simple partition matroid induced by P); that paper studied the query complexity of recovering P with no restriction on the size of the subsets, and gave an O(n)-query deterministic algorithm, and this query complexity is information-theoretically optimal. Finally, several works study partition or clustering recovery when same-cluster queries may be noisy or faulty [20, 21, 18, 10, 15, 16]. These results are complementary to ours: they address robustness to erroneous answers, while our oracle is noiseless and we focus on the tradeoff between query complexity and adaptive rounds. 
+
+Broader query-access models. Partition learning is also part of a broader literature on reconstruct-ing hidden combinatorial objects from indirect queries. In graph and hypergraph reconstruction, additive queries ask for the number or total weight of hidden edges contained in a queried subset of vertices; this model was studied for graphs by Grebinski and Kucherov [17] and Mazzawi [23], and for hypergraphs by Bshouty and Mazzawi [11]. More recently, this question was studied [13] in the CUT query model as well, motivated by relation to submodular function minimization. Another well-studied model is the edge-detecting oracle, where a query set reveals whether it contains at 5least one hidden edge. Alon et al. [2] studied learning hidden matchings, while Angluin and Chen studied learning hidden graphs and hypergraphs [3, 4]; subsequent work sharpened query and round tradeoffs for graph learning [1] and low-degree hypergraph learning, including hypermatchings [7], and specializations to Erdos-Renyi hypergraphs [6]. These models are not identical to PAIR queries, but they share the same basic theme: understanding how query complexity and adaptivity interact when reconstructing an unknown discrete structure. 
+
+1.3 Preliminaries 
+
+The formal problem we consider is the following. An oracle commits to a partition P of {1, ..., n }.Our algorithm is allowed to query the algorithm in adaptive rounds: at round t, the algorithm can select a set of PAIR queries {(xi, y i)}. For query ( xi, y i), the oracle answers Q(xi, y i) =YES if xi, y i
+
+are in the same part of the partition, NO otherwise. Note that the queries at round t may depend on the queries and answers of previous rounds; however, the partition is fixed at the beginning, before any query are done. This partition may be chosen based on the distribution of queries, but not on the specific random choices – i.e., the oracle knows the code of the algorithm, but not the random seed. Because of the clustering motivation of our problem, we will interchangeably use “parts” and “clusters”: the goal of the algorithm is to recover an unknown partition, or equivalently an unknown clustering. 
+
+# 2 Algorithms for Pair Queries 
+
+2.1 Known Number of Parts 
+
+We begin with proving the following. 
+
+Theorem 2.1. Given an upper bound k on the size of a partition P, there is a 3-round randomized algorithm that learns P and makes O(nk log n) PAIR queries whp. 
+
+The base of our algorithm is the following simple observation: 
+
+Fact 2.2. Let S ⊂ [n] be a (multi-)subset of T > 0 random samples of U , chosen independently and uniformly (with replacement). Let P be a cluster of P with size at least n/T . Then, P[S ∩ P̸ =
+
+∅] > 12 .Proof. Consider the T independent elements of S (with possible repetition) in the order they are picked to be s1, . . . , s T . For any i, the probability P[si ∈ P ] ≥ |P | 
+
+> n
+
+≥ 1 
+
+> T
+
+. Therefore, 
+
+P[S ∩ P = ∅] = P[
+
+> T
+
+^
+
+> i=1
+
+{si /∈ P }] ≤
+
+
+
+1 − 1
+
+T
+
+T
+
+≤ 1
+
+e ⇒ P[S ∩ P̸ = ∅] > 12In the first round, the algorithm identifies one representative for each cluster with size at least pn log n/k ; call such clusters large. This is done by sampling O(√nk log n) points and querying all pairs. The second round identifies all these large clusters, by querying the representatives and all other points. The last round queries all unclassified points by querying all unclassified pairs. First, we show in the next lemma that the algorithm is correct: 6Algorithm 1 Learning k Partitions Let R be a random subset of [ n] of size 10 √nk log n.
+
+Round 1 : For all pairs x, y in R, query Q(x, y ). Select a maximal set of points S in R that are in different clusters. 
+
+Round 2 : For all x ∈ R and y ∈ [n], query Q(x, y ). For y ∈ R, denote Cy the set of points in y’s cluster, as computed in round 2. Let P ′ = [ n] \ ∪ y∈RCy be the not-classified points. 
+
+Round 3 : Query Q(x, y ) for all pairs of points x, y ∈ P ′.
+
+Lemma 2.3. At the end of round 3, the algorithm correctly knows all clusters with probability 1.Proof. At the end of round 2, the algorithm correctly identifies all clusters that intersect R. All remaining clusters consist of points in P ′: they are therefore identified in round 3. Now, we can bound the number of queries made by the algorithm. First, we show that the first two rounds classify most of the points: 
+
+Lemma 2.4. Let P ′ be as in the algorithm be the set of points not classified after round 2. With high probability, |P ′| ≤ √nk log n.Proof. Let C ∈ P be a cluster with size at least 
+
+q n log nk . Partition R into 10 log n many sets of size 
+
+q nk   
+
+> log n
+
+: Fact 2.2 ensures that C intersects each part with constant probability. Hence, C intersects with at least one of them with high probability 1 − 1/n 10 : let y be a point in this intersection. At round 2, the algorithms queries pairs x, y for all x ∈ [n]: hence, the set Cy is equal to C.Hence, with high probability, in P ′ there are only points from clusters with size less than pn log n/k .There are at most k such clusters, so |P ′| ≤ √nk log n.
+
+Lemma 2.5. With high probability, the number of queries made by Algorithm 1 is O(nk log n).Proof. Round 1 uses O  (√nk log n)2 queries. Round 2 identifies at most k representatives, hence makes at most nk queries. Lemma 2.4 ensures that, with high probability, |P ′| ≤ √nk log n: the number of queries made in round 3 is therefore O(nk log n). Hence, in total there are O(nk log n)queries whp. 
+
+2.2 Unknown Number of Parts 
+
+In this section, we consider the case when the number of parts is unknown. As mentioned in the introduction, BMS [9] only consider the known k case. In Section 4, we consider the situation of deterministic algorithms and how the picture changes drastically when |P| is unknown to the algorithm. In this section, however, we focus on randomized algorithms and show that the round complexity increases by 1. In particular, we prove the following theorem. 
+
+Theorem 2.6. There is a 4-round randomized algorithm which learns P and with high probability makes O(n|P| log 2 n) many PAIR queries. This algorithm has no knowledge about |P| .
+
+7Recall from the introduction that in the first round the algorithm can make only eO(n) queries since it doesn’t know n. Our algorithm computes a lower bound k∗ in the first round, and then simply applies the 3-round algorithm (Algorithm 1) for known k in rounds 2,3, and 4. Crucially, our lower bound k∗ may not be accurate, that is, it is possible that k∗ ≪ k. In such cases, however, we argue that the number of pairs queried in the last round of Algorithm 1 (which is Round 4 of this algorithm) remains eO(√nk ), for the true value of k, even though the two previous rounds used only 
+
+eO(nk ∗) ≪ nk queries. The lower bound is based on the following idea. Suppose for some s, there are more than n/ (s log n)points in clusters of size (roughly) s. In this case, a random subset R of size s log n is likely to hit such a cluster. Fix some cluster C, and an item x ∈ R ∩ C. Next, note that another sample Q
+
+of n/s independently drawn points contains in expectation |Q| · |C| 
+
+> n
+
+= |C| 
+
+> s
+
+many “neighbors” (YES answer with a PAIR query) of x. Thus, if C has size significantly less than s, x has no neighbors in 
+
+Q; if it has size roughly s, it contains a single neighbor with constant probability; and if it has size much bigger than s, it contains more than one neighbor. Thus, by making PAIR queries between all points s log n points of R and random samples Q of size n/s – which is n log n queries– it is possible to estimate how many points of R are in clusters of size s; and, since R is a random set, this allows us to estimate how many points in total are in clusters of size s. Leveraging this idea, it is possible to identify s∗, the smallest s such that there are more than n/s points in clusters of size roughly s. Since there are at most k such clusters, this yields the bound s∗k ≥ ns∗ implying 
+
+k ≥ ns∗2 . This is the “lower bound” k∗ that we use; we analyze in Corollary 2.9 that this is indeed a lower bound with high probability. As alluded above, it is possible that k∗ ≪ k in which case we lose our guarantee of Algorithm 1. In particular, the worry is that in the last round we may have too many not-classified points remaining since our choice of k∗ was small. We show this is however not a problem because the points left not-classified must be in clusters of some size s such that fewer than n/s points are in s-sized clusters (otherwise, our k∗ would’ve been higher). So if there are “too many” not-classified points remaining at the end of the penultimate round, then it must be because in reality there must be “too many” clusters as well. Thus, doing all pair queries is within budget. We now proceed to give details of the above idea; the formal algorithm is described in Algorithm 2. The high-level steps are the following. 1. Instead of working with every s, we work with powers of 2. 2. So, for each i = 1 , ..., log n, we think of s = 2 i and sample 160 · s log n random points in U ;call this set Ri.3. For each x ∈ Ri, we sample a set Qx of n/s random points in U and perform PAIR queries. 4. We call x successful if exactly one of the PAIR queries returns YES. 5. We call i useful if at least 5 log n of the x ∈ Ri are successful. 
+
+Lemma 2.7. For any x, let s(x) be the size of the cluster containing x. For i < log( n/ 2) and 
+
+x ∈ Ri, the probability that x is successful, that is, in Succ i, is: 
+
+• at most 1/n 2 if s(x) > 3 · 2i log n,
+
+• at least 116 if s(x) ∈ [2 i−1, 2i).
+
+8Algorithm 2 Learning k Partitions with unknown k
+
+Round 1 . ▷ We are being very loose with constant factors 
+
+k∗ ← 1. 
+
+for i = 1 , ..., log n do :Sample a set Ri of 160 · 2i log n random points from U ▷ 2i is “ s” in above discussion Initialize Succ i ← ∅ 
+
+for x ∈ Ri do :Sample a set Qx of n/ 2i random points from U
+
+Perform pair query Q(x, y ) for each y ∈ Qx
+
+if exactly one query returns YES then : ▷ this x is successful 
+
+Succ i ← Succ i ∪ { x}
+
+end if end for if |Succ i| ≥ 5 log n then : ▷ this is a useful i
+
+Set k∗ ← n 
+
+> 4i
+
+· 1500 log n .Break and exit the for-loop 
+
+end if end for Rounds 2, 3, 4 :Use Algorithm 1 with the number of parts ˆk ← 2000 k∗ log n.
+
+Proof. Fix such an x. For a random y ∈ U , the probability that the PAIR query between x and y
+
+returns YES is s(x) 
+
+> n
+
+. Thus, as all the random samples are taken independently, the number of YES is Binomial variable with s(x) 
+
+> n
+
+success probability and ni := n 
+
+> 2i
+
+random trials. The probability that there is exactly a single YES is therefore ni · s(x) 
+
+> n
+
+· (1 − s(x) 
+
+> n
+
+)ni−1
+
+In particular, if n ≥ s(x) > 3 · 2i log n, this is at most 
+
+n
+
+
+
+1 − s(x)
+
+n
+
+ni−1
+
+≤ n exp 
+
+
+
+− 3 · 2i log nn · n
+
+2i
+
+
+
+< n −2.
+
+Similarly, if s(x) ∈ [2 i−1, 2i], then 1 ≤ ni · s(x) 
+
+> n
+
+and the probability is at least 
+
+
+
+1 − s(x)
+
+n
+
+ni
+
+≥
+
+
+
+1 − 2i−1
+
+n
+
+n/ 2i
+
+≥ 116 where we used that x → (1 − x)2/x is decreasing for 0 ≤ x ≤ 1/2, and hence the term is greater than 1 /16 when i ≤ log( n/ 2). For i = 1 , 2, . . . , log n, define Ui to be x ∈ U with s(x) ∈ [2 i−1, 2i). Although we break the algorithm when we encounter any i with |Succ i| ≥ 5 log n, consider running the algorithm for all i calling an 
+
+i useful if |Succ i| ≥ 5 log n, and then setting k∗ := n 
+
+> 4i
+
+· 1500 log n for the smallest useful i. If no i is useful, then we set k∗ = 1. The above lemma implies the following as a corollary of Lemma 2.7. 9Lemma 2.8. With high probability, it holds that : 
+
+• if |Ui| ≥ n/ 2i, then i is useful, 
+
+• if i is useful, then ∪j:2 j ≤3·2i log nUj ≥ n 
+
+> 160 ·2i
+
+.Proof. First, fix i such that |Ui| ≥ n/ 2i. Then, |Ui ∩ Ri| is a sum of 160 · 2i log n independent Bernouilli trials, with success probability at least |Ui|/n ≥ 1/2i. Hence, Chernoff bounds ensure that with probability at least 1 − 1/n 3, |Ui ∩ Ri| ≥ 6 · 16 · log n; and Lemma 2.7 ensures that any point in this intersection will be successful with probability at least 1 /16. Since there are at least 6 · 16 · log n such points, at least 5 log n of them are successful with high probability. Hence, i is useful with high probability. For the converse, define U≲i := ∪j:2 j ≤3·2i log nUj and suppose |U≲i| ≤ n 
+
+> 160 ·2i
+
+. Then, |U≲i ∩ Ri| is a random variable with the same distribution as a sum of 160 · 2i log n independent Bernouilli trials, each with success probability at most 1160 ·2i . Thus, Chernoff bounds ensure that with probability at least 1 − 1/n 2, |U≲i ∩ Ri| < 3 log n. In addition, a direct corollary of Lemma 2.7 is that, with probability at least 1 −1/n 2, no point in Ri \U≲i is successful (since they all have s(x) ≥ 3·2i log n). Hence, whp, there are at most 3 log n successful points in Ri, implying i is not useful. Hence, by contraposition, whp, if i is useful, then |U≲i| ≥ n 
+
+> 160 ·2i
+
+.
+
+Corollary 2.9. With high probability, the k∗ returned by the algorithm satisfies k∗ ≤ k.Proof. This follows from the second bullet point of Lemma 2.8. If the algorithm returns k∗ = 
+
+> n
+> 4i
+
+· 1500 log n , then, this iteration i is useful and so the lemma implies, with high probability, 
+
+∪j:2 j ≤3·2i log nUj ≥ n 
+
+> 160 ·2i
+
+. Since each part in this union is at most size 3 · 2i log n, this implies 
+
+k ≥ n 
+
+> 160 ·2i
+
+· 13·2i log n > n 
+
+> 4i
+
+· 1500 log n = k∗.
+
+Theorem 2.10. Algorithm 2 performs O(nk log 2 n) many pair queries with high probability. Proof. In the first round, the algorithm performs eO(n) queries. In the second and third round, we run the first two rounds of Algorithm 1. So, the second round makes O(nˆk log n) many queries which, by Corollary 2.9, is O(nk log 2 n) with high probability. The third round (i.e., second round of Algorithm 1) never makes more than O(nk ) queries. What is remaining and is non-trivial is the number of queries made in the last round – this is |P ′|2 where P ′ is the set of not-classified points. To analyze this, we will use the first bullet point of Lemma 2.8. First, as in the analysis of Algorithm 1, we notice that with high probability P ′ ⊆ U which lie in clusters of size <
+
+q n log n 
+
+> ˆk
+
+= 2 i−1, where i is the useful iteration at which we break. If there is no such i, then let i = log n. So, |P ′| ≤ P 
+
+> i′<i
+
+|Ui′ |, or more pertinently, there is an i′ < i with    
+
+> |P′|
+> log n
+
+≤ | Ui′ | since there are only log n indices. Recalling the definition of the set Ui’s, we know that k ≥ | Ui′ |/2i′
+
+. Putting all this together we get the following upper bound on the number of not-classified points. 
+
+|P ′| ≤ | Ui′ | · log n ≤ k · 2i′
+
+· log n (1) Now, the first bullet point of Lemma 2.8 implies that, even after union bounding over all possible 10 i’s, with high probability |Ui′ | < n 
+
+> 2i′
+
+. Again using |P ′| ≤ |Ui′ |  
+
+> log n
+
+, we get another upper bound 
+
+|P ′| ≤ | Ui′ | · log n < n
+
+2i′ · log n (2) Multiplying the above two inequalities gives that, with high probability, the number of queries made in the final round, that is, |P ′|2 is at most nk · log 2 n. This completes the proof of the theorem. 
+
+# 3 Lower Bounds for Pair Queries 
+
+As usual, we will use Yao’s lemma to focus on deterministic algorithms which are promised a par-tition from a particular distribution. Therefore, our lower-bound instances consists of distribution against which any deterministic algorithm must do many PAIR queries. 
+
+3.1 2-round lower bound for arbitrary known k
+
+Let k be any integer dictating the upper bound on the number of parts, and define n = kl for some large enough integer l ≥ 1. Let U be a universe on n elements. We define a distribution D over partitions of U with at most 2 k + 2 parts 5 We show that any 2-round deterministic algorithm A
+
+which makes 6 o(n4/3k2/3) queries will make a mistake with at least a constant probability. In a subsequent remark we see how to boost this probability. The distribution is defined as follows. (D1.) For each x ∈ U we pick ux uniformly at random from [ k], let Ui = {x | ux = i}.(D2.) For each x ∈ U let rx = 1 with probability 1 
+
+> l1/3
+
+and Ri = {x | ux = i, r x = 1 } and 
+
+R = {x | rx = 1 }.(D3.) Sample a, b uniformly at random from R.(D4.) Now we are ready to return the partitions. With probability 0 .5, we return the partition: U1 \ R1, · · · , U k \ Rk, R 1 \ { a, b }, · · · , R k \{a, b }, {a, b }. We call this the DOUBLETON instance With probability 0 .5, we return the partition U1 \ R1, · · · , U k \ Rk, R 1 \ { a, b }, · · · , R k \{a, b }, {a}, {b}. We call this the SINGLETON instance. We will show that, with constant probability, A cannot distinguish between a DOUBLETON or SINGLETON instance, and therefore, will make a mistake. Let us fix a 2-round deterministic algorithm A which makes at most o(n4/3k2/3) queries in each round. 
+
+Theorem 3.1. Given a partition drawn from D, A cannot distinguish whether it is a DOUBLETON instance or a SINGLETON instance with probability > 12 + o(1) .
+
+Using Yao’s lemma, the above proves the following theorem alluded to in Result 1. 
+
+Theorem 3.2. Any 2-round randomized algorithm which learns a partition P with at most k parts with probability > 0.51 must make Ω( n4/3k2/3) many PAIR queries.                    
+
+> 5Note that it is natural that the lower bound holds for partitions with at least 3 parts: for 2 parts, the trivial deterministic algorithm described in introduction uses only 1 rounds.
+> 6For reading convenience, we use the little-oh notation throughout. One should should think of this as
+> ≤n4/3k2/3/C for some large constant Cwhich will determine the mistake probability.
+
+11 Remark 1. One can “boost” the 0.51 success (or rather lack thereof ) to any constant δ > 0 by taking t = Θ(log(1 /δ )) copies while increasing the universe size by a factor t. In the remainder of the section, we focus on proving Theorem 3.1. 
+
+We let Q1 denote the first round queries, and let Q2 denote the second round queries. The key observation is that if ( a, b ) /∈ Q1 ∪ Q2, then the algorithm cannot distinguish a DOUBLETON instance from a SINGLETON instance, since one can form a coupling among these with ( a, b )being the only query at which their answers differ. So if we can upper-bound the probability of A
+
+querying ( a, b ) by o(1), we obtain the above theorem. Here, the probability is over the randomness in ux, r x, a x, b x for all x ∈ U .By symmetry, it is easy to see that P[( a, b ) ∈ Q1] = |Q1|
+
+(n
+
+> 2
+
+) since {a, b } is uniformly distributed over all pairs. Since |Q1| = o(n2), this probability is o(1). What is non-trivial is to show that the answers to Q1, which we denote A(Q1), don’t reveal enough information so that Q2 can “catch” (a, b ). More precisely, we need to show 
+
+P[( a, b ) ∈ Q2 | A(Q1)] = o(1) (*) This is what we do next. We begin with a simple structural fact showing that |R| is large with high probability. 
+
+Fact 3.3. Let G1 be the event that |R| = (1 − o(1)) · kl 2/3. Then P[G1] = 1 − o(1) 
+
+Remark 2. The above is an example of an abuse of notation which we choose to do for the sake of readability (and not carrying around inconvenient constants). The above statement should be read is as follows: for any constants ε1, ε 2 ∈ (0 , 1) , for large enough n, we have P[|R| ≥ (1 − ε1)kℓ 2/3] ≥
+
+1 − ε2.Proof. The expected size of R is E[|R|] = nl1/3 = kl 2/3. The above fact now holds by Chernoff bounds. More precisely, for any ε1 ∈ (0 , 1), we have P[|R| < (1 − ε1) E[|R|]] ≤ exp( − ε21 
+
+> 2
+
+· kl 2/3), which can be made ≤ ε2 for any ε2 ∈ (0 , 1) by choosing l to be large enough. Next, we state a few claims about the first round queries Q1. First, note that |Q1| = o(n4/3k2/3) = 
+
+o(k2ℓ4/3). We next show that with high probability, a good fraction of the queries have their endpoint lying in different Ri’s. 
+
+Fact 3.4. Let G2 be the event that |Q1 ∩ ∪ ki=1 (Ri × Ri)| = o(kl 2/3). Then, P[G2] = 1 − o(1) .Proof. Let ( x, y ) ∈ Q1 be an arbitrary query in Q1. Let ux = i. The probability that ( x, y ) ∈∪ki=1 (Ri × Ri) is the probability uy = i, r x = 1 , r y = 1. Since these are independent, this probability is 1 
+
+> kl 2/3
+
+. Therefore, E[|Q1 ∩ ∪ ki=1 (Ri × Ri)|] = o(kl 2/3). The fact follows from Markov’s inequality.                     
+
+> 7
+> 7As before, to be precise, if |Q1|=n4/3k2/3/C , then Markov’s inequality states that for any ε > 0, we have
+> P[|Q1∩ ∪ ki=1 (Ri×Ri)| ≤ 1
+> ε·kl 2/3
+> C]≥1−ε. For any slowly growing function C, if we choose 1 /ε to be slower function such that Cε goes to infinity as well. Thus, quantitatively, the “little-oh”s differ, but figuring this out exactly, in our opinion, is not worthwhile.
+
+12 Consider a pair ( x, y ) ∈ Q1. If ux̸ = uy, the answer to this query is NO. Crucially, if x ∈ R, then the answer to this query doesn’t give any information of whether x is a or not. To this end, define 
+
+R′ := {x ∈ R | for all ( x, y ) ∈ Q1, u x̸ = uy}
+
+Lemma 3.5. Let G3 be the event that the pair (a, b ) sampled in step (D3.) lies in (R′ × R′) \ Q1.Then P[G3] = 1 − o(1) .Proof. Conditioning on G1 and G2, we can lower bound the size of |R′|: fix any item x ∈ R \ R′,with ux = i. Then there is some y with uy = i, such that ( x, y ) ∈ Q1 ∩ (Ri × Ri). Hence, 
+
+|R \ R′| ≤ | Q1 ∩ ∪ ki=1 (Ri × Ri)| = o(kl 2/3). Fact 3.3 implies |R| = (1 − o(1)) kl 2/3 implying, 
+
+|R \ R′| = o(|R|) or |R′| = (1 − o(1)) |R′|. Hence, 
+
+P(G3 | G2, G 1) = |(R′ × R′) \ Q1||R|2 ≥ |R′|2
+
+|R|2 − |Q1||R|2 = 1 − o(1) since |Q1| = o(k2l4/3) and so is o(|R|2). Since P(G1), P(G2) = 1 − o(1), we get P(G3) = 1 − o(1). After the first round of queries of the protocol, if the events {G1, G 2, G 3} don’t all occur, we let the protocol win. Otherwise, we proceed to the second round after telling the protocol the solutions to 
+
+Q1. The crucial observation is the following. 
+
+Observation 3.6. Conditioned on {G1, G 2, G 3}, A(Q1) is independent of a and b.Proof. Indeed, by definition of R′, if x ∈ R′, then any query ( x, y ) ∈ Q1 have ux̸ = uy. Unless (x, y ) = ( a, b ), the answer to this query is NO. Since G3 enforces ( a, b ) ∈ (R′ × R′) \ Q1, every answer in A(Q1) is determined solely by {ux, r x} which are independent of a, b .Now we can establish the upper bound in Equation (*) completing the proof of Theorem 3.1, and thus establishing the lower bound of Result 1. 
+
+Lemma 3.7. P[( a, b ) ∈ Q2 | A(Q1)] = o(1) .Proof. To do so, we first note 
+
+P[( a, b ) ∈ Q2 | A(Q1)] ≤ P[( a, b ) ∈ Q2 | A(Q1), G 1, G 2, G 3] + 
+
+> 3
+
+X
+
+> i=1
+
+P[¬Gi]
+
+| {z }
+
+> =o(1)
+
+By the above observation, we have the first term in the RHS is P[( a, b ) ∈ Q2 | G1, G 2, G 3]. Condi-tioned on G3, any ( x, y ) ∈ Q2 which is not in ( R′ × R′) \ Q1 has 0 chance of being ( a, b ). Therefore, we can upper bound 
+
+P[( a, b ) ∈ Q2 | G1, G 2, G 3] ≤ X
+
+> (x,y )∈Q2
+
+P[( a, b ) = ( x, y ) | (x, y ) ∈ (R′ × R′) \ Q1, G 1, G 2, G 3]Event G3 ensures that ( a, b ) is uniform in ( R′ × R′) \ Q1 instead of uniform in R × R, and so the above probability is 1 
+
+> |(R′×R′)\Q1|
+
+. Conditioned on G1, G 2, we have |(R′ × R′) \ Q1| ≥ (|R′|)2 − | Q1| =(1 − o(1)) k2l4/3, implying each term in the above summation is 1+ o(1)  
+
+> k2l4/3
+
+. If |Q2| = o(k2l4/3), the above summation is o(1). 13 3.2 A 3-round lower-bound for unknown k
+
+The main goal of this section is to show that there cannot exist a 3-round randomized algorithm which, with high probability, learns any partition P making eO(n|P| ) queries per round. To do so we create a distribution over partitions, and with 0 .5 probability the partition is the trivial partition with 1 part. What this forces is that any randomized algorithm must make eO(n4/3)-queries in the first round; otherwise, with 0 .5 probability, the number of queries overshoots the budget. This is all we need to prove our 3-round lower bound; we will in fact tell the algorithm what |P| is along with the first round’s answers. As we mention in Result 2, we show something stronger; if there is a 3-round randomized algorithm, then it must make Ω( n4/3|P |2/3) queries. However, we do not know of such an algorithm (and we leave that as an open problem). 
+
+Theorem 3.8. If there exists a randomized 3-round protocol which succeeds with probability at least  
+
+> 910
+
+to find any partition P, then it must make Ω( n4/3|P| 2/3) queries on some partition P.
+
+This distribution D′ that we use for Yao’s lemma is as follows: with probability 1 /2, the instance is a trivial partition into a single part. With the remaining probability, it is the 2-round distribution from the previous section with for k = ω(n2/3). 
+
+Proof. Fix any deterministic algorithm A which makes o(n4/3|P| 2/3)-many queries on any par-tition P drawn from the above distribution. Let Q1 be the first round queries. Since with 0 .5 the partition may be the trivial partition (and A doesn’t know this before Round 1), we must have 
+
+|Q1| = o(n4/3). Note that Q1 is the same even for the “hard partitions”, and indeed, henceforth we assume that the instance is the hard 2-round instance (if not, we let the algorithm win, which happens with 0 .5 probability). We say an item x ∈ U is “revealed” after the first round of queries Q1 if either there is a query (x, y ) ∈ Q1 with ux = uy, or if |{ y : ( x, y ) ∈ Q1}| ≥ k/ 3. Any i ∈ [k] is “revealed” if Ui contains one item that is revealed. We define U ′ := {x ∈ U : x is not revealed }.
+
+Claim 3.9. If |Q1| = o(n4/3), then with probability 1 − o(1) there are at most o(k) many revealed 
+
+i, and |U ′| = Ω( n).Proof. The number of vertices with |{ y : ( x, y ) ∈ Q1}| ≥ k/ 3 must be less than 3 |Q1|/k . Since 
+
+|Q1| = o(n4/3) and k = ω(n2/3), this is o(k). Thus, there are o(k) parts revealed because they contain such a vertex. For any ( x, y ) ∈ Q1, P(ux = uy) = 1 /k . Hence, the expected number of revealed parts because they contain two items of a query is |Q1|/k = o(k) as well. Thus, Markov’s inequality ensures that, with probability 1 − o(1), the number of revealed part is o(k). After the first round, the partition of points in all revealed i is given to the algorithm. In addition, 
+
+k is given to the algorithm. Let Q2 be the second round of queries. We assume therefore that all those are within U ′. Our claim is essentially that this instance is the same as the two round instance with known k. However, we need to adjust the proofs to account for the results of queries in Q1 – which the algorithm could possibly use to gain information. Recall Fact 3.3 that |R| = (1 − o(1)) kl 2/3 with probability 1 − o(1), and this even is called G1.
+
+Observation 3.10. Conditioned on G1, it holds that that |Q2 ∩ (R × R)| ≤ | Q2| = o(|R|2).
+
+14 Proof. This is simply because |Q2| = o(n4/3k2/3) = o(k2l2/3). 
+
+Lemma 3.11. We have E[|Q2 ∩ ∪ ki=1 (Ri × Ri)| | A(Q1)] = o(kl 2/3). With probability 1 − o(1) ,conditioned on A(Q1), |Q2 ∩ ∪ ki=1 (Ri × Ri)| = o(kl 2/3). We refer to this event as G2.Proof. Fix a query ( x, y ) ∈ Q2, and consider the randomness remaining after round 1 in the choice of ux and uy. As x, y ∈ U ′, they are chosen uniformly at random in [ k], conditioned on 
+
+∀(x, z ) ∈ Q1, u x̸ = uz and ∀(y, z ) ∈ Q1, u y̸ = uz . Suppose that all such uz are given, and let kx := 
+
+|{ uz : ( x, z ) ∈ Q1}| , k y := |{ uz : ( y, z ) ∈ Q1}| and kxy := |{ uz : ( x, z ) ∈ Q1} ∩ { uz : ( y, z ) ∈ Q1}| .We therefore have: 
+
+P(ux = uy|A(Q1), k x, k y, k xy ) = k − kx − ky + kxy 
+
+(k − kx)( k − ky) .
+
+Now, conditioning on x and y being not revealed implies kx, k y ≤ k/ 3. Thus, in this case the probability becomes: 
+
+P(ux = uy|A(Q1), x, y ∈ U ′) ≤ k
+
+(k − k/ 3) 2 = 94k .
+
+In addition, as in the previous proof, ux, u y are independent from rx, r y and P(rx = ry = 1 |A(Q1), x, y ∈
+
+U ′) = l−2/3. Hence, P(( x, y ) ∈ ∪ ki=1 (Ri × Ri)) ≤ 94k · l−2/3, and linearity of expectation ensures that: 
+
+E[|Q2 ∩ ∪ ki=1 (Ri × Ri)|| A(Q1), U ′] ≤ | Q2| · 94k · l−2/3 = o(k2l4/3) · 94k · l−2/3 = o(kl 2/3).
+
+Markov inequality concludes. 
+
+Lemma 3.12. Let R′ = {x ∈ R ∩ U ′ | for all (x, y ) ∈ Q2, u x̸ = uy}, and G3 be the event that 
+
+(a, b ) ∈ (R′ × R′) \ Q2. Then, P(G2, G 3|A(Q1)) = 1 − o(1) .
+
+Proof. This proof follows the same line as that of Lemma 3.5: first, we note that |R \ R′| ≤ |Q2 ∩ ∪ ki=1 (Ri × Ri)|. Conditioned on A(Q1) and G2, it therefore holds that |R \ R′| = o(kl 2/3). Since |R| = (1 + o(1)) kl 2/3, this implies that, conditioned on G2, R′ = (1 + o(1)) kl 2/3, and hence 
+
+|R′ × R′ \ Q2| = (1 + o(1)) k2l4/3 = (1 + o(1)) |R × R|.The pair ( a, b ) is initially chosen uniformly in R × R: as, conditioned on G2, R′ × R′ \ Q2 takes a 1 − o(1) proportion of this set, ( a, b ) lies in it with probability 1 − o(1). We conclude the proof using that G2 occurs with probability 1 − o(1) (Lemma 3.11). 
+
+Lemma 3.13. For any x, y , P(x = a, y = b | x, y ∈ R′, A (Q1), A (Q2), G 1, G 2, G 3) ≥ 1+ o(1) 
+
+> k2l4/3
+
+Proof. Just as in the known-k case, the crucial observation is that, once conditioned on {G1, G 2, G 3},the values of a and b are independent of the answers to the first two rounds queries – and therefore, 
+
+G3 ensures that the pair ( a, b ) is uniform in ( R′ × R′) \ Q2. As shown in the proof of Lemma 3.12, 
+
+|(R′ × R′) \ Q2| = (1 + o(1)) k2l4/3 with probability 1 − o(1). Since G2 and G3 occur with probability 1 − o(1), this concludes the lemma. 15 Hence, after the first two rounds of queries, the pair ( a, b ) is almost uniform in a set of size k2l4/3.Just as in the known-k case, if the third round uses significantly less queries, it therefore cannot hit the pair ( a, b ) and the algorithm cannot distinguish between SINGLETONS and DOUBLETON with all but negligible probability. We repress the repetition of this calculation. This concludes the proof of Theorem 3.8. 
+
+# 4 Deterministic algorithms with unknown number of parts 
+
+Black, Mazumdar, and Saha [9] studied the rounds-vs-query trade-off for learning a partition P
+
+when |P| is known, and give a complete answer for deterministic algorithms. As mentioned in the introduction, the similar trade-off question for the unknown |P| case, to the best of our knowledge, was not studied even for deterministic algorithms. In this section, we show an exponential gap in the number of rounds needed by deterministic algorithms of (near) optimal query-complexity, between the known and unknown |P| cass. 
+
+4.1 Algorithms. 
+
+We begin with a simple algorithm akin to the deterministic algorithm in BMS [9]. 
+
+Theorem 4.1. For any r ≥ 1, there is a deterministic algorithm A which makes O(n1+ 1 
+
+> r
+
+|P| )-many PAIR queries in r-rounds to learn any partition P. The algorithm doesn’t need to know |P| .Proof. Let k := |P| and let q := ⌈n1/r ⌉; we assume q ≥ 2. Note that the algorithm does not know 
+
+k. Fix an arbitrary ordering of the elements of the universe. The algorithm maintains a partition of the universe into consecutive blocks, together with the restriction of P inside each block. Initially each block is a singleton. In round t, we group q consecutive current blocks into a “parent block”; each of these consecutive blocks are “children blocks” of this parent block. In each parent block, we take one representative from every currently known local part of its children blocks, and query all pairs of these represen-tatives. Two local parts are merged if and only if the corresponding representative pair answers YES. This recovers the exact restriction of P inside the parent block. Note that after t rounds, each parent block has size qt, and so, since qr ≥ n, after r rounds there is only one parent block, and therefore, the algorithm learns P at the end of the rth round. It remains to bound the number of queries. Consider round t in which the children block size is qt−1.Each children block contains at most min {qt−1, k } local parts; here k := |P| which the algorithm doesn’t know, but this is only for analysis. Hence a parent block contains at most q min {qt−1, k }
+
+local parts, and so the number of PAIR queries inside one parent block is O  q2 min {qt−1, k }2.There are O(n/q t) parent blocks, so the total number of queries in this tth round is 
+
+O
+
+ nqt · q2 min {qt−1, k }2
+
+
+
+= O
+
+
+
+nq · min {qt−1, k }2
+
+qt−1
+
+
+
+.
+
+16 Summing over 1 ≤ t ≤ r, we get the total number of queries made is O(nq ) times 
+
+> r
+
+X
+
+> t=1
+
+min {qt−1, k }2
+
+qt−1 ≤ X
+
+> t:qt−1≤k
+
+qt−1
+
+| {z }
+
+> ≤2k
+
++ X
+
+> t:qt−1>k
+
+k2
+
+qt−1
+
+| {z }   
+
+> <k P∞
+> j=0 1
+> qj≤2k
+
+= O(k).
+
+where the summations follow because q ≥ 2. Therefore the total number of queries is O(nqk )proving the theorem’s assertion. 
+
+Corollary 4.2. There is an ⌈log n/ log log n⌉-round deterministic algorithm which learns any hid-den partition P making eO(n|P| ) many queries. 
+
+The above corollary follows by setting r =
+
+l log n 
+
+> log log n
+
+m
+
+so that n1/r = O(log n); the total query complexity is O(n|P| log 2 n/ log log n). The theorem also implies that in 3-rounds, we have a 
+
+O(n4/3|P| )-query deterministic algorithm; compare this with the Ω( n4/3|P| 2/3)-lower bound for 
+
+randomized algorithms we proved in Theorem 3.8. There is a “ |P| 1/3-gap”, and we leave plugging this as an open question. It is instructive to remind the reader that when |P| is known to the algorithm, then BMS [9] also consider more nuanced query complexities of the form O(n1+ c|P| 1−c), where the exponents of n
+
+and |P| add up to 2. These are not the optimal n|P| , but it gives a nice trade-off. BMS [9] showed that for arbitrary small constant c > 0, they can achieve constant -round algorithms with this query complexity, where the constant depends on c but is independent of n.In the case when |P| is unknown, we show that our above algorithm can be modified slightly to give an improvement in the round-complexity; in particular, we can bring down the round-complexity from nearly logarithmic to Oc(log log n). On the other hand, our lower bound (Theorem 4.4) will show o(log log n) rounds is not possible for a nuanced query complexity of n1+ c|P| 1−c for any c < 1; of course, when c = 1, there is a trivial non-adaptive O(n2)-query algorithm which makes all pairwise queries. 
+
+Theorem 4.3. For any c > 0, there is an O( 1 
+
+> c
+
+· log log n)-round algorithm to learn |P| that makes 
+
+O(n1+ c|P| 1−c) many queries. Proof. As in the proof of Theorem 4.1, we maintain a partition of the universe into consecutive blocks, together with the exact restriction of P inside each block. Earlier, the block sizes grew by a factor of q = n1/r . This time, the block sizes are governed as follows: 
+
+b0 = 1 , bt = ncb1−ct−1 ,
+
+rounding as necessary. Note that this implies 
+
+bt = n1−(1 −c)t
+
+,
+
+and so when t = 1 
+
+> c
+
+· log log n, this becomes n.In round t, we merge ⌈bt/b t−1⌉ child blocks into one parent block; as before, the algorithm takes one representative from every known local part of the children block in each parent block, and queries all pairs of these representatives. It then merges two local parts iff their representatives answer 17 YES. This recovers the exact restriction of P in O( 1 
+
+> c
+
+· log log n)-rounds. the parent block, so the invariant follows by induction. What is interesting is the number of queries. It remains to bound the number of queries. In round t, there are O(n/b t) many parent blocks. For each such parent block, we have 
+
+l bt
+
+> bt−1
+
+m
+
+children, and each such child contributes ≤ min( bt−1, k )local parts. Again, comparing with the previous proof, bt 
+
+> bt−1
+
+was q and bt−1 = qt−1. This time, the total number of queries made in round t is 
+
+O nbt
+
+·
+
+ bt
+
+bt−1
+
+min( bt−1, k )
+
+2!
+
+= O
+
+
+
+nb t · min( bt−1, k )2
+
+b2
+
+> t−1
+
+
+
+By plugging in our choice of bt = ncb1−ct−1 , we get that the RHS is n1+ cb1−ct−1 if bt−1 ≤ k, and n1+ c k2
+
+> b1+ ct−1
+
+otherwise. Summing up over all t, we get that the number of queries is O(n1+ c) multiplied by 
+
+X
+
+> t:bt−1≤k
+
+b1−ct−1 + X
+
+> t:bt−1>k
+
+k2
+
+b1+ ct−1
+
+We claim that this is O(k1−c) which would prove the lemma. Indeed, the bt’s growth is faster than a geometric progression since bt+1  
+
+> bt
+
+= ( n/b t)c > 1. Thus, for the first term, the largest bt matters and for the second summation, the smallest one matters; and both give k1−c.
+
+4.2 Lower Bounds. 
+
+We begin with a lower bound which strongly complements Theorem 4.3; this acts as a warm-up to the Ω(log n/ log log n)-lower bound for deterministic algorithms with near optimal query complexity. We show that unless one makes log log n-rounds of queries, one cannot get even an n1.999 |P| 0.001 -query algorithms; while the aforementioned theorem states that with O(log log n) rounds, we get 
+
+n1.001 |P| 0.999 -query algorithms. 
+
+Theorem 4.4. Fix any 0 ≤ c < 1. There is no deterministic o(log log n)-round algorithm which, for every partition P of an n-element universe, learns P using at most O(n1+ c|P| 1−c)-many PAIR queries. 
+
+Our proof below uses the adversary method as also used by BMS [9] for the known |P| case. However, we deviate a bit from their method. While they use the existence of large independent sets in sparse graphs as their main combinatorial tool, we use that sparse graphs have low chromatic number. The latter is relevant for our lower bound since we use low chromatic number to indicate the inability of the algorithm to deduce “large |P| ”. Details follow. 
+
+Proof. For the sake of contradiction, suppose there is an r-round algorithm with r = o(log log n). The main idea is this. We, as the adversary, will keep answering NO to every PAIR query the algorithm asks. The trivial partition P0 where every part is a singleton is consistent with this answer. Furthermore, at the end of the rth round, if there is some pair ( a, b ) which the algorithm has not queried sometime, then it cannot be correct: it cannot distinguish from P0 and the partition which clubs {a, b } together in one part, and the remaining parts are singletons. In particular, if 
+
+Q1, Q 2, . . . , Q r are the queries made by the algorithm (where Qi could depend on the answers to 
+
+Q1, . . . , Q i−1), the union of this must be all the edges. Or, Pri=1 |Qt| = Ω( n2). 18 At the beginning of round i, however, the algorithm’s budget is O(n1+ ck1−ci ) where ki is the largest lower bound the algorithm can infer from all the NO answers it has received so far. To this end, let Fi := Q1 ∪ · · · ∪ Qi with F0 = ∅, and let Gi = ( U, F i). Then note that 
+
+ki = χ(Gi−1)where χ(G) is the chromatic number of a graph G. This is almost by definition: any valid coloring gives a partition which is consistent with the NO answers so far, and every consistent partition also induces a coloring. Now, if number of queries are small, or equivalently if Gi−1 is not dense, then we can upper bound its chromatic number. More precisely, we know that every m-edge graph 8 G has χ(G) = O(√m). Now we can set up a recurrence which will lead us to the required lower bound; we do so next. 
+
+Claim 4.5. Let ai = 1 −   1−c
+
+> 2
+
+i. Then, χ(Gi) = O(nai ).Proof. The proof is by induction. When i = 0, we have a0 = 0 and G0 is the empty graph with 
+
+χ(G0) = 1. Suppose the claim is true for some i and we wish to prove it for i + 1. The queries made by the algorithm till and including round i has an upper bound of O(n1+ ck1−ci ). Using the fact that ki = χ(Gi) = O(nai ), we get 
+
+|Fi| ≤ O(n1+ c · nai(1 −c)) ⇒|{z} 
+
+> χ(G)= O(
+
+√|E(G)|)
+
+χ(Gi) = O
+
+
+
+n (1+ c)+ ai(1 −c)2
+
+
+
+By choice of the sequence ai, we have ai+1 = 1+ c+(1 −c)ai 
+
+> 2
+
+. This proves the claim. When c < 1 and r = o(log log n), we have ar < 1. Therefore, at the end of r rounds, the union of all queries is a graph Gr with χ(Gr) = o(n). In particular, it is not the complete graph. As argued in the first paragraph of this proof, the algorithm cannot be correct. This completes the proof of the theorem. Although the above lower bound rules out any o(log log n)-round deterministic algorithm making 
+
+eO(n1+ c|P| 1−c) many 9 queries for any c < 1, for the c = 0 case, unfortunately, we do not obtain a stronger lower bound; in particular, an O(log log n)-round eO(n|P| )-query deterministic algorithm is not ruled out. Furthermore, our scheme above has a log log n bottleneck; in particular, if the adversary keeps answering NO to all queries (as in our construction above) the algorithm makes (possibly because the final partition is the trivial one), then an algorithm could query edges of a clique with n1/2 vertices in round 1 and know |P| ≥ n1/2, and then query edges of a clique of 
+
+n3/4 vertices in round 2 and know |P| ≥ n3/4, query edges of a clique of n7/8 vertices, and so on, succeeding in certifying the trivial partition in O(log log n) rounds. Henceforth, to prove a stronger lower bound, our adversary needs to answer YES once in a while. We do so in the next result. 
+
+Theorem 4.6. Any deterministic algorithm which learns any hidden partition P using O(n|P| log c n)-many queries, for some constant c ≥ 0, must proceed in Ω(log n/ log log n) rounds.     
+
+> 8Indeed, χ(G)≤1 + √2m; see Fact 1 of [4].
+> 9here the eis suppressing logarithmic factors in the denominator
+
+19 Proof. Let us fix a deterministic algorithm A which makes queries Q1, . . . , Q r in the r-rounds and for contradictions sake suppose r = o(log n/ log log n). We have |Qi| ≤ nk i log c n for each i, where 
+
+ki is the largest lower bound on |P| which the algorithm can deduce given the answers seen so far. We reach a contradiction by showing that at the end of r rounds, the algorithm cannot distinguish between two distinct partitions. The proof proceeds via an adversary argument where the adversary decides the answers to Qi after seeing it. To do so, the adversary maintains graphs G1, . . . , G r where Gi = ( Vi, F i), where each vertex of Vi is a subset of U that the adversary has revealed belong to the same part; in particular, they are the connected components of the YES answers the adversary has given to queries in rounds 1 to i−1. Each edge e ∈ Fi between two parts A ∈ Vi and B ∈ Vi corresponds to a query ( x, y ) ∈ Qj
+
+for j ≤ i − 1 with x ∈ A, y ∈ B, and which has received answer NO from the adversary. To begin with, V (G1) = U and E(G1) = ∅.Let χ(Gi) be the chromatic number of Gi. By definition of Gi, there is a partition of size ki
+
+consistent with the answers given by the adversary till now. Therefore, we have that 
+
+|Fi| + |Qi| ≤ n · χ(Gi) log c n (3) The main idea now is to answer the queries to Qi in such a way that (a) the YES answers do not contradict older NO answers, (b) the YES answers do not contract Vi “too much”; in particular, we assert |Vi+1 | ≥ | Vi|/2, and (c) the resulting graph Gi+1 doesn’t have its chromatic number blown up; in particular, we want χ(Gi+1 ) ≤ O (χ(Gi) log c n). If we manage to do so, then note that after 
+
+r-rounds for r = o(log n/ log log n), the adversary will have a graph Gr+1 with |V (Gr+1 )| ≥ n/ 2and χ(Gr+1 ) = no(1) . In particular, there is at least one (in fact many) pair ( A, B ) ∈ Vr+1 × Vr+1 
+
+such that all answers are consistent with the two partitions: one which is Vr+1 and the other is 
+
+Vr+1 with A and B merged. To obtain (a), (b), and (c), we need the following simple lemma. 
+
+Lemma 4.7. Let H = ( V, E ) be a graph with a proper L-coloring ϕ. Let Q be another collection of pairs in V × V . For every number A ≥ 1, there exists a coloring ψ of V using at most L(1 + A)
+
+colors such that: (i) for every (x, y ) ∈ E, ψ(x)̸ = ψ(y), (ii) contracting all pairs (x, y ) ∈ Q with 
+
+ψ(x) = ψ(y), decreases the number of vertices by at most 2|E|+|Q| 
+
+> AL
+
+.Proof. This follows from a simple application of the probabilistic method with alteration. Note that 
+
+ϕ uses L colors. Use a fresh palette of AL colors, and randomly color every vertex independently using this. Call this random coloring ρ.Let X denote the number of ( u, v ) ∈ E with ρ(u) = ρ(v), and let Y denote the number of ( u, v ) ∈ Q
+
+with ρ(u) = ρ(v). Note that E[X] = |E| 
+
+> AL
+
+and E[Y ] = |Q| 
+
+> AL
+
+. To obtain ψ, for each edge in E which is monochromatic, revert its original color. More precisely, if we let B denote the set of vertices incident to the X edges of E which are monochromatic under ρ, then ψ(v) = ϕ(v) if v ∈ B and 
+
+ψ(v) = ρ(v) if v / ∈ B. Note that |B| ≤ 2X.Now, by design, we have obtained (i) since the palettes used by ρ and ϕ are disjoint. We now need to argue (ii). Consider the ψ-monochromatic pairs of Q. Such a pair of vertices is either already monochromatic under ρ, contributing to Y , or has both vertices in B (if there is only one end point, then it won’t be monochromatic since we use fresh colors). Contracting the first type loses 20 at most Y vertices, and contracting all edges inside B loses at most |B| ≤ 2X vertices. Thus the total number of vertices lost is at most 2 X + Y . Since E[2 X + Y ] ≤ 2|E|+|Q| 
+
+> AL
+
+, there exists a coloring as required by the lemma. Let us now return to the adversary. Inductively, we assume that at the beginning of round i, we have 
+
+|V (Gi)| ≥ n ·
+
+
+
+1 − i
+
+8r
+
+
+
+and χ(Gi) ≤ (16 r log c n)i
+
+Upon receiving the queries Qi, the adversary sets A := 8 r log c n, and applies the above lemma with 
+
+H = Gi(Vi, F i), Q = Qi, L = χ(Gi)The lemma leads to a graph Gi+1 with 
+
+|V (Gi+1 )| ≥ | V (Gi)| − 2|Fi| + |Qi|
+
+Aχ (Gi) ≥
+
+|{z} 
+
+> (3)
+
+|V (Gi)| − 2nχ (Gi) log c nAχ (Gi) = |V (Gi)| − n
+
+8r ,
+
+and 
+
+χ(Gi+1 ) ≤ χ(Gi) · (1 + A) ≤ 2Aχ (Gi) = (16 r log c n) · χ(Gi+1 )Both imply that the inductive hypothesis holds at i + 1 as well. The adversary answers YES to the Qi-edges that are monochromatic under this coloring, answers NO to the remaining Qi-edges, and then contracts the YES-connected components. By design, our answers are consistent with previous answers. At the end of round r, we have |V (Gr+1 )| ≥ n/ 2 and χ(Gr+1 ) ≤ (16 r log c n)r, and if r =
+
+o(log n/ log log n), we have χ(Gr+1 ) = no(1) . This leads to the contradiction as described ear-lier. 
+
+# 5 Weak Subset Queries 
+
+We now go back to the randomized algorithms, and extend them to use the power of weak subset queries in order to reduce the number of queries made to the oracle. Building on the techniques of BMS [9], we show the following theorem: 
+
+Theorem 5.1. Given an upper bound k on the size of a partition P, there is a 3 round randomized algorithm for learns P with eO( nk s2 ) many weak-subset queries of size at most 2 ≤ s ≤ √k.
+
+First note that if k < s 2, then nk s2 ≤ n: since Ω( n) queries are information-theoretically necessary (because each query returns log k bits of information, and that there are kn = 2 n log k many possible partitions [8]), there cannot be an algorithm scaling with s2. Hence, we require for the theorem that s ≤ √k.To prove Theorem 5.1, we use the following result of [9, Lemma 4.1]. 
+
+Lemma 5.2 (Lemma 4.1 of [9]) . There is a non-adaptive algorithm which for any query size bound 
+
+2 ≤ s ≤ √n and error probability δ > 0, learns an arbitrary partition on n elements exactly using 
+
+O( n2 
+
+> s2
+
+log( n/δ ) + n log 4(n/δ ) log s) subset queries of size at most s, and succeeds with probability at least 1 − δ.
+
+21 The algorithm from Lemma 5.2 can be readily used to improve rounds 1 and 3 of Algorithm 1: as R and P ′ have size O(√nk log n) (by Lemma 2.4), learning completely the partition in each of them requires only eO
+
+
+
+max {√nk, nk s2 }
+
+
+
+= eO   nk s2
+
+ many queries. It is therefore merely necessary to improve the query complexity in Round 2. The question is therefore the following: given a subset 
+
+S of one representative from a subset of the clusters, can we learn the whole clusters of points in 
+
+R, in eO( nk s2 ) many non-adaptive queries? 
+
+Lemma 5.3. Let A ⊆ P and |P | = n. For y ∈ A, let Cy be y’s cluster in P . It is possible to learn all Cy, in one round, using eO( n|A| 
+
+> s2
+
+) weak subset queries. Proof. Partition P into L1, L 2, . . . , L p each of size s2 (except for Lp, which has size at most s2), and partition A into A1, . . . , A q each of size s2 (except for Aq, which has size at most s2), where 
+
+p = n/s 2 and q = |A|/s 2.Using the algorithm from Lemma 5.2, we can in one round learn the partition of Li ∪ Aj using 
+
+eO(2 s2/s )2 = eO(s2) many weak subset queries for each i, j . The total number of queries made to learn the partition in all Li ∪ Aj simultaneously is eO(pqs 2) = eO(n|A|/s 2). This information is enough to recover the cluster of all points in A: fix points x ∈ P and y ∈ A.Since the Li partition [ n], there is i such that x ∈ Li; similarly, there is a j such that y ∈ Aj . When learning the full clustering of Li ∪ Aj , the algorithm will learn whether x ∈ Cy or not. Since this holds for all x, this concludes the lemma. Combining this lemma with the results of the pairwise queries algorithm concludes the proof of Theorem 5.1: 
+
+Proof of Theorem 5.1. As sketched above, the algorithm follows the three steps of Algorithm 1; and uses the algorithm from Lemma 5.3 instead of round 2. More formally, the algorithm starts with sampling a set R of √nk log n random points. In round 1, the algorithm uses Lemma 5.2 to learn the partition of R in eO(√nk log n/s )2 = eO(nk/s 2) many queries. Then, the algorithm selects in R a set S of at most k representatives, one per cluster. Then, in round 2, the algorithm uses Lemma 5.3 (using S for the set A) to find all points in the clusters of points from S, in eO( nk s2 ) queries. This in particular implies that all points in R are correctly classified. Finally, let P ′ be the set of remaining unclustered points: the third round is again an application of Lemma 5.2 to get the full clustering of P ′, using O(|P ′|2/s 2) queries. This algorithm has the same behavior as Algorithm 1: hence, Lemma 2.3 shows its correctness. The number of queries is eO(nk/s 2) in the first two rounds, and Lemma 2.4 shows that |P ′| ≤ √nk log n: hence, the number of queries in the thirds round is as well eO(nk/s 2), which concludes the theorem. A direct corollary of this is the adaptation of the algorithm for unknown |P| :
+
+Corollary 5.4 (Weak subset queries) . There is a 4 round algorithm which learns a partition P
+
+and, with high probability, makes eO( nk s2 ) many weak subset queries of size at most 2 ≤ s ≤ √k.This algorithm has no knowledge about |P| .
+
+22 Proof. This result is a direct corollary of Algorithm 2 and of Theorem 5.1. To implement Algo-rithm 2 with weak subset queries, we proceed as follows: the first round uses eO(n) PAIR queries (and does not use the power of the subset queries); and the subsequent rounds follow the imple-mentation of Algorithm 2 with subset queries. Since s2 ≤ k, we have eO(n) = eO( nk s2 ), so there is nothing to show for the first. The second and third round thus use eO( nk (s∗) 
+
+> s2
+
+) = eO( nk s2 ) queries. The last one uses eO( |U ′|2 
+
+> s2
+
+) queries (with lemma 5.2), where U ′ is the set of unclustered points and verifies |U ′|2 ≤ nk log 2 n (as shown in Theorem 2.10). 
+
+# References 
+
+[1] Hasan Abasi and Nader H. Bshouty. On learning graphs with edge-detecting queries. In 
+
+Proceedings, International Conference on Algorithmic Learning Theory (ALT) , pages 3–30, 2019. [2] Noga Alon, Richard Beigel, Simon Kasif, Steven Rudich, and Benny Sudakov. Learning a hidden matching. SIAM Journal on Computing (SICOMP) , 33(2):487–501, 2004. [3] Dana Angluin and Jiang Chen. Learning a hidden hypergraph. Journal of Machine Learning Research (JMLR) , 7(79):2215–2236, 2006. [4] Dana Angluin and Jiang Chen. Learning a hidden graph using o(log n) queries per edge. 
+
+Journal on Computer and System Sciences (JCSS) , 74(4):546–556, 2008. [5] Hassan Ashtiani, Shrinu Kushagra, and Shai Ben-David. Clustering with same-cluster queries. In Advances in Neural Information Processing Systems (NeurIPS) , pages 3216–3224, 2016. [6] Bethany Austhof, Lev Reyzin, and Erasmo Tani. Non-adaptive learning of random hypergraphs with queries. In IEEE International Symposium on Information Theory (ISIT) , pages 1209– 1214. IEEE, 2025. [7] Eric Balkanski, Oussama Hanguir, and Shatian Wang. Learning low degree hypergraphs. In 
+
+Proceedings, Conference on Learning Theory (COLT) , pages 419–420, 2022. [8] Hadley Black, Euiwoong Lee, Arya Mazumdar, and Barna Saha. Clustering with non-adaptive subset queries. In Advances in Neural Information Processing Systems (NeurIPS) , pages 1–33, 2024. [9] Hadley Black, Arya Mazumdar, and Barna Saha. Learning partitions with optimal query and round complexities. In Proceedings, Conference on Learning Theory (COLT) , pages 344–374, 2025. [10] Marco Bressan, Nicol` o Cesa-Bianchi, Silvio Lattanzi, and Andrea Paudice. Exact recovery of mangled clusters with same-cluster queries. In Advances in Neural Information Processing Systems (NeurIPS) , pages 9324–9334, 2020. [11] Nader H. Bshouty and Hanna Mazzawi. Optimal query complexity for reconstructing hyper-graphs. In Proceedings, Internation Symposium on Theoretical Aspects of Computer Science (STACS) , pages 143–154, 2010. [12] Deeparnab Chakrabarty and Hang Liao. Learning partitions using rank queries. In Pro-
+
+23 ceedings, Foundations of Software Technology and Theoretical Computer Science. (FSTTCS) ,pages 16:1–16:14, 2024. [13] Deeparnab Chakrabarty and Hang Liao. Query complexity of hypergraph connectivity and learnability using CUT oracles. In Proceedings, European Symposium on Algorithms , page to appear, 2026. To appear. Also available as arXiv:2607.01216. [14] Susan B. Davidson, Sanjeev Khanna, Tova Milo, and Sudeepa Roy. Top-k and clustering with noisy comparisons. ACM Transactions on Database Systems , 39(4):35:1–35:39, 2014. [15] Alberto Del Pia, Mingchen Ma, and Christos Tzamos. Clustering with queries under semi-random noise. In Proceedings, Conference on Learning Theory (COLT) , pages 1391–1459, 2022. [16] Adela Frances DePavia, Olga Medrano Mart´ ın del Campo, and Erasmo Tani. Optimal algo-rithms for learning partitions with faulty oracles. In Advances in Neural Information Processing Systems (NeurIPS) , pages 20225–20258, 2024. [17] Vladimir Grebinski and Gregory Kucherov. Optimal reconstruction of graphs under the addi-tive model. Algorithmica , 28(1):104–124, 2000. [18] Wasim Huleihel, Arya Mazumdar, Muriel M´ edard, and Soumyabrata Pal. Same-cluster query-ing for overlapping clusters. In Advances in Neural Information Processing Systems (NeurIPS) ,pages 10485–10495, 2019. [19] Xizhi Liu and Sayan Mukherjee. Tight query complexity bounds for learning graph partitions. In Proceedings, Conference on Learning Theory (COLT) , pages 167–181, 2022. [20] Arya Mazumdar and Barna Saha. Clustering with noisy queries. In Advances in Neural Information Processing Systems (NeurIPS) , pages 5788–5799, 2017. [21] Arya Mazumdar and Barna Saha. Query complexity of clustering with side information. In 
+
+Advances in Neural Information Processing Systems (NeurIPS) , pages 4682–4693, 2017. [22] Arya Mazumdar and Barna Saha. A theoretical analysis of first heuristics of crowdsourced entity resolution. In Proceedings, AAAI Conference on Artificial Intelligence (AAAI) , pages 970–976, 2017. [23] Hanna Mazzawi. Optimally reconstructing weighted graphs using queries. In Proceedings, ACM-SIAM Symposium on Discrete Algorithms (SODA) , pages 608–615, 2010. [24] Michael Mitzenmacher and Charalampos E. Tsourakakis. Predicting signed edges with 
+
+o(n1+ o(1) log n) queries. arXiv preprint arXiv:1609.00750, 2016. [25] Lev Reyzin and Nikhil Srivastava. Learning and verifying graphs using queries with a focus on edge counting. In Proceedings, International Conference on Algorithmic Learning Theory (ALT) , pages 285–297, 2007. [26] Jiannan Wang, Guoliang Li, Tim Kraska, Michael J. Franklin, and Jianhua Feng. Leverag-ing transitive relations for crowdsourced joins. In Proceedings of the 2013 ACM SIGMOD International Conference on Management of Data , pages 229–240. ACM, 2013. [27] Steven Euijong Whang, Peter Lofgren, and Hector Garcia-Molina. Question selection for crowd entity resolution. Proceedings, Very Large Databases (VLDB) , 6(6):349–360, 2013. 24 A On Estimating the number of parts 
+
+As mentioned in the main body, one natural approach to solve the partition learning problem when the number of parts k := |P| is unknown is to first estimate k and then apply Algorithm 1. More precisely, return a parameter k′ such that k/C ≤ k′ ≤ Ck for some constant C. Of course, one doesn’t need this to learn as illustrated by Algorithm 2. Nonetheless, the question of estimating the number of parts is interesting in its own right: what is the optimal query complexity? what is the number of rounds required? etc. We make a few observations. 
+
+Claim A.1. For any integers k < r , any non-adaptive, possibly randomized algorithm making 
+
+o(n2k/r 2) queries cannot distinguish between partitions with k parts and partitions with r parts. Proof. Fix a parameter k; for now consider to be any positive integer smaller than the universe size 
+
+n. We construct distributions D(1)  
+
+> r,k
+
+and D(2)  
+
+> r,k
+
+over partitions of U .
+
+• First we select R ⊆ U of size r by picking every element with probability r/n independently. 
+
+• Next, we partition R into k-sets R1, . . . , R k where each x ∈ R picks i ∈ [k] with probability 1/k .
+
+• In D(1)  
+
+> r,k
+
+, we output P := {U \ R, R 1, . . . , R k} with roughly k parts. In D(2)  
+
+> r,k
+
+, we output P := {U \ R} ∪ {{ x} : x ∈ R} with roughly r parts. Let Q be any collection of PAIR queries with q := |Q|. We now figure out the relation between q, r 
+
+and k such that the answers to these queries cannot distinguish the two distributions. This occurs, in particular, if Q ∩ ∪ ki=1 (Ri × Ri) = ∅. Call this event B. The expected size of the set is qr 2 
+
+> kn 2
+
+, and so, if q = o
+
+ n2kr2
+
+
+
+, the probability B occurs is 1 − o(1). 
+
+Corollary A.2. Any non-adaptive, possibly randomized algorithm making eO(n) queries cannot distinguish between two partitions, one with r = √n and one with k = nε parts for any ε > 0.
+
+25

@@ -1,0 +1,54 @@
+{
+  "label": "2026-08-09",
+  "date": "2026-08-09",
+  "generated_at": "2026-08-09T20:54:32",
+  "count": 3,
+  "papers": [
+    {
+      "paper_id": "202608/09/2608.02176v1-randomized-algorithms-for-learning-partitions-with-near-optimal-query-complexity-in-constant-rounds",
+      "section": "deep",
+      "title_en": "Randomized Algorithms for Learning Partitions with Near Optimal Query Complexity in Constant Rounds",
+      "authors": "Deeparnab Chakrabarty, Aditi Dudeja, David Saulpic",
+      "date": "2026-08-03",
+      "pdf": "https://arxiv.org/pdf/2608.02176v1",
+      "score": "9.0",
+      "evidence": "通过成对查询学习隐藏划分，直接对应主动聚类中的查询策略",
+      "tldr": "学习隐藏划分的PAIR查询问题中，基本算法查询数最优但需线性轮数，已有确定性结果需对数轮。本文研究随机化，发现其根本改变轮数-查询权衡：已知划分大小k时，给出简单3轮随机算法，以高概率用O(nk log n)查询，并证明2轮需要Ω(n^{4/3}k^{2/3})查询。未知k时，给出4轮随机算法用O(n|P|log^2 n)查询，且3轮无法近最优。随机化与确定性（需Θ(log n/log log n)轮）呈现更大分离。",
+      "tags": "query:active-clust",
+      "abstract_en": "We study the round complexity of learning a hidden partition $\\mathcal{P}$ of an $n$-element universe using PAIR queries: PAIR($x,y$) tells us whether $x$ and $y$ belong to the same part of the partition or not. While it is easy to learn using $n|\\mathcal{P}|$ queries using a basic algorithm and this query complexity is optimal, this basic algorithm is highly sequential. Black, Mazumdar, and Saha [COLT 2025] recently gave tight deterministic round/query tradeoffs when the number of parts of $\\mathcal{P}$ is known. In particular they prove $Θ(\\log\\log n)$ rounds are sufficient and necessary to limit the number of queries to $n|\\mathcal{P}|$. They leave proving a randomized lower bound as an open direction.   We show that randomization dramatically changes the picture. When the number of parts $k = |\\mathcal{P}|$ is known, we give a simple 3-round randomized algorithm using $O(nk\\log n)$ queries with high probability, and prove that 2 rounds require $Ω(n^{4/3}k^{2/3})$ queries -- the same as deterministic algorithms. We also study a more general setting where the number of parts is unknown. In this case, we give a 4-round randomized algorithm using $O(n|\\mathcal P|\\log^2 n)$ queries with high probability, and prove that 3-rounds cannot achieve near-optimal query complexity. Furthermore, we show an even bigger separation in this regime between randomized and deterministic algorithms: for the latter, $Θ(\\log n/\\log\\log n)$ rounds are necessary and sufficient to obtain near-optimal query complexity.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202608/09/2608.03565v1-enhancing-tabular-learners-with-context-aware-semantic-embeddings",
+      "section": "quick",
+      "title_en": "Enhancing Tabular Learners with Context-Aware Semantic Embeddings",
+      "authors": "Günther Schindler, Maximilian Schambach, Johannes Höhne",
+      "date": "2026-08-04",
+      "pdf": "https://arxiv.org/pdf/2608.03565v1",
+      "score": "6.0",
+      "evidence": "利用大模型嵌入增强表格表示，可服务于聚类",
+      "tldr": "表格学习器虽擅于捕捉统计模式，却常忽略特征名和单元格文本的语义，将其视为离散符号。为此，我们提出CASE框架，利用定制训练的Gemma 3表格语言模型，通过预填充KV cache锚定代表性样本行，建立数据集语义上下文，生成动态上下文感知的行嵌入。在CARTE、TextTab和TabArena基准上，CASE显著提升语义丰富数据集的性能，尤其在低数据条件下，取得一致增益。该工作弥合了LLM语义理解与表格统计学习之间的鸿沟，为语义丰富表格建模提供了实用方案。",
+      "tags": "query:ac",
+      "abstract_en": "While modern tabular learners excel at capturing statistical patterns, they frequently operate in a semantic vacuum, treating textual features as discrete symbols, ignoring the rich semantics inherent in feature names or cell entries. We propose CASE (Context-Aware Semantic Embeddings), a novel framework that bridges the gap between the semantic understanding of Large Language Models (LLMs) and the statistical capabilities of tabular learners. Unlike existing methods that embed rows in isolation, CASE utilizes a contextualization strategy: we pre-fill the KV cache of a custom-trained Gemma 3-based Tabular Language Model with a representative sample of rows to establish a persistent anchor of the dataset's semantics. This ensures that generated row embeddings are dynamically contextualized, resolving semantic ambiguities and anchoring representations in domain-specific context. Our experiments across several benchmarks (CARTE, TextTab, and TabArena) demonstrate that CASE substantially improves the performance of tabular learners on semantically rich datasets, particularly in low-data regimes.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202608/09/2608.04002v1-semantic-bundling-interactive-node-and-edge-bundling-to-simplify-knowledge-graphs-using-large-language-models",
+      "section": "quick",
+      "title_en": "Semantic Bundling: Interactive Node and Edge Bundling to Simplify Knowledge Graphs using Large Language Models",
+      "authors": "Adam Coscia, Zeyu Hua, Eric Krokos, Timothy Lin, Alex Endert",
+      "date": "2026-08-04",
+      "pdf": "https://arxiv.org/pdf/2608.04002v1",
+      "score": "6.0",
+      "evidence": "利用大语言模型对知识图谱节点和边进行语义捆绑分组",
+      "tldr": "知识图谱随规模增大会出现“毛团”问题，难以理解和可视化。本文提出Semantic Bundling，利用大语言模型实现用户驱动的节点与边捆绑，形成超级节点和超级边，并链接到底层三元组和源文档以增强可解释性。在AgentK系统中实现，通过电影评论和情报分析用例验证，能揭示文档集合中的新见解，并讨论相关挑战与机遇。",
+      "tags": "query:ac",
+      "abstract_en": "We present Semantic Bundling, a visual analytics technique for making sense of text documents represented as knowledge graphs (KGs). Representing a document corpus as a KG makes relationships between entities explicit, making KGs useful both to analyze directly and in computational workflows including ML pipelines and generative AI backends. However, as KGs grow they become difficult to interpret and visualize for specific tasks (e.g., the ``hairball problem''), with the meaning of each relationship often buried in dense source text. Semantic Bundling uses large language models (LLMs) to support user-driven bundling of nodes and edges in a KG into higher-level graph structures: super nodes, which collapse and summarize a region of the graph, and super edges, which summarize the connection between two entities. Results are linked to underlying triples and source documents, grounding summaries in evidence. We implement Semantic Bundling in AgentK, an open-source system that builds a KG from text documents and maps graph interactions to bundling operations. Through use cases on movie reviews and an intelligence analysis scenario, we show how Semantic Bundling reveals new insights in document collections, and synthesize our findings into a discussion of emerging challenges and opportunities in knowledge graph sensemaking.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}
