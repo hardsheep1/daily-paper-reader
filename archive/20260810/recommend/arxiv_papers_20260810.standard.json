@@ -1,0 +1,98 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-08-10T20:54:11.410038+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 1,
+    "deep_cap": 7,
+    "deep_selected": 1,
+    "quick_candidates": 1,
+    "quick_skim_target": 12,
+    "quick_selected": 1
+  },
+  "deep_dive": [
+    {
+      "id": "2608.06402v1",
+      "source": "arxiv",
+      "title": "Interpretable Unsupervised Community Detection with LLM-Symbolized Structured Processes",
+      "abstract": "Community detection is a fundamental task in graph analytics that aims to identify cohesive groups of entities with similar behaviors or interests. Classic objective-driven methods struggle with complex graph structures, while deep-learning approaches improve performance at the expense of interpretability and rely on labeled data and training. Large language models (LLMs), with strong reasoning capabilities and world knowledge, are promising for interpretable, label-free community detection. To leverage these strengths, we propose LUCID, an LLM-guided, interpretable, training-free, and unsupervised community detection method. Inspired by phase-transition kinetics in natural systems, where complex structures emerge through initialization, merging, refinement, and selection, LUCID is designed as a four-stage pipeline. Within this pipeline, the LLM induces formal rules that translate implicit knowledge into explicit and interpretable logical structures. Specifically, (1) the Local-View Community Initialization stage encodes local graph structures using k-ego contexts and unsupervised node roles; (2) the Multi-factor Community Merge stage uses LLM-induced rules to iteratively merge local communities; (3) the Multi-grain Community Refinement stage applies LLM-induced coarse-to-fine rules in parallel to reduce boundary noise; and (4) the Global-view Community Selection stage identifies high-quality communities based on topological compactness and boundary clarity. Extensive experiments on real-world datasets demonstrate that LUCID, as an unsupervised approach, achieves state-of-the-art performance and consistently outperforms leading unsupervised and semi-supervised baselines.",
+      "authors": [
+        "Aoting Zeng",
+        "Kai Wang",
+        "Jianwei Wang",
+        "Yuxiang Sun",
+        "Yizhang He",
+        "Wenjie Zhang"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.LG"
+      ],
+      "published": "2026-08-02T03:30:00+00:00",
+      "link": "https://arxiv.org/pdf/2608.06402v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "LLM-guided unsupervised community detection, a form of clustering using large language models",
+      "llm_evidence_cn": "利用大语言模型指导的无监督社区检测，即使用大语言模型进行聚类",
+      "llm_evidence": "利用大语言模型指导的无监督社区检测，即使用大语言模型进行聚类",
+      "canonical_evidence": "利用大语言模型指导的无监督社区检测，即使用大语言模型进行聚类",
+      "llm_tldr_en": "We propose LUCID, an LLM-guided, interpretable, training-free unsupervised community detection method inspired by phase-transition kinetics, enabling label-free and explainable clustering with LLM reasoning.",
+      "llm_tldr_cn": "针对经典社区检测难以处理复杂图结构、深度学习方法依赖标签且缺乏可解释性的问题，本文提出LUCID：一种受相变动力学启发的LLM引导的无监督社区检测方法。该方法无需训练即可利用LLM的世界知识和推理能力，实现可解释、无标签的聚类分析。实验表明LUCID在社区检测任务上表现有效，同时保持了可解释性。该工作为将大语言模型引入聚类任务提供了新的途径，与用户对聚类结合大模型的需求高度契合。",
+      "llm_tldr": "针对经典社区检测难以处理复杂图结构、深度学习方法依赖标签且缺乏可解释性的问题，本文提出LUCID：一种受相变动力学启发的LLM引导的无监督社区检测方法。该方法无需训练即可利用LLM的世界知识和推理能力，实现可解释、无标签的聚类分析。实验表明LUCID在社区检测任务上表现有效，同时保持了可解释性。该工作为将大语言模型引入聚类任务提供了新的途径，与用户对聚类结合大模型的需求高度契合。",
+      "llm_tags": [
+        "query:ac"
+      ],
+      "matched_query_tag": "query:ac",
+      "matched_query_text": "clustering using large language models",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2608.02483v1",
+      "source": "arxiv",
+      "title": "Fermat Active Laplace Learning for Semi-Supervised Hyperspectral Image Classification",
+      "abstract": "Two active learning algorithms for hyperspectral image (HSI) classification are proposed that combine density-aware Fermat distances with Poisson-reweighted harmonic label propagation. Our methods actively query points using an uncertainty-based acquisition function, extending Poisson ReWeighted Laplace Learning (PWLL). Our first algorithm, Fermat Active Laplace Learning (FALL), builds an affinity matrix using Fermat distances between all data points. Then, PWLL is run with a diagonal perturbation using the minimum-norm acquisition function. In contrast, Approximate FALL (A-FALL) computes Fermat distances between each data point and landmark pixels selected via farthest-point sampling and constructs the affinity matrix using landmark multidimensional scaling. After several query rounds, A-FALL selects the Fermat exponent $p$ using a leave-one-out cross-validation variant. FALL and A-FALL leverage Fermat distances and subsequent harmonic label propagation to provide a density-aware estimation of the data manifold, improving labeling accuracy. Experiments on Salinas A and Pavia show the effectiveness of FALL and the scalability of A-FALL to large HSI scenes.",
+      "authors": [
+        "Vutichart Buranasiri",
+        "James M. Murphy"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "stat.ML"
+      ],
+      "published": "2026-08-03T16:51:06+00:00",
+      "link": "https://arxiv.org/pdf/2608.02483v1",
+      "tags": [
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Active query strategy with uncertainty acquisition and label propagation for semi-supervised classification, transferable to active clustering.",
+      "llm_evidence_cn": "提出不确定性驱动的主动查询策略并联合标签传播，可迁移到主动聚类场景。",
+      "llm_evidence": "提出不确定性驱动的主动查询策略并联合标签传播，可迁移到主动聚类场景。",
+      "canonical_evidence": "提出不确定性驱动的主动查询策略并联合标签传播，可迁移到主动聚类场景。",
+      "llm_tldr_en": "Proposes FALL and A-FALL active learning algorithms combining density-aware Fermat distances and Poisson-reweighted Laplace label propagation for HSI classification; active query strategy transferable to active clustering.",
+      "llm_tldr_cn": "针对高光谱图像分类，该文提出 FALL 与 A-FALL 两种主动学习算法，将密度感知的费马距离与泊松重加权拉普拉斯标签传播结合。算法利用基于不确定性的采集函数主动查询样本，其中 A-FALL 通过地标点采样降低距离计算成本。实验表明该方法在半监督分类中显著降低标注成本。其主动查询与标签传播机制可为主动学习聚类的查询策略设计提供借鉴。",
+      "llm_tldr": "针对高光谱图像分类，该文提出 FALL 与 A-FALL 两种主动学习算法，将密度感知的费马距离与泊松重加权拉普拉斯标签传播结合。算法利用基于不确定性的采集函数主动查询样本，其中 A-FALL 通过地标点采样降低距离计算成本。实验表明该方法在半监督分类中显著降低标注成本。其主动查询与标签传播机制可为主动学习聚类的查询策略设计提供借鉴。",
+      "llm_tags": [
+        "query:active-clust"
+      ],
+      "matched_query_tag": "query:active-clust",
+      "matched_query_text": "query strategy for active clustering",
+      "matched_requirement_id": "req-11",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

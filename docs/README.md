@@ -6,29 +6,26 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-08-09
-- 运行时间：2026-08-09 20:54:27 UTC
+- 最新运行日期：2026-08-10
+- 运行时间：2026-08-10 20:56:31 UTC
 - 运行状态：成功
-- 本次总论文数：3
+- 本次总论文数：2
 - 精读区：1
-- 速读区：2
+- 速读区：1
 
 ### 今日简报（AI）
-今日精读1篇随机算法论文，速读2篇表格学习与知识图谱可视化研究。最值得关注的是常数轮查询复杂度近最优的随机划分学习算法。普通读者可优先浏览精读论文，其余两篇作为应用补充。
-- 详情：[/202608/09/README](/202608/09/README)
+今日精读1篇、速读1篇，共处理2篇论文，重点聚焦社区检测方向。最值得关注的是《Interpretable Unsupervised Community Detection with LLM-Symbolized Structured Processes》（9.0/10），其可解释的LLM符号化方法颇具启发性。建议普通读者优先查看该论文中如何用大模型实现无监督社区检测，无需深究速读的遥感分类细节。
+- 详情：[/202608/10/README](/202608/10/README)
 
 ### 精读区论文标签
-1. [Randomized Algorithms for Learning Partitions with Near Optimal Query Complexity in Constant Rounds](/202608/09/2608.02176v1-randomized-algorithms-for-learning-partitions-with-near-optimal-query-complexity-in-constant-rounds)  
-   标签：评分：9.0/10、query:active-clust
-   evidence：通过成对查询学习隐藏划分，直接对应主动聚类中的查询策略
+1. [Interpretable Unsupervised Community Detection with LLM-Symbolized Structured Processes](/202608/10/2608.06402v1-interpretable-unsupervised-community-detection-with-llm-symbolized-structured-processes)  
+   标签：评分：9.0/10、query:ac
+   evidence：利用大语言模型指导的无监督社区检测，即使用大语言模型进行聚类
 
 ### 速读区论文标签
-1. [Enhancing Tabular Learners with Context-Aware Semantic Embeddings](/202608/09/2608.03565v1-enhancing-tabular-learners-with-context-aware-semantic-embeddings)  
-   标签：评分：6.0/10、query:ac
-   evidence：利用大模型嵌入增强表格表示，可服务于聚类
-2. [Semantic Bundling: Interactive Node and Edge Bundling to Simplify Knowledge Graphs using Large Language Models](/202608/09/2608.04002v1-semantic-bundling-interactive-node-and-edge-bundling-to-simplify-knowledge-graphs-using-large-language-models)  
-   标签：评分：6.0/10、query:ac
-   evidence：利用大语言模型对知识图谱节点和边进行语义捆绑分组
+1. [Fermat Active Laplace Learning for Semi-Supervised Hyperspectral Image Classification](/202608/10/2608.02483v1-fermat-active-laplace-learning-for-semi-supervised-hyperspectral-image-classification)  
+   标签：评分：6.0/10、query:active-clust
+   evidence：提出不确定性驱动的主动查询策略并联合标签传播，可迁移到主动聚类场景。
 
 
 <div class="dpr-home-promo-card">

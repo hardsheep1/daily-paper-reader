@@ -1,0 +1,39 @@
+{
+  "label": "2026-08-10",
+  "date": "2026-08-10",
+  "generated_at": "2026-08-10T20:56:36",
+  "count": 2,
+  "papers": [
+    {
+      "paper_id": "202608/10/2608.06402v1-interpretable-unsupervised-community-detection-with-llm-symbolized-structured-processes",
+      "section": "deep",
+      "title_en": "Interpretable Unsupervised Community Detection with LLM-Symbolized Structured Processes",
+      "authors": "Aoting Zeng, Kai Wang, Jianwei Wang, Yuxiang Sun, Yizhang He, Wenjie Zhang",
+      "date": "2026-08-02",
+      "pdf": "https://arxiv.org/pdf/2608.06402v1",
+      "score": "9.0",
+      "evidence": "利用大语言模型指导的无监督社区检测，即使用大语言模型进行聚类",
+      "tldr": "社区检测是图分析基础任务，但传统目标驱动方法难以处理复杂图结构，深度方法依赖标签且缺乏可解释性。为此提出LUCID，一种基于LLM的无监督可解释方法，通过四阶段流程模拟相变动力学，利用LLM归纳显式规则进行社区初始化、合并、精炼和选择。在真实数据集上全面超越无监督和半监督基线。该方法无需训练即可实现SOTA性能，为可解释图学习提供新范式。",
+      "tags": "query:ac",
+      "abstract_en": "Community detection is a fundamental task in graph analytics that aims to identify cohesive groups of entities with similar behaviors or interests. Classic objective-driven methods struggle with complex graph structures, while deep-learning approaches improve performance at the expense of interpretability and rely on labeled data and training. Large language models (LLMs), with strong reasoning capabilities and world knowledge, are promising for interpretable, label-free community detection. To leverage these strengths, we propose LUCID, an LLM-guided, interpretable, training-free, and unsupervised community detection method. Inspired by phase-transition kinetics in natural systems, where complex structures emerge through initialization, merging, refinement, and selection, LUCID is designed as a four-stage pipeline. Within this pipeline, the LLM induces formal rules that translate implicit knowledge into explicit and interpretable logical structures. Specifically, (1) the Local-View Community Initialization stage encodes local graph structures using k-ego contexts and unsupervised node roles; (2) the Multi-factor Community Merge stage uses LLM-induced rules to iteratively merge local communities; (3) the Multi-grain Community Refinement stage applies LLM-induced coarse-to-fine rules in parallel to reduce boundary noise; and (4) the Global-view Community Selection stage identifies high-quality communities based on topological compactness and boundary clarity. Extensive experiments on real-world datasets demonstrate that LUCID, as an unsupervised approach, achieves state-of-the-art performance and consistently outperforms leading unsupervised and semi-supervised baselines.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202608/10/2608.02483v1-fermat-active-laplace-learning-for-semi-supervised-hyperspectral-image-classification",
+      "section": "quick",
+      "title_en": "Fermat Active Laplace Learning for Semi-Supervised Hyperspectral Image Classification",
+      "authors": "Vutichart Buranasiri, James M. Murphy",
+      "date": "2026-08-03",
+      "pdf": "https://arxiv.org/pdf/2608.02483v1",
+      "score": "6.0",
+      "evidence": "提出不确定性驱动的主动查询策略并联合标签传播，可迁移到主动聚类场景。",
+      "tldr": "高光谱图像分类面临标注样本稀缺问题，本文提出两种结合密度感知Fermat距离与泊松重加权拉普拉斯学习的主动学习算法。FALL利用Fermat距离构建亲和矩阵，A-FALL通过地标多维缩放加速大规模场景处理。在Salinas A和Pavia数据集上的实验表明，该方法显著提升分类精度，并具有良好可扩展性。",
+      "tags": "query:active-clust",
+      "abstract_en": "Two active learning algorithms for hyperspectral image (HSI) classification are proposed that combine density-aware Fermat distances with Poisson-reweighted harmonic label propagation. Our methods actively query points using an uncertainty-based acquisition function, extending Poisson ReWeighted Laplace Learning (PWLL). Our first algorithm, Fermat Active Laplace Learning (FALL), builds an affinity matrix using Fermat distances between all data points. Then, PWLL is run with a diagonal perturbation using the minimum-norm acquisition function. In contrast, Approximate FALL (A-FALL) computes Fermat distances between each data point and landmark pixels selected via farthest-point sampling and constructs the affinity matrix using landmark multidimensional scaling. After several query rounds, A-FALL selects the Fermat exponent $p$ using a leave-one-out cross-validation variant. FALL and A-FALL leverage Fermat distances and subsequent harmonic label propagation to provide a density-aware estimation of the data manifold, improving labeling accuracy. Experiments on Salinas A and Pavia show the effectiveness of FALL and the scalability of A-FALL to large HSI scenes.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

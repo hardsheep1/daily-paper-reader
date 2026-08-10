@@ -1,0 +1,999 @@
+Title: Interpretable Unsupervised Community Detection with LLM-Symbolized Structured Processes
+
+URL Source: https://arxiv.org/pdf/2608.06402v1
+
+Published Time: Mon, 10 Aug 2026 00:04:47 GMT
+
+Number of Pages: 16
+
+Markdown Content:
+# Interpretable Unsupervised Community Detection with LLM-Symbolized Structured Processes 
+
+# Aoting Zeng 
+
+Shanghai Jiao Tong University Shanghai, China aotingzeng@sjtu.edu.cn 
+
+# Kai Wang 
+
+Shanghai Jiao Tong University Shanghai, China w.kai@sjtu.edu.cn 
+
+# Jianwei Wang 
+
+University of New South Wales Sydney, Australia jianwei.wang1@unsw.edu.au 
+
+# Yuxiang Sun 
+
+Shanghai Jiao Tong University Shanghai, China scscsc04@sjtu.edu.cn 
+
+# Yizhang He 
+
+Shanghai Jiao Tong University Shanghai, China yizhang.he@sjtu.edu.cn 
+
+# Wenjie Zhang 
+
+University of New South Wales Sydney, Australia wenjie.zhang@unsw.edu.au 
+
+## Abstract 
+
+Community detection is a fundamental task in graph analytics that aims to identify cohesive groups of entities with similar behaviors or interests. Classic objective-driven methods struggle with complex graph structures, while deep-learning approaches improve perfor-mance at the expense of interpretability and their reliance on la-beled data and training. Large language models (LLMs), with strong reasoning and world knowledge, are promising for interpretable, label-free community detection. To leverage these strengths, we propose LUCID , an LLM-guided interpretable, training-free and 
+
+Unsupervised Commun Ity Detection method. Inspired by phase-transition kinetics in natural systems, where complex structures emerge through initialization, merging, refinement, and selection, 
+
+LUCID is designed as a four-stage pipeline. Within this pipeline, the LLM induce formal rules that translate implicit knowledge into explicit and interpretable logical structures. Specifically, (1) the Local-View Community Initialization stage encodes local graph structure with 𝑘 -ego contexts and unsupervised node roles; (2) the 
+
+Multi-factor Community Merge stage uses LLM-induced rules to iteratively merge local communities; (3) the Multi-grain Community Refinement stage applies LLM-induced coarse-to-fine rules in paral-lel to reduce boundary noise; and (4) the Global-view Community Selection stage identifies high-quality communities with topologi-cal compactness and boundary clarity. Extensive experiments on real-world datasets demonstrate that LUCID , as an unsupervised approach, achieves state-of-the-art performance and consistently outperforms leading unsupervised and semi-supervised baselines. 
+
+## Keywords 
+
+Community Detection; Graph Data Mining; Large Language Models 
+
+KDD Availability Link: 
+
+The source code of this paper is available at https://anonymous.4open. science/r/KDD2027LUCID-0F70. 
+
+## 1 Introduction 
+
+Graphs serve as powerful tools for modeling complex relationships and have been widely applied in domains including financial sys-tems [20, 38], social networks [1, 22, 37], and biomedicine [18, 39]. In graph analytics, community detection [12, 24] is a fundamental task that identifies densely connected groups of entities sharing similar behaviors or interests, which provides essential insights for downstream analysis and strategic decision-making. Classic objective-based community detection methods [6, 24, 29] often struggle to capture complex community structures in real-world graphs due to limited flexibility. More recently, a growing body of work [9, 26, 35, 36, 44] has shifted toward deep-learning–based approaches, which leverage the capabilities of neural networks to capture complex structural patterns in graphs, as shown in Ta-ble 1. For instance, ComE [9] exploits node embeddings to encode community-related features, whereas SEAL [44] employs genera-tive adversarial networks to infer community structures. CLARE [36] introduces a deep reinforcement learning framework with locator–rewriter mechanisms, and PROCOM [35] integrates pre-training with prompt-based strategies to improve the performance. Deep-learning-based community detection methods operate un-der both unsupervised and semi-supervised settings. Despite their strong performance, they share two practical limitations: (1) their decision-making processes are generally opaque, making it difficult to interpret why specific nodes are grouped together; and (2) they often require dataset-specific training or adaptation when applied to new graphs. In addition, semi-supervised methods such as SEAL, CLARE, and PROCOM face a further limitation: they rely on labeled communities for training or prompting, while such annotations are costly to obtain and often unavailable in real-world applications. 
+
+Motivations . Motivated by the above discussions, we aim to ex-plore new community detection paradigms that can identify com-munity structures without heavy supervision, while providing in-terpretable insights into why specific communities are formed. In recent years, large language models (LLMs) have demonstrated strong reasoning capabilities and the ability to transfer knowledge without task-specific training [23, 46], making them a natural can-didate for alleviating the interpretability and label-dependency lim-itations of existing approaches. However, directly applying LLMs to predict communities is impractical. Approaches that input the full graph or iterate over nodes suffer from context constraints and low efficiency. How to leverage LLMs’ reasoning capabilities while alleviating these issues has become a key challenge in introducing them into the community detection task. 
+
+Our approaches . Motivated by the challenges and to address the above limitations, we propose LUCID , an LLM-guided interpretable, training-free and Unsupervised Commun Ity Detection method. As a result, LUCID incurs no training overhead and requires no local arXiv:2608.06402v1 [cs.AI] 2 Aug 2026 Aoting Zeng, Kai Wang, Jianwei Wang, Yuxiang Sun, Yizhang He, Wenjie Zhang 
+
+Table 1: Comparisons of community detection methods. Approach Overlap Label Free? Detection Mode Backbone Methodology 
+
+Louvain [29] ✗ ✓ Global Modularity Optimization Classic objective-based PRoCD [26] ✗ ✓ Global Pre-train & Refine Deep-learning-based BigClam [41] ✓ ✓ Global Matrix Factorization Classic objective-based ComE [9] ✓ ✓ Global Node Embeddings Deep-learning-based CommunityGAN [16] ✓ ✓ Global GAN + Motifs Deep-learning-based Bespoke [2] ✓ ✗ Local Structural Fingerprints Classic objective-based SEAL [44] ✓ ✗ Local GAN Deep-learning-based CLARE [36] ✓ ✗ Local DRL (Locator-Rewriter) Deep-learning-based PROCOM [35] ✓ ✗ Local Pre-train & Prompt Deep-learning-based 
+
+LUCID (ours) ✓ ✓ Global LLM-Symbolized Pipeline Symbolic rule-based GPU resources, facilitating deployment in resource-constrained set-tings. The design of LUCID is inspired by phase-transition kinetics in natural systems [4, 19], which provides a high-level evolutionary view of how complex structures emerge through successive stages. Following this view, LUCID frames community formation as a four-phase process of initialization, merging, refinement, and selection, progressively constructing communities from local structures to a global view. In particular, LUCID leverages the LLM in the merge and refinement stages to make critical structural decisions. Rather than using the LLM as an end-to-end predictor, LUCID employs it as an automatic rule inducer, which converts implicit model knowl-edge into explicit, interpretable rules. In this way, we combine the reasoning capabilities of the LLM with the structure of algorithmic graph processing. Specifically, (1) in the local-view community initialization stage, 
+
+LUCID transforms the graph into localized 𝑘 -ego representations and introduces unsupervised node role labels to help the LLM understand local structural semantics. (2) In the multi-factor com-munity merge stage, the LLM first derives a multi-factor decision tree for evaluating structural compatibility between communities. This decision tree is then applied to guide merge decisions between neighboring communities. To improve both performance and scala-bility, we prioritize community backbones by sorting center nodes according to their ego-network density, ensuring high-coverage merges of core communities. We also select neighbors with high Jac-card similarity for each center node, restricting merge candidates to structurally relevant nodes while respecting context constraints. (3) In the multi-grain community refinement stage, LUCID guides the LLM to induce coarse-to-fine rules for refining node memberships in the community and removing boundary noise. These rules are applied progressively to refine nodes within each candidate com-munity, and executed in parallel to enable concurrent processing across communities and batch refinement within each community. (4) In the global-view community selection stage, we introduce a structural quality metric that evaluates topological compactness and boundary clarity to select high-quality communities in an in-terpretable manner. 
+
+Contributions . Here, we summarize the principal contributions. 
+
+• We propose LUCID , a symbolic rule–based community detection framework that is interpretable, training-free and label-free. 
+
+• We formulate community detection as a four-stage process of initialization, merging, refinement, and selection, together with stage-specific strategies for scalable and robust graph processing. 
+
+• We propose a new way to leverage the LLM as rule inducers, distilling implicit model knowledge into explicit, interpretable logic to drive decision-making within the four-stage algorithmic pipeline. 
+
+• Extensive experiments on diverse real-world datasets demon-strate state-of-the-art performance under unsupervised settings, while comprehensive analyses validate the interpretability and effectiveness of the proposed components. 
+
+## 2 Related Work 
+
+Community detection. Community detection [12] partitions graphs into cohesive modules, revealing structures in social [5, 31, 32], bi-ological [8, 27], and information systems [13, 33]. Early studies fall into three categories. (1) Optimization-based methods [6, 24, 29] maximize metrics like modularity. (2) Matrix factorization methods [34, 41] decompose adjacency matrices into latent representations. (3) Generative methods [16, 17] assume edges are sampled from distributions. However, these methods rely on fixed objectives and often fail to adapt to real-world graphs. Recent learning-based meth-ods combine representation learning with community detection. SDCN [7] and DMoN [30] jointly optimize embeddings and par-titions, while CGC [25] captures patterns via structural contrasts. For targeted identification, seed-centric methods like Bespoke [3] and SEAL [44] expand from target nodes, CLARE [36] uses sub-graph inference, while PROCOM [35] reduces annotation costs via pretrain-prompting. However, these methods rely on labeled data and lack transparency and interpretability. 
+
+LM-based graph analytics. Existing LM-based graph analytics methods fall into four categories. Cascading GNN-LM models [42, 45] sequentially combine GNNs and LMs to fuse structural and textual information, but incur high computational cost and lack interpretability. Self-supervised GNN-LM approaches [10, 21] lever-age graph-based tasks to adapt LMs to graph data, but they remain focused on node-level representation learning and provide limited interpretability of community structures. LLMs for graph methods [14, 28, 43] transform graphs into textual descriptions for LLMs, enabling semantic reasoning but failing to explicitly model intrinsic graph structures and community boundaries. GraphAdapter-style methods [15] attach GNN adapters to frozen PLMs and achieve Interpretable Unsupervised Community Detection with LLM-Symbolized Structured Processes 
+
+strong performance on text-attributed graphs, but still rely on im-plicit supervision and offer limited transparency. 
+
+## 3 Problem Definition 
+
+In this section, we present the problem definition and frequently used notations throughout this paper. 
+
+Unsupervised global community detection. In this paper, we study unsupervised global overlapping community detection on an undirected graph 𝐺 = (𝑉 , 𝐸 ), where 𝑉 and 𝐸 denote the node set and edge set, respectively. The goal is to infer a set of potential communities C = {𝐶 (𝑖 ) }𝑁 𝑖 =1 over the entire graph without queries, where each 𝐶 𝑖 ⊆ 𝑉 , and different communities may overlap. 𝑁 
+
+denotes the number of communities produced by LUCID . In contrast, 
+
+𝑀 denotes the number of ground-truth communities and is used only for evaluation. Notations are summarized in Table 6. 
+
+Remark (Problem scope). Global community detection aims to recover all potential communities across the entire graph, whereas local community detection [2, 35, 36, 44] starts from given queries and retrieves specific target communities. Overlapping community detection [2, 9, 16, 35, 36, 41, 44] addresses another need by allow-ing each node to belong to multiple communities. We study the global overlapping setting because our goal is to discover all such communities without queries. 
+
+## 4 The LUCID Framework 
+
+In this section, we present the LUCID framework. We first provide an overview, then detail its four operational stages, and conclude with a complexity analysis. 
+
+## 4.1 Framework Overview 
+
+We propose LUCID , a four-stage LLM-symbolized framework for interpretable community detection, as illustrated in Figure 1. The framework constructs communities through four stages: local-view community initialization, multi-factor community merge, multi-grain community refinement, and global-view community selection. Rather than treating the LLM as end-to-end predictors, LUCID em-ploys them as rule inducers in the merge and refinement stage. Guided by our prompts, the LLM observes structural patterns from sample communities and draws on its implicit understanding of community-detection objectives to induce explicit, executable sym-bolic rules: a multi-factor decision tree for merging compatible subgraphs and coarse-to-fine rules for removing boundary noise. 
+
+## 4.2 Local-view Community Initialization 
+
+In the local-view community initialization stage, we generate ini-tial communities and assign unsupervised role labels to nodes. To generate initial communities, we decompose the graph into 𝑘 -ego networks. Every node serves as a center, yielding |𝑉 | overlapping 
+
+𝑘 -ego subgraphs {𝐺 (𝑘 ) 
+
+> 𝑢
+
+}𝑢 ∈𝑉 , where each 𝐺 (𝑘 ) 
+
+> 𝑢
+
+contains node 𝑢 and all nodes within 𝑘 hops. This decomposition addresses LLM context window limitations by converting the full graph into smaller struc-tural units, while preserving local connectivity around each center. We choose 𝑘 -ego networks as the decomposition unit because they serve as natural building blocks for communities. To further enhance the LLM’s understanding of graph structure, we assign each node an unsupervised role label [2] as an auxiliary Input Graph     
+
+> Initialize Merge Refine Select
+> Raw Data (𝑉, 𝐸) Node Labeling (𝑉, 𝐸) K-ego Networks
+> Dynamic Merge Orchestration
+> RDC Algorithm
+> TOP 2
+> TOP N
+> LLM
+> 1
+> 2
+> 3
+> 4
+> 5
+> 1
+> 2
+> 3
+> 4
+> 5
+> Merge No Merge
+> Multi-factor Decision Tree Construction
+> Decision Rules
+> TOP 1
+> …
+> LLM
+> Scalable Execution Module Multi-grain Rule Generation:
+> Similarity-based Sampling Density-based Scheduling
+
+Figure 1: The framework of LUCID : (1) The initialization stage assigns role labels to nodes and decomposes the graph into localized 𝑘 -ego representations; (2) The merge stage lever-ages LLM-driven multi-factor reasoning to merge subgraphs into community candidates; (3) The refinement stage refines candidates through LLM-guided coarse-to-fine rule gener-ation with a scalable execution module; (4) Finally, the se-lection stage selects final communities by balancing inter-nal cohesion and external separation. Our LLM-symbolized framework enables interpretable community detection in a label-free manner. 
+
+structural signal. These labels summarize the connectivity of each node within its neighborhood, providing richer information than raw edges alone. For each node 𝑢 ∈ 𝑉 , we compute the Jaccard similarity between its neighborhood and those of its neighbors 
+
+𝑣 ∈ N ( 𝑢 ). The resulting set of similarity values S( 𝑢 ) is summarized using five percentiles (𝑄 0, 𝑄 25 , 𝑄 50 , 𝑄 75 , 𝑄 100 ) to form a fixed-length feature vector x𝑢 , capturing the local connectivity structure of 𝑢 .We then apply K-means clustering with 𝐾 = 4 to {x𝑢 } to assign discrete node role labels. Each label reflects the local neighborhood structure of the corresponding node. Formally, the graph is thus represented as an attributed graph 𝐺 = (𝑉 , 𝐸 ), where each node 
+
+𝑢 ∈ 𝑉 is associated with a label 𝑙 𝑢 representing its identified role. 
+
+## 4.3 Multi-factor Community Merge 
+
+After initialization, the graph is decomposed into local subgraphs. The merge stage identifies opportunities to merge initial communi-ties, but determining merge decisions requires considering multiple structural factors. To address this, the merge stage is organized around two key components: (i) an LLM-guided multi-factor deci-sion tree that determines whether candidate subgraphs should be merged, and (ii) a dynamic merging orchestration that governs how merge decisions are executed through similarity-based sampling and density-based scheduling. The illustration of the merge stage process is shown in Figure 2. Aoting Zeng, Kai Wang, Jianwei Wang, Yuxiang Sun, Yizhang He, Wenjie Zhang Merge       
+
+> Merge Path No Merge No Merge Path
+> Saved to 𝑪 𝑴
+> Step 1: Sort the center nodes according to Ego Density Step 2: Similarity-based sampling Step 3: Make decisions based on decision tree rules Step 4: Update the available centers and search for the next Step 5: Similarity-based sampling Step 6: Make decisions based on decision tree rules
+> Saved to 𝑪 𝑴
+
+Figure 2: Illustrating the Merge Stage in LUCID . The process iteratively merges subgraphs through six steps: (1) sorting centers by ego density, (2) sampling top-𝑏 neighbors for the current center, (3) applying LLM-generated decision tree rules for merge decisions, (4) removing merged neighbors and their 𝑘 -ego nodes from center candidates, (5) sampling neighbors for the next center, and (6) applying decision rules again. The process continues until all centers are processed, accumulating communities in C𝑀 . This dynamic orchestration enables effective and efficient merging at scale. 
+
+4.3.1 Multi-factor Decision Tree Construction. We design a struc-tured prompt that guides the LLM to generate a multi-factor de-cision tree. The prompt consists of three key components: data context, decision tree definition, and output requirements. An ex-ample is given in Box L. 
+
+Data context. We input a data profile that provides dataset-level statistical metadata, together with a sample block centered on one node, which explicitly describes its 𝑘 -ego network and the 𝑘 -ego networks of its direct neighbors. Formally, the input context is defined as I = {I 𝑃 , I𝐵 }, where I𝑃 denotes the data profile, and 
+
+I𝐵 =  𝑣 𝑐 , 𝐺 (𝑘 ) 
+
+> 𝑣 𝑐
+
+, {𝐺 (𝑘 ) 
+
+> 𝑛 𝑗
+
+}𝑧 𝑗 =1
+
+ is a sample block. Here, 𝑣 𝑐 is the center vertex, and 𝐺 (𝑘 ) 
+
+> 𝑣 𝑐
+
+is the 𝑘 -ego network centered at 𝑣 𝑐 . {𝐺 (𝑘 ) 
+
+> 𝑛 𝑗
+
+}𝑧 𝑗 =1
+
+denotes the 𝑘 -ego networks of 𝑧 direct neighbors of 𝑣 𝑐 .
+
+Decision tree definition. We define a decision tree that hierar-chically evaluates multiple structural factors (e.g., overlap, density, and labels) in a symbolic rule-based manner: 
+
+T = (U , E, 𝑟, {𝜙 𝑛 }𝑛 ∈ U int , {𝜓 ℓ }ℓ ∈ U leaf ),
+
+where U and E denote the sets of nodes and directed edges in the decision tree, 𝑟 is the root node, and Uint and Uleaf represent internal and leaf nodes, respectively. Each internal node 𝑛 ∈ U int is associated with a structural predicate 𝜙 𝑛 : R ( 𝑣, 𝑢 )×X → 0, 1, where 
+
+R ( 𝑣, 𝑢 ) denotes the structural context of a center–neighbor pair, and 
+
+X represents the global merge state. Each leaf node corresponds to a decision action 𝜓 ℓ ∈ Merge , No Merge. Executing the decision tree amounts to traversing a root-to-leaf path conditioned on both local structure and global state, yielding a merge decision for each eligible center–neighbor pair. 
+
+Output requirements. The LLM generates JSON-formatted deci-sion rules which are then compiled into executable Python predi-cates 𝜙 𝑛 . The structured output is designed to be machine-interpretable, including an executable decision tree and corresponding decision traces for each sample. A case study of the decision is illustrated in Figure 6 in Section 5.6. 
+
+4.3.2 Dynamic Merge Orchestration. Static multi-factor decision trees are insufficient for large-scale community merging. Instead, effective merging requires dynamic orchestration to align local de-cisions with global consistency under sequential dependencies. To this end, we design two optimizations: (i) similarity-based sampling to restrict merge candidates to structurally relevant nodes under context constraints, and (ii) density-based scheduling to prioritize merges in dense regions and regulate execution order. 
+
+Similarity-based sampling. We restrict merge candidates to struc-turally relevant neighbors using Jaccard similarity: 
+
+𝐽 (𝑣, 𝑢 ) = |𝑉 ego (𝑣 ) ∩ 𝑉 ego (𝑢 )| |𝑉 ego (𝑣 ) ∪ 𝑉 ego (𝑢 )| .
+
+During decision tree construction, we select the top-𝑧 neighbors to form the sample block I𝐵 ; during merging, for each center node 𝑣 ,we select the top-𝑏 neighbors N (𝑏 ) 
+
+> 𝑣
+
+. This restricts merge decisions to relevant neighbors and maintains prompt length within the LLM’s context window. Interpretable Unsupervised Community Detection with LLM-Symbolized Structured Processes 
+
+Density-based scheduling. Let A be the set of available center nodes. Each node 𝑣 ∈ A has an ego graph density defined as EgoDensity (𝑣 ) = 2|𝐸 ego (𝑣 )| |𝑉 ego (𝑣 )|(| 𝑉 ego (𝑣 )| − 1) .
+
+Nodes are sorted by density in descending order and processed sequentially. This density-based ordering prioritizes nodes in struc-turally rich regions first, ensuring high-coverage merges of core communities while deferring sparse or peripheral nodes to reduce unnecessary computations. For each neighbor 𝑢 ∈ N 𝑏 (𝑣 ), the merge decision 𝑀 (𝑣, 𝑢 ) ∈ { 0, 1} indicates acceptance (1) or rejection (0). If 
+
+𝑀 (𝑣, 𝑢 ) = 1, the available set is updated as 
+
+A ← A \ 𝑉 ego (𝑢 ),
+
+so that 𝑢 and its ego nodes cannot act as centers again but can still be merged into other communities. The overall process can be expressed as for 𝑣 ∈ sort (A , EgoDensity ), C𝑣 ← C 𝑣 ∪{ 𝑢 ∈ N 𝑏 (𝑣 ) : 𝑀 (𝑣, 𝑢 ) = 1}.
+
+Together, these two mechanisms control which merges happen and the order of execution, ensuring stable local merges while preserving global community consistency in large-scale graphs. 
+
+## 4.4 Multi-grain Community Refinement 
+
+After merging, community backbones are recovered through subgraph-level aggregation. The refinement stage corrects ambiguous bound-ary vertices by refining individual node memberships using a coarse-to-fine rule set, organized into two phases: (i) multi-grain rule gener-ation, establishing a multi-layered evaluation standard from global structural consistency to local connection strength; (ii) parallel rule execution, leveraging the independence of node-level decisions to enable efficient batch processing. 
+
+4.4.1 Multi-grain Rule Generation. We prompt the LLM to gen-erate a hierarchy of coarse-to-fine node refinement rules using three components: data context, rule-set specification, and output requirements. An example is given in Box L. 
+
+Data context. The input comprises a data profile with dataset-level statistical metadata and a sample block of example candidate communities formed during merging. 
+
+Multi-grain rule design. The LLM generates a coarse-to-fine rule hierarchy: (1) Coarse rules filter clear inconsistencies using broad criteria (e.g., nodes with < 20% internal edges relative to their degree); (2) Medium-grained rules examine local neighborhoods (e.g., nodes whose role label differs from 80% + of their neighbors); and (3) Fine-grained rules apply precise structural metrics (e.g., local clustering coefficient < 0.5 and betweenness centrality above a threshold). This progressive filtering reduces refinement cost by approximately 60 − 70% compared with applying fine-grained rules to all nodes, as coarse checks eliminate most outliers before expensive fine-grained evaluation. 
+
+Output requirements. For each community, refinement outputs a list of nodes to drop, restricted to outliers or structural inconsis-tencies. 
+
+4.4.2 Parallel Rule Execution. Our design makes node-level refine-ment decisions conditionally independent within each community, enabling two levels of parallelism: multiple communities are pro-cessed simultaneously, while nodes within each community are refined in batches using a shared LLM-generated rule set. Applied progressively from coarse to fine, these rules efficiently remove nodes that deviate from a community’s structural and relational patterns. Consequently, refinement incurs minimal computational overhead, scales linearly with the number of nodes, and runs orders of magnitude faster than the preceding subgraph-merging stage. 
+
+## 4.5 Global-view Community Selection 
+
+Since the refinement stage produces a large pool of candidate com-munities, we then require a structural quality metric to identify high-quality communities. Existing ranking metrics such as modu-larity and density have notable limitations: modularity suffers from resolution limits [32], while density-based metrics overlook commu-nity boundaries [40]. To address this, we utilize local conductance to balance internal cohesion with external separation. However, standard conductance remains bounded for communities with the minimum number of internal edges required for connectivity, as formalized below. 
+
+Lemma 1 (Limitation of Standard Conductance). Let 𝐺 =
+
+(𝑉 , 𝐸 ) be a graph and let C ⊆ 𝑉 be a connected community with 
+
+𝑛 = |C| ≥ 2. Denote its complement by ¯C = 𝑉 \ C , its set of internal edges by 𝐸 (C) , and the number of edges crossing from C to ¯C by 
+
+𝐶𝑢𝑡 (C , ¯C) . Let 𝑒 = |𝐸 (C)| and 𝑐 = 𝐶𝑢𝑡 (C , ¯C) , and define the stan-dard conductance score as 𝑆 𝑏𝑎𝑠𝑒 (C) = 𝑐 /𝑒 . If the subgraph induced by C is a tree, then 𝑒 = 𝑛 − 1 and 𝑆 𝑏𝑎𝑠𝑒 (C) = 𝑐 /𝑒 = 𝑐 /( 𝑛 − 1) < ∞.
+
+To address this limitation, we propose RDC (Ranking with Den-sity and Conductance), a density-regularized conductance scoring function that incorporates a penalty derived from the minimum spanning tree constraint: 
+
+𝑅𝐷𝐶 (C R ) = 𝐶𝑢𝑡 (C R, ¯CR )|𝐸 (C R )| − 𝜖 (|C R | − 1) . (1) Here, 𝐶𝑢𝑡 (C R, ¯CR ) measures external separation, |𝐸 (C R )| is the number of internal edges, and 𝜖 (|C R | − 1) introduces a structural penalty against chain-like communities. We compute 𝑅𝐷𝐶 (C) for each candidate community, rank them in ascending order, and select the top-𝑁 communities with the lowest scores. The asymptotic behavior and edge-count sensitivity of RDC rel-ative to standard conductance are given by the following theorem. 
+
+Theorem 1 (Properties of RDC). Let 𝑆 𝑛𝑒𝑤 (𝑒 ) = 𝑐 /( 𝑒 − 𝜂 ) and 
+
+𝑆 𝑏𝑎𝑠𝑒 (𝑒 ) = 𝑐 /𝑒 , where 𝑐 > 0, 𝜂 = 𝜖 (|C| − 1) > 0, and 𝑒 > 𝜂 . Under the continuous relaxation of 𝑒 , the following properties hold: (1) lim  
+
+> 𝑒 →𝜂 +
+
+𝑆 𝑏𝑎𝑠𝑒 (𝑒 ) = 𝑐 𝜂 , whereas lim  
+
+> 𝑒 →𝜂 +
+
+𝑆 𝑛𝑒𝑤 (𝑒 ) = +∞ .(2) The absolute derivative of 𝑆 𝑛𝑒𝑤 with respect to 𝑒 is strictly larger than that of 𝑆 𝑏𝑎𝑠𝑒 :
+
+𝑑𝑆 𝑛𝑒𝑤 
+
+𝑑𝑒 = 𝑐 
+
+(𝑒 − 𝜂 )2 > 𝑐 𝑒 2 = 𝑑𝑆 𝑏𝑎𝑠𝑒 
+
+𝑑𝑒 (2) 
+
+for all 𝑒 > 𝜂 .
+
+Proof. For the first property, 𝑒 → 𝜂 + gives 𝑐 /𝑒 → 𝑐 /𝜂 , while 
+
+𝑒 − 𝜂 → 0+ gives 𝑐 /( 𝑒 − 𝜂 ) → +∞ . For the second property, differentiation yields 𝑑𝑆 𝑛𝑒𝑤 /𝑑𝑒 = −𝑐 /( 𝑒 − 𝜂 )2 and 𝑑𝑆 𝑏𝑎𝑠𝑒 /𝑑𝑒 =Aoting Zeng, Kai Wang, Jianwei Wang, Yuxiang Sun, Yizhang He, Wenjie Zhang 
+
+Table 2: Overall performance comparison against unsupervised and semi-supervised baselines (results in percent ± standard deviation). “N/A” denotes the algorithm failing to converge within 4 days. The best results are highlighted in bold, and the strongest baseline results are underlined. With a fixed prompt, LUCID reports mean ±std over three independent LLM generations. Our method is purely unsupervised, yet it outperforms the state-of-the-art semi-supervised baseline. Metric Dataset Unsupervised Semi-supervised Unsupervised Improv. 
+
+BigClam ComE CommGAN Bespoke SEAL CLARE PROCOM LUCID 
+
+F1 Score Facebook 36 .59 ±0.23 38 .18 ±0.64 25 .84 ±0.99 29 .29 ±3.52 12 .15 ±6.31 23 .45 ±0.95 34 .97 ±1.19 40.82 ±0.54 +6.9% Amazon 71 .43 ±0.05 78 .32 ±0.20 70 .59 ±0.76 65 .65 ±2.21 79 .35 ±0.45 78 .38 ±2.48 83 .42 ±0.27 92.11 ±0.78 +10.4% Livejournal 40 .75 ±0.31 N/A 19 .68 ±15 .44 36 .82 ±1.53 52 .95 ±7.12 41 .50 ±1.97 51 .06 ±1.55 54.25 ±1.23 +2.5% DBLP 40 .29 ±0.08 N/A N/A 44 .50 ±2.06 17 .98 ±1.64 50 .45 ±0.53 47 .74 ±3.94 54.73 ±0.50 +8.5% Twitter 29 .55 ±0.05 25 .92 ±0.14 N/A 28 .96 ±0.88 12 .83 ±0.39 17 .26 ±0.90 24 .69 ±1.12 32.51 ±0.31 +10.0% Jaccard Facebook 26 .11 ±0.22 28 .36 ±0.44 17 .68 ±1.03 20 .25 ±3.37 7.34 ±4.69 15 .91 ±0.60 25 .09 ±0.93 31.77 ±0.61 +12.0% Amazon 61 .44 ±0.07 69 .93 ±0.24 62 .47 ±0.71 59 .54 ±2.75 69 .34 ±0.93 69 .51 ±3.04 74 .89 ±0.23 87.41 ±1.04 +16.7% Livejournal 31 .77 ±0.30 N/A 16 .88 ±13 .18 30 .67 ±1.63 41 .60 ±7.19 33 .09 ±2.16 41 .71 ±1.43 46.97 ±1.15 +12.6% DBLP 28 .61 ±0.09 N/A N/A 39 .24 ±2.28 11 .64 ±1.04 39 .03 ±0.49 36 .42 ±4.00 45.20 ±0.60 +15.2% Twitter 18 .72 ±0.04 16 .43 ±0.12 N/A 19 .51 ±0.62 7.25 ±0.21 10 .55 ±0.56 16 .30 ±0.73 21.83 ±0.25 +11.9% 
+
+−𝑐 /𝑒 2. Since 𝑒 > 𝜂 > 0, we have 0 < 𝑒 − 𝜂 < 𝑒 and hence (𝑒 − 𝜂 )2 <
+
+𝑒 2. Together with 𝑐 > 0, this gives 𝑐 /( 𝑒 − 𝜂 )2 > 𝑐 /𝑒 2. □
+
+## 4.6 Complexity Analysis 
+
+The overall time complexity of LUCID is 𝑂 (𝑛 ¯𝑑 𝑘 + 𝑛𝑏𝐷 + |C 𝑀 |¯𝑠𝑅 +|C 𝑅 |¯𝑠 ¯𝑑 ). Detailed stage-wise derivations and the space complexity analysis are provided in Appendix B. 
+
+## 5 Experiments 5.1 Experimental setup 
+
+In this section, we describe the experimental setup and present comprehensive results to systematically evaluate LUCID and address the following research questions (RQs): 
+
+• RQ1 (Overall performance) As a fully unsupervised method, how does LUCID perform compared with other unsupervised methods and representative semi-supervised baselines? 
+
+• RQ2 (Ablation study) How do the each key component of 
+
+LUCID contributes to the overall performance? 
+
+• RQ3 (Efficiency study) How efficient is LUCID compared to other methods? 
+
+• RQ4 (Hyperparameter sensitivity) How sensitive is LUCID to critical hyperparameters? 
+
+• RQ5 (Case study) How does LUCID accurately identify commu-nities while providing interpretability? 
+
+5.1.1 Datasets. Following previous works [35, 36, 44], we evaluate our method on five real-world datasets from SNAP 1 (see Table 3), covering social networks (Facebook, Twitter, Livejournal), e-commerce (Amazon), and academic collaboration (DBLP). We follow the dataset preprocessing protocols used by ProCom, CLARE, and SEAL to remove outliers and ensure a fair evaluation. All datasets contain overlapping communities with partial labels. 
+
+5.1.2 Baselines. To show the effectiveness of LUCID , we compare it with both representative unsupervised and semi-supervised com-munity detection methods. Following ProCom, we evaluate global 
+
+> 1http://snap.stanford.edu/data/
+
+Table 3: Summary of dataset characteristics. The symbols |𝑉 |,
+
+|𝐸 |, and |𝐶 | represent the total number of nodes, edges, and communities, while |𝐶 | indicates the mean community size, and ¯𝑑 denotes the average degree. Dataset |𝑉 | |𝐸 | |𝐶 | |𝐶 | ¯𝑑 
+
+Facebook 3,622 72,964 130 15.6 40.3 Amazon 13,178 33,767 4,517 9.3 5.1 Livejournal 69,860 911,179 1,000 13.0 26.1 DBLP 114,095 466,761 4,559 8.4 8.2 Twitter 87,760 1,293,985 2,838 10.9 29.5 and local methods under consistent settings, including both unsu-pervised and semi-supervised cases. Unsupervised baselines include BigClam [41], which uses matrix factorization to detect overlapping communities; ComE [9], which jointly learns node embeddings and community structures; and CommunityGAN [16], which extends BigClam by using motifs instead of simple edges. Semi-supervised baselines include Bespoke [2], which uses community size and structural information; SEAL [44], which employs GANs to learn from labels; CLARE [36], which uses a locator and a rewriter; and PROCOM [35], which adopts a “pretrain, prompt” paradigm with dual-level pre-training. 
+
+5.1.3 Evaluation metrics. For graph networks with available ground-truth communities, performance is typically evaluated using F1 and Jaccard scores [35, 36, 41, 44]based on bi-directional matching. Sup-pose there are 𝑀 ground-truth communities ¤𝐶 (𝑖 ) and 𝑁 communi-ties predicted by the model ˆ 𝐶 ( 𝑗 ) . For each predicted community, we compute its similarity to the most similar ground-truth community, and vice versa. The final score is obtained by averaging the two directions: 12
+
+1
+
+𝑁 ∑︁ 𝑗 
+
+max  
+
+> 𝑖
+
+𝛿 ( ˆ𝐶 ( 𝑗 ) , ¤𝐶 (𝑖 ) ) + 1
+
+𝑀 ∑︁ 𝑖 
+
+max  
+
+> 𝑗
+
+𝛿 ( ˆ𝐶 ( 𝑗 ) , ¤𝐶 (𝑖 ) )
+
+!
+
+, (3) where 𝛿 represents either the F1 score or the Jaccard score. Interpretable Unsupervised Community Detection with LLM-Symbolized Structured Processes 
+
+Figure 3: Ablation study on the effectiveness of the four stages in LUCID .Table 4: Ablation study with different rank metrics on F1 score (%) across five datasets.                             
+
+> Dataset Density Modularity LC RDC
+> Facebook 30.27 24.54 41.00 40.95 Amazon 44.03 60.41 86.54 91.71 Livejournal 9.35 17.70 52.64 56.57 DBLP 22.88 35.76 54.28 55.03 Twitter 27.98 26.46 32.71 33.03
+> Improve (%) +161.44 +83.40 +3.14 –
+
+5.1.4 Implementation Details. All experiments are conducted on an NVIDIA A100. We use GPT-5.2 as the LLM backbone for our main experiments. The number of predicted communities 𝑁 is set to 200 for Facebook, 1000 for Livejournal, 1500 for Amazon, and 5000 for DBLP and Twitter. We use the official APIs with their default temperatures: 1.0 for GPT-5.2 and DeepSeek-V4-Pro, and 0.8 for Qwen3-Max. 
+
+## 5.2 Overall performance (RQ1) 
+
+We provide the overall performance comparison in Table 2, where the reported LUCID results use GPT-5.2 as the LLM backbone. Re-sults with the open-weight DeepSeek-V4-Pro [11] are reported in Appendix D. Following previous works [35, 36, 44], we report the performance of unsupervised community detection algorithms without variation. Similarly, for semi-supervised algorithms, we randomly select 10 communities for training (prompts for PRO-COM) and use the remaining communities for testing. We observe the following patterns: (1) LUCID significantly outperforms existing unsupervised methods across all datasets. Compared with the best unsupervised baseline on each dataset, our method achieves aver-age improvements of 20.7% in F1 score and 31.9%in Jaccard score. (2) As an unsupervised method, LUCID consistently outperforms state-of-the-art semi-supervised baselines. Specifically, LUCID achieves the best performance across all five datasets, with average rela-tive gains of 10.1% in F1 and 16.6% in Jaccard over the strongest semi-supervised baseline on each dataset. This shows that LUCID 
+
+captures community structures from network topology without any labels. (3) While semi-supervised models like PROCOM occa-sionally achieve second-best results, they rely on labelled data and training. When compared with the strongest baseline in each row, including both unsupervised and semi-supervised methods, LUCID 
+
+achieves average relative gains of 7.7% in F1 and 13.7% in Jaccard. 
+
+Table 5: LLM necessity ablation results on F1 score (%), where LJ denotes LiveJournal. Improv. reports the average relative gain of LLM Rules over each heuristic across five datasets.                      
+
+> Metric Facebook Amazon LJ DBLP Twitter Improv.
+> Density 34.19 71.66 49.39 54.69 29.73 +13.4% Modularity 38.86 85.54 52.50 52.34 31.17 +5.0% LLM Rules 40.82 92.11 54.25 54.73 32.51 –
+
+Figure 4: Performance comparison with different LLMs, mea-sured by F1 score (%). 
+
+## 5.3 Ablation studies (RQ2) 
+
+Stages in LUCID ablation study. Figure 3 presents the stage-wise ablation results of LUCID . Overall, removing any stage generally degrades performance, demonstrating that the stages play com-plementary roles in the framework. Removing the merge stage causes substantial declines on Amazon and Livejournal but yields a slight improvement on DBLP, suggesting that merge effectiveness is dataset-dependent and sensitive to structure. DBLP communities are small and tight with low overlap, merging structurally close 
+
+𝑘 -ego subgraphs can blur their boundaries. Removing refinement consistently impairs performance across multiple datasets, confirm-ing its importance in reducing boundary noise. The removal of selection leads to severe drops on Livejournal and DBLP and mod-erate declines elsewhere, highlighting the role of global structural filtering in balancing internal cohesion and boundary clarity, espe-cially in networks with substantial community overlap. Although the contribution of each stage varies across datasets, their combined use enables LUCID to achieve the most robust overall performance. 
+
+Ranking metric ablation study. Table 4 presents the ablation study comparing different ranking metrics. Our proposed RDC consistently outperforms baselines on most datasets, achieving substantial average gains over Density (+161.44%) and Modular-ity (+83.40%). Compared to Local Conductance (LC), RDC shows modest improvements, indicating that both effectively leverage conductance-based metrics. RDC attains the best performance on Amazon and Livejournal, and performs comparably to LC on Face-book, where community boundaries are relatively clear. The supe-rior performance of RDC can be attributed to its joint consideration of density and conductance, which enables better identification of communities with both high internal cohesion and clear boundaries across diverse network structures. 
+
+LLM necessity ablation study. To examine whether the LLM is necessary, we remove it from the two stages. We consider Density and Modularity to replace LLM-induced rules. During the merge stage, two communities are merged only if the corresponding metric Aoting Zeng, Kai Wang, Jianwei Wang, Yuxiang Sun, Yizhang He, Wenjie Zhang 
+
+Figure 5: Sensitivity analysis of hyperparameters. Structural                   
+
+> Consistency
+> Merge No Merge
+> Node Overlap
+> Density
+> Compatibility
+> Label
+> Alignment
+> Scale Balance
+> Union
+> Integrity
+> Strict Rescue
+> Filter
+> Micro -Artifact
+> Check
+> T
+> T
+> T
+> T
+> T
+> T
+> T
+> T
+> F
+> F
+> F
+> F
+> F
+> F
+> F
+> F
+> (Jaccard_Node >= 0.65) OR
+> (Containment_Ratio >= 0.95)
+> (Jaccard_Edge >= 0.55) AND
+> (Edge_Coverage >= 0.75)
+> (abs( density_A -density_B ) <=
+> 0.12) AND (min( density_A ,
+> density_B ) >= 0.05)
+> (Dominant_Labels_Match ==
+> True) AND
+> (Label_Distribution_Difference
+> <= 0.50)
+> (Size_Ratio >= 0.70) OR
+> (( Max_Node_Containment >=
+> 0.95 AND Size_Ratio >= 0.50))
+> Union_Graph_Density >= (0.80
+> ×Min(Density_A, Density_B))
+> (Jaccard_ Node >= 0.45) AND
+> (Jaccard_ Edge >= 0.65) AND
+> (abs( density_A -density_B ) <= 0.08)
+> (Total_Union_Nodes <= 8) AND
+> (Shared_Nodes_Ratio >= 0.25) AND
+> (Dominant_Labels_Match == True)
+
+Figure 6: The decision tree generated by the LLM for subgraph merging. 
+
+increases after merging. During the refinement satge, a node is removed only if its removal increases that metric. As shown in Table 5, LLM-induced rules outperform Density and Modularity by 13.4% and 5.0% on average across the five datasets, respectively. Further process-level comparisons are provided in Appendix E. 
+
+## 5.4 Efficiency study (RQ3) 
+
+LUCID achieves competitive computational efficiency while main-taining superior detection performance. Additionally, LUCID keeps token costs low by limiting each experiment to just two API calls. Detailed efficiency analysis including runtime comparisons with baselines, time with stages, and token cost breakdown are provided in Table 12 in Appendix F and Table 13 in Appendix G. 
+
+## 5.5 Hyperparameter sensitivity (RQ4) 
+
+We evaluate the sensitivity of LUCID to LLM selection, tree depth, merge sampling, top-𝑏 neighbors, refinement sampling, and the penalty coefficient 𝜖 . Figures 4 and 5 show that performance varia-tions are typically within 1–2%, demonstrating robustness without extensive tuning. Detailed experimental results and analysis for each hyperparameter are provided in Appendix K. Based on our analysis, we adopt the default settings in Table 7 in Appendix C. 
+
+Figure 7: Visualization of overall procedure interpretability. 
+
+## 5.6 Case studies (RQ5) 
+
+A case study on merging rules. Figure 6 illustrates LLM-induced merging rules in LUCID , which follows a hierarchical decision struc-ture to balance structural connectivity and community quality. (1) Initial filtering: the process begins with the node overlap gate , pri-oritizing subgraph pairs with significant overlap or directional containment. (2) Validation sequence: candidates passing the initial gate undergo a multi-step validation, starting with structural con-sistency and density compatibility . Subsequently, label alignment 
+
+and scale balance ensure structural uniformity and compatibility. (3) Rescue mechanisms: to handle boundary cases, the model in-corporates a strict rescue filter to recover candidates with moderate overlap and a micro-artifact check for small, high-density cliques. (4) Final integrity: a union integrity test mandates that the merged union retains high density to preserve internal cohesion. 
+
+A case study on the interpretability of LUCID . Interpretability means a transparent decision process from inputs to outputs. Fig-ure 7 visualizes LUCID ’s LLM-symbolized pipeline on DBLP and Amazon. On DBLP, stage 1 shows a center vertex connected to two neighbors (top and bottom) with their ego networks displayed. 
+
+LUCID merges the top neighbor into the community because it demonstrates strong structural consensus, with high overlap ratio, label consistency, and density similarity validated through dedi-cated gates. Conversely, the bottom neighbor is rejected due to insufficient shared context. The community is then refined by re-moving nodes with low internal degrees and weak triadic closures, resulting in an exact 5-clique that matches the ground truth. Simi-larly, on Amazon, LUCID aggregates dense neighbors and prunes outliers to produce a prediction aligned with ground truth. These examples highlight the transparency and interpretability of LUCID 
+
+via explicit structural rules. Interpretable Unsupervised Community Detection with LLM-Symbolized Structured Processes 
+
+## 6 Conclusion 
+
+We propose LUCID , a four-stage LLM-symbolized framework for interpretable, training-free, and label-free community detection. It constructs communities via local-view initialization, multi-factor merge, multi-grain refinement, and global selection. Rather than acting as end-to-end predictors, the LLM serve as rule inducers: they build a multi-factor decision tree for merging and induce coarse-to-fine rules for refinement to remove boundary noise. Experiments show that LUCID achieves state-of-the-art performance, with av-erage relative improvements of 20.7% in F1 and 31.9% in Jaccard over the strongest unsupervised baselines, while outperforming the strongest semi-supervised baselines by 10.1% and 16.6%. 
+
+## References 
+
+[1] Lars Backstrom, Daniel P. Huttenlocher, Jon M. Kleinberg, and Xiangyang Lan. 2006. Group formation in large social networks: membership, growth, and evolution. In Proceedings of the Twelfth ACM SIGKDD International Conference on Knowledge Discovery and Data Mining, Philadelphia, PA, USA, August 20-23, 2006 , Tina Eliassi-Rad, Lyle H. Ungar, Mark Craven, and Dimitrios Gunopulos (Eds.). ACM, 44–54. doi:10.1145/1150402.1150412 [2] Arjun Bakshi, Srinivasan Parthasarathy, and Kannan Srinivasan. 2018. Semi-Supervised Community Detection Using Structure and Size. In IEEE International Conference on Data Mining, ICDM 2018, Singapore, November 17-20, 2018 . IEEE Computer Society, 869–874. doi:10.1109/ICDM.2018.00103 [3] Arjun Bakshi, Srinivasan Parthasarathy, and Kannan Srinivasan. 2018. Semi-Supervised Community Detection Using Structure and Size. In IEEE International Conference on Data Mining, ICDM 2018, Singapore, November 17-20, 2018 . IEEE Computer Society, 869–874. doi:10.1109/ICDM.2018.00103 [4] Robert D Barish, Rebecca Schulman, Paul WK Rothemund, and Erik Winfree. 2009. An information-bearing seed for nucleating algorithmic self-assembly. 
+
+Proceedings of the National Academy of Sciences 106, 15 (2009), 6054–6059. [5] Punam Bedi and Chhavi Sharma. 2016. Community detection in social networks. 
+
+WIREs Data Mining Knowl. Discov. 6, 3 (2016), 115–135. doi:10.1002/WIDM.1178 [6] Vincent D Blondel, Jean-Loup Guillaume, Renaud Lambiotte, and Etienne Lefeb-vre. 2008. Fast unfolding of communities in large networks. Journal of statistical mechanics: theory and experiment 2008, 10 (2008), P10008. [7] Deyu Bo, Xiao Wang, Chuan Shi, Meiqi Zhu, Emiao Lu, and Peng Cui. 2020. Structural Deep Clustering Network. In WWW ’20: The Web Conference 2020, Taipei, Taiwan, April 20-24, 2020 , Yennun Huang, Irwin King, Tie-Yan Liu, and Maarten van Steen (Eds.). ACM / IW3C2, 1400–1410. doi:10.1145/3366423.3380214 [8] Genís Calderer and Marieke L Kuijjer. 2021. Community detection in large-scale bipartite biological networks. Frontiers in Genetics 12 (2021), 649440. [9] Sandro Cavallari, Vincent W. Zheng, Hongyun Cai, Kevin Chen-Chuan Chang, and Erik Cambria. 2017. Learning Community Embedding with Community Detection and Node Embedding on Graphs. In Proceedings of the 2017 ACM on Conference on Information and Knowledge Management, CIKM 2017, Singa-pore, November 06 - 10, 2017 , Ee-Peng Lim, Marianne Winslett, Mark Sanderson, Ada Wai-Chee Fu, Jimeng Sun, J. Shane Culpepper, Eric Lo, Joyce C. Ho, Debora Donato, Rakesh Agrawal, Yu Zheng, Carlos Castillo, Aixin Sun, Vincent S. Tseng, and Chenliang Li (Eds.). ACM, 377–386. doi:10.1145/3132847.3132925 [10] Eli Chien, Wei-Cheng Chang, Cho-Jui Hsieh, Hsiang-Fu Yu, Jiong Zhang, Olgica Milenkovic, and Inderjit S. Dhillon. 2022. Node Feature Extraction by Self-Supervised Multi-scale Neighborhood Prediction. In The Tenth International Conference on Learning Representations, ICLR 2022, Virtual Event, April 25-29, 2022 . OpenReview.net. https://openreview.net/forum?id=KJggliHbs8 [11] DeepSeek-AI. 2026. DeepSeek-V4: Towards Highly Efficient Million-Token Con-text Intelligence. arXiv:2606.19348 [cs.CL] https://arxiv.org/abs/2606.19348 [12] Santo Fortunato. 2010. Community detection in graphs. Physics reports 486, 3-5 (2010), 75–174. [13] Fabio Gasparetti, Giuseppe Sansonetti, and Alessandro Micarelli. 2021. Commu-nity detection in social recommender systems: a survey. Appl. Intell. 51, 6 (2021), 3975–3995. doi:10.1007/S10489-020-01962-3 [14] Jiayan Guo, Lun Du, and Hengyu Liu. 2023. GPT4Graph: Can Large Language Models Understand Graph Structured Data ? An Empirical Evaluation and Bench-marking. CoRR abs/2305.15066 (2023). arXiv:2305.15066 doi:10.48550/ARXIV. 2305.15066 [15] Xuanwen Huang, Kaiqiao Han, Yang Yang, Dezheng Bao, Quanjin Tao, Ziwei Chai, and Qi Zhu. 2024. Can GNN be Good Adapter for LLMs?. In Proceedings of the ACM on Web Conference 2024, WWW 2024, Singapore, May 13-17, 2024 ,Tat-Seng Chua, Chong-Wah Ngo, Ravi Kumar, Hady W. Lauw, and Roy Ka-Wei Lee (Eds.). ACM, 893–904. doi:10.1145/3589334.3645627 [16] Yuting Jia, Qinqin Zhang, Weinan Zhang, and Xinbing Wang. 2019. Communi-tyGAN: Community Detection with Generative Adversarial Nets. In The World Wide Web Conference, WWW 2019, San Francisco, CA, USA, May 13-17, 2019 , Ling Liu, Ryen W. White, Amin Mantrach, Fabrizio Silvestri, Julian J. McAuley, Ricardo Baeza-Yates, and Leila Zia (Eds.). ACM, 784–794. doi:10.1145/3308558.3313564 [17] Brian Karrer and Mark EJ Newman. 2011. Stochastic blockmodels and community structure in networks. Physical Review E—Statistical, Nonlinear, and Soft Matter Physics 83, 1 (2011), 016107. [18] Nevan J Krogan, Gerard Cagney, Haiyuan Yu, Gouqing Zhong, Xinghua Guo, Alexandr Ignatchenko, Joyce Li, Shuye Pu, Nira Datta, Aaron P Tikuisis, et al. 2006. Global landscape of protein complexes in the yeast Saccharomyces cerevisiae. 
+
+Nature 440, 7084 (2006), 637–643. [19] Wei Li, Yi Peng, Tim Still, A. G. Yodh, and Yilong Han. 2025. Nucleation kinetics and virtual melting in shear-induced structural transitions. Reports on Progress in Physics 88, 1 (2025), 010501. doi:10.1088/1361-6633/ad99fd [20] Jiacheng Ma, Fan Li, Rui Zhang, Zhikang Xu, Dawei Cheng, Yi Ouyang, Ruihui Zhao, Jianguang Zheng, Yefeng Zheng, and Changjun Jiang. 2023. Fighting against Organized Fraudsters Using Risk Diffusion-based Parallel Graph Neural Network. In Proceedings of the Thirty-Second International Joint Conference on Aoting Zeng, Kai Wang, Jianwei Wang, Yuxiang Sun, Yizhang He, Wenjie Zhang 
+
+Artificial Intelligence, IJCAI 2023, 19th-25th August 2023, Macao, SAR, China .ijcai.org, 6138–6146. doi:10.24963/IJCAI.2023/681 [21] Costas Mavromatis, Vassilis N Ioannidis, Shen Wang, Da Zheng, Soji Adeshina, Jun Ma, Han Zhao, Christos Faloutsos, and George Karypis. 2023. Train your own gnn teacher: Graph-aware distillation on textual graphs. In Joint European Conference on Machine Learning and Knowledge Discovery in Databases . Springer, 157–173. [22] Zizhuo Meng, Ke Wan, Yadong Huang, Zhidong Li, Yang Wang, and Feng Zhou. 2024. Interpretable Transformer Hawkes Processes: Unveiling Complex Inter-actions in Social Networks. In Proceedings of the 30th ACM SIGKDD Conference on Knowledge Discovery and Data Mining, KDD 2024, Barcelona, Spain, August 25-29, 2024 , Ricardo Baeza-Yates and Francesco Bonchi (Eds.). ACM, 2200–2211. doi:10.1145/3637528.3671720 [23] Humza Naveed, Asad Ullah Khan, Shi Qiu, Muhammad Saqib, Saeed Anwar, Muhammad Usman, Naveed Akhtar, Nick Barnes, and Ajmal Mian. 2025. A com-prehensive overview of large language models. ACM Transactions on Intelligent Systems and Technology 16, 5 (2025), 1–72. [24] Mark EJ Newman and Michelle Girvan. 2004. Finding and evaluating community structure in networks. Physical review E 69, 2 (2004), 026113. [25] Namyong Park, Ryan A. Rossi, Eunyee Koh, Iftikhar Ahamath Burhanuddin, Sungchul Kim, Fan Du, Nesreen K. Ahmed, and Christos Faloutsos. 2022. CGC: Contrastive Graph Clustering forCommunity Detection and Tracking. In WWW ’22: The ACM Web Conference 2022, Virtual Event, Lyon, France, April 25 - 29, 2022 ,Frédérique Laforest, Raphaël Troncy, Elena Simperl, Deepak Agarwal, Aristides Gionis, Ivan Herman, and Lionel Médini (Eds.). ACM, 1115–1126. doi:10.1145/ 3485447.3512160 [26] Meng Qin, Chaorui Zhang, Yu Gao, Weixi Zhang, and Dit-Yan Yeung. 2024. Pre-train and refine: Towards higher efficiency in k-agnostic community detection without quality degradation. In Proceedings of the 30th ACM SIGKDD Conference on Knowledge Discovery and Data Mining . 2467–2478. [27] Sara Rahiminejad, Mano R Maurya, and Shankar Subramaniam. 2019. Topological and functional comparison of community detection algorithms in biological networks. BMC bioinformatics 20, 1 (2019), 212. [28] Yijun Tian, Huan Song, Zichen Wang, Haozhu Wang, Ziqing Hu, Fang Wang, Nitesh V. Chawla, and Panpan Xu. 2024. Graph Neural Prompting with Large Language Models. In Thirty-Eighth AAAI Conference on Artificial Intelligence, AAAI 2024, Thirty-Sixth Conference on Innovative Applications of Artificial In-telligence, IAAI 2024, Fourteenth Symposium on Educational Advances in Artifi-cial Intelligence, EAAI 2014, February 20-27, 2024, Vancouver, Canada , Michael J. Wooldridge, Jennifer G. Dy, and Sriraam Natarajan (Eds.). AAAI Press, 19080– 19088. doi:10.1609/AAAI.V38I17.29875 [29] Vincent A Traag, Ludo Waltman, and Nees Jan Van Eck. 2019. From Louvain to Leiden: guaranteeing well-connected communities. Scientific reports 9, 1 (2019), 1–12. [30] Anton Tsitsulin, John Palowitch, Bryan Perozzi, and Emmanuel Müller. 2023. Graph Clustering with Graph Neural Networks. J. Mach. Learn. Res. 24 (2023), 127:1–127:21. https://jmlr.org/papers/v24/20-998.html [31] Jianwei Wang, Kai Wang, Xuemin Lin, Wenjie Zhang, and Ying Zhang. 2024. Efficient Unsupervised Community Search with Pre-trained Graph Transformer. 
+
+Proc. VLDB Endow. 17, 9 (2024), 2227–2240. doi:10.14778/3665844.3665853 [32] Jianwei Wang, Kai Wang, Xuemin Lin, Wenjie Zhang, and Ying Zhang. 2024. Neural attributed community search at billion scale. Proceedings of the ACM on Management of Data 1, 4 (2024), 1–25. [33] Jianwei Wang, Yuehai Wang, Kai Wang, Xuemin Lin, Wenjie Zhang, and Ying Zhang. 2025. Ensemble-based Deep Multilayer Community Search. CoRR 
+
+abs/2501.02194 (2025). arXiv:2501.02194 doi:10.48550/ARXIV.2501.02194 [34] Xiao Wang, Di Jin, Xiaochun Cao, Liang Yang, and Weixiong Zhang. 2016. Se-mantic Community Identification in Large Attribute Networks. In Proceedings of the Thirtieth AAAI Conference on Artificial Intelligence, February 12-17, 2016, Phoenix, Arizona, USA , Dale Schuurmans and Michael P. Wellman (Eds.). AAAI Press, 265–271. doi:10.1609/AAAI.V30I1.9977 [35] Xixi Wu, Kaiyu Xiong, Yun Xiong, Xiaoxin He, Yao Zhang, Yizhu Jiao, and Jiawei Zhang. 2024. ProCom: A Few-shot Targeted Community Detection Algorithm. In Proceedings of the 30th ACM SIGKDD Conference on Knowledge Discovery and Data Mining, KDD 2024, Barcelona, Spain, August 25-29, 2024 , Ricardo Baeza-Yates and Francesco Bonchi (Eds.). ACM, 3414–3424. doi:10.1145/3637528.3671749 [36] Xixi Wu, Yun Xiong, Yao Zhang, Yizhu Jiao, Caihua Shan, Yiheng Sun, Yangyong Zhu, and Philip S. Yu. 2022. CLARE: A Semi-supervised Community Detection Algorithm. In KDD ’22: The 28th ACM SIGKDD Conference on Knowledge Discovery and Data Mining, Washington, DC, USA, August 14 - 18, 2022 , Aidong Zhang and Huzefa Rangwala (Eds.). ACM, 2059–2069. doi:10.1145/3534678.3539370 [37] Yihan Wu, Mingze Gao, Haoran Liu, Weiwei Li, Kevin Han, Junfeng Pan, Xinyi Zhang, Jiawei Wen, and Gedi Zhou. 2025. GAS: Large-Scale Heterogeneous Personalization in Social Network Applications at Meta. In Proceedings of the 31st ACM SIGKDD Conference on Knowledge Discovery and Data Mining, V.2, KDD 2025, Toronto ON, Canada, August 3-7, 2025 , Luiza Antonie, Jian Pei, Xiaohui Yu, Flavio Chierichetti, Hady W. Lauw, Yizhou Sun, and Srinivasan Parthasarathy (Eds.). ACM, 5049–5058. doi:10.1145/3711896.3737225 [38] Sheng Xiang, Mingzhi Zhu, Dawei Cheng, Enxia Li, Ruihui Zhao, Yi Ouyang, Ling Chen, and Yefeng Zheng. 2023. Semi-supervised Credit Card Fraud Detection via Attribute-Driven Graph Representation. In Thirty-Seventh AAAI Conference on Artificial Intelligence, AAAI 2023, Thirty-Fifth Conference on Innovative Appli-cations of Artificial Intelligence, IAAI 2023, Thirteenth Symposium on Educational Advances in Artificial Intelligence, EAAI 2023, Washington, DC, USA, February 7-14, 2023 , Brian Williams, Yiling Chen, and Jennifer Neville (Eds.). AAAI Press, 14557–14565. doi:10.1609/AAAI.V37I12.26702 [39] Ran Xu, Patrick Jiang, Linhao Luo, Cao Xiao, Adam Cross, Shirui Pan, Jimeng Sun, and Carl Yang. 2025. A Survey on Unifying Large Language Models and Knowledge Graphs for Biomedicine and Healthcare. In Proceedings of the 31st ACM SIGKDD Conference on Knowledge Discovery and Data Mining, V.2, KDD 2025, Toronto ON, Canada, August 3-7, 2025 , Luiza Antonie, Jian Pei, Xiaohui Yu, Flavio Chierichetti, Hady W. Lauw, Yizhou Sun, and Srinivasan Parthasarathy (Eds.). ACM, 6195–6205. doi:10.1145/3711896.3736556 [40] Jaewon Yang and Jure Leskovec. 2012. Defining and Evaluating Network Com-munities Based on Ground-Truth. In 12th IEEE International Conference on Data Mining, ICDM 2012, Brussels, Belgium, December 10-13, 2012 , Mohammed Javeed Zaki, Arno Siebes, Jeffrey Xu Yu, Bart Goethals, Geoffrey I. Webb, and Xindong Wu (Eds.). IEEE Computer Society, 745–754. doi:10.1109/ICDM.2012.138 [41] Jaewon Yang and Jure Leskovec. 2013. Overlapping community detection at scale: a nonnegative matrix factorization approach. In Sixth ACM International Conference on Web Search and Data Mining, WSDM 2013, Rome, Italy, February 4-8, 2013 , Stefano Leonardi, Alessandro Panconesi, Paolo Ferragina, and Aristides Gionis (Eds.). ACM, 587–596. doi:10.1145/2433396.2433471 [42] Junhan Yang, Zheng Liu, Shitao Xiao, Chaozhuo Li, Defu Lian, Sanjay Agrawal, Amit Singh, Guangzhong Sun, and Xing Xie. 2021. GraphFormers: GNN-nested Transformers for Representation Learning on Textual Graph. In Advances in Neu-ral Information Processing Systems 34: Annual Conference on Neural Information Processing Systems 2021, NeurIPS 2021, December 6-14, 2021, virtual , Marc’Aurelio Ranzato, Alina Beygelzimer, Yann N. Dauphin, Percy Liang, and Jennifer Wort-man Vaughan (Eds.). 28798–28810. https://proceedings.neurips.cc/paper/2021/ hash/f18a6d1cde4b205199de8729a6637b42-Abstract.html [43] Shuzhou Yuan and Michael Färber. 2023. Evaluating Generative Models for Graph-to-Text Generation. In Proceedings of the 14th International Conference on Recent Advances in Natural Language Processing, RANLP 2023, Varna, Bulgaria, 4-6 September 2023 , Ruslan Mitkov and Galia Angelova (Eds.). INCOMA Ltd., Shoumen, Bulgaria, 1256–1264. https://aclanthology.org/2023.ranlp-1.133 [44] Yao Zhang, Yun Xiong, Yun Ye, Tengfei Liu, Weiqiang Wang, Yangyong Zhu, and Philip S. Yu. 2020. SEAL: Learning Heuristics for Community Detection with Generative Adversarial Networks. In KDD ’20: The 26th ACM SIGKDD Conference on Knowledge Discovery and Data Mining, Virtual Event, CA, USA, August 23-27, 2020 , Rajesh Gupta, Yan Liu, Jiliang Tang, and B. Aditya Prakash (Eds.). ACM, 1103–1113. doi:10.1145/3394486.3403154 [45] Jianan Zhao, Meng Qu, Chaozhuo Li, Hao Yan, Qian Liu, Rui Li, Xing Xie, and Jian Tang. 2023. Learning on Large-scale Text-attributed Graphs via Variational Inference. In The Eleventh International Conference on Learning Representations, ICLR 2023, Kigali, Rwanda, May 1-5, 2023 . OpenReview.net. https://openreview. net/forum?id=q0nmYciuuZN [46] Wayne Xin Zhao, Kun Zhou, Junyi Li, Tianyi Tang, Xiaolei Wang, Yupeng Hou, Yingqian Min, Beichen Zhang, Junjie Zhang, Zican Dong, et al. 2023. A survey of large language models. arXiv preprint arXiv:2303.18223 1, 2 (2023). 
+
+## APPENDIX A Notations 
+
+Table 6: Summary of Notations 
+
+Symbol Description 
+
+𝐺 = (𝑉 , 𝐸 ) Input graph 
+
+𝑀 Number of ground-truth communities 
+
+𝑁 Number of predicted communities 
+
+N ( 𝑣 ) Neighborhood of node 𝑣 𝐺 (𝑘 ) 
+
+> 𝑣
+
+𝑘 -ego network of 𝑣 
+
+T Multi-factor decision tree 
+
+A Set of available center nodes 
+
+CM Candidate communities after merge 
+
+CR Candidate communities after refinement 
+
+C Final candidate communities Interpretable Unsupervised Community Detection with LLM-Symbolized Structured Processes 
+
+## B Complexity analysis 
+
+We analyze the time complexity of LUCID across its four stages. Let 
+
+𝐺 = (𝑉 , 𝐸 ) be a graph with |𝑉 | = 𝑛 nodes and |𝐸 | = 𝑚 edges, ¯𝑑 de-note the average degree, 𝑘 be the ego network radius, 𝑏 be the top-𝑏 
+
+neighbor sampling parameter in the merge stage, 𝐷 be the decision tree depth, |C M | be the number of candidate communities after merging, |C R | be the number of candidate communities after refine-ment, and ¯ 𝑠 be the average community size. Stage 1 is dominated by 
+
+𝑘 -ego network decomposition, requiring 𝑂 (𝑛 · ¯𝑑 𝑘 ) time when 𝑘 ≥ 2. Stage 2 incurs the primary computational overhead of 𝑂 (𝑛 · 𝑏 · 𝐷 )
+
+from decision tree evaluation for top-𝑏 neighbors. Stage 3 scales as 
+
+𝑂 (|C M | · ¯𝑠 · 𝑅 ) where 𝑅 is the number of rule layers in the coarse-to-fine hierarchy. Stage 4 requires 𝑂 (|C R | · ¯𝑠 · ¯𝑑 ) time for computing structure-stability-regularized scores. Combining all four stages, the overall time complexity is 𝑂 (𝑛 · ¯𝑑 𝑘 +𝑛 ·𝑏 ·𝐷 +|C M |· ¯𝑠 ·𝑅 +|C R |· ¯𝑠 · ¯𝑑 ).The space complexity is dominated by storing the graph structure (𝑂 (𝑛 +𝑚 )), pre-computed 𝑘 -ego networks ( 𝑂 (𝑛 · ¯𝑑 𝑘 )), and candidate communities ( 𝑂 (|C M |· ¯𝑠 +|C R |· ¯𝑠 )), yielding overall space complexity 
+
+𝑂 (𝑛 + 𝑚 + 𝑛 · ¯𝑑 𝑘 + |C M | · ¯𝑠 + |C R | · ¯𝑠 ).
+
+## C Default hyperparameter settings 
+
+Table 7: Hyperparameter in LUCID 
+
+Hyperparameter Value 
+
+𝑘 Search from {1, 2} Number of node labels 𝐾 4LLM GPT-5.2 Merge sample size 3Max neighbors per center 3Top-𝑀 neighbors for merge 10 Tree depth 11-13 Refine sample size 10 
+
+𝜖 0.2 
+
+## D DeepSeek-V4-Pro results 
+
+Table 8 reports the performance of LUCID when DeepSeek-V4-Pro is used as the LLM backbone. Although we access it through the official API, its weights are available under the MIT License and support self-hosting [11], reducing dependence on API availability. Improvements are relative to the strongest baseline in the corre-sponding row of Table 2. 
+
+## E Process-level quality analysis 
+
+This section provides a detailed process-level analysis of the LLM-induced rules used in the Merge and Refine stages. Unlike community-level F1, this analysis directly examines whether individual merge and node-removal decisions are consistent with the ground truth. We compare LLM Rules with the Density and Modularity heuris-tics on five datasets. All results are reported in percentages and averaged across datasets. 
+
+Table 8: Performance of LUCID with DeepSeek-V4-Pro (results in percent ± standard deviation).                         
+
+> Metric Dataset LUCID (DeepSeek) Improv.
+> F1 Score Facebook 40 .60 ±0.63 +6.3% Amazon 91 .36 ±0.41 +9.5% Livejournal 52 .51 ±0.22 -0.8% DBLP 53 .65 ±0.44 +6.3% Twitter 31 .56 ±0.05 +6.8% Jaccard Facebook 31 .44 ±0.69 +10.9% Amazon 86 .34 ±0.70 +15.3% Livejournal 45 .00 ±0.25 +7.9% DBLP 43 .72 ±0.62 +11.4% Twitter 21 .05 ±0.05 +7.9%
+
+## E.1 Merge quality 
+
+To examine whether each individual merge decision is reasonable, we evaluate every candidate pair (𝐶 𝑖 , 𝐶 𝑗 ) considered during the Merge stage. Our first criterion determines whether the two candi-dates correspond to the same ground-truth community. Specifically, we identify the ground-truth community having the largest overlap with each candidate and label the pair as positive if the two matched communities are identical: GT (𝐶 ) = arg max   
+
+> 𝐺 ∈ G
+
+|𝐶 ∩ 𝐺 |, 𝑦 equal (𝐶 𝑖 , 𝐶 𝑗 ) = 1GT (𝐶 𝑖 ) = GT (𝐶 𝑗 ) ,
+
+where G denotes the set of ground-truth communities. Based on the predicted merge decisions and these labels, we compute Pair Precision, Pair Recall, and Pair F1. We additionally evaluate whether merging the two candidates preserves sufficient ground-truth consistency. Let 𝑈 = 𝐶 𝑖 ∪ 𝐶 𝑗 and 
+
+𝐺 ∗ be the ground-truth community with the largest overlap with 
+
+𝑈 . The pair is labeled as positive when at least a fraction 𝜏 of the merged community belongs to 𝐺 ∗:
+
+𝑈 = 𝐶 𝑖 ∪ 𝐶 𝑗 , 𝐺 ∗ = arg max   
+
+> 𝐺 ∈ G
+
+|𝑈 ∩ 𝐺 |, 𝑦 𝜏 (𝐶 𝑖 , 𝐶 𝑗 ) = 1
+
+ |𝑈 ∩ 𝐺 ∗ ||𝑈 | ≥ 𝜏 
+
+
+
+.
+
+We evaluate 𝜏 ∈ { 0.6, 0.7, 0.8} using the same pair-level metrics and adopt 𝜏 = 0.8 as the strict setting, whose Pair F1 is reported as Strict Pair F1. As shown in Table 9, LLM Rules achieve the best results across all four metrics. Compared with the strongest heuristic, they increase Pair F1 from 32.30% to 39.64% and Strict Pair F1 from 16.62% to 23.57%. 
+
+Table 9: Merge decision quality (%) averaged across five datasets. Strict Pair F1 uses the union-coverage threshold 
+
+𝜏 = 0.8.                
+
+> Rule Pair Precision Pair Recall Pair F1 Strict Pair F1 LLM Rules 44.48 62.37 39.64 23.57
+> Modularity 42.16 48.60 32.30 16.62 Density 37.72 0.02 0.07 0.06
+
+## E.2 Refine quality 
+
+In the Refine stage, each candidate community is first matched to the ground-truth community with the highest Jaccard similar-ity. Nodes outside the matched community are regarded as noisy nodes, whereas the remaining nodes are treated as true members. Aoting Zeng, Kai Wang, Jianwei Wang, Yuxiang Sun, Yizhang He, Wenjie Zhang 
+
+We evaluate the refinement rules using Deletion Precision and Dele-tion Recall, which measure the correctness and coverage of noise removal, respectively. We further report True-member Damage, Pu-rity Gain, and Recall Drop to assess the trade-off between removing noise and preserving valid community members. As shown in Table 10, Modularity is overly conservative. Al-though it causes almost no damage to true members, its Deletion Recall is only 0.06% and its Purity Gain is nearly zero, indicating that it removes little noise. Density exhibits the opposite behavior: it achieves higher Deletion Recall and Purity Gain but removes substantially more true members, resulting in 6.3 × higher True-member Damage and 7.6 × higher Recall Drop than LLM Rules. In comparison, LLM Rules remove a meaningful proportion of noisy nodes while limiting the loss of true members. This result indicates that LLM-induced refinement provides a better balance between community denoising and member preservation, avoiding both the ineffective refinement of Modularity and the excessive pruning of Density. 
+
+## F Efficiency analysis 
+
+As shown in Table 12, LUCID strikes a balance between compu-tational efficiency and detection performance. Compared to deep learning baselines with convergence difficulties or high time costs, 
+
+LUCID maintains better robustness. Notably, on large datasets where deep learning methods fail to converge (ComE and CmtyGAN marked as “NA” in Table 12), LUCID successfully processes all datasets. On datasets where comparisons are available, LUCID achieves significant speedups: 52 × faster than SEAL on Facebook, 472 × faster than ComE on Amazon, and 213 × faster than CmtyGAN on Live-journal. Among all stages, the merge stage incurs the dominating com-putational costs, consuming 78.9%–93.6% of total runtime across datasets, due to deeper decision tree generation for enhanced in-terpretability. Meanwhile, the Refine stage is highly efficient and only accounts for 3.4%–18.8% of total runtime. The Selection stage introduces minimal overhead, consuming less than 1.5% of total runtime. The running times reported in Table 12 include LLM API call latency but exclude the subsequent evaluation process. Across all datasets, LUCID uses only two calls to the LLM API, one in the Merge stage and one in the Refine stage, independent of graph size. The main runtime bottleneck is the Merge stage, while token usage remains moderate due to top-𝑧 /top-𝑏 bounded context construction. We further evaluate LUCID on wiki-topcats (1.79M nodes, 28.5M edges), where total runtime is 6,095.5s with only 
+
+∼20k LLM tokens. This result indicates that large-graph runtime is dominated by graph-side processing rather than LLM context growth. To further clarify the cost of Stage 1, Table 11 reports the runtime of 𝑘 -ego initialization across datasets. 
+
+## G Token cost of five datasets 
+
+LUCID involves two API calls that occur in the Merge and Refine stages, respectively. In the Merge stage, the input incorporates the dataset description and sampled 𝑘 -ego networks with detailed structural context. Consequently, input token consumption is rela-tively high and varies with graph density. The LLM output consists of a structured decision tree and an executable Python function for merging. In the Refine stage, the input comprises the dataset description and a small batch of candidate communities. The LLM generates a node-level refinement function as output to optimize community boundaries. Due to the compact context, token usage in this stage remains low and consistent across datasets. By limiting the interaction to these two specific API calls, LUCID ensures low token costs, as detailed in Table 13. 
+
+## H The stability of LUCID 
+
+Unlike the fixed-prompt trials in the main experiments, here we vary the sampling seed and report mean ±std over three runs. The result indicates moderate variance across sampling seeds, while maintaining competitive performance. 
+
+## I Robustness to large-community fragmentation 
+
+To assess whether small-𝑘 ego decomposition fragments large com-munities, we isolate ground-truth communities with diameter no smaller than 3. As shown in Table 15, performance on these com-munities remains comparable to full-dataset performance. 
+
+## J Robustness to node-role label 
+
+We also evaluate robustness to node-role noise by randomly per-turbing 25%, 50%, and 75% of role assignments. As shown in Table ?? ,performance remains stable because node roles serve as auxiliary structural signals rather than hard constraints. 
+
+## K Hyperparameter sensitivity analysis 
+
+This section provides detailed sensitivity analysis for all hyperpa-rameters evaluated in our framework. We systematically examine the impact of different hyperparameter settings on model perfor-mance across multiple datasets. 
+
+## K.1 LLM sensitivity 
+
+As shown in Figure 4, LUCID maintains stable performance across three different LLMs, with overall performance differences gener-ally within 1.5% across four mainstream datasets, indicating good adaptability to different LLM architectures. On datasets with clearer structural patterns (Facebook and Amazon), DeepSeek-V4-Pro achieves slightly better results, while GPT-5.2 demonstrates superior per-formance on more challenging datasets (Livejournal and DBLP). However, DeepSeek-V4-Pro and Qwen3-Max exhibit limited con-text windows and output instability, often failing to generate fixed-format responses; on the Twitter dataset, these models frequently exceed context window limits under default settings. Therefore, we select GPT-5.2 as our default LLM for its superior stability and larger context capacity. On Twitter, GPT-5.2, Qwen3-Max, and DeepSeek-V4-Pro achieve F1 scores of 0.320, 0.308, and 0.320, respectively, as shown in Table ?? . These results are consistent with the sen-sitivity analysis and indicate stable cross-model behavior under bounded-context prompting. 
+
+## K.2 Tree depth sensitivity 
+
+Figure 5 shows that performance variations across different depth settings are marginal, indicating that the framework is robust to Interpretable Unsupervised Community Detection with LLM-Symbolized Structured Processes 
+
+Table 10: Refinement quality (%) averaged across five datasets. Upward and downward arrows indicate whether higher or lower values are preferred.                          
+
+> Rule Deletion Precision ↑Deletion Recall ↑True-member Damage ↓Purity Gain ↑Recall Drop ↓
+> LLM Rules 83.11 23.18 5.02 3.27 1.66 Modularity 99.80 0.06 0.00 0.01 0.00 Density 72.17 60.03 31.80 9.28 12.55
+
+Table 11: Runtime of 𝑘 -ego initialization.              
+
+> Dataset 𝑘 Compute 𝑘 -ego (s)
+> Facebook 10.05 Amazon 215.09 DBLP 10.77 LiveJournal 10.76 Twitter 10.88
+
+tree depth choices. We observe that deeper trees (11–13) capture more structural information and provide richer interpretability, while maintaining comparable performance. Therefore, we adopt the depth range of 11–13 as our default setting. Using a range rather than a fixed value allows the LLM flexibility in generating decision trees, as the LLM may deviate from exact specifications even when given fixed depth constraints; providing an acceptable range encourages more consistent adherence to the depth requirements. 
+
+## K.3 Merge sample size sensitivity 
+
+We analyze two sampling hyperparameters: the number of sampled centers and the top-𝑧 neighbors per center. As shown in Figure 5, 
+
+LUCID exhibits low sensitivity to both parameters. For the number of sampled centers, values of 3 and 4 yield comparable performance; we select 3 as the default as it represents a stable case that maintains prompt length within the LLM’s context window, effectively avoid-ing NA issues on Livejournal dataset. Similarly, using 3 neighbors per center provides stable performance across datasets, with mini-mal fluctuations. Increasing either parameter occasionally yields slight improvements but risks exceeding context limits. Therefore, we adopt 3 as the default value for both parameters to ensure stable performance while maintaining computational efficiency. 
+
+## K.4 Top-𝑏 neighbors for merge sensitivity 
+
+The parameter 𝑏 controls the number of candidate neighbors con-sidered for each center node during the merge process. We start with 𝑏 = 3, the smallest value with meaning merging decisions. As shown in Figure 5, performance remains relatively stable across different 𝑏 values, with 𝑏 = 3 achieving the best results on most datasets. As 𝑏 increases, performance gradually degrades, particu-larly on Livejournal and DBLP. This implies that considering too many neighbors may introduce noise or weakly related candidates. We attribute this optimal performance at 𝑏 = 3 to the alignment between decision tree construction and execution stages: during prompt construction, we sample top-3 neighbors for LLM decision tree generation, and the LLM learns rules specifically tailored for this three-neighbor structure. Therefore, executing merge decisions with 𝑏 = 3 matches the learned patterns and leads to superior per-formance. Based on these observations, we select 𝑏 = 3 as the default value. 
+
+## K.5 Refine sample size sensitivity 
+
+Figure 5 shows that performance is robust to changes in refine sam-ple size across different datasets. While Facebook and Livejournal show slight improvements with more samples, Amazon reaches its peak at size 5, suggesting that extra samples may introduce redundancy. Given the overall stable performance across different sample sizes, we select 10 as the default value. 
+
+## K.6 𝜖 (penalty coefficient) sensitivity 
+
+As shown in Figure 5, performance remains stable when 𝜖 varies within 0.1–0.25 across different datasets. Values of 𝜖 = 0.15 and 0 .2achieve consistently better or comparable results, suggesting that a moderate penalty on chain-like communities is beneficial. Given the overall stable performance across this range, we select 𝜖 = 0.2as the default value. For new graphs, we recommend 𝜖 = 0.2 by default, with smaller values for sparse graphs and larger values for dense or noisy graphs. 
+
+## L Prompt details 
+
+This section presents the prompts used in the Merge and Refine stages. Dataset descriptions and sampled communities are inserted into the corresponding placeholders at runtime. 
+
+Box 1: Merge-Stage Prompt         
+
+> You are an expert in graph community detection and structural reasoning. Given a dataset description and representative 𝑘 -ego samples, derive conservative and interpretable rules for merging neighboring 𝑘 -ego networks.
+> Input:
+> •Dataset description : global graph statistics and expected com-munity characteristics.
+> •𝑘 -ego samples : a center 𝑘 -ego network and the 𝑘 -ego networks of its direct neighbors, represented by node IDs, node labels, and either node degrees or adjacency lists.
+> Task:
+> •Analyze all samples jointly and construct a decision tree with 8– 12 rule nodes. For each center–neighbor pair, decide whether the neighbor network should be merged with the center network.
+> •Define each rule using interpretable structural and semantic ev-idence, such as node overlap, connectivity, density or compact-ness, size balance, label agreement, and cohesion after merging. Adapt thresholds to the dataset description and favor precision over recall.
+
+Aoting Zeng, Kai Wang, Jianwei Wang, Yuxiang Sun, Yizhang He, Wenjie Zhang 
+
+Table 12: Efficiency study (RQ2) across five datasets, measured by execution time(s). The values in parentheses represent the execution time of the four stages within our LUCID framework (local-view community initialization, multi-factor community merge, multi-grain community refinement, global-view community selection), including the time consumed by LLM API calls. Dataset BigClam ComE CmtyGAN Bespoke SEAL CLARE ProCom LUCID (Ours) 
+
+Facebook 2 611 1,620 4 10,440 135 10 201 (2/178/20/1) Amazon 2 62,760 23,460 207 4,080 118 206 133 (2/105/25/1) Livejournal 76 NA 271,080 67 14,580 784 145 1,275 (22/1,194/43/14) DBLP 34 NA NA 730 2,520 400 305 299 (18/242/35/4) Twitter 46 273,120 NA 538 2,280 1,920 212 1,317 (27/1,144/128/18) 
+
+Table 13: Token usage and cost across different datasets. Costs are estimated based on OpenAI GPT-5.2 standard pricing ($1.75/1M input tokens and $14.00/1M output tokens). 
+
+Dataset Merge Stage Tokens Refine Stage Tokens Est. Cost ($) 
+
+(Input / Output) (Input / Output) (Merge / Refine / Total) Amazon ∼12k / 5k ∼1k / 2k ∼0.09 / 0.03 / 0.12 Facebook ∼90k / 6k ∼1k / 2k ∼0.24 / 0.03 / 0.27 DBLP ∼85k / 5k ∼1k / 2k ∼0.22 / 0.03 / 0.25 LiveJournal ∼50k / 5k ∼1k / 2k ∼0.16 / 0.03 / 0.19 Twitter ∼120k / 6k ∼1k / 2k ∼0.29 / 0.03 / 0.32 
+
+Table 14: Stability under sampling-seed variance (3 seeds). 
+
+Dataset F1 (mean ±std) Jaccard (mean ±std) 
+
+Facebook 38 .52 ± 0.97 28 .50 ± 0.90 Amazon 91 .30 ± 1.45 86 .03 ± 2.34 LiveJournal 54 .34 ± 1.86 46 .80 ± 1.82 
+
+Table 15: Large-community analysis under small 𝑘 .
+
+Dataset GT( 𝑑 ≥ 3)/Total 𝑘 F1( 𝑑 ≥ 3) F1(full) 
+
+Twitter 14.20% 1 34.90 32.51 Facebook 21.54% 1 38.86 40.82 
+
+Table 16: Performance under different noise ratios with F1. Dataset 0% 25% 50% 75% 
+
+Facebook 40.95 40.05 41.06 40.51 Twitter 33.03 28.81 32.00 32.76 LiveJournal 56.57 50.04 47.55 52.11 
+
+• Each rule node must specify a unique ID, a concise metric name, executable Python-style condition code, and its true and false successors. The tree must terminate at either merge or 
+
+no_merge .
+
+• Convert the learned tree into an equivalent executable function that evaluates all neighboring 𝑘 -ego networks, reuses shared computations, and returns the union of the center network and all neighbors selected for merging. 
+
+Output: Return only one valid JSON object containing (1) the merge decision tree, (2) several representative decision-path traces, and (3) the executable merge function. The function must be con-cise, CPU-compatible, and directly executable for the specified input representation. 
+
+Output schema: 
+
+> {"merge_decision_tree": { "nodes": [ {"node_id": "root", "kind": "rule", "name": "<metric_name>", "code": "def rule_fn(meta): ...", "true_child": "<next_node>", "false_child": "<next_node_or_leaf>" }, {"node_id": "leaf_merge", "kind": "leaf", "action": "merge" }], "sample_decisions": [ {"sample_id": 0, "neighbor_id": "<node_id>", "merge": true, "path": ["root", "...", "leaf_merge"], "merged_nodes": ["<node_ids>"], "reason": "<decisive_factors>" }]}, "merge_execution_function": { "code_degree": "def merge_k_ego_networks(...): ...", "code_adjacency_list": "def merge_k_ego_networks(...): ..." }}Interpretable Unsupervised Community Detection with LLM-Symbolized Structured Processes
+
+Box 2: Refine-Stage Prompt 
+
+You are an expert in graph community detection. Candidate com-munities preserve most of the true community structure but may contain noisy boundary nodes. Given a dataset description and rep-resentative candidate communities, generate a scalable rule-based procedure for removing such nodes. 
+
+Input: 
+
+• Dataset description : global graph and community characteristics. 
+
+• Candidate-community samples : node IDs, either an induced ad-jacency list or node degrees, and optional node labels. These samples guide rule induction; the resulting procedure is applied to the full collection. 
+
+Task: 
+
+• Derive dataset-adaptive refinement criteria by jointly consider-ing structural signals (e.g., degree, leaves, and low-core nodes), topological support (e.g., weak triadic closure), and, when avail-able, label consistency with neighboring or majority nodes. 
+
+• Generate one batch refinement function that identifies nodes inconsistent with each candidate community while preserving coherent community cores. 
+
+• Ensure that the function handles either input representation, optional labels, missing fields, and empty communities. It must run on CPU using Python and NumPy with 𝑂 (𝑛 )–𝑂 (𝑛 log 𝑛 )
+
+complexity and scale to tens of thousands of communities. 
+
+Output: Return only the directly executable function 
+
+batch_refine_communities . Its return value must be amapping from each community_index to the corresponding 
+
+list_of_nodes_to_drop .
+
+## M Algorithm details 
+
+In this section, we show the detailed algorithm processes of merge stage and entire LUCID in Algorithms 1 and 2, respectively. 
+
+Algorithm 1 Merge Phase Algorithm 
+
+Input: Graph 𝐺 = (𝑉 , 𝐸 ), Input context I = {I 𝑃 , I𝐵 } (where I𝐵 
+
+contains top-𝑧 neighbors for each sample center), sampling parameters 𝑧 and 𝑏 
+
+Output: Candidate communities CM 
+
+> 1:
+
+⊲ Pre-compute ego networks for all nodes.  
+
+> 2:
+
+Pre-compute 𝑉 ego (𝑣 ), 𝐸 ego (𝑣 ) for all nodes 𝑣 ∈ 𝑉  
+
+> 3:
+
+⊲ Multi-factor Decision Tree Construction.  
+
+> 4:
+
+Generate decision tree T via LLM using context I 
+
+> 5:
+
+Initialize: CM ← { 𝑉 ego (𝑣 ) | 𝑣 ∈ 𝑉 }, A ← 𝑉  
+
+> 6:
+
+⊲ Dynamic Merge Orchestration.  
+
+> 7:
+
+Compute EgoDensity (𝑣 ) = 2|𝐸 ego (𝑣 ) | |𝑉 ego (𝑣 ) | ( | 𝑉 ego (𝑣 ) | − 1) for all 𝑣 ∈ A  
+
+> 8:
+
+Sort A by EgoDensity in descending order  
+
+> 9:
+
+for each center node 𝑣 ∈ A do  
+
+> 10:
+
+Compute Jaccard similarity 𝐽 (𝑣, 𝑢 ) = |𝑉 ego (𝑣 )∩ 𝑉 ego (𝑢 ) | |𝑉 ego (𝑣 )∪ 𝑉 ego (𝑢 ) | for all 𝑢 ∈ N ( 𝑣 ) 
+
+> 11:
+
+Select top-𝑏 neighbors N𝑏 (𝑣 ) from {𝑢 ∈ N ( 𝑣 ) | 𝑢 ∈ A} 
+
+ranked by 𝐽 (𝑣, 𝑢 ) 
+
+> 12:
+
+for each neighbor 𝑢 ∈ N 𝑏 (𝑣 ) do  
+
+> 13:
+
+Evaluate merge decision 𝑀 (𝑣, 𝑢 ) ← T  
+
+> 14:
+
+if 𝑀 (𝑣, 𝑢 ) = 1 then  
+
+> 15:
+
+Merge : C𝑣 ← C 𝑣 ∪ { 𝑢 } 
+
+> 16:
+
+Update available set: A ← A \ 𝑉 ego (𝑢 ) 
+
+> 17:
+
+Return CM
+
+Algorithm 1 details the merge stage process. The complete LUCID 
+
+framework algorithm is presented in Algorithm 2. Aoting Zeng, Kai Wang, Jianwei Wang, Yuxiang Sun, Yizhang He, Wenjie Zhang 
+
+Algorithm 2 The LUCID Framework 
+
+Input: Graph 𝐺 = (𝑉 , 𝐸 ), merge sample number 𝑠 𝑚 , sampling parameters 𝑧 and 𝑏 , tree depth range [𝑑 min , 𝑑 max ], refine sample size 𝑠 𝑟 , penalty coefficient 𝜖 , top-𝑁 selection parameter 
+
+Output: Final communities C 
+
+> 1:
+
+⊲ Stage 1: Local-view Community Initialization.  
+
+> 2:
+
+for each node 𝑢 ∈ 𝑉 do  
+
+> 3:
+
+Compute Jaccard similarity 𝐽 (𝑢, 𝑣 ) for all 𝑣 ∈ N ( 𝑢 ) 
+
+> 4:
+
+Extract feature vector x𝑢 from percentiles of 
+
+{𝐽 (𝑢, 𝑣 )} 𝑣 ∈ N ( 𝑢 ) 
+
+> 5:
+
+Assign role labels {𝑙 𝑢 }𝑢 ∈𝑉 via K-means clustering ( 𝐾 = 4) on 
+
+{x𝑢 }𝑢 ∈𝑉  
+
+> 6:
+
+Decompose graph into 𝑘 -ego networks: {𝐺 (𝑘 ) 
+
+> 𝑢
+
+}𝑢 ∈𝑉  
+
+> 7:
+
+⊲ Stage 2: Multi-factor Community Merge.  
+
+> 8:
+
+Prepare merge input context: select 𝑠 𝑚 representative center nodes {𝑣 (𝑖 ) 
+
+> 𝑐
+
+}𝑠 𝑚 
+
+> 𝑖 =1
+
+, compute Jaccard similarity 𝐽 (𝑣 (𝑖 ) 
+
+> 𝑐
+
+, 𝑢 ) for all 
+
+𝑢 ∈ N ( 𝑣 (𝑖 ) 
+
+> 𝑐
+
+), and select top-𝑧 neighbors N𝑧 (𝑣 (𝑖 ) 
+
+> 𝑐
+
+) for each center to form sample blocks {I (𝑖 ) 
+
+> 𝐵
+
+}𝑠 𝑚  
+
+> 𝑖 =1
+> 9:
+
+Construct input context I = {I 𝑃 , {I (𝑖 ) 
+
+> 𝐵
+
+}𝑠 𝑚  
+
+> 𝑖 =1
+
+} with tree depth range [𝑑 min , 𝑑 max ] 
+
+> 10:
+
+⊲ Call Merge Algorithm (Algorithm 1).  
+
+> 11:
+
+⊲ Input: 𝐺 , I, 𝑏 ; Output: CM 
+
+> 12:
+
+CM ← Merge( 𝐺 , I, 𝑏 ) 
+
+> 13:
+
+⊲ Stage 3: Multi-grain Community Refinement.  
+
+> 14:
+
+Sample 𝑠 𝑟 candidate communities {C 𝑗 }𝑠 𝑟  
+
+> 𝑗 =1
+
+from CM as exam-ples  
+
+> 15:
+
+Generate coarse-to-fine rule set R via LLM using context from sampled communities {C 𝑗 }𝑠 𝑟  
+
+> 𝑗 =1
+> 16:
+
+Initialize: CR ← ∅  
+
+> 17:
+
+for each candidate community C ∈ C M do  
+
+> 18:
+
+Initialize: C′ ← C  
+
+> 19:
+
+for each node 𝑤 ∈ C do  
+
+> 20:
+
+Apply rules in R progressively from coarse to fine  
+
+> 21:
+
+if node 𝑤 violates refinement rules then  
+
+> 22:
+
+Remove : C′ ← C ′ \ { 𝑤 } 
+
+> 23:
+
+if |C ′ | ≥ 2 then  
+
+> 24:
+
+Add : CR ← C R ∪ {C ′ } 
+
+> 25:
+
+⊲ Stage 4: Global-view Community Selection.  
+
+> 26:
+
+for each community C ∈ C R do  
+
+> 27:
+
+Compute 𝑅𝐷𝐶 (C) = 𝐶𝑢𝑡 ( C , ¯C) |𝐸 ( C) | − 𝜖 ( | C | − 1) 
+
+> 28:
+
+Sort CR by 𝑅𝐷𝐶 scores in ascending order  
+
+> 29:
+
+Select top-𝑁 communities: C ← {C 1, C2, . . . , C𝑁 } from sorted 
+
+CR 
+
+> 30:
+
+Return C
