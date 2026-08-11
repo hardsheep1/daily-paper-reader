@@ -6,26 +6,29 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-08-10
-- 运行时间：2026-08-10 20:56:31 UTC
+- 最新运行日期：2026-08-11
+- 运行时间：2026-08-11 21:31:09 UTC
 - 运行状态：成功
-- 本次总论文数：2
+- 本次总论文数：3
 - 精读区：1
-- 速读区：1
+- 速读区：2
 
 ### 今日简报（AI）
-今日精读1篇、速读1篇，共处理2篇论文，重点聚焦社区检测方向。最值得关注的是《Interpretable Unsupervised Community Detection with LLM-Symbolized Structured Processes》（9.0/10），其可解释的LLM符号化方法颇具启发性。建议普通读者优先查看该论文中如何用大模型实现无监督社区检测，无需深究速读的遥感分类细节。
-- 详情：[/202608/10/README](/202608/10/README)
+今日聚焦3篇聚类前沿，其中1篇精读获满分10分，2篇速读均6分。最值得关注的是《GRACE》提出的LLM语义度量空间，为混合数据聚类开辟新路径。建议普通读者优先精读GRACE，可快速掌握大模型驱动的聚类新范式。
+- 详情：[/202608/11/README](/202608/11/README)
 
 ### 精读区论文标签
-1. [Interpretable Unsupervised Community Detection with LLM-Symbolized Structured Processes](/202608/10/2608.06402v1-interpretable-unsupervised-community-detection-with-llm-symbolized-structured-processes)  
-   标签：评分：9.0/10、query:ac
-   evidence：利用大语言模型指导的无监督社区检测，即使用大语言模型进行聚类
+1. [GRACE: LLM-Grounded Semantic Metric Spaces for Scalable Mixed-Data Clustering](/202608/11/2608.07881v1-grace-llm-grounded-semantic-metric-spaces-for-scalable-mixed-data-clustering)  
+   标签：评分：10.0/10、query:ac
+   evidence：利用大语言模型构建语义度量空间进行混合数据聚类
 
 ### 速读区论文标签
-1. [Fermat Active Laplace Learning for Semi-Supervised Hyperspectral Image Classification](/202608/10/2608.02483v1-fermat-active-laplace-learning-for-semi-supervised-hyperspectral-image-classification)  
+1. [Learning Nearest-Neighbor Maps from Adaptive Queries](/202608/11/2608.07352v1-learning-nearest-neighbor-maps-from-adaptive-queries)  
    标签：评分：6.0/10、query:active-clust
-   evidence：提出不确定性驱动的主动查询策略并联合标签传播，可迁移到主动聚类场景。
+   evidence：通过自适应查询恢复隐藏点集，与主动聚类的查询策略相关
+2. [Learning Deep Modality-Shared Self-Expressiveness for Image Clustering with Textual Information](/202608/11/2608.08418v1-learning-deep-modality-shared-self-expressiveness-for-image-clustering-with-textual-information)  
+   标签：评分：6.0/10、query:ac
+   evidence：利用视觉语言模型文本信息进行图像聚类
 
 
 <div class="dpr-home-promo-card">

@@ -1,0 +1,815 @@
+Title: GRACE: LLM-Grounded Semantic Metric Spaces for Scalable Mixed-Data Clustering
+
+URL Source: https://arxiv.org/pdf/2608.07881v1
+
+Published Time: Tue, 11 Aug 2026 00:29:13 GMT
+
+Number of Pages: 13
+
+Markdown Content:
+# GRACE: LLM-Grounded Semantic Metric Spaces for Scalable Mixed-Data Clustering 
+
+Zihua Yang 1, Zhencheng Xie 1, Junyang Chen 2, Liang Xie 3, Yiqun Zhang 1, Mengke Li 4, Yang Lu 51Guangdong University of Technology , 2Tsinghua University 
+
+> 3
+
+Peking University , 4Shenzhen University , 5Xiamen University 
+
+{yangzihua1, xiezhencheng }@mails.gdut.edu.cn, chenjuny25@mails.tsinghua.edu.cn, liangxie@pku.edu.cn, yqzhang@gdut.edu.cn, mengkeli@szu.edu.cn, luyang@xmu.edu.cn 
+
+Abstract —Clustering mixed tabular data requires a unified metric space to bridge the inherent heterogeneity between con-tinuous numerical measurements and discrete categorical sym-bols. Traditionally, algorithms rely entirely on dataset-internal statistics to estimate categorical relationships, which confines the learned metric to empirical co-occurrences and ignores concep-tually obvious yet statistically unobserved affinities. Although LLMs offer external world knowledge, applying their text-centric reasoning to highly abstract tabular concepts presents significant challenges. Bridging this modality gap to construct a semantically complete metric typically requires embedding LLMs into iterative metric learning loops to dynamically optimize cross-modality representations. This incurs intractable computational over-head, forcing a compromise between semantic enrichment and scalability. Therefore, we propose GRACE, an LLM-grounded framework for scalable mixed-data clustering. GRACE shifts semantic acquisition to the attribute-value level via a multi-perspective LLM querying strategy, mapping heterogeneous values into knowledge-informed descriptions. Crucially, this one-shot grounding extracts general-purpose semantic representa-tions that embed heterogeneous attributes into a unified space, de-coupling expensive LLM invocation from iterative optimization. Furthermore, GRACE cross-validates these external semantics against dataset-internal statistical evidence to ensure alignment with the dataset-specific cluster structure. Ultimately, GRACE matches the scalability of conventional statistics-driven baselines while achieving superior clustering accuracy and conceptual interpretability over 11 competing methods. The source code is available at § GRACE. 
+
+Index Terms —Heterogeneous attribute data, scalable similarity measurement, large language models, semantic metric space, representation learning 
+
+I. I NTRODUCTION 
+
+Tabular data with heterogeneous numerical and categor-ical attributes is ubiquitous in healthcare, finance, and e-commerce [1], [2]. In these domains, clustering supports label-free organization of large-scale records for exploratory analy-sis, cohort discovery, and data-driven decision-making. Clus-tering such mixed data requires measuring pairwise similarity across all attributes [3], [4]. For numerical attributes, value differences provide a readily defined distance, but categorical attributes take values from finite unordered sets and carry no intrinsic distance [5]. Whether nurse is closer to doctor or to 
+
+engineer , for example, cannot be judged from their symbolic forms alone. Categorical distance is therefore a key component of mixed-data similarity without a natural definition, and how well it is constructed governs clustering performance [6], [7]. To estimate categorical distances, one line of research defines distance functions directly in the original feature space, using statistical signals of varying granularity, from attribute-wise entropy weighting and cross-attribute dependency mod-eling [8], [9] to higher-order value interaction graphs [10]. These methods recover relationships that symbolic forms alone cannot reveal, but only when such relationships are reflected by co-occurrence, dependency, or interaction patterns in the observed data. Representation learning, by contrast, maps heterogeneous attributes into a shared continuous space where standard distance metrics, such as Euclidean or cosine dis-tance, can be applied [11], [12], enabling unified treatment of numerical and categorical attributes. Such embeddings capture dependencies that feature-space metrics cannot express [13]. However, their learning signal remains derived from dataset-internal statistics. As a result, the learned representations mainly reorganize empirical regularities already present in the observed data [14]. Taken together, these methods share a common limitation: categorical relationships are inferred only from evidence internal to the dataset. This reliance on internal statistics is restrictive because categorical values often denote real-world concepts with readily available external semantics, and ignoring such prior knowledge can leave obvious concep-tual affinities invisible to the learned metric. This motivates the use of external semantic knowledge for mixed-data clustering. To meet the demand for semantic knowledge beyond the dataset, the recent emergence of LLMs offers a natural source, as these models intrinsically encode world knowledge about real-world concepts and their relationships [15], [16]. Much like humans infer the closeness between occupations from domain knowledge rather than from their bare names, grounding attribute values with LLM knowledge lifts isolated symbols into a semantic metric space where conceptual affini-ties become geometrically structured. Sparse symbol encoding derives distances from observed data patterns, leaving the induced metric space semantically incomplete. As a result, conceptual proximity that is evident from world knowledge may not be faithfully translated into geometric proximity. Once each value is expanded into descriptive text grounded in LLM world knowledge, the external semantics reshape the metric arXiv:2608.07881v1 [cs.AI] 8 Aug 2026 space, making domain-level associations explicit and better aligned with the underlying clustering structure. The remaining challenge is how to turn this external se-mantic prior into a clustering-ready metric space for mixed data. Existing LLM-based clustering mainly exploits LLMs in their native language space, where each instance is already a sentence or document and the model can directly reason about semantic similarity [17], [18]. This text-centric paradigm does not transfer naturally to mixed tabular data. Since categori-cal values are isolated but semantically condensed concepts, whereas numerical values are computable measurements with their own metric structure, both are expected to be represented within a unified similarity space. In principle, the semantic compression of categorical values makes LLM guidance es-pecially valuable for metric construction. However, repeatedly invoking an LLM during semantic grounding, neighborhood construction, or cluster refinement would introduce substantial latency and computational overhead, especially when pairwise or neighborhood structures scale with the data. Therefore, the central obstacle to applying LLM knowledge to mixed-data clustering is the efficiency bottleneck of obtaining semantic guidance at scale. This calls for a new paradigm that acquires LLM-grounded semantic representations without repeated in-vocation, while still aligning the resulting space with the dataset-specific clustering structure. Guided by this observation, this paper proposes GRACE (GR ounding Attributes for Clustering via External semantics), a framework that makes LLM world knowledge usable for mixed-data clustering without embedding the LLM in iterative metric learning or cluster refinement. The key idea is to shift semantic acquisition from the instance or pair level to the attribute-value level. Rather than repeatedly querying the LLM over samples, neighborhoods, or intermediate cluster states, GRACE grounds each possible attribute value once: categor-ical symbols are expanded into knowledge-grounded descrip-tions, and numerical domains are partitioned into domain-informed intervals described in the same semantic form. This value-level design decouples LLM knowledge acquisition from clustering-time computation and turns heterogeneous values into comparable semantic units for a unified metric space. External semantics alone, however, do not determine the cluster structure of a specific dataset. A semantic affinity may be conceptually plausible yet irrelevant to the empirical grouping induced by the observed records. GRACE therefore complements LLM-grounded semantics with dataset-internal statistical evidence. The semantic space provides external conceptual knowledge, and the statistical view calibrates it by identifying neighborhood relations supported by the orig-inal features. Relations confirmed by both views are selec-tively enhanced, yielding an affinity structure that preserves world-knowledge-aware similarity and remains aligned with dataset-specific clustering structure. Finally, eigengap-guided graph sparsification converts the refined affinity matrix into a spectrally well-conditioned graph for clustering. The main contributions of this paper are summarized below:  
+
+> •
+
+Bridging LLMs and mixed data clustering. This work is the first to bring external semantic knowledge into effective complementarity with dataset-internal statistical evidence for mixed-data clustering, constructing a unified world-knowledge-aware metric space that captures both conceptual affinities and distributional structures.  
+
+> •
+
+Aligning semantic knowledge with cluster structure. 
+
+GRACE resolves the misalignment between semantic proximity and cluster membership through dual-view neighborhood consistency, providing a principled mecha-nism for coupling external semantics with dataset-specific statistical evidence.  
+
+> •
+
+Decoupling LLM grounding from metric learning. 
+
+GRACE reformulates LLM-assisted mixed-data metric learning as a one-shot value-level grounding process followed by LLM-free metric adaptation. Since the LLM is invoked only over possible attribute values rather than instances, the semantic acquisition cost scales linearly with value cardinality, providing a low-token-overhead and scalable route to world-knowledge-aware clustering. II. R ELATED WORK 
+
+A. Distance Measures for Mixed Data 
+
+Categorical values carry no inherent distance, and the earli-est measures fill that void by counting matches, treating every mismatch as equally far. Such matching yields a workable metric, yet it flattens the unequal relatedness that real concepts exhibit. To recover that relatedness, a long line of work mines it from the data, advancing through co-occurrence context [19], entropy weighting, cross-attribute couplings [8], [9], learnable intra-attribute weights, higher-order value graphs [10], and dense embeddings of the same couplings [20], [21]. Each step reads the statistics more finely than the last, yet every one inherits the same blind spot, namely, any affinity that leaves no trace in the observed sample cannot be recovered. Mixed data, where numerical and categorical attributes coexist, raise a second problem, that of placing continu-ous measurements and discrete symbols on one scale. Early schemes settle it by hand, weighting a Euclidean term against a matching one (k-prototypes [22], Gower [23]), and later ones learn a shared space that absorbs both types (unified distance learning [11], quaternion graphs [12]). The joint metric grows more principled with each design, yet the cure for the scale problem leaves the earlier blind spot untouched, since meaning is still drawn entirely from within the dataset. Two values that never co-occur are therefore judged far apart even when domain knowledge would call them close, a verdict no statistical refinement can overturn. 
+
+B. LLM-Enhanced Clustering 
+
+LLMs encode world knowledge that statistical distances alone cannot recover, and recent clustering research draws on it. These efforts, however, remain confined to inherently textual input. ClusterLLM [17] elicits triplet judgments of relative proximity, few-shot prompting [18] converts limited 233 234 235 236 237 238 239 240 241 242 243 244 245 246 247 248 249 250 251 252 253 254 255 256 257 258 259 260 261 262 263 264 265 266 267 268 269 270 271 272 273 274 275 276 277 278 279 280 281 282 283 284 285 286 287 288 289 290  
+
+> Uncovering Semantic Metric Space via Large Language Models for Categorical-and-Numerical-Attributed Data Clustering KDD ’26, August 9–13, 2026, Jeju, Korea
+> 291 292 293 294 295 296 297 298 299 300 301 302 303 304 305 306 307 308 309 310 311 312 313 314 315 316 317 318 319 320 321 322 323 324 325 326 327 328 329 330 331 332 333 334 335 336 337 338 339 340 341 342 343 344 345 346 347 348
+
+Figure 2: Overview of the GRACE framework. Given raw tabular data with categorical and numerical attributes, GRACE generates natural-language descriptions for each attribute value through LLM-based prompting. The generated descriptions are fed into a transformer encoder 
+
+𝑓 𝜃 to obtain semantic representations e𝑖 ∈ E . To improve the reliability of semantic affinity, a statistical encoder produces representations 
+
+h𝑖 ∈ H from the raw attribute values for validating semantic neighbors. To jointly exploit both spaces, a neighborhood consistency mechanism computes Γ𝑖 𝑗 = NN sem  
+
+> 𝑖 𝑗
+
+· NN stat  
+
+> 𝑖 𝑗
+
+, refining the semantic affinity matrix. Based on the refined affinity, eigengap-graph sparsification determines the optimal sparsity for spectral clustering. 
+
+3 Proposed Method 
+
+Fig. 2 illustrates the overall pipeline of GRACE, which proceeds through problem formulation (§3.1), knowledge-grounded attribute description (§3.2), dual-view neighborhood consistency (§3.3), and model training with spectral clustering (§3.4). 
+
+3.1 Problem Formulation 
+
+Given a dataset D = {𝑥 1, 𝑥 2, . . . , 𝑥 𝑛 } with 𝑛 samples, each sam-ple 𝑥 𝑖 = [𝑥 1 
+
+> 𝑖
+
+, 𝑥 2 
+
+> 𝑖
+
+, . . . , 𝑥 𝑚 𝑖 ]⊤ is described by 𝑚 attributes A =
+
+{𝐴 1, 𝐴 2, . . . , 𝐴 𝑚 }, where 𝑥 𝑗 𝑖 denotes the value of sample 𝑥 𝑖 on at-tribute 𝐴 𝑗 . These attributes are partitioned into a categorical subset 
+
+A𝑐 and a numerical subset A𝑛 , satisfying A = A𝑐 ∪ A 𝑛 with 
+
+A𝑐 ∩ A 𝑛 = ∅. Specifically, a categorical attribute 𝐴 𝑗 ∈ A 𝑐 takes val-ues from a finite unordered set O𝑐 𝑗 = {𝑜 𝑐 
+
+> 1
+
+, 𝑜 𝑐 
+
+> 2
+
+, . . . , 𝑜 𝑐 𝑉 𝑗 } of cardinality 
+
+𝑉 𝑗 , where values lack intrinsic ordering, and a numerical attribute 
+
+𝐴 𝑗 ∈ A 𝑛 takes values from a continuous interval O𝑛 𝑗 = [ℓ𝑗 , 𝑢 𝑗 ] ⊆ R,with observed values {𝑜 𝑛  
+
+> 1
+
+, 𝑜 𝑛  
+
+> 2
+
+, . . . , 𝑜 𝑛 𝑁 𝑗 }.Clustering such heterogeneous data requires measuring pairwise similarity across both attribute types. The goal is to partition the 
+
+𝑛 samples into 𝐾 disjoint groups C = {𝐶 1, 𝐶 2, . . . , 𝐶 𝐾 } such that similar samples fall into the same group. To achieve the partition, GRACE adopts spectral clustering, which operates on a similarity graph G = (D , S) in which the edge weight 𝑆 𝑖 𝑗 quantifies the affinity between 𝑥 𝑖 and 𝑥 𝑗 . Then, an indicator matrix Y ∈ R𝑛 ×𝐾 
+
+encodes the group assignment and is obtained by minimizing the normalized graph cut: min  
+
+> Y
+
+Tr (Y⊤LY ) s.t. Y⊤DY = I, (1) where L = I − D−1/2SD −1/2 is the normalized Laplacian and D de-notes the diagonal degree matrix with entries D𝑖𝑖 = Í𝑗 𝑆 𝑖 𝑗 . The standard spectral relaxation solves Eq. (1) by extracting the 𝐾 small-est eigenvectors of L and applying 𝑘 -means to the rows of the resulting Y. Since L is constructed entirely from S, the quality of the 
+
+Figure 3: The four-perspective knowledge elicitation template ap-plied to the attribute value has hair from the Zoo dataset. Each per-spective contributes a distinct and complementary semantic facet to the generated description. 
+
+final partition depends on how S captures the true grouping struc-ture. For categorical attributes whose values lack inherent metric structure, defining meaningful entries in S is the core challenge. GRACE addresses this by grounding each attribute value in LLM world knowledge to derive S.
+
+3.2 Knowledge-Grounded Attribute Description 
+
+To unify heterogeneous attribute types into a common representa-tion, GRACE converts every attribute value into a natural-language description generated by an LLM. The description quality depends on prompt design. A naive prompt such as “ Describe the value has 4 legs ” produces nearly identical embeddings for semantically dis-tinct values, because it fails to elicit functional associations (e.g., four-legged animals are typically mammals, six-legged ones are insects) or contrasts with alternatives. Motivated by this observation, GRACE adopts a four-perspective knowledge elicitation template (Figure 3). Within a single query, the template instructs the LLM to produce a structured description 
+
+> 3
+
+Fig. 1: Overview of the GRACE framework. Given raw tabular data with categorical and numerical attributes, GRACE generates natural-language descriptions for each attribute value through LLM-based prompting. The generated descriptions are fed into a transformer encoder 
+
+fθ to obtain semantic representations ei ∈ E . To improve the reliability of semantic affinity, a statistical encoder produces representations 
+
+hi ∈ H from the raw attribute values for validating semantic neighbors. To jointly exploit both spaces, a neighborhood consistency mechanism computes Γij = NN sem  
+
+> ij
+
+· NN stat  
+
+> ij
+
+, refining the semantic affinity matrix. Based on the refined affinity, eigengap-graph sparsification determines the optimal sparsity for spectral clustering. 
+
+supervision into pseudo-labels or pairwise constraints, loop-based refinement [24] corrects assignments from model feed-back, and contrastive formulations such as SCCL [25] and TAC [26] incorporate the language signal into the clustering objective. Tabular data, by contrast, offers no such linguistic surface, as its categorical entries are discrete symbols and its numerical entries scalar quantities. A knowledge-grounded distance over such heterogeneous attributes therefore remains an open question. Applying language models to tabular data is itself well studied, though existing work targets prediction or generation instead of a clustering metric. One line serializes each record into a sentence, as in TabLLM [27] for classification and GReaT [28] for generation, and another recasts column seman-tics as features for a downstream learner, as in CAAFE [29] and FeatLLM [30]. Both lines serve supervised objectives and therefore provide no unsupervised distance over mixed attributes. The effort closest to such a distance is BREVE [31], which grounds categorical values in model knowledge to derive a similarity measure. Its fusion is nonetheless static, embedding raw value identities into a shared space under a fixed, non-trainable weight, and cannot separate genuine from spurious semantic affinities. It is moreover restricted to categorical attributes, excluding numerical ones. III. P ROPOSED METHOD 
+
+GRACE follows a four-stage pipeline consisting of prob-lem formulation, knowledge-grounded attribute description, dual-view neighborhood consistency, and model training with spectral clustering, as illustrated in Fig. 1. For clarity, the frequently used symbols are summarized in Table I. The complexity of both GRACE and its scalable variant GRACE-A is analyzed in the complexity analysis subsection. 
+
+TABLE I: Frequently used symbols and notations. 
+
+Symbol Description 
+
+D, n Dataset and the number of samples 
+
+xi, A, m Sample, attribute set, and attribute count 
+
+Ac, An Categorical and numerical attribute subsets 
+
+K, C Number of clusters and partition 
+
+t(j, o ) LLM-generated description for value o on attribute Aj
+
+fθ , de Sentence encoder and embedding dimension-ality 
+
+e(j, o ) Attribute-level embedding for value o on Aj
+
+zi, hi Semantic and statistical representations of sample xi
+
+Ssem , Sstat Semantic and statistical similarity matrices 
+
+λ Natural neighbor search radius 
+
+NN sem , NN stat Natural neighbor graphs for two views 
+
+Γ, τc Consistency matrix and adaptive threshold 
+
+ρil , αil Refined affinity and enhancement coefficient 
+
+θ∗, Aθ∗ Optimal sparsification threshold and adja-cency matrix 
+
+REQ Relative Eigengap Quality 
+
+A. Problem Formulation 
+
+Given a dataset D = {x1, x 2, . . . , x n} with n samples, each sample xi = [ x1 
+
+> i
+
+, x 2 
+
+> i
+
+, . . . , x mi ]⊤ is described by m attributes 
+
+A = {A1, A 2, . . . , A m}, where xji denotes the value of sample 
+
+xi on attribute Aj . These attributes are partitioned into a categorical subset Ac and a numerical subset An, satisfying 
+
+A = Ac ∪ A n with Ac ∩ A n = ∅. Specifically, a categorical attribute Aj ∈ A c takes values from a finite unordered set 
+
+Ocj = {oc
+
+> 1
+
+, o c
+
+> 2
+
+, . . . , o cVj } of cardinality Vj , where values lack intrinsic ordering, and a numerical attribute Aj ∈ A n takes values from a continuous interval Onj = [ ℓj , u j ] ⊆ R, with observed values {on 
+
+> 1
+
+, o n 
+
+> 2
+
+, . . . , o nNj }.Clustering such heterogeneous data requires measuring Fig. 2: The 4P prompt applied to two representative attributes from the Adult dataset: the categorical value Exec-managerial of             
+
+> occupation and the numerical interval [30 ,45] of age . For both attribute types, the prompt elicits four complementary semantic perspectives, producing knowledge-grounded descriptions in a unified textual format.
+
+pairwise similarity across both attribute types. The goal is to partition the n samples into K disjoint groups C =
+
+{C1, C 2, . . . , C K } such that similar samples fall into the same group. To achieve the partition, GRACE adopts spectral clustering, which operates on a similarity graph G = ( D, S)
+
+in which the edge weight Sij quantifies the affinity between 
+
+xi and xj . Then, an indicator matrix Y ∈ Rn×K encodes the group assignment and is obtained by minimizing the normalized graph cut: 
+
+min  
+
+> Y
+
+Tr( Y⊤LY ) s.t. Y⊤DY = I, (1) where L = I − D−1/2SD −1/2 is the normalized Laplacian and D denotes the diagonal degree matrix with entries Dii =P 
+
+> j
+
+Sij . The standard spectral relaxation solves Eq. (1) by extracting the K smallest eigenvectors of L and applying k-means to the rows of the resulting Y. Since L is constructed entirely from S, the quality of the final partition depends on how S captures the true grouping structure. For categorical attributes whose values lack inherent metric structure, defin-ing meaningful entries in S is the core challenge. GRACE addresses this by grounding each attribute value in LLM world knowledge to derive semantically grounded S.
+
+B. LLM-Grounded Attribute Description 
+
+To unify heterogeneous attribute types into a common repre-sentation, GRACE converts every attribute value into a natural-language description generated by an LLM. The description quality depends on prompt design. A naive prompt such as “Describe the value has 4 legs ” produces nearly identical embeddings for semantically distinct values, because it fails to elicit functional associations (e.g., four-legged animals are typically mammals, six-legged ones are insects) or contrasts with alternatives. Motivated by this, GRACE adopts a four-perspective knowl-edge elicitation template, denoted 4P (Fig. 2). Within a single query, the template instructs the LLM to produce a structured description for each categorical value o ∈ O cj :
+
+t(j, o ) = LLM 4P (Aj , o ), (2) where LLM 4P denotes the language model queried under the four-perspective template, Aj is the attribute name, and o is the value being described. The generated description t(j, o ) con-sists of four complementary components, denoted tCORE , tIND ,
+
+tPAT , and tDIS , corresponding to the definitional, functional, contextual, and discriminative perspectives respectively. The first two capture the internal semantics of a value, i.e., what it means and what it implies, and the latter two encode external relationships, i.e., where it co-occurs and how it contrasts with alternatives. The four components are concatenated into a single multi-faceted textual passage that provides rich semantic grounding for downstream encoding. The 4P template additionally includes a domain-adaptive role assignment and quality constraints that require concrete, jargon-free language with domain-specific examples. The four-perspective template applies directly to categorical attributes, where the set of possible values is finite, and each value receives its own description. For numerical attributes, the set of observed values is typically continuous, making per-value descriptions impractical. GRACE delegates discretiza-tion to the LLM, providing the attribute name, observed range, and domain context. The LLM determines both the number of intervals Qj and their boundaries from domain knowledge, e.g., clinical reference ranges for medical indicators. Formally, the discretization defines a mapping: 
+
+ψj : Onj → I j , Ij = {I1, I 2, . . . , I Qj }, (3) where ψj assigns each observed value to one of Qj intervals whose union covers the entire observed range [ℓj , u j ]. As a concrete example, bilirubin is partitioned into three intervals, i.e., normal (below 1.2 mg/dL), elevated (1.2 to 3.0 mg/dL), and severe (above 3.0 mg/dL), corresponding to the standard diagnostic thresholds in hepatology. Each interval Ik is then described through the same four-perspective query as in Eq. (2), namely t(j, I k) = LLM 4P (Aj , I k), giving categor-ical values and numerical intervals one common description format. All downstream modules therefore operate on a single textual input space, regardless of the original attribute type. Given these textual descriptions, GRACE encodes each 
+
+t(j, o ) into a de-dimensional dense embedding e(j, o ) ∈ Rde
+
+via a transformer encoder fθ , which can be expressed as: 
+
+e(j, o ) = fθ
+
+ t(j, o ), (4) To obtain a sample-level representation zi ∈ Rm·de from the 
+
+m attribute-level embeddings, GRACE concatenates them into a single vector: 
+
+zi = e(1 , o 1 
+
+> i
+
+) ⊕ e(2 , o 2 
+
+> i
+
+) ⊕ · · · ⊕ e(m, o mi ), (5) with oji denoting the (possibly discretized) value of sample xi
+
+on attribute Aj . The pairwise semantic similarity between two samples is then computed as: 
+
+Ssem  
+
+> il
+
+= z⊤ 
+
+> i
+
+zl
+
+∥zi∥ ∥ zl∥ . (6) 
+
+Remark 1. Robustness to Keyword Alignment. GRACE assigns embeddings at the attribute-value level (Eq. (4) ). Thus, samples sharing the same value o on attribute Aj receive an identical vector e(j, o ) without requiring keyword align-ment across different descriptions. Because concatenation al-locates disjoint dimensions to each attribute, the inner product 
+
+z⊤ 
+
+> i
+
+zl decomposes into per-attribute terms. For every attribute on which xi and xl agree, the corresponding term equals 
+
+∥e(j, o )∥2, a constant determined solely by value identity. Misaligned keywords can only affect the terms for attributes on which the two samples differ. Within-cluster sample pairs typically share more attribute values than between-cluster pairs, making their similarity estimates rely more heavily on value-identity anchors than on potentially misaligned cross-value terms. Keyword misalignment therefore has a bounded influence on the semantic affinity, which explains the robust-ness of GRACE at the clustering level. C. Dual-View Neighborhood Consistency 
+
+The semantic similarity matrix Ssem quantifies pairwise conceptual proximity among samples, but in an unsupervised setting, no external labels are available to assess whether specific estimates are accurate. A principled remedy is to cross-check against the raw tabular features, which encode sample relationships through observed co-occurrence patterns. GRACE implements this cross-check through a statistical view that operates on the original feature space. Because the statistical view serves a purely confirmatory role, an expressive encoding such as entity embeddings [32] or learned tabular representations [33] would introduce trainable parameters that require labeled supervision or auxiliary objectives to tune, conflicting with the unsupervised setting. GRACE therefore adopts a parameter-free encoding. For each categorical at-tribute Aj ∈ A c, every value o ∈ O cj is mapped to a standard basis vector bo ∈ RVj , and for each numerical attribute 
+
+Aj ∈ A n, observed values are normalized to [0 , 1] via min-max scaling. Concatenating these attribute-level representa-tions yields a feature vector hi ∈ Rdh with dimensionality 
+
+dh = P  
+
+> Aj∈A c
+
+Vj + |A n|. The resulting pairwise statistical similarity between samples xi and xl, denoted by Sstat  
+
+> il
+
+, is then defined as: 
+
+Sstat  
+
+> il
+
+= h⊤ 
+
+> i
+
+hl
+
+∥hi∥ ∥ hl∥ . (7) Given Ssem and Sstat , the next step is to identify neighbors under each view. Comparing raw values across views is prob-lematic because the two matrices operate on different scales. Comparing local neighborhood structures is more principled, since clustering depends on relative proximity, not absolute magnitude. To this end, GRACE extracts neighborhood struc-tures using Natural Neighbor (NaN) graphs [34], which impose a mutual recognition constraint. Specifically, a sample xl
+
+qualifies as a natural neighbor of xi only if xi also appears among the nearest neighbors of xl:
+
+NN il (S) = Il ∈ N λ(i; S) · Ii ∈ N λ(l; S), (8) in which S is a generic similarity matrix standing for either view, and Nλ(i; S) denotes the λ-nearest neighbors of xi under 
+
+S. The mutual constraint is well-suited to the verification task, because one-directional affinities, i.e., cases where xi
+
+considers xl a neighbor but not vice versa, often arise in regions of varying density and tend to be unreliable indicators of cluster membership. By requiring reciprocation, the NaN graph retains only the most structurally stable relationships in each view, and the neighborhood size λ is determined automatically by iterating from λ = 1 until every sample possesses at least one natural neighbor. Instantiating Eq. (8) with the semantic matrix Ssem =[Ssem  
+
+> il
+
+] from Eq. (6) and the statistical matrix Sstat = [ Sstat  
+
+> il
+
+]
+
+from Eq. (7) produces the two view-specific neighborhood matrices: 
+
+NN sem  
+
+> il
+
+= NN il (Ssem ), NN stat  
+
+> il
+
+= NN il (Sstat ). (9) Their agreement defines the neighborhood consistency score 
+
+of a pair (xi, x l):
+
+Γil = NN sem  
+
+> il
+
+· NN stat  
+
+> il
+
+. (10) A value of Γil = 1 thus marks a pair that the semantic and statistical views both recognize as neighbors. Because the two views are constructed from independent information sources, a pair confirmed by both carries stronger evidence, consistent with the co-training principle [35] that agreement between conditionally independent views yields reduced false-positive rates. The reduced false-positive rate noted above is what makes a confirmed pair worth rewarding. A proposition in the supplementary material formalizes the argument, proving that a dual-view-confirmed pair ( Γil = 1 ) carries a strictly higher posterior probability of being a true within-cluster pair than a pair supported by the semantic view alone. GRACE there-fore rewards dual-view confirmation by scaling the semantic affinity: 
+
+ρil = Ssem  
+
+> il
+
+· αil , (11) whose entries form the refined affinity matrix W with Wil =
+
+ρil , through the coefficient: 
+
+αil = 1 + Γ il , Γil ∈ { 0, 1}. (12) The multiplicative and proportional form is deliberate. An unconfirmed pair (Γil = 0) keeps its original semantic value, which leaves the knowledge-grounded signal undis-torted, whereas a confirmed pair is boosted in proportion to its existing semantic strength, letting statistical agreement reinforce the semantic evidence instead of overriding it. 
+
+Remark 2. Asymmetric View Design. GRACE assigns asym-metric roles to the two views. The semantic view supplies the primary affinity structure enriched by external knowledge, and the statistical view provides dataset-specific calibration from the original features. Instead of averaging the two signals, GRACE uses statistical agreement as selective evidence to enhance semantic affinity, preserving the external-knowledge signal and aligning it with the observed clustering structure. D. Model Training and Spectral Clustering 
+
+The semantic affinity Ssem  
+
+> il
+
+in Eq. (6) is the cosine similarity between the sample vectors zi and zl, and Eq. (5) builds each 
+
+zi from the per-attribute embeddings e(j, o ) = fθ (t(j, o )) of Eq. (4). The encoder fθ therefore governs the entire metric, and adapting it to the grounded descriptions is what reshapes 
+
+Ssem . Such adaptation calls for a contrastive objective, one that keeps descriptions of the same value close and drives those of different values apart under the cosine geometry of Eq. (6). Concretely, GRACE fine-tunes fθ with an InfoNCE loss [36]. The objective is well suited to attribute descriptions since it preserves the semantic identity of each grounded value and separates alternative values within the same attribute context. For an anchor description t(j, o ), the positive example 
+
+t+ is obtained by encoding the same text with independently sampled dropout masks, following [37], and the remaining descriptions in the mini-batch B serve as negatives. The per-anchor loss is: 
+
+L(t) = − log exp  sim( fθ (t), f θ (t+)) /τ e
+
+P 
+
+> t′∈B
+
+exp  sim( fθ (t), f θ (t′)) /τ e
+
+ , (13) in which sim( ·, ·) denotes cosine similarity and τe is a tem-perature hyperparameter. Descriptions from different values of the same attribute naturally act as hard negatives, because they share domain context yet refer to distinct categorical states. The full encoder objective averages over all anchors: 
+
+Lenc = 1
+
+|B| 
+
+X
+
+> t∈B
+
+L(t). (14) The encoder is optimized with AdamW [38] for E epochs using a learning rate of η and a batch size |B| .After training, the refined affinity matrix W from Eq. (11) retains pairwise affinities for all sample pairs, including weak relations with limited contribution to the underlying cluster structure. Applying spectral clustering directly to such a fully connected affinity graph may propagate low-confidence edges into the spectral embedding, weakening cluster separation. GRACE therefore converts W into a sparse binary graph by thresholding at a value θ, producing the adjacency matrix 
+
+(Aθ )il = I[ρil > θ]. The threshold θ controls the trade-off between edge preservation and graph sparsity. A small 
+
+θ tends to retain unreliable weak affinities, whereas a large 
+
+Algorithm 1: GRACE: GRounding Attributes for Cluster-ing via External Semantics                                                                                                          
+
+> Input: Dataset Dwith attributes A, cluster count K,threshold candidates Θ
+> Output: Cluster assignments C={C1, . . . , C K}
+> ▷Knowledge-Grounded Attribute Description
+> 1foreach Aj∈ A do
+> 2if Aj∈ A cthen
+> 3Generate description t(j, o )for each o∈ O cjvia LLM;
+> 4else
+> 5Discretize into Ijand generate descriptions via LLM;
+> 6Fine-tune encoder fθwith InfoNCE loss ; ▷Eq. (14)
+> 7zi←Lmj=1 fθ(t(j, x ji)) for each xi;▷Eq. (5)
+> 8Compute semantic similarity Ssem ;▷Eq. (6)
+> ▷Dual-View Neighborhood Consistency
+> 9Encode statistical features {hi}and compute Sstat ;
+> ▷Eq. (7)
+> 10 Build natural neighbor graphs NN sem ,NN stat ;▷Eq. (8)
+> 11 Γ←NN sem ⊙NN stat ;▷Eq. (10)
+> 12 Refine affinity ρil via hierarchical enhancement ; ▷Eq. (11)
+> ▷Graph Sparsification and Spectral Clustering
+> 13 foreach θ∈Θdo
+> 14 Construct Aθand evaluate REQ( Lθ);▷Eq. (15)
+> 15 Select θ∗maximizing REQ among thresholds with minimal fragmentation;
+> 16 return Normalized spectral clustering on Aθ∗
+
+θ may remove structurally necessary edges and fragment the graph into isolated components. To avoid threshold-induced fragmentation, GRACE first identifies the candidate set Θ∗ of thresholds that achieve minimal graph fragmentation. Follow-ing the spectral-theoretic analysis of [39], GRACE then selects from Θ∗ the value θ∗ that maximizes the Relative Eigengap Quality (REQ) of the normalized Laplacian Lθ of Aθ :
+
+θ∗ = arg max 
+
+> θ∈Θ∗
+
+λK+1 (Lθ ) − ¯λK (Lθ )¯λK (Lθ ) + ϵ , (15) where λK+1 is the (K +1) -th smallest eigenvalue of Lθ , ¯λK
+
+denotes the mean of the first K eigenvalues, and ϵ = 10 −6.A larger REQ indicates a wider spectral gap, corresponding to better-separated clusters. The K smallest eigenvectors of 
+
+Lθ∗ are then extracted and row-normalized, and k-means is applied to the rows to produce C = {C1, . . . , C K }, following the normalized spectral clustering algorithm [40]. 
+
+E. Complexity Analysis 
+
+The complete GRACE procedure is summarized in Algo-rithm 1. Because the exact formulation forms a dense affinity over every sample pair and then performs spectral clustering on it, the eigendecomposition of the n×n Laplacian drives the cost to O(n3), which becomes prohibitive at the scale of large tables. To retain the same affinity design at a far lower cost, we further develop an approximation variant, denoted GRACE-A, where “A” stands for Approximation. GRACE-A replaces the dense pairwise graph with a sample-to-anchor bipartite graph over p ≪ n anchors. GRACE-A rests on an anchor-based approximation of the affinity structure. A set of p anchors is first selected by farthest-point sampling, which spreads them across the embedding space and keeps them representative of the latent clusters. Each sample is then linked only to these anchors through a sample-to-anchor affinity matrix Z ∈ Rn×p, replacing the full n × n graph. A truncated factorization of Z recovers the leading spectral components of the implied global graph in the Nystr¨ om sense, after which k-means on the recovered em-bedding yields the partition. The construction thereby involves each sample only a constant number of times once p is fixed, which lowers the order from cubic to linear in n.The following theorems establish the time and space com-plexity of GRACE and GRACE-A. Throughout, n, m, K,and p count the samples, attributes, clusters, and anchors, 
+
+de denotes the embedding dimension, and V the number of distinct attribute values, following Table I. 
+
+Theorem 1. Standard GRACE runs in O(n3 + n2md e) time. Proof. The procedure divides into value grounding, affinity construction, and spectral clustering. Grounding the V distinct attribute values, namely description generation, encoder fine-tuning, and value-level embedding, scales with V instead of n and costs O(V d e). Assembling the n sample vectors and evaluating the dense semantic affinity over all n2 pairs then takes O(n2md e), since every entry is an inner product of two (md e)-dimensional vectors. The dual-view refinement manipulates n×n matrices at O(n2), a term the spectral stage subsumes. Eigendecomposing the normalized Laplacian Lθ
+
+across a fixed budget of candidate thresholds requires O(n3),whereas the ensuing k-means adds only O(tnK 2). Given 
+
+n ≫ K, the eigendecomposition and the affinity construction govern the total, which gives O(n3 + n2md e).
+
+Theorem 2. Standard GRACE requires O(n2) space. Proof. Storage is dictated by the largest object the pipeline keeps in memory. The dense affinity matrix occupies O(n2)
+
+and dominates every other term, since the input table D ∈ 
+
+Rn×m, the value embeddings, and the spectral embedding 
+
+Y ∈ Rn×K need only O(nm ), O(nmd e), and O(nK )
+
+respectively, each below O(n2) whenever n exceeds md e. The space complexity is therefore O(n2).GRACE-A lowers both bounds to linear order, as the next two theorems show. 
+
+Theorem 3. GRACE-A runs in O np (md e + p) time, linear in n for fixed p.Proof. The anchor approximation eliminates the cubic and quadratic terms of Theorem 1. Farthest-point selection of the 
+
+p anchors and construction of the sample-to-anchor affinity 
+
+Z ∈ Rn×p, which connects each sample to the anchors alone, together cost O(npmd e) in place of the O(n2md e) dense                                                                                                                                                                        
+
+> TABLE II: Statistics of the twenty-two datasets. dc,dn, and n
+> denote the numbers of categorical attributes, numerical attributes, and samples, respectively. Vis the total number of distinct values across all categorical attributes. Kequals the true number of clusters. No. Dataset Abbr. (dc, d n)nVK
+> 1Lenses LE (4 ,0) 24 932Caesarian Section CS (3 ,2) 80 823Zoo ZO (16 ,0) 101 36 74Autism Adolescent AA (18 ,2) 104 76 25Lymphography LY (18 ,0) 148 60 46Teaching Assistant TA (4 ,1) 151 55 37Amphibians AM (12 ,3) 189 71 28Soybean (Large) SO (35 ,0) 266 100 15 9SPECT Heart SH (22 ,0) 267 44 210 Breast Cancer BC (9 ,0) 286 51 211 Heart Disease HD (8 ,5) 303 23 512 Primary Tumor PT (17 ,0) 339 37 22 13 Dermatology DE (33 ,1) 366 130 614 Chronic Kidney Disease CK (13 ,11) 400 37 215 Congressional Voting CV (16 ,0) 435 32 216 Statlog Australian SA (8 ,6) 690 37 217 Car Evaluation CA (6 ,0) 1,728 21 418 Auction Verification AV (7 ,1) 2,043 54 219 Obesity Levels OL (8 ,8) 2,111 23 720 Splice SP (60 ,0) 3,190 240 321 Mushroom MU (21 ,0) 8,124 115 222 Adult AD (8 ,6) 48,842 99 2
+
+affinity. A truncated factorization replaces the full eigende-composition at O(np 2), and the closing k-means contributes 
+
+O(tnK 2), both staying within the same order for fixed p.Collecting the terms yields O np (md e + p), which grows linearly in n because p stays bounded independently of n.
+
+Theorem 4. GRACE-A requires O n(md e + p) space. Proof. The same anchoring contracts the footprint. The sample-to-anchor affinity Z holds O(np ) instead of the O(n2)
+
+dense matrix of Theorem 2, and the value embeddings together with the input table account for the remaining O(nmd e).Because no retained structure scales with n2, the dominant term is O n(md e + p), again linear in n.Taken together, the four bounds capture the trade-off be-tween the exact model and its scalable variant. Standard GRACE computes the knowledge-grounded affinity exactly, yet its cubic time and quadratic space confine it to datasets of moderate size. GRACE-A lifts both restrictions at once, reducing the time to O np (md e + p) and the space to 
+
+O n(md e+p), each linear in n for a fixed anchor budget. The anchor design thereby carries the semantic metric of GRACE to corpora whose scale puts a dense n×n affinity out of reach, where storing it alone would exhaust commodity memory. As the experiments demonstrate the accuracy traded for the linear cost remains marginal, leaving GRACE-A with both the world-knowledge benefit of GRACE and the scalability to cluster tables far beyond the reach of dense spectral methods. TABLE III: Clustering results on 11 categorical datasets and two reconstructed datasets (in dark red) for probing LLM label leakage, reported as mean ± standard deviation. Best and second-best results are highlighted (GRACE-A included). AR is the average rank over all 13 datasets; GRACE and GRACE-A are each ranked against the competitors only, not against each other. † indicates statistical significance (p < 0.05 ) against GRACE via the Wilcoxon signed-rank test. 
+
+Metric Dataset KMO ADC GUDMM-S MCDC COForest AMPHM SigDT HARR DiSC OCL GRACE GRACE-A            
+
+> [DMKD’98] [TNNLS’23] [PR’23] [ICDCS’24] [ECAI’24] [CAIS’25] [Inf.Sci.’25] [ESWA’25] [AAAI’26] [SIGMOD’26] [Ours] [Approx.]
+> ARI
+
+LE 0.043 ±.06 0.061 ±.10 0.130 ±.09 -0.076 ±.00 0.119 ±.11 -0.013 ±.00 -0.043 ±.00 0.125 ±.16 0.065 ±.18 0.137 ±.10 0.163 ±.17 0.213 ±.10 
+
+ZO 0.584 ±.10 0.494 ±.00 0.602 ±.04 0.602 ±.00 0.639 ±.13 0.379 ±.00 0.696 ±.00 0.778 ±.13 0.644 ±.25 0.721 ±.12 0.827 ±.00 0.660 ±.00 
+
+LY 0.011 ±.02 0.112 ±.04 0.117 ±.03 -0.010 ±.00 0.118 ±.03 0.129 ±.00 0.015 ±.00 0.152 ±.05 0.080 ±.04 0.159 ±.05 0.215 ±.01 0.161 ±.00 
+
+SO 0.227 ±.04 0.358 ±.02 0.353 ±.03 0.340 ±.00 0.397 ±.04 0.157 ±.00 0.120 ±.00 0.355 ±.03 0.293 ±.15 0.409 ±.02 0.454 ±.00 0.456 ±.00 
+
+SH -0.073 ±.01 -0.007 ±.02 -0.023 ±.00 -0.039 ±.00 -0.048 ±.03 0.063 ±.00 0.094 ±.00 0.023 ±.00 0.312 ±.00 -0.088 ±.00 0.294 ±.00 0.143 ±.00 
+
+BC 0.000 ±.00 0.003 ±.01 0.053 ±.00 -0.008 ±.00 0.013 ±.05 0.013 ±.00 0.058 ±.00 0.000 ±.00 0.036 ±.08 -0.003 ±.00 0.156 ±.00 0.147 ±.00 
+
+PT 0.068 ±.02 0.079 ±.01 0.072 ±.01 0.076 ±.00 0.111 ±.01 0.084 ±.00 0.078 ±.00 0.103 ±.01 0.085 ±.02 0.101 ±.01 0.115 ±.00 0.110 ±.00 
+
+CV 0.422 ±.02 0.495 ±.17 0.550 ±.00 0.537 ±.00 0.566 ±.00 0.008 ±.00 0.459 ±.00 0.550 ±.00 0.563 ±.00 0.590 ±.05 0.628 ±.00 0.573 ±.00 
+
+CA 0.021 ±.03 0.030 ±.03 0.050 ±.05 0.001 ±.00 0.044 ±.05 0.194 ±.00 -0.041 ±.00 -0.002 ±.08 0.032 ±.08 0.048 ±.04 0.131 ±.00 0.087 ±.00 
+
+SP 0.025 ±.00 0.078 ±.00 0.075 ±.00 0.071 ±.00 0.013 ±.01 – 0.386 ±.00 0.107 ±.08 0.000 ±.00 0.078 ±.01 0.396 ±.00 0.438 ±.00 
+
+MU 0.373 ±.05 0.344 ±.20 0.273 ±.00 0.066 ±.01 0.111 ±.10 – 0.266 ±.14 0.384 ±.27 0.261 ±.23 0.435 ±.26 0.606 ±.01 0.581 ±.00 
+
+BC 0.020 ±.00 0.002 ±.00 0.054 ±.00 0.003 ±.00 0.006 ±.00 0.013 ±.00 0.011 ±.00 -0.004 ±.00 0.047 ±.00 0.028 ±.00 0.065 ±.00 0.057 ±.00 
+
+LY 0.029 ±.00 0.051 ±.00 0.045 ±.00 0.025 ±.00 0.029 ±.00 0.038 ±.00 0.052 ±.00 0.020 ±.00 0.050 ±.00 0.025 ±.00 0.059 ±.00 0.054 ±.00 
+
+AR 8.23 † 6.54 † 5.31 † 9.00 † 5.93 † 6.73 † 6.54 † 5.77 † 5.54 † 4.61 † 1.15 1.54 NMI 
+
+LE 0.165 ±.06 0.232 ±.11 0.210 ±.10 0.200 ±.00 0.287 ±.15 0.129 ±.00 0.027 ±.00 0.183 ±.16 0.226 ±.15 0.287 ±.10 0.341 ±.13 0.339 ±.11 
+
+ZO 0.679 ±.05 0.702 ±.00 0.745 ±.02 0.803 ±.00 0.793 ±.05 0.601 ±.00 0.786 ±.00 0.869 ±.04 0.736 ±.20 0.810 ±.04 0.854 ±.00 0.819 ±.00 
+
+LY 0.117 ±.03 0.156 ±.02 0.212 ±.02 0.108 ±.00 0.161 ±.03 0.330 ±.00 0.141 ±.00 0.174 ±.05 0.173 ±.05 0.196 ±.05 0.253 ±.00 0.218 ±.00 
+
+SO 0.518 ±.03 0.638 ±.01 0.644 ±.02 0.634 ±.00 0.697 ±.02 0.562 ±.00 0.538 ±.00 0.642 ±.02 0.569 ±.28 0.704 ±.02 0.756 ±.00 0.731 ±.00 
+
+SH 0.059 ±.00 0.011 ±.03 0.068 ±.00 0.062 ±.00 0.069 ±.02 0.061 ±.00 0.119 ±.00 0.115 ±.00 0.185 ±.00 0.094 ±.00 0.144 ±.00 0.135 ±.00 
+
+BC 0.002 ±.00 0.005 ±.00 0.041 ±.00 0.001 ±.00 0.009 ±.02 0.030 ±.00 0.053 ±.00 0.000 ±.00 0.033 ±.04 0.001 ±.00 0.079 ±.00 0.076 ±.00 
+
+PT 0.250 ±.01 0.263 ±.02 0.304 ±.01 0.322 ±.00 0.360 ±.01 0.308 ±.00 0.304 ±.00 0.351 ±.01 0.345 ±.02 0.354 ±.01 0.370 ±.00 0.364 ±.00 
+
+CV 0.438 ±.00 0.436 ±.15 0.444 ±.00 0.475 ±.00 0.491 ±.00 0.006 ±.00 0.526 ±.00 0.479 ±.00 0.446 ±.00 0.503 ±.05 0.538 ±.00 0.483 ±.00 
+
+CA 0.041 ±.02 0.049 ±.03 0.054 ±.07 0.003 ±.00 0.111 ±.06 0.124 ±.00 0.034 ±.00 0.065 ±.06 0.084 ±.07 0.104 ±.04 0.188 ±.00 0.133 ±.00 
+
+SP 0.050 ±.00 0.091 ±.00 0.076 ±.00 0.082 ±.00 0.015 ±.01 – 0.329 ±.00 0.115 ±.09 0.000 ±.00 0.128 ±.03 0.404 ±.00 0.399 ±.00 
+
+MU 0.329 ±.02 0.361 ±.17 0.303 ±.00 0.052 ±.01 0.098 ±.10 – 0.332 ±.11 0.323 ±.23 0.272 ±.19 0.377 ±.23 0.554 ±.01 0.553 ±.00 
+
+BC 0.110 ±.00 0.062 ±.00 0.138 ±.00 0.099 ±.00 0.111 ±.00 0.090 ±.00 0.136 ±.00 0.080 ±.00 0.129 ±.00 0.144 ±.00 0.149 ±.00 0.155 ±.00 
+
+LY 0.179 ±.00 0.234 ±.00 0.227 ±.00 0.191 ±.00 0.206 ±.00 0.172 ±.00 0.209 ±.00 0.185 ±.00 0.213 ±.00 0.186 ±.00 0.226 ±.00 0.227 ±.00 
+
+AR 9.00 † 7.15 † 5.54 † 7.69 † 5.23 † 7.73 † 5.92 † 6.00 † 5.85 † 4.00 † 1.38 1.58 ACC 
+
+LE 0.517 ±.07 0.529 ±.06 0.545 ±.09 0.417 ±.00 0.554 ±.09 0.458 ±.00 0.417 ±.00 0.567 ±.10 0.500 ±.12 0.558 ±.10 0.575 ±.11 0.600 ±.11 
+
+ZO 0.655 ±.09 0.545 ±.00 0.526 ±.01 0.673 ±.00 0.702 ±.09 0.554 ±.00 0.802 ±.00 0.788 ±.11 0.717 ±.15 0.746 ±.10 0.822 ±.00 0.756 ±.00 
+
+LY 0.410 ±.03 0.433 ±.04 0.443 ±.03 0.446 ±.00 0.508 ±.04 0.561 ±.00 0.493 ±.00 0.487 ±.04 0.470 ±.07 0.513 ±.04 0.546 ±.00 0.509 ±.00 
+
+SO 0.424 ±.06 0.483 ±.02 0.452 ±.02 0.564 ±.00 0.602 ±.04 0.436 ±.00 0.323 ±.00 0.510 ±.03 0.473 ±.16 0.595 ±.04 0.658 ±.00 0.616 ±.00 
+
+SH 0.430 ±.02 0.766 ±.08 0.547 ±.00 0.502 ±.00 0.544 ±.02 0.629 ±.00 0.397 ±.00 0.592 ±.00 0.843 ±.00 0.559 ±.00 0.824 ±.00 0.793 ±.00 
+
+BC 0.516 ±.02 0.544 ±.01 0.575 ±.00 0.531 ±.00 0.531 ±.07 0.567 ±.00 0.523 ±.00 0.708 ±.00 0.609 ±.08 0.509 ±.00 0.711 ±.00 0.704 ±.00 
+
+PT 0.191 ±.02 0.280 ±.02 0.287 ±.01 0.265 ±.00 0.306 ±.02 0.286 ±.00 0.256 ±.00 0.287 ±.02 0.279 ±.02 0.299 ±.02 0.293 ±.00 0.287 ±.00 
+
+CV 0.762 ±.01 0.846 ±.08 0.871 ±.00 0.867 ±.00 0.877 ±.00 0.618 ±.00 0.657 ±.00 0.871 ±.00 0.876 ±.00 0.884 ±.02 0.897 ±.00 0.879 ±.00 
+
+CA 0.262 ±.03 0.393 ±.05 0.375 ±.04 0.270 ±.00 0.383 ±.05 0.514 ±.00 0.554 ±.00 0.600 ±.08 0.544 ±.12 0.372 ±.04 0.487 ±.00 0.398 ±.00 
+
+SP 0.377 ±.00 0.513 ±.00 0.510 ±.00 0.556 ±.00 0.392 ±.02 – 0.687 ±.00 0.554 ±.05 0.519 ±.00 0.474 ±.01 0.748 ±.00 0.776 ±.00 
+
+MU 0.678 ±.02 0.782 ±.08 0.678 ±.00 0.628 ±.01 0.650 ±.07 – 0.551 ±.04 0.759 ±.17 0.732 ±.11 0.806 ±.12 0.889 ±.00 0.813 ±.00 
+
+BC 0.206 ±.00 0.191 ±.00 0.219 ±.00 0.188 ±.00 0.217 ±.00 0.206 ±.00 0.213 ±.00 0.191 ±.00 0.227 ±.00 0.217 ±.00 0.246 ±.00 0.238 ±.00 
+
+LY 0.247 ±.00 0.251 ±.00 0.254 ±.00 0.243 ±.00 0.257 ±.00 0.257 ±.00 0.267 ±.00 0.250 ±.00 0.277 ±.00 0.250 ±.00 0.270 ±.00 0.270 ±.00 
+
+AR 9.31 † 6.73 † 6.50 † 8.16 † 5.30 † 6.36 † 7.08 † 4.69 † 4.54 † 5.08 † 1.69 2.15 
+
+IV. E XPERIMENTS 
+
+A. Experimental Settings 
+
+Four experimental studies and one case study are con-ducted to evaluate GRACE from complementary perspectives. 
+
+1) Clustering effectiveness (§IV-B) compares GRACE with eleven representative counterparts on twenty UCI datasets and reports Wilcoxon signed-rank tests to assess statistical reliability. 2) Component analysis (§IV-C) isolates the contri-bution of semantic representation and dual-view neighborhood consistency. 3) Generality and robustness (§IV-D, §IV-E) examines whether the learned representation remains effective across clustering algorithms and whether the results are stable across different LLM backends. 4) Scalability evaluation 
+
+(§IV-F) studies runtime and clustering quality under increasing sample size, attribute cardinality, and cluster count. 5) Case study (§IV-G) analyzes the learned semantic metric on the CK dataset to illustrate how GRACE improves cluster separation. All methods run on an NVIDIA RTX 4090, except the scala-bility study, which is timed on a single commodity RTX 3060 (6GB) to provide an independent efficiency measurement. 
+
+Eleven representative clustering counterparts, five LLM-based baselines, and four LLM backends are selected for comparison. Partition-based methods include k-Modes (KMO) [22] and k-Prototypes (KPR) [41]. Distance met-ric learning methods consist of DiSC [42], ADC [10], HARR [11], MCDC [43], and GUDMM-S [44]. Tree-based approaches include COForest [45] and SigDT [46]. OCL [47] adopts ordinalization, and AMPHM [48] employs multi-resolution condensation. Among these counterparts, KPR, ADC, HARR, AMPHM, and GUDMM-S natively support mixed data. The five LLM-based baselines adapt representative LLM-for-clustering paradigms to our mixed-attribute setting. Following the row-serialization paradigm of TabLLM [27], we serialize each record into a natural-language string over its attribute names and values, encode it with fθ , and cluster the resulting embeddings. Adapting the triplet-guided representa-tion idea of ClusterLLM [17], we elicit LLM triplet judgments over records to shape the clustering representation. Following the few-shot pairwise-constraint paradigm of [18], we derive LLM-generated must-link/cannot-link constraints and run con-strained clustering. GenericDescribe prompts the LLM for a single free-form description per attribute value and clusters the description embeddings, serving as a description-only variant. Finally, BREVE [31], preliminary study on purely categorical 
+
+data, generates per-value descriptions and linearly fuses a semantic view with a one-hot identity view; GRACE extends it to mixed data via LLM-based numerical discretization, dual-view neighborhood consistency, and spectral clustering. Four LLM backends, namely GPT-5.1, Claude Opus 4.5, DeepSeek V3.2, and Gemini 3 Pro, are considered and evaluated in §IV-E. For sentence encoding, fθ is instantiated as all-mpnet-TABLE IV: Clustering results on 11 mixed datasets. All notations are consistent with those defined in Table III. 
+
+Metric Dataset KPR ADC GUDMM-S AMPHM HARR GRACE GRACE-A 
+
+[PAKDD’97] [TNNLS’23] [PR’23] [CAIS’25] [ESWA’25] [Ours] [Approx.] 
+
+> ARI
+
+CS 0.003 ±.00 -0.003 ±.01 0.010 ±.00 0.050 ±.00 0.044 ±.04 0.094 ±.00 0.078 ±.00 
+
+AA 0.478 ±.02 0.029 ±.02 0.509 ±.00 0.040 ±.00 0.131 ±.23 0.528 ±.00 0.588 ±.00 
+
+TA 0.004 ±.01 0.012 ±.01 0.016 ±.00 0.016 ±.00 -0.008 ±.01 0.065 ±.00 0.052 ±.00 
+
+AM -0.005 ±.00 0.008 ±.00 0.067 ±.00 0.010 ±.00 0.001 ±.01 0.109 ±.00 0.090 ±.00 
+
+HD 0.019 ±.00 0.229 ±.00 0.372 ±.00 0.242 ±.00 0.337 ±.00 0.394 ±.00 0.390 ±.00 
+
+DE 0.101 ±.01 0.351 ±.08 0.705 ±.00 0.679 ±.00 0.805 ±.08 0.921 ±.00 0.914 ±.00 
+
+CK 0.112 ±.00 0.664 ±.00 0.510 ±.00 0.567 ±.00 0.626 ±.00 0.895 ±.00 0.815 ±.00 
+
+SA 0.004 ±.00 0.077 ±.01 0.347 ±.00 -0.009 ±.00 0.417 ±.01 0.387 ±.00 0.363 ±.00 
+
+AV -0.100 ±.00 0.004 ±.01 0.003 ±.00 -0.047 ±.00 -0.009 ±.05 0.053 ±.00 -0.002 ±.00 
+
+OL 0.214 ±.00 0.079 ±.01 0.231 ±.00 0.163 ±.00 0.090 ±.02 0.255 ±.00 0.264 ±.00 
+
+AD -0.012 ±.00 0.084 ±.00 0.086 ±.01 – 0.100 ±.00 0.093 ±.03 0.156 ±.01 
+
+AR 5.09 † 4.36 † 2.82 † 4.00 † 3.36 † 1.18 1.27 NMI 
+
+CS 0.018 ±.00 0.006 ±.01 0.017 ±.00 0.077 ±.00 0.053 ±.03 0.108 ±.00 0.098 ±.00 
+
+AA 0.347 ±.01 0.019 ±.01 0.432 ±.00 0.058 ±.00 0.122 ±.22 0.460 ±.00 0.492 ±.00 
+
+TA 0.014 ±.00 0.021 ±.01 0.046 ±.00 0.084 ±.00 0.004 ±.01 0.074 ±.00 0.065 ±.00 
+
+AM 0.016 ±.00 0.004 ±.00 0.079 ±.00 0.005 ±.00 0.002 ±.00 0.113 ±.00 0.100 ±.00 
+
+HD 0.014 ±.00 0.174 ±.00 0.294 ±.01 0.189 ±.00 0.262 ±.00 0.306 ±.00 0.308 ±.00 
+
+DE 0.218 ±.02 0.403 ±.08 0.749 ±.00 0.740 ±.00 0.822 ±.06 0.913 ±.00 0.904 ±.00 
+
+CK 0.246 ±.00 0.639 ±.00 0.528 ±.00 0.568 ±.00 0.611 ±.00 0.848 ±.00 0.767 ±.00 
+
+SA 0.016 ±.00 0.059 ±.00 0.288 ±.00 0.040 ±.00 0.323 ±.01 0.300 ±.00 0.278 ±.00 
+
+AV 0.003 ±.00 0.004 ±.00 0.003 ±.00 0.009 ±.00 0.020 ±.03 0.006 ±.00 0.000 ±.00 
+
+OL 0.281 ±.00 0.135 ±.02 0.338 ±.00 0.249 ±.00 0.146 ±.02 0.346 ±.00 0.354 ±.00 
+
+AD 0.001 ±.00 0.077 ±.00 0.057 ±.01 – 0.082 ±.00 0.064 ±.05 0.125 ±.01 
+
+AR 4.73 † 4.45 † 3.36 † 3.50 † 3.18 † 1.55 1.73 ACC 
+
+CS 0.562 ±.00 0.540 ±.03 0.575 ±.00 0.625 ±.00 0.606 ±.05 0.662 ±.00 0.650 ±.00 
+
+AA 0.784 ±.01 0.592 ±.04 0.828 ±.00 0.612 ±.00 0.631 ±.14 0.867 ±.00 0.885 ±.00 
+
+TA 0.383 ±.01 0.426 ±.02 0.404 ±.00 0.384 ±.00 0.352 ±.02 0.470 ±.00 0.459 ±.00 
+
+AM 0.561 ±.00 0.566 ±.00 0.635 ±.00 0.571 ±.00 0.554 ±.01 0.669 ±.00 0.654 ±.00 
+
+HD 0.576 ±.00 0.741 ±.00 0.806 ±.00 0.748 ±.00 0.791 ±.00 0.815 ±.00 0.813 ±.00 
+
+DE 0.363 ±.02 0.494 ±.08 0.746 ±.00 0.768 ±.00 0.832 ±.07 0.953 ±.00 0.947 ±.00 
+
+CK 0.669 ±.00 0.908 ±.00 0.858 ±.00 0.877 ±.00 0.896 ±.00 0.973 ±.00 0.952 ±.00 
+
+SA 0.562 ±.00 0.642 ±.01 0.792 ±.00 0.520 ±.00 0.823 ±.00 0.812 ±.00 0.801 ±.00 
+
+AV 0.660 ±.00 0.552 ±.03 0.527 ±.00 0.814 ±.00 0.582 ±.05 0.801 ±.00 0.562 ±.00 
+
+OL 0.324 ±.00 0.274 ±.01 0.429 ±.00 0.390 ±.00 0.283 ±.02 0.437 ±.00 0.423 ±.00 
+
+AD 0.613 ±.01 0.654 ±.00 0.690 ±.01 – 0.660 ±.00 0.739 ±.04 0.701 ±.00 
+
+AR 4.82 † 4.45 † 3.18 † 3.50 † 3.64 † 1.18 1.45 
+
+TABLE V: ARI of GRACE and GRACE-A versus LLM-based clustering methods on 22 datasets. All notations are consistent with those defined in Table III.                                                                                                                                                                         
+
+> Dataset TabLLM ClusterLLM FewShot GenericDesc. BREVE GRACE GRACE-A
+> LE 0.026 0.000 -0.043 0.094 0.217 0.163 0.213 CS 0.003 -0.014 0.064 0.064 –0.094 0.078 ZO 0.631 0.000 0.805 0.447 0.774 0.827 0.660 AA -0.004 0.074 0.024 0.466 –0.528 0.588
+> LY 0.072 0.000 0.061 0.020 0.207 0.215 0.161 TA 0.045 0.006 0.039 -0.011 –0.065 0.052 AM 0.022 0.110 0.022 0.129 –0.109 0.090 SO 0.173 0.000 0.139 0.150 0.428 0.454 0.456
+> SH -0.016 0.000 -0.013 -0.010 -0.022 0.294 0.143 BC 0.117 0.008 0.008 -0.002 0.169 0.156 0.147 HD 0.174 -0.004 0.002 0.306 –0.394 0.390 PT 0.056 0.000 0.058 0.036 0.103 0.115 0.110 DE 0.159 -0.005 0.104 0.314 –0.921 0.914 CK 0.396 0.672 0.101 0.639 –0.895 0.815 CV 0.006 0.000 0.606 0.061 0.578 0.628 0.573 SA 0.069 -0.004 0.000 0.193 –0.387 0.363 CA 0.009 0.011 0.169 0.007 0.085 0.131 0.087 AV 0.014 0.286 -0.002 0.003 –0.053 -0.002 OL 0.222 0.131 0.142 0.130 –0.255 0.264
+> SP 0.030 0.000 0.006 0.033 0.353 0.396 0.438
+> MU 0.081 0.000 0.648 0.093 0.593 0.606 0.581 AD 0.104 0.026 0.032 0.094 –0.093 0.156
+> AR 3.61 †4.48 †3.66 †3.57 †2.55 †1.41 1.73
+
+base-v2. 
+
+Twenty-two public datasets from the UCI Machine Learn-ing Repository 1 [49] are used for evaluation. Eleven contain purely categorical attributes, and the remaining eleven mix cat-egorical and numerical attributes. Table II reports the statistics of each dataset. 
+
+> 1
+
+https://archive.ics.uci.edu/ 
+
+Three validity indices are adopted to evaluate clustering quality, namely the Adjusted Rand Index (ARI) [50], Normal-ized Mutual Information (NMI) [51], and Clustering Accuracy (ACC) [52]. Higher values indicate better performance for all three metrics. All experiments are repeated 10 times with different random seeds. 
+
+B. Clustering Performance Evaluation 
+
+Table III and Table IV report the categorical and mixed benchmarks, where GRACE attains the best AR on every metric, with a categorical ARI rank of 1.15 , i.e., a first-place finish on nearly every dataset. The size of the lead points to a qualitative gain, since the LLM-grounded semantics recover relations that co-occurrence statistics cannot supply, e.g., the ordering of clinical severities or the kinship among biological traits. No competing method stays on top of both benchmarks, because the strongest categorical specialists do not carry over to mixed inputs, whereas the mixed-capable GUDMM-S slips to mid-pack once symbolic attributes dominate, leaving GRACE and GRACE-A as the only methods placed first and second throughout. GRACE-A trails GRACE by a fraction of a rank and still outranks every competitor, with its rare sizeable drops confined to small datasets such as ZO and SH, where the anchor set draws on too few points to preserve the fine structure. TABLE VI: Ablation study over Semantic Representation (SR) and Dual-View Neighborhood Consistency (DVNC). 
+
+Metric Components Mark Datasets AR 
+
+SR DVNC LE CS ZO AA LY TA AM SO SH BC HD PT DE CK CV SA CA AV OL SP 
+
+> ARI
+
+I 0.064 0.094 0.807 0.366 0.192 0.019 0.068 0.432 0.068 0.173 0.370 0.099 0.778 0.755 0.585 0.354 0.000 0.049 0.290 0.000 2.65 
+
+✓ II 0.064 0.111 0.656 0.529 0.238 0.065 0.086 0.456 0.068 0.151 0.420 0.099 0.921 0.768 0.599 0.387 0.131 0.053 0.241 0.379 1.85 
+
+✓ ✓ Full 0.130 0.094 0.827 0.528 0.217 0.065 0.108 0.454 0.294 0.156 0.394 0.116 0.921 0.895 0.628 0.387 0.131 0.053 0.255 0.396 1.50 NMI  I 0.137 0.078 0.803 0.264 0.243 0.026 0.066 0.725 0.119 0.089 0.280 0.353 0.851 0.713 0.505 0.280 0.003 0.034 0.354 0.001 2.65 
+
+✓ II 0.137 0.131 0.794 0.437 0.275 0.074 0.088 0.748 0.119 0.076 0.329 0.354 0.913 0.725 0.520 0.300 0.188 0.006 0.364 0.401 1.88 
+
+✓ ✓ Full 0.337 0.108 0.854 0.460 0.255 0.074 0.112 0.756 0.144 0.079 0.306 0.371 0.913 0.848 0.538 0.300 0.188 0.006 0.346 0.404 1.48 ACC  I 0.583 0.662 0.801 0.806 0.513 0.430 0.635 0.633 0.633 0.722 0.795 0.283 0.813 0.935 0.883 0.806 0.266 0.702 0.515 0.519 2.60 
+
+✓ II 0.583 0.675 0.673 0.867 0.540 0.470 0.651 0.680 0.633 0.708 0.825 0.282 0.953 0.939 0.887 0.812 0.487 0.801 0.427 0.737 1.93 
+
+✓ ✓ Full 0.583 0.662 0.822 0.867 0.547 0.470 0.668 0.658 0.824 0.711 0.815 0.294 0.953 0.973 0.897 0.812 0.487 0.801 0.437 0.748 1.48 
+
+TABLE VII: Mechanism ablation on ten mixed-type datasets (ACC). The two components indicate whether semantic grounding ( ✓) replaces the default distance for categorical (Cat., default Hamming) and numerical (Num., default Euclidean) attributes. Row I (neither) reduces to KPR and Full (both) is the complete GRACE. AR is the average rank; the best result per dataset is in bold .
+
+Metric Components Mark Datasets AR 
+
+Cat. Num. CS AA TA AM HD DE CK SA AV OL 
+
+> ACC
+
+I 0.562 0.784 0.383 0.561 0.576 0.363 0.669 0.562 0.660 0.324 3.60 
+
+✓ II 0.599 0.663 0.348 0.646 0.754 0.377 0.915 0.801 0.595 0.383 2.90 
+
+✓ III 0.665 0.853 0.458 0.626 0.827 0.623 0.865 0.794 0.509 0.394 2.30 
+
+✓ ✓ Full 0.662 0.867 0.470 0.670 0.815 0.953 0.973 0.812 0.801 0.437 1.20 
+
+A potential concern is that prompting the LLM exposes the dataset identity and lets the model retrieve the published labels online, shaping the value descriptions toward them. To rule out such leakage, we relabel two datasets (shown in dark red) with a composite label that a LLM builds from attribute names and value distributions, with no access to the original. The two attributes that define it are held out from every method, and an NMI audit keeps only labels near-independent of the published one (NMI ≤ 0.13 here), which places the new label beyond the reach of memory or a web search. GRACE still ranks first in ARI on both, which a method exploiting retrieved labels could not achieve, i.e., the advantage does not stem from label leakage. Every method scores low on these intrinsically hard targets, and the evidence therefore rests on the relative order, where GRACE leads even the baselines fed the ground-truth label as a feature. Against methods built specifically for LLM-driven clus-tering (Table V), GRACE and GRACE-A again rank first and second, and the strongest prior design BREVE trails at 
+
+2.55 . Since those baselines also query an LLM yet land well behind, the gain traces to the 4P description and the cross-view verification, not to LLM access itself. 
+
+C. Ablation Study 
+
+To isolate each component, Table VI compares the statistical view alone (I), that view plus semantic representation (SR, giving II), and the full model that adds dual-view neighbor-hood consistency (DVNC, giving Full). SR is the primary driver, as the AR falls from roughly 2.6 to 1.9 on all three metrics. DVNC then contributes a further drop to near 1.5
+
+by cross-checking the semantic affinities against statistical evidence. The benefit is clearest on SH and ZO. On SH, SR alone adds nothing, yet the full model lifts ARI from 0.068 
+
+to 0.294 once cross-view confirmation removes unreliable semantic neighbors. On ZO, SR even lowers the score, whereas 
+
+TABLE VIII: ARI performance of representations generated by One-Hot (OH) encoding, HARR, and GRACE under k-means, hierarchical clustering with average linkage (HC-avg), and spectral clustering algorithms. “ ↑” indicates that GRACE outperforms both baselines.                                                                                                                                                                                                                           
+
+> Dataset k-Means HC-avg Spectral Clustering
+> OH HARR GRACE OH HARR GRACE OH HARR GRACE LE 0.085 0.227 0.166 -0.043 -0.043 0.074 ↑0.182 0.166 0.002 CS 0.078 0.094 0.078 -0.006 0.063 0.112 ↑0.064 0.094 0.078 ZO 0.702 0.501 0.674 0.889 0.960 0.799 0.523 0.657 0.650 AA 0.566 0.017 0.090 0.325 0.299 0.561 ↑0.592 0.436 0.595 ↑
+> LY 0.197 0.194 0.199 ↑0.111 0.144 0.154 ↑0.234 0.228 0.238 ↑
+> TA 0.037 -0.008 0.010 0.037 0.017 0.063 ↑-0.002 0.011 0.065 ↑
+> AM 0.053 0.099 0.092 0.059 -0.003 -0.001 0.062 0.066 0.067 ↑
+> SO 0.414 0.423 0.476 ↑0.343 0.303 0.522 ↑0.344 0.436 0.443 ↑
+> SH -0.007 0.002 0.123 ↑-0.103 -0.107 0.031 ↑-0.061 -0.063 0.118 ↑
+> BC -0.003 -0.002 -0.010 0.236 0.016 0.145 0.124 0.185 0.149 HD 0.383 0.412 0.402 0.270 0.284 0.198 0.386 0.420 0.412 PT 0.100 0.101 0.115 ↑0.067 0.058 0.129 ↑0.102 0.097 0.107 ↑
+> DE 0.798 0.882 0.940 ↑0.514 0.616 0.836 ↑0.701 0.709 0.940 ↑
+> CK 0.706 0.809 0.837 ↑0.070 0.702 0.880 ↑0.532 0.477 0.745 ↑
+> CV 0.578 0.533 0.606 ↑0.004 0.004 0.599 ↑0.564 0.585 0.571 MA 0.425 0.442 0.426 0.000 0.314 0.319 ↑0.426 0.419 0.432 ↑
+> CA 0.058 0.013 0.209 ↑0.013 0.013 0.147 ↑0.049 0.068 0.115 ↑
+> AV -0.002 0.030 -0.007 0.090 0.054 0.033 0.085 0.101 0.053 OL 0.277 0.286 0.264 0.001 0.001 0.270 ↑0.256 0.286 0.260 SP 0.612 0.642 0.683 ↑-0.017 0.000 0.277 ↑0.311 0.436 0.405 MU 0.207 0.166 0.215 ↑0.599 0.172 0.576 0.602 0.146 0.596 AD 0.191 0.033 0.170 -0.005 -0.006 0.158 ↑0.159 -0.006 0.140
+> AR 2.30 2.00 1.70 2.18 2.41 1.41 2.41 2.00 1.59
+
+the complete model climbs back above the baseline because the statistical view down-weights the misleading semantic affinities. DVNC therefore serves a dual purpose, reinforcing the correct semantic signals and repairing the harmful ones. A further ablation in Table VII turns to mixed data, where the baseline (I) reduces to k-prototype with Hamming for categorical and Euclidean for numerical attributes. Grounding the numerical distance alone (II) or the categorical distance alone (III) already improves on I, which shows the semantic metric suits either attribute type. Applying it to both (Full) wins by the widest margin, and the average rank drops steadily from 3.60 at I to 1.20 at Full across the four settings. The monotonic trend traces the gain to a single cause, i.e., the two attribute types come to share one semantic metric instead of the separate distances that k-prototype fuses by hand, which unifies them in a common metric space. Finally, three additional ablations on the four prompt perspectives, the dual-channel design, and the graph-construction and spectral-clustering steps appear in the supplementary material. 
+
+D. General-Purpose Representation 
+
+To test whether the GRACE representation generalizes beyond the spectral setting, Table VIII pairs three encodings, namely one-hot (OH), HARR, and GRACE, with k-means, hierarchical clustering under average linkage (HC-avg), and spectral clustering. The three representations differ in the information they carry, since OH treats every value as equidis-tant, HARR computes statistical distances from conditional distributions, and GRACE grounds the value relations in ex-ternal semantic knowledge. GRACE holds the best AR under all three algorithms, whereas OH and HARR trade the runner-up position from one to the next, which shows that only the added world knowledge delivers a reliable gain. The margin widens most under HC-avg, because greedy agglomeration runs no iterative refinement and therefore exposes the quality of the input distances most directly. GRACE thus serves as a general-purpose representation that transfers across clustering paradigms, not a component tuned to the spectral case alone. 
+
+E. Robustness to LLM Selection 
+
+Robustness to the LLM backend is examined by replac-ing the default GPT with Claude, DeepSeek, and Gemini, recording the ARI deviation on every benchmark (Table IX). For GRACE, |∆| stays within 0.02 on the vast majority of datasets, and the Friedman test returns p=0 .41 , i.e., switching the model leaves performance statistically unchanged. The consistency follows from the design of the 4P prompt, because it queries established factual knowledge that LLMs trained on overlapping corpora encode in much the same way, and the three alternatives therefore produce nearly identical value de-scriptions. GRACE-A shows larger swings on a few datasets, e.g., a drop on CA under Gemini, because the anchor ap-proximation magnifies small representation differences. Those swings favor no particular backend, however, and the test for the approximate variant returns an even higher p=0 .96 .Therefore, the effectiveness of GRACE rests on the description design and the cross-view verification, not on any single LLM. 
+
+F. Scalability Evaluation 
+
+Scalability is evaluated on synthetic data generated from the Dermatology dataset by sampling from its per-class condi-tional distributions, with the sample-size experiment varying n
+
+from 10,000 to 100,000 in steps of 10,000 at s=20 attributes and k=5 clusters (Figure 3). As an exact spectral method, GRACE inherits an O(n2) memory cost and gives out beyond 20,000, later than dense baselines such as AMPHM that fail earlier. GRACE-A removes the ceiling and reaches 100,000 with near-linear scaling, a scale no competing method attains without sacrificing clustering quality. In fact, the approxi-mate variant attains the highest ARI throughout and edges slightly above GRACE at the two overlapping scales, because the anchor sampling acts as an implicit regularizer on the well-separated synthetic clusters. The supporting analysis is 
+
+TABLE IX: LLM robustness evaluation (ARI) on 22 benchmarks. The GPT column reports absolute performance, and each ∆ column gives the deviation of an alternative backend from the GPT baseline, where Cla., DS, and Gem. denote Claude, DeepSeek, and Gemini. The Friedman p row reports a Friedman test assessing whether the choice of backend significantly affects performance, with n.s. denoting a non-significant result ( p ≥ 0.05 ). 
+
+Dataset GRACE GRACE-A GPT ∆Cla. ∆DS ∆Gem. GPT ∆Cla. ∆DS ∆Gem. 
+
+LE 0.164 0.00 0.00 0.00 0.201 0.00 0.00 0.00 CS 0.094 +0.02 +0.05 +0.05 0.094 0.00 0.00 0.00 ZO 0.827 0.00 0.00 0.00 0.617 -0.01 0.00 -0.01 AA 0.529 0.00 +0.01 0.00 0.608 +0.01 +0.01 +0.01 LY 0.194 +0.02 -0.01 +0.01 0.148 +0.02 0.00 +0.01 TA 0.066 0.00 0.00 -0.01 0.060 -0.01 0.00 -0.01 AM 0.093 +0.02 -0.01 -0.01 0.086 -0.01 0.00 -0.01 SO 0.456 0.00 0.00 0.00 0.444 +0.01 -0.01 +0.02 SH 0.294 0.00 0.00 0.00 0.134 0.00 0.00 0.00 BC 0.145 +0.01 +0.01 0.00 0.155 +0.01 +0.01 0.00 HD 0.409 -0.01 -0.02 0.00 0.417 -0.02 -0.04 0.00 PT 0.114 0.00 0.00 0.00 0.116 -0.01 0.00 0.00 DE 0.895 +0.03 0.00 +0.01 0.887 +0.02 0.00 +0.01 CK 0.896 0.00 +0.01 -0.02 0.814 0.00 0.00 0.00 CV 0.628 0.00 0.00 0.00 0.580 0.00 0.00 0.00 MA 0.402 0.00 -0.02 -0.01 0.403 -0.01 -0.03 0.00 CA 0.131 0.00 +0.04 +0.01 0.092 +0.01 +0.04 -0.08 AV 0.053 0.00 0.00 0.00 -0.002 0.00 0.00 0.00 OL 0.255 0.00 +0.02 -0.01 0.250 +0.03 +0.03 +0.02 SP 0.396 0.00 -0.03 -0.01 0.366 0.00 -0.02 -0.01 
+
+Friedman p 0.41 (n.s.) 0.96 (n.s.) 1 2 3 4 5 6 7 8 9 10                                               
+
+> No. of samples n(×10 4)
+> 0510 15 20 25
+> Execution time ( ×10 3 s)
+> 12345678910
+> No. of samples n(×10 4)
+> 0.0 0.2 0.4 0.6 0.8 1.0
+> Adjusted Rand Index
+> 12345678910
+> No. of values V(×10 2)
+> 0100 200 300 400 500
+> Execution time (s)
+> 246810 12 14 16 18 20
+> No. of clusters k(×10 )
+> 0100 200 300 400 500
+> Execution time (s)
+> KPR DiSC MCDC OCL HARR COForest SigDT ADC AMPHM GUDMM-S GRACE GRACE-A
+
+Fig. 3: Scalability evaluation on synthetic data. The sample-size experiment varies n from 10,000 to 100,000, reporting execution time and ARI. The cardinality experiment varies V from 100 to 1,000. The cluster-count experiment varies k from 20 to 200. Missing points indicate out-of-memory failures. 
+
+deferred to the supplementary material. The cardinality and cluster-count experiments fix n=2 ,000 and s=20 , sweeping 
+
+V from 100 to 1,000 (at k=5 ) and k from 20 to 200, respectively. Several counterparts show steep time growth or memory failures as either quantity rises, and the full model itself climbs steadily with the value count, whereas GRACE-A stays nearly flat across both sweeps. Taken together, the approximate variant offers a practical drop-in replacement once the quadratic cost of GRACE turns prohibitive. 
+
+G. Case Study on CK Dataset 
+
+Among the categorical attributes considered so far, ordinal ones additionally carry an inherent order over their values, Fig. 4: Case study on the serum creatinine attribute of the CK dataset, where GRACE is our method and HARR is the strongest statistics-only baseline. The top row reports the value-level affinity among the five severity levels, (a) under HARR and (b) under GRACE. The bottom row shows the UMAP of the sample representations, (c) under HARR and (d) under GRACE, colored by cluster assignment. 
+
+which makes them a clean test of whether a method’s affinity reflects genuine structure (Figure 4). The serum creatinine attribute of the CK (Chronic Kidney Disease) dataset offers one such case, with five levels running from normal to criti-cal. Because GRACE grounds every value in external world knowledge before consulting dataset statistics, it encodes each level into a description representation, and the cosine similarity between two such representations defines the affinity reported in Panel (b). The grounded affinity therefore tracks clinical meaning, falling off as severity distance grows, e.g., severe remains near critical at 0.76 yet drops to 0.61 against normal, and the five levels settle into a smooth gradient along the scale. Reading the recovered structure then uncovers an ordinal arrangement that GRACE was never instructed to produce, i.e., the gradient emerges as a by-product of reasoning over meaning instead of counting co-occurrences. HARR, by com-parison, derives its affinity from dataset statistics alone, and Panel (a) reveals the resulting distortion. It assigns mild and moderate an identical score of 1.00 and pushes normal away from every abnormal level, thereby flattening the fine-grained progression that separates one clinical stage from the next. The contrast at the value level in turn carries over to the sample level without further intervention. The faithful gradient of GRACE divides the patients into two compact clusters in Panel (d), whereas the collapsed affinity of HARR leaves the same patients interleaved in Panel (c). Overall, semantic grounding enables GRACE to recover the genuine structure of an ordinal attribute, and the correct linear order follows as a natural product of that grounding and not as a target built into the model. V. C ONCLUDING REMARKS 
+
+In modern data engineering, clustering mixed tabular data serves as a fundamental technique for the label-free orga-nization, cohort discovery, and exploratory analysis of het-erogeneous records. To advance this critical capability, this paper presents GRACE, a scalable framework that practically injects LLM-derived world knowledge into the clustering pipeline. To circumvent the prohibitive token and temporal overheads inherent to iterative LLM queries, GRACE shifts semantic acquisition to the attribute-value level. This one-shot grounding extracts reusable semantic anchors, breaking the scalability bottleneck of LLM-assisted metric learning. Furthermore, to guarantee the faithfulness of the external knowledge and prevent semantic hallucinations from distort-ing actual data groupings, GRACE strictly cross-validates these conceptual affinities against dataset-internal statistical evidence. This dual-view calibration yields a robust metric space, ensuring the resulting clusters achieve superior accuracy alongside conceptual interpretability. Building upon this archi-tecture, we further introduce GRACE-A, an approximation-based variant that reduces the computational complexity to linear time. GRACE-A delivers an ultra-efficient yet precise solution, ensuring that LLM-enhanced metric learning remains computationally feasible even for massive-scale datasets. Despite the above-mentioned merits, the current one-shot LLM grounding mechanism inherently assumes an offline batch setting, requiring the complete attribute value space to be fully observable before metric construction. Given the increas-ingly frequent updates in modern databases, extending our framework to efficiently accommodate emerging distributional shifts of mixed data on the fly presents an important avenue for future research. REFERENCES [1] B. Pu, X. Lv, J. Yang, X. Dong, Y. Lin et al. , “Leveraging anatomical consistency for multi-object detection in ultrasound images via source-free unsupervised domain adaptation,” in Proceedings of the 39th AAAI Conference on Artificial Intelligence , 2025, pp. 6532–6540. [2] S. Shields, O. Withington, and E. Melcer, “Designer difficulties: Visu-alizing the possibility spaces of dynamic difficulty adjustment systems,” in Proceedings of the 21st AAAI Conference on Artificial Intelligence and Interactive Digital Entertainment , 2025, pp. 315–325. [3] F. Spurio, E. Bahrami, G. Francesca, and J. Gall, “Hierarchical vector quantization for unsupervised action segmentation,” in Proceedings of the 39th AAAI Conference on Artificial Intelligence , 2025, pp. 6996– 7005. [4] Y. Shi, Y.-K. Wang, X.-P. Tian, T.-Y. Zhang, B. Yao et al. , “Speheatal: A cluster-enhanced segmentation method for sperm morphology analysis,” in Proceedings of the 39th AAAI Conference on Artificial Intelligence ,2025, pp. 729–737. [5] J. Kim, K. Lee, and T. Park, “To predict or not to predict? proportionally masked autoencoders for tabular data imputation,” in Proceedings of the 39th AAAI Conference on Artificial Intelligence , 2025, pp. 17 886– 17 894. [6] J. Shi, M. Xu, H. Hua, H. Zhang et al. , “Tabdiff: a mixed-type diffusion model for tabular data generation,” in Proceedings of the 13th International Conference on Learning Representations , 2025. [7] A. Stephan, L. Miklautz, K. Sidak, J. P. Wahle et al. , “Text-guided image clustering,” in Proceedings of the 18th Conference of the European Chapter of the Association for Computational Linguistics , 2024, pp. 2960–2976. [8] C. Zhu, L. Cao, Q. Liu, J. Yin et al. , “Heterogeneous metric learning of categorical data with hierarchical couplings,” IEEE Transactions on Knowledge and Data Engineering , vol. 30, no. 7, pp. 1254–1267, 2018. [9] C. Zhu, L. Cao, and J. Yin, “Unsupervised heterogeneous coupling learning for categorical representation,” IEEE Transactions on Pattern Analysis and Machine Intelligence , vol. 44, no. 1, pp. 533–549, 2022. [10] Y. Zhang and Y.-M. Cheung, “Graph-based dissimilarity measurement for cluster analysis of any-type-attributed data,” IEEE Transactions on Neural Networks and Learning Systems , vol. 34, no. 9, pp. 6530–6544, 2023. [11] Y. Zhang, M. Zhao, Y. Chen, Y. Lu et al. , “Learning unified distance metric for heterogeneous attribute data clustering,” Expert Systems with Applications , vol. 273, p. 126738, 2025. [12] J. Chen, Y. Ji, R. Zou, Y. Zhang et al. , “QGRL: Quaternion graph representation learning for heterogeneous feature data clustering,” in 
+
+Proceedings of the 30th ACM Special Interest Group on Knowledge Discovery and Data Mining Conference on Knowledge Discovery and Data Mining , 2024, pp. 297–306. [13] J. Svirsky and O. Lindenbaum, “Interpretable deep clustering for tabular data,” in Proceedings of the 41st International Conference on Machine Learning , 2024, pp. 47 314–47 330. [14] G. Gu´ erard and S. Djebali, “Mixed data clustering survey and chal-lenges,” SN Computer Science , vol. 6, no. 8, p. 939, 2025. [15] Y. Zhang, M. Zhao, Y. Zhang, and Y.-M. Cheung, “Trending applications of large language models: A user perspective survey,” IEEE Transactions on Artificial Intelligence , vol. 6, no. 1, pp. 1–20, 2025. [16] X. Du and K. Tanaka-Ishii, “Information-theoretic generative clustering of documents,” in Proceedings of the 39th AAAI Conference on Artificial Intelligence , 2025, pp. 16 408–16 417. [17] Y. Zhang, Z. Wang, and J. Shang, “ClusterLLM: Large language models as a guide for text clustering,” in Proceedings of the 27th Conference on Empirical Methods in Natural Language Processing , 2023, pp. 13 903– 13 920. [18] V. Viswanathan, K. Gashteovski, C. Lawrence, T. Wu et al. , “Large language models enable few-shot clustering,” Transactions of the Asso-ciation for Computational Linguistics , vol. 12, pp. 321–333, 2024. [19] D. Ienco, R. G. Pensa, and R. Meo, “From context to distance: Learning dissimilarity for categorical data clustering,” ACM Transactions on Knowledge Discovery from Data , vol. 6, no. 1, pp. 1–25, 2012. [20] S. Jian, L. Cao, G. Pang, K. Lu et al. , “Embedding-based representation of categorical data by hierarchical value coupling learning,” in Proceed-ings of the 26th International Joint Conference on Artificial Intelligence ,2017, pp. 1937–1943. [21] S. Jian, G. Pang, L. Cao, K. Lu et al. , “CURE: Flexible categorical data representation by hierarchical coupling learning,” IEEE Transactions on Knowledge and Data Engineering , vol. 31, no. 5, pp. 853–866, 2019. [22] Z. Huang, “Extensions to the k-means algorithm for clustering large data sets with categorical values,” Data Mining and Knowledge Discovery ,vol. 2, no. 3, pp. 283–304, 1998. [23] J. C. Gower, “A general coefficient of similarity and some of its properties,” Biometrics , vol. 27, no. 4, pp. 857–871, 1971. [24] W. An, W. Shi, F. Tian, H. Lin, Q. Wang et al. , “Generalized category discovery with large language models in the loop,” in Proceedings of the 62nd Annual Meeting of the Association for Computational Linguistics: Findings , 2024, pp. 8653–8665. [25] D. Zhang, F. Nan, X. Wei, S.-W. Li et al. , “Supporting clustering with contrastive learning,” in Proceedings of the 10th Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies , 2021, pp. 5419–5430. [26] Y. Li, P. Hu, D. Peng, J. Lv et al. , “Image clustering with external guidance,” in Proceedings of the 41st International Conference on Machine Learning , 2024, pp. 27 890–27 902. [27] S. Hegselmann, A. Buendia, H. Lang et al. , “Tabllm: Few-shot classifi-cation of tabular data with large language models,” in Proceedings of the 26th International Conference on Artificial Intelligence and Statistics ,2023, pp. 5549–5581. [28] V. Borisov, K. Seßler, T. Leemann, M. Pawelczyk, and G. Kasneci, “Language models are realistic tabular data generators,” in Proceedings of the 11th International Conference on Learning Representations , 2023. [29] N. Hollmann, S. M¨ uller, and F. Hutter, “Large language models for automated data science: Introducing caafe for context-aware automated feature engineering,” in Proceedings of the 37th International Con-ference on Neural Information Processing Systems , 2023, pp. 44 753– 44 775. [30] S. Han, J. Yoon, S. O. Arik, and T. Pfister, “Large language models can automatically engineer features for few-shot tabular learning,” in 
+
+Proceedings of the 41st International Conference on Machine Learning ,2024, pp. 17 454–17 479. [31] Z. Yang, X. Liao, Y. Zhang, and Y.-M. Cheung, “Bridging the semantic gap for categorical data clustering via large language models,” arXiv preprint arXiv:2601.01162 , 2026. [32] C. Guo and F. Berkhahn, “Entity embeddings of categorical variables,” 
+
+arXiv:1604.06737 , 2016. [33] Y. Gorishniy, I. Rubachev, V. Khrulkov, and A. Babenko, “Revisiting deep learning models for tabular data,” Proceedings of the 35th Interna-tional Conference on Neural Information Processing Systems , vol. 34, pp. 18 932–18 943, 2021. [34] Q. Zhu, J. Feng, and J. Huang, “Natural neighbor: A self-adaptive neighborhood method without parameter k,” Pattern recognition letters ,vol. 80, pp. 30–36, 2016. [35] A. Blum and T. Mitchell, “Combining labeled and unlabeled data with co-training,” in Proceedings of the 7th annual conference on Computational learning theory , 1998, pp. 92–100. [36] A. v. d. Oord, Y. Li, and O. Vinyals, “Representation learning with contrastive predictive coding,” arXiv:1807.03748 , 2018. [37] T. Gao, X. Yao, and D. Chen, “Simcse: Simple contrastive learning of sentence embeddings,” in Proceedings of the 25th Conference on Empirical Methods in Natural Language Processing , 2021, pp. 6894– 6910. [38] I. Loshchilov and F. Hutter, “Decoupled weight decay regularization,” in Proceedings of the 7th International Conference on Learning Repre-sentations , 2019. [39] J. Fan, Y. Tu, Z. Zhang, M. Zhao, and H. Zhang, “A simple approach to automated spectral clustering,” in Proceedings of the 35th International Conference on Neural Information Processing Systems , 2022, pp. 9907– 9921. [40] A. Ng, M. Jordan, and Y. Weiss, “On spectral clustering: Analysis and an algorithm,” Proceedings of the 15th International Conference on Neural Information Processing Systems , vol. 14, 2001. [41] Z. Huang et al. , “Clustering large data sets with mixed numeric and categorical values,” in Proceedings of the 1st pacific-asia conference on knowledge discovery and data mining , 1997, pp. 21–34. [42] M. Zhao, Z. Huang, Y. Lu, M. Li, Y. Zhang et al. , “Break the tie: Learning cluster-customized category relationships for categorical data clustering,” arXiv:2511.09049 , 2025. [43] S. Cai, Y. Zhang, X. Luo et al. , “Robust categorical data clustering guided by multi-granular competitive learning,” in Proceedings of the 44th IEEE International Conference on Distributed Computing Systems ,2024, pp. 288–299. [44] E. Mousavi and M. Sehhati, “A generalized multi-aspect distance metric for mixed-type data clustering,” Pattern Recognition , vol. 138, p. 109353, 2023. [45] M. Zhao, S. Feng, Y. Zhang, M. Li et al. , “Learning order forest for qualitative-attribute data clustering,” in Proceedings of the 27th European Conference on Artificial Intelligence , 2024, pp. 1943–1950. [46] L. Hu, M. Jiang, X. Liu, and Z. He, “Significance-based decision tree for interpretable categorical data clustering,” Information Sciences , vol. 690, p. 121588, 2025. [47] Y. Zhang, M. Zhao, H. Jia, M. Li, Y. Lu et al. , “Categorical data clustering via value order estimated distance metric learning,” in Pro-ceedings of the 52nd ACM Special Interest Group on Management of Data Conference , 2025, pp. 1–24. [48] Y. Zhang, R. Zou, Y. Zhang, Y. Zhang et al. , “Adaptive micro partition and hierarchical merging for accurate mixed data clustering,” Complex & Intelligent Systems , vol. 11, no. 1, p. 84, 2025. [49] D. Dua and C. Graff, “UCI machine learning repository,” 2017. [50] L. Hubert and P. Arabie, “Comparing partitions,” Journal of classifica-tion , vol. 2, no. 1, pp. 193–218, 1985. [51] A. Strehl and J. Ghosh, “Cluster ensembles—a knowledge reuse frame-work for combining multiple partitions,” Journal of machine learning research , vol. 3, no. Dec, pp. 583–617, 2002. [52] W. Xu, X. Liu, and Y. Gong, “Document clustering based on non-negative matrix factorization,” in Proceedings of the 26th annual interna-tional ACM Special Interest Group on Information Retrieval conference on Research and development in informaion retrieval , 2003, pp. 267– 273.

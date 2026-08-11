@@ -1,0 +1,54 @@
+{
+  "label": "2026-08-11",
+  "date": "2026-08-11",
+  "generated_at": "2026-08-11T21:31:15",
+  "count": 3,
+  "papers": [
+    {
+      "paper_id": "202608/11/2608.07881v1-grace-llm-grounded-semantic-metric-spaces-for-scalable-mixed-data-clustering",
+      "section": "deep",
+      "title_en": "GRACE: LLM-Grounded Semantic Metric Spaces for Scalable Mixed-Data Clustering",
+      "authors": "Zihua Yang, Zhencheng Xie, Junyang Chen, Liang Xie, Yiqun Zhang, Mengke Li, Yang Lu",
+      "date": "2026-08-08",
+      "pdf": "https://arxiv.org/pdf/2608.07881v1",
+      "score": "10.0",
+      "evidence": "利用大语言模型构建语义度量空间进行混合数据聚类",
+      "tldr": "混合表格数据聚类需要统一度量空间，传统方法仅依赖数据集内部统计，忽略外部世界知识。GRACE通过多视角LLM查询策略在属性-值级别获取语义，将异构值映射为知识描述，一次性嵌入统一空间，避免迭代优化开销。同时交叉验证外部语义与内部统计，保证与数据聚类结构对齐。在11个对比方法中，GRACE在保持与传统方法可扩展性的同时，显著提升聚类准确性和可解释性。",
+      "tags": "query:ac",
+      "abstract_en": "Clustering mixed tabular data requires a unified metric space to bridge the inherent heterogeneity between continuous numerical measurements and discrete categorical symbols. Traditionally, algorithms rely entirely on dataset-internal statistics to estimate categorical relationships, which confines the learned metric to empirical co-occurrences and ignores conceptually obvious yet statistically unobserved affinities. Although LLMs offer external world knowledge, applying their text-centric reasoning to highly abstract tabular concepts presents significant challenges. Bridging this modality gap to construct a semantically complete metric typically requires embedding LLMs into iterative metric learning loops to dynamically optimize cross-modality representations. This incurs intractable computational overhead, forcing a compromise between semantic enrichment and scalability. Therefore, we propose GRACE, an LLM-grounded framework for scalable mixed-data clustering. GRACE shifts semantic acquisition to the attribute-value level via a multi-perspective LLM querying strategy, mapping heterogeneous values into knowledge-informed descriptions. Crucially, this one-shot grounding extracts general-purpose semantic representations that embed heterogeneous attributes into a unified space, decoupling expensive LLM invocation from iterative optimization. Furthermore, GRACE cross-validates these external semantics against dataset-internal statistical evidence to ensure alignment with the dataset-specific cluster structure. Ultimately, GRACE matches the scalability of conventional statistics-driven baselines while achieving superior clustering accuracy and conceptual interpretability over 11 competing methods. The source code is available at https://github.com/develop-yang/GRACE-GRACE-A",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202608/11/2608.07352v1-learning-nearest-neighbor-maps-from-adaptive-queries",
+      "section": "quick",
+      "title_en": "Learning Nearest-Neighbor Maps from Adaptive Queries",
+      "authors": "Hadley Black, Geelon So",
+      "date": "2026-08-07",
+      "pdf": "https://arxiv.org/pdf/2608.07352v1",
+      "score": "6.0",
+      "evidence": "通过自适应查询恢复隐藏点集，与主动聚类的查询策略相关",
+      "tldr": "本文研究用自适应最近邻查询重构隐藏点集的问题。作者将之前局限于超立方体与单位球面的分析推广到一般范数，证明最坏情况查询复杂度为Θ(nκ)，κ为亲吻数。针对欧氏球面，利用随机化维度减少预处理，将查询复杂度从O(nd)降至O(min(n,d))；而球体域即使n=2也需exp(Ω(d))次查询。该结果揭示了球面与球体在查询复杂度上的显著分歧，并给出紧界。",
+      "tags": "query:active-clust",
+      "abstract_en": "We study the problem of learning nearest-neighbor maps from adaptive queries, which is equivalent to the following problem of reconstructing a hidden set $H$ via a nearest-neighbor query oracle. Let $K \\subset \\mathbb{R}^d$ be a compact domain in a normed space $(\\mathbb{R}^d,\\| \\cdot\\|)$ and let $H \\subset K$ be a hidden set of $n$ points. Upon querying $q \\in K$, the oracle returns some $h \\in H$ with minimum distance from $q$. How many queries are required to exactly recover $H$? Previous work has studied this question in specific domains, namely the Boolean hypercube and the $\\ell_2$-unit sphere. We generalize previous work and prove the tight worst-case query complexity bound of $Θ(nκ)$, where $κ$ is the kissing number of the underlying norm.   In the Euclidean norm, obtaining tight asymptotic bounds on $κ$ is a significant open question, although it is known that $κ= \\exp(Θ(d))$. Our second set of results shows that an exponential dependence on $d$ is required even in natural Euclidean domains: $\\exp(Ω(d))$ queries are needed in the ball, even when $n=2$, and $n\\exp(Ω(d))$ queries are needed in the cone.   Lastly, we prove a sharper upper bound in the Euclidean sphere. Here, $d$ can be replaced by $\\min(n,d)$ via a dimension reduction preprocessing step. This is a randomized version of a procedure due to Prabhu-Woodruff (ICML 2024) where we improve the query complexity from $O(nd)$ to $O(\\min(n,d))$. This reveals a striking contrast between the sphere and the ball: when $n = O(1)$, the sphere admits an $O(1)$ query algorithm, whereas the ball requires $\\exp(Ω(d))$.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202608/11/2608.08418v1-learning-deep-modality-shared-self-expressiveness-for-image-clustering-with-textual-information",
+      "section": "quick",
+      "title_en": "Learning Deep Modality-Shared Self-Expressiveness for Image Clustering with Textual Information",
+      "authors": "Xianghan Meng, Wei He, Zhiyuan Huang, Chun-Guang Li",
+      "date": "2026-08-09",
+      "pdf": "https://arxiv.org/pdf/2608.08418v1",
+      "score": "6.0",
+      "evidence": "利用视觉语言模型文本信息进行图像聚类",
+      "tldr": "图像聚类结合文本信息有前景，但现有方法直接对齐跨模态表示，忽略模态内结构，易导致不可靠对齐。为此，提出模态共享自表达模型DeepMORSE，同时学习跨模态结构与子空间表示，并证明其系数可抑制类间噪声。在六个基准上均获提升，其中UCF-101、DTD-47、ImageNet-Dogs超3%。学习表示可迁移至图像检索与零样本分类，无需任务特定损失或后处理。",
+      "tags": "query:ac",
+      "abstract_en": "Leveraging textual information for image clustering has emerged as a promising direction, largely owing to the powerful representations learned by Vision-Language Models (VLMs). Existing approaches typically retrieve a textual counterpart for each image and then refine multimodal representations by directly enforcing cross-modal agreement, e.g., maximizing image-text similarity inherited from pretrained VLMs. However, such a strategy aligns heterogeneous representations across modalities without explicitly modeling the intrinsic structure within each modality and thus might yield unreliable alignment or distort modality-specific structures that are crucial for clustering. In this paper, we propose a simple but principled approach, termed deep modality-shared self-expressive model (DeepMORSE), which discovers cross-modal structures via a modality-shared self-expressive model and simultaneously learns structured representations that conform to a union of modality-specific subspaces. Moreover, we theoretically justify that the modality-shared self-expressive coefficients suppress inter-class noise towards a subspace-preserving solution, and show that mini-batch optimization procedure introduces an implicit regularization onto the self-expressive model. We evaluate our DeepMORSE on six widely used image clustering benchmarks and observe performance improvements exceeding 3% on the UCF-101, DTD-47, and ImageNet-Dogs datasets. In addition, we demonstrate the strong transferability of the learned representations by achieving state-of-the-art performance on downstream tasks such as image retrieval and zero-shot classification---without requiring any task-specific losses or post-processing. The code is available at: https://github.com/mengxianghan123/DeepMORSE.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

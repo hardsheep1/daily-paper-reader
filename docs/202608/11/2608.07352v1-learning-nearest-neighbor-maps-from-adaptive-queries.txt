@@ -1,0 +1,686 @@
+Title: Learning Nearest-Neighbor Maps from Adaptive Queries
+
+URL Source: https://arxiv.org/pdf/2608.07352v1
+
+Published Time: Mon, 10 Aug 2026 01:04:44 GMT
+
+Number of Pages: 16
+
+Markdown Content:
+# Learning Nearest-Neighbor Maps from Adaptive Queries 
+
+Hadley Black ∗ Geelon So †
+
+August 10, 2026 
+
+Abstract 
+
+We study the problem of learning nearest-neighbor maps from adaptive queries, which is equivalent to the following problem of reconstructing a hidden set H via a nearest-neighbor query oracle. Let K ⊂ Rd be a compact domain in a normed space (Rd, ∥ · ∥ ) and let H ⊂ K be a hidden set of n points. Upon querying q ∈ K, the oracle returns some h ∈ H with minimum distance from q. How many queries are required to exactly recover H? Previous work has studied this question in specific domains, namely the Boolean hypercube and the ℓ2-unit sphere. We generalize previous work and prove the tight worst-case query complexity bound of Θ( nκ ),where κ is the kissing number of the underlying norm. In the Euclidean norm, obtaining tight asymptotic bounds on κ is a significant open question, although it is known that κ = exp(Θ( d)) . Our second set of results shows that an exponential dependence on d is required even in natural Euclidean domains: exp(Ω( d)) queries are needed in the ball, even when n = 2 , and n exp(Ω( d)) queries are needed in the cone. Lastly, we prove a sharper upper bound in the Euclidean sphere. Here, d can be replaced by min( n, d ) via a dimension reduction preprocessing step. This is a randomized version of a procedure due to Prabhu-Woodruff (ICML 2024) where we improve the query complexity from 
+
+O(nd ) to O(min( n, d )) . This reveals a striking contrast between the sphere and the ball: when 
+
+n = O(1) , the sphere admits an O(1) query algorithm, whereas the ball requires exp(Ω( d)) .
+
+> ∗
+
+CUNY Baruch College. hadley.black@baruch.cuny.edu .
+
+> †
+
+ETH Zürich. geelon.so@inf.ethz.ch .arXiv:2608.07352v1 [cs.DS] 7 Aug 2026 1 Introduction 
+
+We study learning nearest-neighbor maps from adaptive queries . Let K be a compact metric space, and let H ⊆ K be a finite set of hidden points. A map NN H : K → K is a nearest-neighbor map of H
+
+if, for each q ∈ K, it returns a point in H that minimizes distance to q. In this problem, the goal of a learner is to recover any nearest-neighbor map of H. To achieve this, the learner may make queries to a nearest-neighbor oracle: given q ∈ K, the oracle returns a nearest neighbor NN H (q).Furthermore, the learner may adaptively interact with the oracle over many rounds. We would like to understand the query complexity of learning a nearest neighbor map: how many queries does a learner need to compute any nearest-neighbor map of H, and how should it select them? There are a few natural ways to view this problem. In a model of exact query learning [Ang87], a learner would like to identify an underlying target function by adaptively probing it. The problem we study extends the query learning model to the class of nearest-neighbor maps, which is in itself fundamental to many areas of computer science, machine learning, information retrieval, and computational geometry [Yia93, DGL96, IM98, Aur91]. Additionally, the nearest-neighbor map is often treated as a black-box primitive for solving downstream problems in computational geometry, such as clustering, estimating statistics about a point set, simulating a separation oracle, computing range queries, to name a few [HKMR16, DKMR11, BAK +09, YGZ +16]. This black box is precisely the oracle that is available to our learner, and the goal here is to understand how many calls to the black box are needed to, as it were, open it up. Finally, there is a particularly elegant and equivalent formulation of the problem, which we will heavily make use of. It follows from the fact that a learner is able to compute a nearest-neighbor map of H if and only if it knows what H is. Thus, the problem is one of reconstructing the hidden point set H from adaptive nearest-neighbor queries . Two specific instances of the problem formulated this way were introduced and studied by [PW24]. They focused on when the domain K is the Boolean hypercube with Hamming distance, and when it is the unit sphere with Euclidean distance; both in high dimensions. The motivation comes from viewing the hidden set H as a dictionary of binary or spherical codes, and the nearest-neighbor map as an error-correcting mechanism. 
+
+1.1 Main Results 
+
+In this work, we let the domain K be any compact subset of a d-dimensional normed space (Rd, ∥·∥ ).For any hidden set H ⊆ K, the nearest-neighbor map NN H of H is defined by 
+
+NN H (q) ∈ arg min 
+
+> h∈H
+
+∥q − h∥.This setting is reasonably general, and it includes the Boolean hypercube in (Rd, ℓ 1) and the unit sphere in (Rd, ℓ 2) studied in [PW24]. We show that the complexity of any nearest neighbor map depends on fundamental geometric properties of the domain K and the norm ∥ · ∥ . Our core result characterizes the minimax query complexity of learning nearest-neighbor maps in normed spaces. 
+
+A minimax-optimal learner. It turns out that the kissing number controls the worst-case query complexity. The usual definition of this number is the maximum number of unit balls with disjoint interior that can be arranged to simultaneously touch (kiss) a central unit ball. In normed spaces, the kissing number is also called the Hadwiger number [Swa18], and has an equivalent definition: 1Definition 1.1 (Kissing number) . The kissing number of the norm ∥ · ∥ is the maximum number of points that can be packed onto the unit sphere with pairwise distance at least one 
+
+κ := max |U | : ∥u∥ = 1 and ∥u − v∥ ≥ 1 for all u̸ = v ∈ U .
+
+Intuitively, the kissing number quantifies how many ‘directions’ there are at a fixed scale, and an elementary fact is that it is always upper bounded by 3d [Had57]. If |H| = n, this work shows that the minimax query complexity of learning a nearest-neighbor map is nκ , up to factors of 2. 
+
+Theorem 1.2 (A minimax-optimal learner) . Let ∥ · ∥ have kissing number κ. For each n ≥ 2:
+
+• There is an adaptive, deterministic algorithm which, for any non-empty, compact domain K ⊂ Rd,learns any unknown set H ⊆ K of size n using at most 2nκ nearest-neighbor queries. Moreover, the algorithm does not need to know n beforehand and terminates within 2n rounds. 
+
+• There is a compact domain K ⊂ Rd on which any randomized adaptive algorithm that exactly learns any n-point hidden set H ⊆ K must make at least ⌊n/ 2⌋ · (κ − 1) queries. 
+
+Interestingly, a closely-related upper bound was previously discovered in passing; an algorithm designed to solve a clustering problem also happens to solve this one [HKMR16, Observation 3.3]. It uses at most cdn queries where cd is an unspecified, dimension-dependent constant. Theorem 1.2 pins down this constant, establishing a tight, and somewhat surprising, connection to the kissing number of the norm. It is arguably not obvious that the kissing number, which deals with balls, should be the right quantity for controlling hardness over arbitrary compact sets. The algorithm realizing the upper bound (Alg. 1) is a simple greedy algorithm, it is completely general, and this result shows that it is essentially optimal against worst-case problem instances. A natural question to then ask is: what happens in more structured settings? 
+
+Upper bounds in Euclidean space. Here, we focus on d-dimensional Euclidean space (Rd, ℓ 2).The bounds in Theorem 1.2 depend on the ℓ2-kissing number in Rd, which we denote κ2,d .Determining the value of κ2,d is a classic geometric problem going back to an argument in 1694 between Isaac Newton and David Gregory [BDM12]. For interest, Table 1 gives a few examples where κ2,d has been computed. In general, the tightest known asymptotic bounds are 
+
+2(0 .2075+ o(1)) d ≤ κ2,d ≤ 2(0 .401+ o(1)) d,
+
+where the upper bound is given by [KL78] and the lower bound is by [Wyn65]. With these bounds on κ2,d , it turns out to be quite interesting to compare Theorem 1.2 with the earlier results in [PW24]. In the following, we consider learning an n-point hidden set H in K.• Let K be the unit ℓ2-sphere. Our algorithm uses O(n20.402 d) queries, beating the prior query complexity of O(n⌊d/ 2⌋) by a constant factor in the exponent (Theorem 4.2 of [PW24]). • Let K be the Boolean hypercube {0, 1}d embedded in ℓ2-space (Rd, ℓ 2).1 There is an algo-rithm specialized to the hypercube that uses 2O(√d·log d·log n) queries (Theorem 3.1 of [PW24]). Thus, it uses significantly fewer queries than our worst-case lower bound of n · 2Ω( d).                
+
+> 1Technically, [PW24] considered the Boolean hypercube with the ℓ1-distance. However, in the context of computing nearest neighbors, the ℓ1and ℓ2distances are equivalent when restricted to this domain. In particular, the distances are monotonically related since ∥x−y∥1=∥x−y∥22whenever x, y ∈ { 0,1}d.
+
+2d κ2,d Reference 1 2 trivial 
+
+2 6 folklore 
+
+3 12 [SvdW52] 4 24 [Mus08] 8 240 [Lev79, OS79] 24 196560 [Lev79, OS79] Table 1: Values of d where κ2,d has been determined. 
+
+The second point does not contradict our lower bound as, evidently, the Boolean hypercube does not yield worst-case problem instances. It does point out that the kissing number only controls the 
+
+minimax query complexity, and that certain domains K may exhibit additional structure. This raises the question: how pathological is the lower bound in Theorem 1.2? Or, in other words, is learning the nearest-neighbor map easier on more natural domains? 
+
+Lower bounds in Euclidean space. The next result partially addresses the previous questions. We provide quantitative lower bounds for specific domains—namely the closed ℓ2-ball and cone. They arguably show that bounds obtained by the kissing number are fairly tight even in nice do-mains. 
+
+Theorem 1.3 (Lower bounds in nice domains) . Let n ≥ 2. Suppose that a randomized adaptive algo-rithm exactly recovers any n-point hidden set H ⊂ K with probability at least 1/10 .
+
+• If K ⊂ Rd is the closed ℓ2-unit ball, the algorithm makes at least Ω  n + 2 0.2075 d queries. 
+
+• If K ⊂ Rd is the ℓ2-cone Cd, then the algorithm makes at least Ω  n · 20.0156 d queries, where 
+
+Cd := (s, v ) ∈ [0 , 1] × Rd−1 : ∥v∥2 ≤ s .
+
+The lower bound for the ball is an additive bound of n + 2 Ω( d), where the constant in the expo-nent is 12 log 2(4 /3) ≈ 0.2075 . This corresponds to the tightest known lower bound of κ2,d [Wyn65]. The lower bound for the cone gives a multiplicative bound n · 2Ω( d). While we did not attempt to optimize the constant in this exponent, this still shows a lower bound in a ‘nice’ domain that is on the same order as the worst-case lower bound Ω( n · κ2,d ) from Theorem 1.2. This lower bound gives some evidence that our minimax result may be indicative of hardness even for many non-worst-case problem instances. If so, this is unfortunate because a query com-plexity that is linear in κ, which is exponential in dimension for Euclidean space, quickly becomes intractable when d grows. This leads us to our next question: are there reasonable settings where a learner, given additional structure, may circumvent the general bound Θ( n · κ)?
+
+Learning a rank-deficient set on the sphere. For our final result, we let K = Sd−1 be the ℓ2-unit sphere in Rd. We also assume that the hidden set H ⊂ K has rank k = dim(aff( H)) , which is the dimension of the affine span of H. We do not assume that the learner knows the value of k.3This setting is inspired by [PW24], who observed that when the hidden set H lies on the sphere, it is possible to exactly recover its affine span using O(kd ) deterministic nearest-neighbor queries. This subroutine enables a learner to efficiently reduce the dimensionality of the problem to min( k, d ). We contribute a simplified, randomized dimension-reduction subroutine using O(k)
+
+nearest-neighbor queries that almost surely recovers the affine span aff( H).
+
+Lemma 1.4 (Randomized dimension reduction in Sd−1). Let H ⊂ Sd−1 be a set in the ℓ2-unit sphere and with rank k. There is a randomized algorithm using 2k + 1 queries that almost surely returns an affine basis u1, . . . , u k ∈ H. That is, with probability 1, their affine span contains H,
+
+H ⊆ aff( u1, . . . , u k).
+
+Moreover, the algorithm does not need to know k beforehand and terminates within k + 1 rounds. 
+
+By first running the subroutine provided by Lemma 1.4, a learner can first use 2n + 1 queries to recover aff( H), reducing the dimensionality of the problem to k. Then, by proceeding with the general algorithm Alg. 1 from Theorem 1.2 within aff( H), using 2n · κ2,k queries. We obtain: 
+
+Corollary 1.5 (Specialized algorithm in Sd−1). There is a randomized, adaptive algorithm that almost surely learns any n-point hidden set H ⊂ Sd−1 using (2 n + 1) + 2 n · min {κ2,n , κ 2,d } nearest-neighbor queries. Moreover, the algorithm does not need to know n beforehand and terminates within 3n + 1 rounds. 
+
+Notice that this result shows a remarkable separation between the ℓ2-sphere and the ℓ2-ball. When there is only a constant number of hidden points, Corollary 1.5 yields a constant O(1) -query complexity on the sphere. In contrast, Theorem 1.3 proves an exponential exp(Ω( d)) query com-plexity lower bound for the ball even when there are only two hidden points. 
+
+1.2 Open Questions 
+
+This work builds substantially on the prior work [PW24]. Nevertheless, to our knowledge, it is also the first to study, in a fairly general setting, the problem of learning a nearest-neighbor map from adaptive queries. This simple question arises in the intersection of query learning and com-putational geometry. For normed spaces, our minimax query complexity already finds new con-nections to a classic notion of kissing numbers. Given how unexplored this problem is, there are many natural directions for follow-up. We list a few here. • Generalizations. We studied the problem in normed spaces, but it also makes sense in general metric spaces, or other canonical families of metric spaces like graphs. What happens there? • Average-case hardness and other hardness parameters. Are there natural distributions under which random instances are easier? Furthermore, can we explain more generally why the problem is easier on the Boolean hypercube, and low-rank hidden sets on the sphere? • Noisy and inexact oracles. What happens if the nearest-neighbor oracle is not always correct or only outputs an approximate nearest neighbor? • Fine-grained lower bounds. Can our lower bounds for the ball and cone in ℓ2 be extended to all compact domains with non-empty interior? Can they be generalized to ℓp-norms? • Computation. In this paper, we are concerned only with query complexity. Are there settings that admit computationally-efficient algorithms? 42 Characterizing Query Complexity in Normed Spaces 
+
+In this section we prove Theorem 1.2 which characterizes the query complexity for a general com-pact set K ⊂ Rd in a finite-dimension real normed space, (Rd, ∥ · ∥ ), in terms of the kissing number, 
+
+κ := κ∥·∥ , of the space (Definition 1.1). In Section 2.1, we show that there is a deterministic 2n-round algorithm that recovers any hidden set H ⊆ K of size n using at most 2nκ queries. In Section 2.2 we show that there always exists a compact set K where Ω( nκ ) queries are needed. 
+
+2.1 Upper Bound 
+
+Our algorithm works by maintaining a set of discovered points X ⊆ H, the first of which can be obtained with a single arbitrary query anywhere in K. Given non-empty X, we consider the decomposition of K into Voronoi cells induced by X. For each x ∈ X, define 
+
+VX (x) = z ∈ K : ∥z − x∥ ≤ ∥ z − x′∥ for all x′ ∈ X (1) as the set of points in K whose nearest-neighbor in H is x. Note that these cells cover K and are interior-disjoint. A key observation is the following. 
+
+Observation 2.1. Querying any q ∈ VX (x) must either (i) discover a new h ∈ H \ X, or (ii) return x
+
+(or an equidistant point y ∈ X in the case that q lies on the boundary of multiple cells). If (ii) occurs, we learn that no hidden points exist in the open ball around q of radius ∥q − x∥, i.e. 
+
+H ∩ B(q, ∥q − x∥) = ∅.
+
+With this in mind, suppose we query a set of points Q ⊆ VX (x) \ { x} such that these open balls form a cover of VX (x):
+
+VX (x) \ { x} ⊆ [
+
+> q∈Q
+
+B(q, ∥q − x∥).Then, by Observation 2.1 after querying Q we are guaranteed to either (a) discover a new hidden point, or (b) certify that no more hidden points exist in VX (x). In particular, note that VH (x) ⊆
+
+VX (x), and so if (b) occurs, this certifies that no undiscovered hidden points remain in VH (x).Therefore, we do not need to perform this procedure for x going forward. In conclusion, we can perform this Voronoi cell covering procedure at most twice for every point x ∈ H: once to discover 
+
+x, and once to certify the complete discovery of H ∩ VH (x). As a result, the query complexity of the entire algorithm is bounded by 2nt where t is an upper bound on the covering size. We prove the following lemma (proof deferred to Section 2.1.1) which shows we can always find a covering of size at most κ, the kissing number of the underlying normed-space. 
+
+Lemma 2.2 (Greedy tangent-ball covering) . Let V ⊆ Rd be a non-empty compact set in a normed space 
+
+(Rd, ∥ · ∥ ) with kissing number κ (Definition 1.1), and let x ∈ V . There exists a set of points Q ⊆ V \ { x},of size |Q| ≤ κ, such that 
+
+V \ { x} ⊆ [
+
+> q∈Q
+
+B q, ∥q − x∥. (2) Given Lemma 2.2 and the above discussion, we state our algorithm formally in Alg. 1. (See Fig. 1 for an illustration of an application of Lemma 2.2 during the algorithm’s execution.) 5Algorithm 1: Voronoi cell-covering algorithm  
+
+> 1
+
+Input: A non-empty compact domain K ⊂ Rd in a normed space (Rd, ∥ · ∥ ) and nearest-neighbor query access to a hidden set H ⊆ K of size |H| = n; 
+
+> 2
+
+Output: The set H; 
+
+> 3
+
+Initialization: Let x0 ∈ H be the point returned by an arbitrarily chosen initial query in K.The set X ← { x0} records the so-far discovered points and C ← ∅ contains all x ∈ X for which it has been certified that H ∩ VH (x) ⊆ X; 
+
+> 4
+
+while C̸ = X do  
+
+> 5
+
+Let VX (x) denote the Voronoi cell of x induced by X. (Recall Equation (1).);  
+
+> 6
+
+Apply Lemma 2.2 to construct a set Qx ⊆ VX (x) \ { x} satisfying Equation (2);  
+
+> 7
+
+Query all points in Qx. If some such query returns h ∈ H \ X, then set X ← X ∪ { h}.Otherwise, set C ← C ∪ { x}; 
+
+> 8
+
+end  
+
+> 9
+
+Return X;The correctness of Alg. 1 follows by the above discussion. That is, at termination the algorithm always returns the set H. To bound the query complexity, Lemma 2.2 shows that every round of queries made during an iteration of the while-loop either increments |X| or increments |C|, using at most κ queries. Each of these can be incremented at most n times and so the total number of queries is at most 2nκ . This completes the proof of the upper bound stated in Theorem 1.2. 
+
+2.1.1 Proof of Lemma 2.2 
+
+We construct Q greedily while keeping track of the region of V that is left uncovered. Initialize 
+
+R0 = V . We proceed in stages, selecting one point at a time, until V has been covered. For j ≥ 1,we let qj ∈ V denote the point chosen in stage j and let 
+
+Rj = V \ [
+
+> i≤j
+
+B qi, ∥qi − x∥.Because the balls are open, Rj is a closed subset of the compact set V , and is therefore compact. If 
+
+Rj = {x}, we stop, since this means V \ { x} has been covered. Otherwise, we select qj+1 ∈ Rj to be a point in Rj with maximum distance ∥qj+1 − x∥ from x. Such a maximizer exists by compactness of Rj , and its distance from x is non-zero since Rj̸ = {x}. For every selected point qj , we write 
+
+rj = ∥qj − x∥ > 0 and uj = qj − xrj
+
+∈ Sd−1. (3) Since R0 ⊃ R1 ⊃ · · · ⊃ Rj are nested and qj maximizes the distance from x in Rj , we have 
+
+r1 ≥ r2 ≥ · · · ≥ rj . Now, fix i < j . At the time qj is selected, it has not been covered by the ball centered at qi and so ∥qj − qi∥ ≥ ri. Writing qi = x + riui, qj = x + rj uj , applying the triangle inequality and homogeneity, we obtain 
+
+ri ≤ ∥ qi − qj ∥
+
+= ∥riui − rj uj ∥
+
+= ∥(ri − rj )ui + rj (ui − uj )∥≤ (ri − rj )∥ui∥ + rj ∥ui − uj ∥ = ri − rj + rj ∥ui − uj ∥. (4) 6Figure 1: An illustration showing an application of Lemma 2.2 in Alg. 1 under the ℓ2 norm. Black points denote the set X. Three queries q1, q 2, q 3, q 4 ∈ VX (x) are selected such that the open balls B(qi, ∥qi − x∥)   
+
+> form a cover of the Voronoi cell, VX(x)\ { x}.
+
+Rearranging terms yields ∥ui − uj ∥ ≥ 1. Thus, the selected directions U = {ui : i ≥ 1} satisfy 
+
+∥ui − uj ∥ ≥ 1 for all i̸ = j. Hence, we have |U | ≤ κ by Definition 1.1. 
+
+2.2 Lower Bound 
+
+We now prove the following lower bound, showing that our algorithm in the previous section is optimal for an arbitrary compact K in any finite-dimensional normed space. 
+
+Theorem 2.3 (Worst-case lower bound) . Suppose that a finite-dimensional normed space (Rd, ∥ · ∥ ) has kissing number κ ≥ 2. There exists a compact set K ⊂ Rd such that any randomized adaptive algorithm that exactly recovers every n-point hidden set H ⊂ K with probability Ω(1) must make at least Ω( nκ ) queries. Proof. We first give a construction for the case n = 2 . Let B ⊂ Rd be a closed unit ball centered at the origin and let U ⊂ ∂B be a set of points forming a 1-packing of the sphere ∂B of maximal size. In particular, by Definition 1.1, the size of U is 
+
+|U | = κ. 
+
+Fix the finite (compact) domain K = U ∪{ 0}. We let H ⊂ K be a randomized hidden set consisting of the origin and a point x ∈ U chosen uniformly at random 
+
+H = {0, x }.
+
+Since ∥q − 0∥ ≤ 1 ≤ ∥ q − x∥ for all q ∈ K \ { x}, a worst-case nearest neighbor oracle is 
+
+NN H (q) = 
+
+
+
+0 q̸ = xx q = x. 
+
+7In particular, any query q ∈ U \ { x} reveals no information about the hidden point x and so re-covering x is equivalent to an unstructured search on |U | = κ elements. Therefore, to success-fully recover H with Ω(1) success probability requires Ω( κ) queries for any randomized algorithm. Specifically, achieving success probability 1 requires at least κ − 1 queries. This construction easily generalizes to a set of n points, where we generate k = ⌊n/ 2⌋ inde-pendent, translated copies of the 2-point construction whose centers are sufficiently far apart. Let 
+
+v1, . . . , v k ∈ Rd be any k points such that ∥vi − vj ∥ ≥ 5 for all i̸ = j. Then, let x1, . . . , x k ∈ U be selected independently and uniformly at random. Define Kn and Hn to be the sets 
+
+Kn =
+
+> k
+
+[
+
+> i=1
+
+(vi + K) and Hn =
+
+> k
+
+[
+
+> i=1
+
+{vi, v i + xi}.
+
+By construction, every query q ∈ vi + K will return a nearest neighbor in vi + K, so no queries can be shared across copies of the problem. Therefore, recovering x1, . . . , x k requires solving k inde-pendent unstructured search problems, each on κ elements. Therefore, Ω( nκ ) queries are required for any randomized algorithm to achieve Ω(1) success probability. In the case where the success probability is 1, ⌊n/ 2⌋ · (κ − 1) queries are required. 
+
+# 3 Lower Bounds in Euclidean Convex Bodies 
+
+Our Theorem 2.3 constructs a worst-case domain on which the kissing number characterizes the query complexity. It is then natural to ask whether the problem is not as hard within a less patho-logical space. In this section, we partially address this question by proving lower bounds for natural Euclidean convex bodies, namely the ball and the cone. 
+
+3.1 Additive Lower Bound in the Ball 
+
+Our first result gives a hard construction when the domain is the closed unit ball in Rd under the 
+
+ℓ2-distance. It shows that Ω(2 0.2075 d) nearest neighbor queries are required even in the case of a two-point hidden set—one point is the origin and the other point is chosen uniformly at random from the boundary of the ball. The additive lower bound Ω( n + 2 0.2075 d) stated in Theorem 1.3 follows by combining this result with the trivial Ω( n) information-theoretic lower bound. 
+
+Theorem 3.1 (Lower bound in the ball) . Let K ⊂ Rd be the closed unit ℓ2-ball. Every randomized adaptive algorithm that recovers every 2-point hidden set with probability at least Ω(1) makes at least 
+
+Ω
+
+
+
+(4 /3) d/ 2
+
+queries .
+
+Proof. The following forms a hard, randomized 2-point hidden set. Our distribution over H is defined as follows. Let H ⊂ K be a hidden set consisting of the origin and a uniformly random point x ∈ Sd−1 on the boundary of the unit ball, 
+
+H = {0, x }.
+
+If a query NN H (q) returns x, then x must be contained in the closed ball B(q, ∥q∥). Otherwise, the distance from q to x would be greater than the distance ∥q∥ from q to the origin. In particular, 
+
+x ∈ Sd−1 ∩ B(q, ∥q∥).
+
+8This set Sd−1 ∩ B(q, ∥q∥) is contained in the spherical cap Aq where 
+
+Aq := 
+
+
+
+y ∈ Sd−1 : q⊤y
+
+∥q∥ ≥ 1/2
+
+
+
+.
+
+The surface area of this spherical cap is a standard computation (e.g. Section 1.2 of [JJP18]). We provide a version here with explicit constants for which we give a proof in Section A. 
+
+Lemma 3.2 (Surface area of a spherical cap) . Fix 0 < τ ≤ 1. For every integer d ≥ 2, let Sd−1 ⊂ Rd be the unit sphere and let 
+
+A = {x ∈ Sd−1 : x1 ≥ τ }.
+
+Then there exists a constant cτ > 0, depending only on τ , such that 
+
+vol d−1(A)vol d−1(Sd−1) ≤ cτ
+
+r 1
+
+d
+
+ 1 − τ 2d/ 2 .
+
+Let q1, . . . , q M be the (possibly random) sequence of queries that the algorithm would make if the nearest-neighbor oracle returns the origin for each query. This occurs in the event that 
+
+E =
+
+(
+
+x / ∈
+
+> M
+
+[
+
+> m=1
+
+Aqm
+
+)
+
+.
+
+Combining the fact that x is chosen uniformly from the sphere with Lemma 3.2, we obtain that the probability that this event occurs is lower bounded by 
+
+Pr ( E) ≥ 1 −
+
+> M
+
+X
+
+> m=1
+
+Pr  x ∈ Aqm
+
+ ≥ 1 − M c 
+
+ 34
+
+d/ 2
+
+,
+
+where c > 0 is a universal constant. Notice that if the right-hand side is strictly positive, the union S Aqm leaves a non-negligible part of Sd−1 uncovered. Thus, on the event E, there is almost surely no way for the learner to guess x correctly. In particular, we have 
+
+Pr  learner recovers x ≤ M c 
+
+ 34
+
+d/ 2
+
+.
+
+To recover x with success probability Ω(1) requires a query complexity M = Ω((4 /3) d/ 2).
+
+3.2 Multiplicative Lower Bound in the Cone 
+
+In the case that there are n hidden points, Theorem 3.1 implies an overall additive lower bound of Ω( n + 2 0.2075 d). The next lower bound gives a construction where a multiplicative n · exp(Ω( d)) 
+
+queries are required, showing that there are domains that admit a ‘direct-sum’ structure, where we can embed Θ( n) independent copies of a hard construction into the space. We give a construction on the high-dimensional cone; the core source of hardness is essentially the same as for the ball. 9Remark 3.3. Perhaps a more immediate approach to proving a multiplicative n · exp(Ω( d)) lower bound is to consider a high-dimensional cylinder in which n copies of a (d − 1) -dimensional hard instance from Theorem 3.1 are embedded into cross-sections. In order to make these instances completely independent requires sufficiently large distance between each consecutive cross-section, requiring the domain itself to grow with n. Thus, such a construction shows that for every n, there exists a domain Kn where n · exp(Ω( d)) 
+
+queries are needed. We believe that a much more interesting statement is to show that a single fixed domain achieves the lower bound for all n simultaneously. The following Theorem 3.4 achieves this using the cone. 
+
+Theorem 3.4 (Lower bound in the cone) . For every d ≥ 2 and height 0 < h ≤ ∞ , define the cone 
+
+Chd := (s, v ) ∈ [0 , h ] × Rd−1 : ∥v∥2 ≤ s .
+
+There are constants c1, c 2 > 0 such that the following holds. Let n ≥ 4. Every randomized adaptive algorithm that exactly recovers every n-point hidden set from a cone Chd with probability at least 1/10 must make at least 
+
+c1n exp( c2d) queries .
+
+Proof. We first modify the construction in Theorem 3.1. Let γ := 1 + √2. Define the truncated cone 
+
+Td := 
+
+
+
+(s, v ) ∈
+
+
+
+1 − 1
+
+γ , 1 + γ
+
+
+
+× Rd−1 : ∥v∥2 ≤ s
+
+
+
+.
+
+The figure to the right visualizes T2 ⊂ R2, which has been formed by cutting off the base and tip of a larger cone, shaded in gray. We also define four points. Let xL and xR be 
+
+xL = (1 − γ−1, 0, . . . , 0) and xR = (1 + γ, 0, . . . , 0) .
+
+These are visualized by the left- and rightmost points in the figure. We also let xO and xU be points of the form 
+
+xO = (1 , 0, . . . , 0) and xU ∈ { 1} × Sd−2.
+
+Choose xU uniformly at random, and let the hidden set be 
+
+HTd = {xL, x R, x O, x U }.
+
+Notice that by our choice of γ, if a query q ∈ C∞ 
+
+> d
+
+\ Td comes from the gray region, then xU is never a nearest neighbor to q,
+
+xU̸ = NN HTd (q).
+
+This is because one of xL or xR is always nearer. 
+
+xO
+
+xU
+
+xL xR
+
+Claim 3.5. There are constants c1, c 2 > 0 such that any randomized adaptive algorithm that finds xU using nearest neighbor queries in Td with probability at least 1/10 needs c1 exp( c2d) queries. 
+
+Assume Claim 3.5 for now. We can deduce the lower bound for the cone Chd . In particular, we can construct k = ⌊n/ 4⌋ disjoint and independent (scaled) copies of Td. Formally, let xiU be 10 independent draws from {1}× Sd−2 for i ∈ [k]. Let α1, . . . , α K ∈ (0 , 1) be scale parameters satisfying for all i = 1 , . . . , k − 1,
+
+0 < α i
+
+
+
+1 − 1
+
+γ
+
+
+
+< α i (1 + γ) < α i+1 
+
+
+
+1 − 1
+
+γ
+
+
+
+< α i+1 (1 + γ) < h. 
+
+Let the hidden set be constructed as follows: 
+
+H =
+
+> k
+
+[
+
+> i=1
+
+αixL, α ixR, α ixO, α ixiU .
+
+By Claim 3.5, finding αixiU requires c1 exp( c2d) nearest neighbor queries from within the scaled truncated cone αiTd. Since each of these truncated cones is disjoint, queries cannot be shared, and recovering every αixiU requires kc 1 exp( c2d) queries. Letting c1 ← c1/4 shows the lower bound. This completes the proof of Theorem 3.4. 
+
+Proof of Claim 3.5. We follow the same technique used in Theorem 3.1. Let xU = 1 ⊕ u, where 
+
+u ∈ Sd−2. The first coordinates of xU and xO coincide, so whether a point is closer to one or the other only depends on the last d − 1 coordinates. They are the points in the set 
+
+
+
+(s, v ) ∈ Td : v⊤u ≥ 12
+
+
+
+.
+
+Since ∥v∥2 ≤ s ≤ 1 + γ, any point (s, v ) in this set satisfies 
+
+v⊤u
+
+∥v∥ ≥ 12(1 + γ) .
+
+Thus, the unit vector v/ ∥v∥ must be chosen from a spherical cap with threshold τ = 12(1+ γ) .Because u ∈ Sd−2 is chosen uniformly at random, Lemma 3.2 shows that this event has bounded probability. In particular, there is a dimension-independent constant cτ > 0 such that 
+
+Pr  xU = NN H (q) ≤ cτ
+
+
+
+1 − 14(1 + γ)2
+
+(d−1) /2
+
+.
+
+As in the proof of Theorem 3.1, an algorithm that finds xU with probability at least 1/10 makes at least M queries where 
+
+1 − M c τ
+
+
+
+1 − 14(1 + γ)2
+
+(d−1) /2
+
+< 910 .
+
+The claim follows by letting c−10 = 1 − 14(1+ γ)2 , c1 = c0cτ 
+
+> 10
+
+and c2 = 12 lg c0 > 0.0156 . □
+
+# 4 Dimension Reduction in the Sphere 
+
+In this section we prove our dimension reduction Lemma 1.4 for the sphere under ℓ2-distance. The algorithm of Corollary 1.5 follows immediately by combining this lemma with Alg. 1. We denote the unit sphere by Sd−1 = {x ∈ Rd : ∥x∥2 = 1 }. Observe that for q, h ∈ Sd−1, we have 
+
+∥q − h∥22 = 2 − 2⟨q, h ⟩.
+
+11 As a result, given query q ∈ Sd−1, the ℓ2-nearest-neighbor oracle returns some h ∈ H ⊂ Sd−1 with maximum inner product ⟨q, h ⟩.To prove Lemma 1.4, we analyze the following iterative process. We maintain a set X ⊆ H of points discovered so far and at each iteration make two queries on w and −w where w is drawn uniformly from the orthogonal subspace of the affine hull of X, denoted aff( X). We argue that as long as H̸ ⊆ aff( X), then one of these queries will discover a new point with probability 1.Suppose that X ⊆ H is a nonempty set of discovered points. Fixing an arbitrary x0 ∈ X, define the linear subspace L = span ({x − x0 : x ∈ X}) and the affine subspace A = aff( X) = x0 + L.Note that X ⊂ A. Let N = L⊥ denote the orthogonal subspace of L. In particular, note that the following holds: 
+
+∀w ∈ N, x ∈ A : ⟨w, x ⟩ = ⟨w, x 0⟩. (5) The following lemma establishes the correctness of one iteration of the dimension reduction. 
+
+Lemma 4.1. Assume N̸ = {0} (equivalently, dim( L) < d ) and let w be drawn uniformly from S(N ) = 
+
+{w ∈ N : ∥w∥2 = 1 }. If H̸ ⊆ A, then 
+
+Pr  
+
+> w
+
+[NN H (w)̸ ∈ A or NN H (−w)̸ ∈ A] = 1 .
+
+In particular, querying either w or −w will return some point z ∈ H \ X with probability 1.Proof. Fix z ∈ H \ A and let p = proj N (z − x0). Since A = x0 + L, the assumption that z / ∈ A implies 
+
+p̸ = 0 . Therefore, the set 
+
+Ep = {w ∈ S(N ) : ⟨w, p ⟩ = 0 }
+
+has measure zero under the uniform distribution over S(N ). (Note that in the one-dimensional case, dim( N ) = 1 , we have that Ep is empty.) Now fix w ∈ S(N ) \ Ep, and choose σ ∈ {− 1, +1 } so that σ⟨w, p ⟩ > 0. For every x ∈ A, using 
+
+w ⊥ L and Equation (5), we have 
+
+⟨σw, z ⟩ − ⟨ σw, x ⟩ = σ⟨w, z − x0⟩ = σ⟨w, proj N (z − x0)⟩ = σ⟨w, p ⟩ > 0.
+
+Therefore, the query σw is strictly closer to z than to all x ∈ H ∩ A and so the oracle must return a point from H \ A. In particular, at least one of the two queries w, −w returns a point outside A,except if w ∈ Ep, which occurs with probability zero. 
+
+Proof of Lemma 1.4. We now use Lemma 4.1 to prove Lemma 1.4. We will argue that the following process uses 2k +1 queries and with probability 1, returns a basis u1, . . . , u k ∈ H for the affine hull, 
+
+aff( H). We repeat the following. Initialize the basis X ← { x0} where x0 is the oracle response on an arbitrarily chosen initial query in Sd−1.1. Let L = span ({x − x0 : x ∈ X}), A = aff( X) = x0 + L, and N = L⊥.2. If N = {0}, halt. Otherwise, draw w uniformly from S(N ), query both w and −w, and add both returned points to X.3. If both returned points belong to A, halt. Otherwise, return to step (1). If step (3) does not terminate, at least one newly returned point lies outside the old affine hull. The affine dimension therefore increases by at least one. Since X ⊆ H and H has rank k, this can happen at most k times. There is at most one final iteration in which both answers lie in the old affine hull. Including the initial query, this process therefore uses at most 2k + 1 queries. □
+
+12 Acknowledgments 
+
+AI Acknowledgment. Some proof ideas in this paper were discovered through interactions with ChatGPT-5.6-Sol-Pro: the simple proof of Lemma 2.2, the idea of using the cone in Theorem 3.4, and the randomized dimension reduction over the sphere in Lemma 1.4. All proofs and exposition were written by the authors. 
+
+# References 
+
+[Ang87] Dana Angluin. Queries and concept learning. Mach. Learn. , 2(4):319–342, 1987. 1 [Aur91] Franz Aurenhammer. Voronoi diagrams—a survey of a fundamental geometric data structure. ACM Comput. Surv. , 23(3):345–405, September 1991. 1 [BAK +09] Wan D. Bae, Shayma Alkobaisi, Seon Ho Kim, Sada Narayanappa, and Cyrus Shahabi. Web data retrieval: solving spatial range queries using k-nearest neighbor searches. 
+
+GeoInformatica , 13(4):483–514, 2009. 1 [BDM12] Peter Boyvalenkov, Stefan Dodunekov, and Oleg R. Musin. A survey on the kissing numbers. Serdica Mathematical Journal , 38(4):507–522, 2012. 2 [DGL96] Luc Devroye, László Györfi, and Gábor Lugosi. A probabilistic theory of pattern recogni-tion , volume 31. Springer New York, 1996. 1 [DKMR11] Nilesh N. Dalvi, Ravi Kumar, Ashwin Machanavajjhala, and Vibhor Rastogi. Sam-pling hidden objects using nearest-neighbor oracles. In Proceedings of the 17th ACM SIGKDD International Conference on Knowledge Discovery and Data Mining , pages 1325– 1333. ACM, 2011. 1 [DLMF] NIST Digital Library of Mathematical Functions . https://dlmf.nist.gov/ , Release 1.2.7 of 2026-06-15. F. W. J. Olver, A. B. Olde Daalhuis, D. W. Lozier, B. I. Schneider, R. F. Boisvert, C. W. Clark, B. R. Miller, B. V. Saunders, H. S. Cohl, and M. A. McClain, eds. 14 [Had57] Hugo Hadwiger. Über treffanzahlen bei translationsgleichen eikörpern. Archiv der Mathematik , 8(3):212–213, 1957. 2 [HKMR16] Sariel Har-Peled, Nirman Kumar, David M. Mount, and Benjamin Raichel. Space ex-ploration via proximity search. Discret. Comput. Geom. , 56(2):357–376, 2016. 1, 2 [IM98] Piotr Indyk and Rajeev Motwani. Approximate nearest neighbors: towards removing the curse of dimensionality. In Proceedings of the thirtieth annual ACM symposium on Theory of computing , pages 604–613, 1998. 1 [JJP18] Matthew Jenssen, Felix Joos, and Will Perkins. On kissing numbers and spherical codes in high dimensions. Advances in Mathematics , 335:307–321, 2018. 9 [KL78] G. A. Kabatiansky and V. I. Levenshtein. On bounds for packings on a sphere and in space. Problemy Peredachi Informacii , 14(1):3–25, 1978. English translation in Problems of Information Transmission 14 (1978), no. 1, 1–17. 2 13 [Lev79] V. I. Levenshtein. On bounds for packings in n-dimensional Euclidean space. Dokl. Akad. Nauk SSSR , 1979. 3 [Mus08] Oleg R. Musin. The kissing number in four dimensions. Annals of Mathematics ,168(1):1–32, 2008. 3 [OS79] A.M Odlyzko and N.J.A Sloane. New bounds on the number of unit spheres that can touch a unit sphere in n dimensions. Journal of Combinatorial Theory, Series A , 26(2):210– 214, 1979. 3 [PW24] Milind Prabhu and David P. Woodruff. Learning multiple secrets in mastermind. In 
+
+ICML , 2024. 1, 2, 4 [SvdW52] K. Schütte and B. L. van der Waerden. Das Problem der dreizehn Kugeln. Mathema-tische Annalen , 125, 1952. 3 [Swa18] Konrad J. Swanepoel. Combinatorial Distance Geometry in Normed Spaces . Springer Berlin Heidelberg, 2018. 1 [Wyn65] Aaron D Wyner. Capabilities of bounded discrepancy decoding. Bell System Technical Journal , 44(6):1061–1122, 1965. 2, 3 [YGZ +16] Hui Yan, Zhiguo Gong, Nan Zhang, Tao Huang, Hua Zhong, and Jun Wei. Crawling hidden objects with knn queries. IEEE Trans. Knowl. Data Eng. , 28(4):912–924, 2016. 1 [Yia93] Peter N. Yianilos. Data structures and algorithms for nearest neighbor search in general metric spaces. In Symposium on Discrete Algorithms (SODA) , pages 311–321. ACM/SIAM, 1993. 1 
+
+# A Bounding Spherical Cap Surface Area 
+
+In this section we give a complete proof of Lemma 3.2, restated here for convenience. 
+
+Lemma 3.2 (Surface area of a spherical cap) . Fix 0 < τ ≤ 1. For every integer d ≥ 2, let Sd−1 ⊂ Rd be the unit sphere and let 
+
+A = {x ∈ Sd−1 : x1 ≥ τ }.
+
+Then there exists a constant cτ > 0, depending only on τ , such that 
+
+vol d−1(A)vol d−1(Sd−1) ≤ cτ
+
+r 1
+
+d
+
+ 1 − τ 2d/ 2 .
+
+Proof. If τ = 1 , then A = {e1} has zero (d − 1) -dimensional volume, so the result is immediate. We may assume that 0 < τ < 1. The surface volume of the unit sphere Sd−1 is given by [DLMF, Eq. (5.19.4)] 
+
+vol d−1(Sd−1) = 2πd/ 2
+
+Γ( d/ 2) ,
+
+where Γ is the gamma function. For the spherical cap, we parametrize it using polyspherical coor-dinates 
+
+A = (cos ϕ, sin ϕ · u) : τ ≤ cos ϕ ≤ 1 and u ∈ Sd−2 .
+
+14 The (d − 1) -dimensional volume of the spherical cap is 
+
+vol d−1(A) = 
+
+Z cos −1 τ
+
+> 0
+
+vol d−2
+
+  sin ϕ · Sd−2 dϕ 
+
+= vol d−2(Sd−2)
+
+Z cos −1 τ
+
+> 0
+
+sin d−2 ϕ dϕ 
+
+= 2π(d−1) /2
+
+Γ(( d − 1) /2) 
+
+Z 1
+
+> τ
+
+(1 − t2)(d−3) /2 dt, 
+
+where in the last line, we used a change of coordinates t = cos ϕ with dt = − sin ϕ dϕ , along with the fact that sin ϕ = (1 − t2)1/2. Since t ≥ τ on the interval of integration, 
+
+Z 1
+
+> τ
+
+(1 − t2)(d−3) /2 dt ≤ 1
+
+τ
+
+Z 1
+
+> τ
+
+t(1 − t2)(d−3) /2 dt 
+
+= 1
+
+τ (d − 1) (1 − τ 2)(d−1) /2.
+
+The gamma function is log-convex, which implies that 
+
+Γ( d/ 2) 2 ≤ Γ(( d − 1) /2)Γ(( d + 1) /2) = d − 12 Γ(( d − 1) /2) 2,
+
+and hence 
+
+Γ( d/ 2) Γ(( d − 1) /2) ≤
+
+r d − 12 .
+
+Combining these inequalities yields 
+
+vol d−1(A)vol d−1(Sd−1) ≤ Γ( d/ 2) Γ(( d − 1) /2) (1 − τ 2)(d−1) /2
+
+τ (d − 1) √π ≤ 1
+
+τ p2π(d − 1) (1 − τ 2)(d−1) /2.
+
+Because 2( d − 1) ≥ d for d ≥ 2, this is at most 
+
+1
+
+τ pπ(1 − τ 2)
+
+r 1
+
+d (1 − τ 2)d/ 2.
+
+Thus, for 0 < τ < 1, one may take 
+
+cτ = 1
+
+τ pπ(1 − τ 2) ,
+
+and this completes the proof. 15
