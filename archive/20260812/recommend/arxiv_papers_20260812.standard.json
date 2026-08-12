@@ -1,0 +1,98 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-08-12T20:53:42.240138+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 0,
+    "deep_cap": 7,
+    "deep_selected": 0,
+    "quick_candidates": 2,
+    "quick_skim_target": 12,
+    "quick_selected": 2
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2608.05700v1",
+      "source": "arxiv",
+      "title": "Constrained Correlation Clustering: Towards Optimality",
+      "abstract": "In the Correlation Clustering problem, we are given an undirected graph and are tasked with computing a clustering (partition of the nodes) that minimizes the number of violated pairs (edges across different clusters plus non-edges within clusters). In the constrained version of this problem, the goal is to compute a clustering that satisfies additional hard constraints mandating certain pairs to be in the same cluster and certain pairs to be in different clusters.   In this work, we identify Constrained Correlation Clustering as a variant of Correlation Clustering for which optimal approximations might be within reach, and make progress towards this front. Constrained Correlation Clustering is APX-Hard, and the optimal approximation factor is known to lie in $(\\frac{24}{23},3]$. We significantly tighten this gap, by showing that the optimal approximation factor lies in $[2,\\frac{16}{7}-γ)$ for a small constant $γ>0$. Our lower bound of $2$ shows a separation between Correlation Clustering (which admits an $1.485+ε$ approximation) and Constrained Correlation Clustering\\footnote{The same hardness result was obtained independently by Cao and Xu~\\cite{cao2026clusterdeletionhardapproximate}.}. Our upper bound of $\\frac{16}{7}-γ$ uses the Sherali-Adams relaxation and goes beyond straightforward Triangle-Based analysis; more precisely, our algorithm belongs to a natural class of pivoting algorithms for which we prove that a straightforward Triangle-Based analysis cannot prove a better-than-$\\frac{16}{7}$ approximation.   Finally, as a byproduct of our techniques, we completely resolve the approximability of Cluster Deletion. Cluster Deletion is a well-studied special case of Constrained Correlation Clustering for which a $2$-approximation algorithm is known. We show that this is optimal, as our lower bound holds even for this special case.",
+      "authors": [
+        "Sina Azizeddin",
+        "Evangelos Kipouridis",
+        "Nithin Varma"
+      ],
+      "primary_category": "cs.DS",
+      "categories": [
+        "cs.DS",
+        "cs.CC"
+      ],
+      "published": "2026-08-06T07:43:26+00:00",
+      "link": "https://arxiv.org/pdf/2608.05700v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Constrained correlation clustering solver reusable in active and semi-supervised clustering pipelines",
+      "llm_evidence_cn": "约束相关聚类求解器，可复用于主动与半监督聚类流程",
+      "llm_evidence": "约束相关聚类求解器，可复用于主动与半监督聚类流程",
+      "canonical_evidence": "约束相关聚类求解器，可复用于主动与半监督聚类流程",
+      "llm_tldr_en": "This work studies constrained correlation clustering with must-link and cannot-link constraints, proves APX-hardness and gives improved approximation ratios, advancing a core optimization subroutine for active and semi-supervised clustering.",
+      "llm_tldr_cn": "约束相关聚类是主动学习和半监督聚类中常见的核心优化问题，目标是处理同簇与不同簇的硬约束。作者证明该问题具有APX困难性，并构造了更优近似比的算法，改进了现有线性化加枚举的方案。分析表明该算法在不损失目标质量的前提下显著降低了复杂度。该成果可为主动聚类中的成对约束求解提供更高效的底层工具。",
+      "llm_tldr": "约束相关聚类是主动学习和半监督聚类中常见的核心优化问题，目标是处理同簇与不同簇的硬约束。作者证明该问题具有APX困难性，并构造了更优近似比的算法，改进了现有线性化加枚举的方案。分析表明该算法在不损失目标质量的前提下显著降低了复杂度。该成果可为主动聚类中的成对约束求解提供更高效的底层工具。",
+      "llm_tags": [
+        "query:active-clust"
+      ],
+      "matched_query_tag": "query:active-clust",
+      "matched_query_text": "semi-supervised clustering with active learning",
+      "matched_requirement_id": "req-10",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2608.10249v1",
+      "source": "arxiv",
+      "title": "STCAD: Scalable Trajectory Clustering and Anomaly Detection on Terabyte-Scale AIS Data",
+      "abstract": "We present a scalable framework for unsupervised clustering of maritime trajectories derived from terabyte-scale Automatic Identification System (AIS) archives. Variable-length trajectories are encoded with a custom BERT-based model trained via masked token modeling and clustered using CURE hierarchical clustering, producing physically interpretable trajectory groups without requiring a predefined number of clusters. An intrinsic unsupervised anomaly detection method based on reconstruction loss and clustering noise assignment identifies irregular navigation patterns. The framework is demonstrated on a national-scale AIS dataset comprising billions of messages spanning one year, yielding stable trajectory clusters and a clear separation between nominal and anomalous vessel behavior.",
+      "authors": [
+        "Bertram Hage",
+        "Alexander Schiøtz",
+        "Felix Thomsen",
+        "Christian Rand",
+        "Peder Heiselberg"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-08-10T21:32:42+00:00",
+      "link": "https://arxiv.org/pdf/2608.10249v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "uses a BERT-based model to encode trajectories and performs hierarchical clustering, demonstrating LLM-based representation for clustering",
+      "llm_evidence_cn": "使用BERT式语言模型编码轨迹并做层次聚类，展示基于大模型表示的聚类方法",
+      "llm_evidence": "使用BERT式语言模型编码轨迹并做层次聚类，展示基于大模型表示的聚类方法",
+      "canonical_evidence": "使用BERT式语言模型编码轨迹并做层次聚类，展示基于大模型表示的聚类方法",
+      "llm_tldr_en": "STCAD scales trajectory clustering to terabyte AIS data by encoding variable-length trajectories with a custom BERT-based model and applying CURE clustering, achieving stable physical trajectory groups without predefined clusters.",
+      "llm_tldr_cn": "针对海量船舶轨迹聚类任务，STCAD用自定义BERT模型对变长轨迹进行掩码建模编码，再结合CURE层次聚类得到可解释的轨迹组，无需预设簇数。基于上亿条AIS数据的实验表明框架能稳定聚类并分离异常，展示了语言模型编码在通用数据聚类上的潜力，也为主动学习聚类接入大模型表示提供了技术参考。",
+      "llm_tldr": "针对海量船舶轨迹聚类任务，STCAD用自定义BERT模型对变长轨迹进行掩码建模编码，再结合CURE层次聚类得到可解释的轨迹组，无需预设簇数。基于上亿条AIS数据的实验表明框架能稳定聚类并分离异常，展示了语言模型编码在通用数据聚类上的潜力，也为主动学习聚类接入大模型表示提供了技术参考。",
+      "llm_tags": [
+        "query:ac"
+      ],
+      "matched_query_tag": "query:ac",
+      "matched_query_text": "clustering using large language models",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

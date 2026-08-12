@@ -1,0 +1,3152 @@
+Title: Constrained Correlation Clustering: Towards Optimality
+
+URL Source: https://arxiv.org/pdf/2608.05700v1
+
+Published Time: Fri, 07 Aug 2026 00:45:18 GMT
+
+Number of Pages: 39
+
+Markdown Content:
+# Constrained Correlation Clustering: Towards Optimality 
+
+## Sina Azizeddin ∗ Evangelos Kipouridis † Nithin Varma ‡
+
+Abstract 
+
+In the Correlation Clustering problem, we are given an undirected graph and are tasked with com-puting a clustering (partition of the nodes) that minimizes the number of violated pairs (edges across different clusters plus non-edges within clusters). In the constrained version of this problem, the goal is to compute a clustering that satisfies additional hard constraints mandating certain pairs to be in the same cluster and certain pairs to be in different clusters. In this work, we identify Constrained Correlation Clustering as a variant of Correlation Clustering for which optimal approximations might be within reach, and make progress towards this front. Constrained Correlation Clustering is APX-Hard, and the optimal approximation factor is known to lie in ( 24 23 , 3]. We significantly tighten this gap, by showing that the optimal approximation factor lies in [2 , 16 7 − γ) for a small constant γ > 0. Our lower bound of 2 shows a separation between Correlation Clustering (which admits an 1 .485 + ϵ approximation) and Constrained Correlation Clustering 1. Our upper bound of 16 7 − γ uses the Sherali-Adams relaxation and goes beyond straightforward Triangle-Based analysis; more precisely, our algorithm belongs to a natural class of pivoting algorithms for which we prove that a straightforward Triangle-Based analysis cannot prove a better-than- 16 7 approximation. Finally, as a byproduct of our techniques, we completely resolve the approximability of Cluster Dele-tion. Cluster Deletion is a well-studied special case of Constrained Correlation Clustering for which a 2-approximation algorithm is known. We show that this is optimal, as our lower bound holds even for this special case. 
+
+> ∗
+
+Sharif University of Technology, Iran, sina.azizeddin@gmail.com 
+
+> †
+
+Max Planck Institute for Informatics & Saarland Informatics Campus, Saarbr¨ ucken, Germany, kipouridis@mpi-inf.mpg.de 
+
+> ‡
+
+University of Cologne, Germany, nithvarma@gmail.com 
+
+> 1
+
+The same hardness result was obtained independently by Cao and Xu [CX26]. arXiv:2608.05700v1 [cs.DS] 6 Aug 2026 1 Introduction 
+
+Clustering is a central problem in unsupervised learning, with many applications to machine learning and data mining. The high-level goal is to partition a set of elements into clusters so that similar elements fall into the same cluster and dissimilar elements fall into different clusters. Among the various formalizations of clustering, one particularly elegant and natural formulation is that of Correlation Clustering, proposed by Bansal, Blum, and Chawla [BBC04]. Correlation Clustering captures pairwise similarities and dissimilarities among a set V of elements using a complete unweighted undirected labeled graph ( V, E + ⊎ E−), where the plus edges in E+ represent similar pairs and the minus edges in E− represent dissimilar pairs. The objective is to determine a clustering that minimizes the total number of plus edges whose endpoints lie in different clusters and minus edges whose endpoints lie in the same cluster. Correlation Clustering stands out among other clustering formulations because it does not require specifying the number of clusters as part of the input. Since its introduction, the problem has been widely studied and successfully applied to automated labeling [AHK +09, CKP08], clustering ensembles [BGU13], community detection [CSX12, VGW18], disambiguation tasks [KCMN08], duplicate detection [ARS09], and image segmentation [KNKY11, YIF12], among others. Real-world clustering tasks often come with prior knowledge that certain nodes must always be grouped together, while others must be kept apart. Several constrained clustering formulations have been pro-posed to model such requirements, including constrained k-means [WCR +01], spectral clustering with con-straints [WD10], constrained ranking and clustering [vZW09], and constrained fuzzy clustering [Pha02]. Constrained clustering is particularly valuable as it improves the quality of the resulting clusters, aligns outcomes with domain-specific knowledge, and reduces sensitivity to noisy data. In this paper, we study Constrained Correlation Clustering , a variant of Correlation Clustering introduced by van Zuylen and Williamson [vZW09] that incorporates the notion of critical pairs of nodes. The input to Constrained Correlation Clustering consists of the labeled graph ( V, E + ⊎ E−) together with a collection of hard pairwise constraints: a must-link constraint requires two nodes to be in the same cluster, while a cannot-link constraint requires them to be in different clusters. Only clusterings that satisfy all hard constraints are considered valid, and the goal is to find an optimal valid clustering. Practical applications of Constrained Correlation Clustering include, for example, clustering news articles about the same event across different languages [GZ07], where the hard constraints ensure that articles covering different events within the same language do not end up in the same cluster. There are also applications in DNA clone classification [BVDM10]. In fact, in these cases there are no must-link constraints, and all minus edges are cannot-link constraints (also known as the Cluster Deletion problem). 
+
+## 1.1 Previous Results 
+
+Bansal, Blum, and Chawla [BBC04], who defined Correlation Clustering, also proved that it is NP-Hard. They further provided a deterministic constant-factor approximation, where the constant is larger than 15,000. The approximation guarantee was subsequently improved further, by relying on LP-rounding tech-niques. Charikar, Guruswami and Wirth [CGW05] gave a deterministic 4-approximation, while also show-ing that the problem is APX-Hard. Ailon, Charikar and Newman [ACN08] presented a randomized 2 .5-approximation, and Chawla, Makarychev, Schramm and Yaroslavtsev [CMSY15] gave a deterministic 2 .06-approximation. The last result is nearly optimal among algorithms that round the natural LP formulation, since its integrality gap is at least 2. A breakthrough result by Cohen-Addad, Lee and Newman [CLN22] used the Sherali-Adams relaxation to obtain a (1 .994 + ϵ)-approximation and broke the 2 barrier. The ap-proximation guarantee was later improved to 1 .73 + ϵ by Cohen-Addad, Lee, Li and Newman [CLLN23], and even to 1 .485 + ϵ by [CCL +24]. The current-state of the art is an adaptation of the 1 .485 + ϵ approx-imation that runs in linear [CCL +25], and even sublinear [CCL +25] time. There is also a combinatorial 1.847-approximation by [CLP +24] for the problem. Correlation Clustering has also been studied in different settings such as dynamic algorithms [CLMP24], sublinear and streaming algorithms [AW22, CKL +24, BCMT22, BCMT23, MC23, CKL +24], parameterized 1algorithms [FKP +14], massively parallel computation (MPC) algorithms [CLM +21, CHS24], and differen-tially private algorithms [BEK21]. The approximation of the Cluster Deletion problem (special case of Constrained Correlation Clustering where there are no must-link constraints, and all minus edges are cannot-link constraints) has been extensively studied [CGW05, vZW09, BVDM10, PM15, VGW18, Vel22, BXCV24, GHR25]. The current best is a 2 approximation, by Veldt, Gleich, and Wirth [VGW18]. Subsequent research focused on faster algorithms even at the expense of worse approximation factors [Vel22, BXCV24], and better-than-2 approximations for particular graph classes [GHR25]. For Constrained Correlation Clustering the state-of-the-art is a deterministic 3-approximation, presented by van Zuylen and Williamson [vZW09], who introduced the problem. Due to the significance of the problem, a follow-up work by Fischer, Klausen, Kipouridis and Thorup [FKKT24] focused on faster algorithms for Constrained Correlation Clustering, even at the expense of the approximation guarantee (16); this was improved by Veldt to a 3+ ε approximation [Vel26]. Finally, in [KKV25] the authors show how an adaptation of the Linear Program (Cluster LP) solved in [CCL +24] would imply a better-than-2 approximation for Constrained Correlation Clustering. As a final remark, we point out that it is not possible, in general, to handle the must-link constraints by simply merging the nodes in connected components induced by these constraints into single nodes, as this results in a weighted instance outside the problem. 
+
+## 1.2 Our Contribution and Techniques 
+
+The optimal approximation factor for Constrained Correlation Clustering is known to lie in ( 24 23 , 3] [CCL +24, vZW09]. In this work, we tighten the gap to [2 , 16 7 − γ) for some constant γ > 0, hinting that 2 might be the optimal approximation for Constrained Correlation Clustering 2.
+
+Lower Bound Our lower bound of 2 shows a separation between Correlation Clustering (which admits an 1.485 + ϵ approximation [CCL +24]) and Constrained Correlation Clustering. It is conditioned on the Unique Games [Kho02]. Furthermore, combined with the work of [KKV25], our work implies that the Cluster LP (the most important tool in the state of the art approximation for Correlation Clustering) cannot be adapted in the constrained setting. 
+
+Theorem 1.1. Under the Unique Games Conjecture, there is no (2 − ε)-factor approximation algorithm for Constrained Correlation Clustering, for any constant ε > 0. Furthermore, under the Unique Games Conjecture, there is no (2 − ε)-factor approximation algorithm for Cluster Deletion, for any constant ε > 0.
+
+It is known that Cluster Deletion is approximable within a factor 2 [VGW18]. Our lower bound imme-diately implies that this is optimal. 
+
+Corollary 1.2. There exists a polynomial time algorithm for Cluster Deletion whose approximation factor is (the optimal) 2.
+
+We note that the same lower bound result was obtained independently by Cao and Xu [CX26]. 
+
+The barrier of 16 7 A particular type of algorithms, called pivoting algorithms, have been extensively used for Correlation Clustering [ACN08, CMSY15, CLN22, CLLN23, CCL +24]. A common type of analysis for such algorithms is the Triangle-Based analysis. From a high-level view, in this analysis we bound the ratio of the cost of the algorithm to the budget given by a Linear Program (LP, Figure 1), independently for every triplet of nodes (triangle). The overall approximation is upper bounded by the maximum such ratio.    
+
+> 2On a more informal note, for both Correlation Clustering and Chromatic Correlation Clustering the only known lower bound is 24 /23 [CCL +24], while they both admit better-than-2 approximations [CCL +24, LFL25a], making it difficult to conjecture the actual optimal approximation factor. To the best of our knowledge, all other variants of Correlation Clustering (such as Pseudometric-Weighted Correlation Clustering [LFL25b]) also lack “natural” lower bounds.
+
+2To address hard constraints, a natural class of pivoting algorithms is presented in Algorithm 1. We call these algorithms strict pivoting algorithms. Let us use the term supernode to refer to a maximal set of nodes connected with must-link constraints. From a high-level view: 
+
+• The LP relaxation in Figure 1 gives a distance in [0 , 1] for every pair of nodes, such that must-link pairs have distance 0 and cannot-link pairs have distance 1. 
+
+• At every step of the algorithm, until all nodes are clustered, we select a supernode p (pivot) at random, with probability proportional to the number of nodes it contains. 
+
+• For every unclustered supernode s, we decide whether to include it in the cluster of p with probability related to the LP distance of p and s, and the type of edges connecting the supernode of p and s.Crucially, if the LP distance is 0 .5 or larger, we do not cluster s together with p (hence the term strict pivoting ). Notice that hard constraints are always satisfied. This follows trivially for must-link constraints. For cannot-link constraints, notice that within a cluster every node is at distance less than 0 .5 from the pivot. Therefore, by triangle inequality, the diameter of any cluster is less than 1; as cannot-link pairs have distance exactly 1, this means that we do not violate cannot-link constraints. We show that the straightforward Triangle-Based analysis used for such algorithms cannot give a better-than- 16 7 approximation, while also presenting an algorithm that achieves 16 7 approximation. It is worth noting that for Correlation Clustering, a similar barrier exists (2 .025), but no algorithm within the corre-sponding framework achieves this bound (best known approximation is ≈ 2.06); see [CMSY15]. Similarly, for Chromatic Correlation Clustering, within the corresponding framework the lower bound 2 .11 and upper bound 2 .15 do not match [LFL25b]. We are only aware of Pseudometric-Weighted Correlation Clustering where within its corresponding framework an optimal 10 /3 approximation has been designed (however, in this case, no better algorithm is known, while for Constrained Correlation Clustering we show a 16 7 − γ
+
+approximation). 
+
+Approximation beyond 16 7 Our upper bound of 16 7 − γ (for a small γ > 0) goes beyond the standard Triangle-Based analysis. We note however that the algorithm itself uses the framework of Algorithm 1. Unlike our analysis for the 16 7 -approximation algorithm, for which it is sufficient to use the properties of the standard LP (Figure 1), our 16 7 − γ approximation requires the usage of the Sherali-Adams relaxation (Figure 2). The argument uses a global charging scheme, inspired from the first better-than-2 approximation for Correlation Clustering [CLN22] 3
+
+Theorem 1.3. There exists a 16 7 − γ approximation for Constrained Correlation Clustering, for some con-stant γ > 0.
+
+Comparison with Correlation Clustering There is a big literature on (unconstrained) Correlation Clustering. It is therefore imperative to discuss if/how techniques that worked in the unconstrained setting can be expected to provide results for the constrained setting as well. We focus on techniques that led to better-than-3 approximations, as a 3-approximation for Constrained Correlation Clustering was already known before our work. 
+
+• Cluster LP : The Cluster LP is an exponentially large LP that has been shown to be solvable in polynomial time [CCL +24]. It has been used to achieve the state of the art 1 .485 + ϵ approximation for Correlation Clustering. However, as shown in [KKV25], solving this LP in the constrained setting would imply a better-than-2 approximation for Constrained Correlation Clustering. As per our Theorem 1.1, this would contradict the Unique Games Conjecture.  
+
+> 3For the knowledgeable reader, the core argument in [CLN22] shows that we cannot have too many “bad” triangles in any subgraph of 4 nodes; in our case the argument gets more technical and requires subgraphs of 6 nodes.
+
+3• Correlated Rounding : The first algorithm achieving a 2-approximation for Correlation Clustering (which was improved to 1 .994 in the same paper [CLN22]) used a pivoting algorithm and correlated rounding. Specifically, for any two nodes u, v that differ from the pivot p, the decision on whether to include u in the cluster containing p was not independent from the decision regarding v. Unfortunately, our 16 7 barrier holds even if correlated rounding is used. Furthermore, implementing correlated round-ing that would respect the hard constraints seems to be the main barrier in solving the Constrained Cluster LP, and is thus unlikely. 
+
+• Set-based Rounding : An important ingredient to improve the approximation from 1 .994 to 1 .73 was the set-based clustering [CLLN23]. According to the authors, this uses the “the power of [...] the correlated rounding technique”, which we already highlighted as a challenge in the constrained setting. 
+
+• Local Search : The local search technique from [CLP +24] assumes access to some “near-optimal” clus-ters and provides a better-than-2 approximation. Even though obtaining such clusters is possible for Correlation Clustering, in the constrained setting it would automatically imply a better-than-2 approximation ([KKV25]), which would contradict the Unique Games Conjecture [Kho02]. 
+
+• Specialized Rounding : Pairing the pivoting algorithm with specialized rounding functions has been used extensively [ACN08, CMSY15, CLN22, CLLN23, CCL +24] for Correlation Clustering. However, for Constrained Correlation Clustering, only a very simple rounding (rounding to the closest integer) has been employed [vZW09] so far. A possible reason is that the must-link constraints enforce (a special case of) correlated rounding, which turned out to be a significant challenge for our work as well. Concretely, all previous approaches use two different rounding functions, depending on whether a plus or a minus edge is rounded. In order to satisfy must-link constraints however, we need to round sets of multiple edges simultaneously, while it is not necessary for all of them to be plus (resp. minus). We show that using a convex combination of two particular functions (one for plus and one for minus edges), with the coefficients depending on the number of plus (resp. minus) edges in the set of edges we round, it suffices to consider cases where all edges are plus or all are minus 4.Perhaps surprisingly, the key property of the particular functions we use, that allows for the afore-mentioned argument, is that if a plus and a minus edge have the same LP distance, then we are more likely to cluster together the endpoints of the minus edge, rather than the endpoints of the plus edge. This was not the case, for example, in the work of [CMSY15] that introduced the specialized rounding framework. 
+
+Summing up To summarize the contributions of our work, we identify Constrained Correlation Clustering as a variant of Correlation Clustering for which an optimal approximation might be within reach. We conjecture the optimal approximation to be 2, and prove that it lies in [2 , 16 7 ). At the same time, our results demonstrate that the Cluster LP cannot be (1 + ε) approximated in the constrained setting, and is thus unlikely to help in designing an optimal approximation. Furthermore, the optimality cannot be achieved using specialized rounding and a straightforward Triangle-Based analysis, even if the actual optimal is larger than 2; that is because we show that, unlike our upper bound, this framework cannot prove better-than- 16 7
+
+approximations. Finally, as a byproduct of our work, we completely settle the approximability of the Cluster Deletion problem, showing that the optimal approximation factor is 2. 
+
+## 1.3 Related Work 
+
+Closely related to the problems considered by us are hierarchical clustering problems under similar con-strained settings. In particular, for each pair {u, v } we are given an upper and a lower bound regarding the distance of u and v in the output (Farach, Kannan, and Warnow [FKW95]). Ailon and Charikar, in [AC11], make progress on constrained hierarchical clustering, but optimal algorithms are still elusive. We note that 
+
+> 4On a technical note which may only be clear after reading Section 4: this is again non-trivial, exactly because of the must-link constraints, which are the sole reason a non-linear (in the coefficients of the convex combination) behavior is introduced.
+
+4Constrained Correlation Clustering is a special case of constrained hierarchical clustering (where the hi-erarchy is trivial). Tree reconstruction problems with lower bound constraints (similar to the cannot-link constraints) have also been studied [MWZ99, DKS26]. 
+
+## 1.4 Organization 
+
+The rest of the paper has the following structure. In Section 2, we introduce some necessary definitions and results. In Section 3, we present our lower bound of 2. In Section 4, we present our algorithmic framework and the 16 7 barrier. In Section 5, we present our algorithm and prove that it achieves a 16 7 approximation, while in Section 6, we prove a 16 7 − γ approximation, for a small constant γ > 0. 
+
+# 2 Preliminaries 
+
+The graphs ( V, E + ⊎ E−) we consider in this paper are complete, unweighted, undirected, and every edge is labeled plus or minus (it belongs to one of E+ or E−, respectively). Throughout the paper we refer to a set F ⊆  V
+
+> 2
+
+ as the friendly (must-link) constraints, and to a set H ⊆  V
+
+> 2
+
+ as the hostile (cannot-link) constraints. Together, they constitute the so-called hard constraints .We typically set n = |V |. Let  A
+
+> 2
+
+ denote the set of all size-2 subsets of a set A. We often abbreviate the (unordered) set { u, v } by uv , and the (unordered) set { u, v, w } by uvw . We use ·∪ to denote unions of disjoint sets. A clustering C = { C1, . . . , C k } is a partition of V ; each set Ci is called a cluster. We denote by C(u) the cluster of C containing u.
+
+Definition 2.1 (Constrained Correlation Clustering) . Given (V, E + ⊎E−, F, H ), where E+, E −, F, H ⊆  V
+
+> 2
+
+,compute a partition of V (clustering) C = { C1, . . . , C k } such that: 
+
+• if uv ∈ F , then both u and v are in the same cluster Ci;
+
+• if uv ∈ H, then u and v are in different clusters Ci ∋ u, C j ∋ v, where i̸ = j;
+
+• C minimizes |{ uv ∈ E+ | C (u)̸ = C(v) }| + |{ uv ∈ E− | C (u) = C(v) }| out of all possible clusterings that satisfy the above two conditions. 
+
+As per [vZW09], who introduced Constrained Correlation Clustering, we assume that the constraints are consistent: 
+
+• if ab, bc ∈ F , then also ac ∈ F (F is transitive); 
+
+• if ab ∈ F and bc ∈ H then ac ∈ H;
+
+• F ∩ H = ∅;
+
+• if ab ∈ F then ab ∈ E+; similarly if ab ∈ H then ab ∈ E−.It is easy to see that the set of feasible clusterings does not change if we minimally extend F, H to satisfy the first two conditions. It is also straightforward that given the first two conditions, the third condition holds if and only if the instance is satisfiable (there exists a feasible clustering). Finally, if an algorithm α
+
+approximates satisfiable instances that satisfy the fourth condition, then it α approximates any satisfiable instance. From now on, we use the term supernode to denote a maximal set of nodes that are pairwise friendly. For a node u ∈ V , we use s(u) to denote the supernode containing u, and s(V ) to denote the set of all supernodes. 5min X
+
+> (i,j )∈E+
+
+xuv + X
+
+> (i,j )∈E−
+
+(1 − xuv )s.t. xuv ≤ xuw + xvw ∀u, v, w ∈ Vxuv = 0 ∀uv ∈ Fxuv = 1 ∀uv ∈ Hxuv ∈ [0 , 1] ∀u, v ∈ V
+
+Figure 1: The standard LP relaxation for Constrained Correlation Clustering min X
+
+> ij ∈E+
+
+xij + X
+
+> ij ∈E−
+
+(1 − xij )s.t. yT1|... |Tk = X    
+
+> S1,...,S ℓ:
+> S=S1·∪... ·∪Sℓ
+> and Ti=Si∩T∀i∈[k]
+
+yS1|S2|... |Sℓ ∀T ⊆ S ⊆ V, |S| ≤ r, and T = T1 ·∪ . . . ·∪ Tk
+
+y∅ = 1 
+
+xuv ≤ xuw + xvw ∀u, v, w ∈ Vxuv = 0 ∀uv ∈ Fxuv = 1 ∀uv ∈ Hy ≥ 0Figure 2: The r-rounds of the Sherali-Adams relaxation. The last constraint requires the y-variables across all possible subscripts to be nonnegative. In this paper we use r = 6. 
+
+The standard LP: In the standard LP (Figure 1), we have a variable xuv for every pair uv which can be interpreted as the distance between u, v . In an integral clustering, if u, v are in the same cluster then xuv = 0, and if they are in different clusters then xuv = 1. The objective function of this LP (Figure 1) follows directly by the definition of Constrained Correlation Clustering. We enforce triangle inequality (which means that if uw are in the same cluster, and vw are also in the same cluster, then uv are in the same cluster) and hardcode the values 0 and 1 in the case of hard constraints. 
+
+Sherali-Adams relaxation: Similarly to the standard LP, we have the Sherali-Adams relaxation. Here it is convenient to introduce the variables yuv = 1 − xuv . We note that any solution to the Sherali-Adams relaxation is also a feasible solution to the standard LP; we highlight this by adding the triangle-inequality on the x variables, even though it is implied by the rest of the constraints. Furthermore, the optimal cost of the Sherali-Adams relaxation is also a lower bound for the optimal cost of the Constrained Correlation Clustering instance (although maybe higher than the optimal cost of the standard LP). More formally, the definition of the r-rounds of the Sherali-Adams relaxation is in Figure 2. In our paper, we use r = 6. For disjoint sets S1, . . . , S ℓ ⊆ V such that Pℓi=1 |Si| ≤ r = 6, we have a variable yS1|S2|... |Sℓ
+
+indicating whether the optimal partition induced by S1 ∪ · · · ∪ Sℓ is exactly ( S1, . . . , S ℓ). For example, for two vertices u and v, yu|v indicates whether u and v are in different clusters in the optimal solution and yuv 
+
+indicates whether they are in the same cluster, so that yu|v +yuv = 1. The main benefit of the Sherali-Adams relaxation is that it allows us to naturally argue about the relation of more than 2 nodes (but only up to 
+
+r = 6 nodes). For example, we can use arguments of the form yuv = yuv |w + yuvw .6Inclusion probabilities: We define two functions f +, f − : [0 , 1] → [0 , 1] that we use throughout the paper. They determine the inclusion probabilities in our pivot based algorithms. 
+
+f +(x) = 
+
+q
+
+1 − 20 9 x if x < 0.25  
+
+> 13 12
+
+− 53 x if 0 .25 ≤ x < 0.5, f −(x) = 
+
+(
+
+1 − x if x < 0.50 if x ≥ 0.50 if x ≥ 0.5We now state several basic analytic properties of the functions f +, f − that are used in the approximation analysis (their proofs are found in Section A). 
+
+Lemma 2.2. The function f +(x) is continuous on [0 , 0.5) and has a continuous first derivative on this domain. 
+
+Lemma 2.3. For all x:
+
+(i) If x ∈ [0 , 0.5) , then 
+
+q
+
+1 − 20 9 x ≤ f +(x) ≤ 13 12 − 53 x.
+
+(ii ) If x ∈ [0 , 0.5) , then 1 − 10 9 x ≥ f +(x) ≥ 1 − 32 x.
+
+Lemma 2.4. The function ln( f +(x)) is a concave function on [0 , 0.5) .
+
+Lemma 2.5. For all x ∈ [0 , 1] , we have f +(x) ≤ f −(x).
+
+# 3 Hardness of Approximation 
+
+In this section, we show that it is UGC-hard to obtain a better-than-2-approximation algorithm for the Constrained Correlation Clustering problem (where UGC is the Unique Games Conjecture). 
+
+Theorem 1.1. Under the Unique Games Conjecture, there is no (2 − ε)-factor approximation algorithm for Constrained Correlation Clustering, for any constant ε > 0. Furthermore, under the Unique Games Conjecture, there is no (2 − ε)-factor approximation algorithm for Cluster Deletion, for any constant ε > 0.Proof. We show that a (2 − ε) approximation for Constrained Correlation Clustering would imply a (2 − 
+
+> ε
+> 2
+
+) approximation for Min Vertex Cover, which is impossible assuming the Unique Games Conjecture (UGC) [KR08]. 
+
+Reduction: Given an instance G = ( V, E ) of Min Vertex Cover, with n = |V |, we transform it into an instance CG = ( V ′, E + ⊎ E−, F, H ) of Constrained Correlation Clustering as follows. The instance CG is defined on a set of nodes V ′ = V ⊎ V ′′ , where |V ′′ | = n3. The hostile constraints and the non-edges in CG
+
+are the edges in G, that is H = E− = E. It follows that the plus edges E+ are the nonedges of G and all the pairs with at least one endpoint in V ′′ . Finally, there are no friendly constraints, that is F = ∅.Notice that the instance CG is satisfiable, e.g. by making every node a singleton. Furthermore, as F = ∅
+
+and H = E−, CG is equivalent to the instance ( V ′, (E+, E −)) of Cluster Deletion. This implies that the lower bound we derive for Constrained Correlation Clustering immediately extends to Cluster Deletion. Now assume we have a (2 − ε)-approximation algorithm A for Constrained Correlation Clustering. We use this algorithm as a subroutine to obtain a (2 − ε/ 2)-approximation algorithm for Min Vertex Cover. In particular, given an input graph G for Min Vertex Cover, we first run A on CG and obtain clustering C. We return every node in V that is not contained in a cluster of C with size at least 0 .99 n3 (clearly there can be at most one such large cluster). 7Note that the nodes in V that are not in the output are all contained in the same cluster (of size at least 0.99 n3). Therefore, by definition of H, they form an independent set in graph G, meaning that our output is a valid vertex cover. We now need to prove that the size of our output is at most (2 − ε/ 2) times the size of the Min Vertex Cover. We first need the following claims: 
+
+Claim 3.1. The cost of the optimal clustering in CG is at most v · n3 +  n
+
+> 2
+
+, where v is the size of the minimum vertex cover in G.Proof. Consider a maximum independent set I ⊆ V in G. Note that V \ I is a minimum vertex cover in 
+
+G. Consider a clustering, where I ∪ V ′′ is a cluster and each vertex in V \ I forms its own singleton cluster. This clustering is valid and has cost at most |V \ I| · | V ′′ | +  n
+
+> 2
+
+ = v · n3 +  n
+
+> 2
+
+.
+
+Claim 3.2. There exists a cluster Cbig ∈ C such that |Cbig ∩ V ′′ | ≥ 0.99 |V ′′ |.Proof. It suffices to prove that there cannot exist a subset S ⊆ C such that 0.01 |V ′′ | < |( [
+
+> C∈S
+
+C) ∩ V ′′ | < 0.99 |V ′′ |.
+
+Indeed, if this were the case, the cost of C would be at least (0 .01) 2|V ′′ |2 = Ω( n6) due to the plus edges with one endpoint in V ′′ ∩ (S 
+
+> C∈S
+
+C) and the other endpoint in V ′′ \ (S 
+
+> C∈S
+
+C). This is a factor Ω( n2) worse off than the optimal clustering with cost O(n4) (see Claim 3.1). For large enough n, this contradicts the assumption that A is a (2 − ε)-approximation algorithm for Constrained Correlation Clustering. To analyze |V \ Cbig |, we first modify C and obtain C′ as follows: For each cluster C̸ = Cbig satisfying 
+
+C ∩ V ′′ ̸ = ∅, we remove the vertices in C ∩ V ′′ , meaning that we are left with C \ V ′′ instead of C.Furthermore, we replace Cbig with Cbig ∪ V ′′ . The modified clustering C′ is valid as the only vertices we move across clusters are contained in V ′′ , for which there are no hard constraints. Now notice that the only edges with possibly different cost contributions in C and in C′ are edges with one endpoint in V ′′ \ Cbig . For each node u ∈ V ′′ \ Cbig , its cost contribution was at least |Cbig | ≥ 0.99 n3, while its new cost contribution is at most n. Thus C′ is at least as good as C. In particular, it is also a (2 − ε)-approximate clustering. The cost of C′ is at least |V \ Cbig | · n3. By Claim 3.1 the optimal cost is at most v · n3 +  n
+
+> 2
+
+, where v is the size of the minimum vertex cover in G. Therefore |V \ Cbig | · n3 ≤ (2 − ε) · (v · n3 +  n
+
+> 2
+
+), implying that 
+
+|V \ Cbig | ≤ (2 − ε 
+
+> 2
+
+) · v, for large enough n. This violates the Unique Games Conjecture. 
+
+# 4 Algorithmic framework and 16 /7 barrier 
+
+In this section, we present the algorithmic framework we use throughout this paper (Algorithm 1). We present it in full generality, using a placeholder function p(·, ·, ·); this function may differ across different algorithms in the framework. We prove that for any algorithm in this framework, a particular type of analysis (standard Triangle Based analysis) cannot prove a better-than-16 /7 approximation. In Section 5, we pick a particular algorithm from this framework (Algorithm 2), that instantiates the probability p as a convex combination of f +, f − (defined in Section 2). Algorithm 1 constructs a clustering of the graph using the fractional LP distances xuv . In each iteration, it selects a uniformly random pivot vertex u (contained in supernode U = s(u)) from the remaining vertices and forms a new cluster by adding every remaining supernode W (containing some node w) with a probability determined by: 
+
+• the LP value xuw (note that this is independent of the choice of w, because all nodes in W have LP distance 0 to each other, directly from Figure 1), 
+
+• the number of pairs in E+ with one endpoint in U and the other in W ,8Algorithm 1: Strict-Pivoting Framework 
+
+Input : Instance G = ( V, E + ⊎ E−, F, H )
+
+Output: A clustering C of V 
+
+> 1
+
+Obtain {xuv }uv ∈(V 
+
+> 2
+
+), a feasible solution to the standard LP (Figure 1)  
+
+> 2
+
+C ← { ∅ }  
+
+> 3
+
+while V̸ = ∅ do  
+
+> 4
+
+Pick a pivot u ∈ V uniformly at random and let U = s(u) be the supernode containing u 
+
+> 5
+
+Initialize a new cluster C ← U
+
+// The following iterations do not necessarily need to be performed independently for each W (one can allow correlations)  
+
+> 6
+
+foreach supernode W̸ = U do  
+
+> 7
+
+Let EU W be the pairs in E+ with one endpoint in U and the other in W 
+
+> 8
+
+Let w be an arbitrary node in W 
+
+> 9
+
+if xuw < 0.5 then  
+
+> 10
+
+Include W into C with probability p(xuw , |EU W |, |U || W |)
+
+// p(·, ·, ·) may differ across different algorithms in this framework  
+
+> 11
+
+Remove C from V 
+
+> 12
+
+C ← C ∪ { C} 
+
+> 13
+
+return C
+
+• and the number of pairs with one endpoint in U and the other in W .Different algorithms may determine the inclusion probability of W in different ways, but always as a function of the aforementioned three quantities. The only restriction is that if xuw ≥ 0.5, then W is not included in 
+
+C (hence the term strict pivoting ). We prove that the clustering output by a strict pivoting algorithm respects all the hard constraints. 
+
+Lemma 4.1. The output of a strict pivoting algorithm always satisfies all friendly and hostile constraints. Proof. By construction, no supernode is ever split, therefore the friendly constraints are satisfied. Regarding hostile constraints, notice that the LP distance of any node in a cluster C to the pivot of C is less than 0 .5; by triangle inequality the LP distance between any two nodes in a cluster C is less than one, which means that they are not hostile (directly from Figure 1). Notice that our framework is quite general. For example, it does not force the inclusion of each W to be decided independently; one could use correlated rounding. Additionally, the feasible solution to the standard LP could be obtained through solving the more restricted Sherali-Adams relaxation. Yet, we show that a straightforward Triangle-Based analysis cannot yield a better-than- 16 7 approximation. It is important to note that our lower bound does not mean that no Strict-Pivoting algorithm can obtain a better-than- 16 7 approximation. It only shows that the standard Triangle-Based analysis is not strong enough to prove such a bound. In fact, in Section 6 we present a Strict-Pivoting algorithm that obtains a better-than- 16 7 approximation, using a more sophisticated analysis. 
+
+Analysis We now present the standard analysis for such algorithms. We first argue that it is sufficient to analyze a single, arbitrary iteration in Algorithm 1 (as noted in [CLN22]). Suppose in iteration m we create the cluster C. Let ALG m denote the expected cost incurred in iteration m and LP m be the expected amount of LP value removed by this iteration, that is the sum of LP contributions ( xuv , in case of positive edges, 1 − xuv otherwise) of pairs with at least one endpoint in C and the other endpoint outside C, if it exists, unclustered. If we can establish that ALG m ≤ α · LP m holds for all m, then the overall approximation ratio 9follows by summing over all R iterations of the algorithm: 
+
+E [ALG ] = E
+
+" RX
+
+> m=0
+
+ALG m
+
+#
+
+≤ α · E
+
+" RX
+
+> m=0
+
+LP m
+
+#
+
+= α · LP ,
+
+where ALG is the total expected cost of the algorithm and LP denotes the objective value of the LP. This reduces the problem to analyzing a single, arbitrary iteration, for which we drop the subscript m for conve-nience. We now define the following quantities. For a given pivot u, let cost u(vw ) be the probability that the edge vw is violated ( vw ∈ E+ but they end up in different clusters, or vw ∈ E− but they end up in the same cluster), and let lp u(vw ) be the LP contribution of vw (i.e., xvw if vw is positive and 1 − xvw if it is a negative edge) times the probability that vw is decided (i.e., that either v or w joins C). We call a set of three distinct vertices a triangle and a set of two vertices a degenerate triangle . We aggregate the above notations for both triangles and degenerate triangles. For a triangle T = uvw we define 
+
+cost (T ) = cost (uvw ) = cost u(vw ) + cost v (uw ) + cost w(uv )
+
+lp (T ) = lp (uvw ) = lp u(vw ) + lp v (uw ) + lp w(uv ).
+
+For a degenerate triangle uv , we define 
+
+cost (uv ) = cost u(uv ) + cost v (uv )
+
+lp (uv ) = lp u(uv ) + lp v (uv ).
+
+Lemma 4.2. The approximation factor of an algorithm in the framework of Algorithm 1 is at most 
+
+P
+
+> uvw ∈
+
+(V 
+
+> 3
+
+) cost (uvw ) + P
+
+> uv ∈
+
+(V 
+
+> 2
+
+) cost (uv )
+
+P
+
+> uvw ∈
+
+(V 
+
+> 3
+
+) lp (uvw ) + P
+
+> uv ∈
+
+(V 
+
+> 2
+
+) lp (uv ) .
+
+Proof. It is straightforward to see that for a single arbitrary iteration 
+
+ALG = Eu∈V
+
+X
+
+> vw ∈
+
+(V 
+
+> 2
+
+)
+
+cost u(vw )
+
+
+
+LP = Eu∈V
+
+X
+
+> vw ∈
+
+(V 
+
+> 2
+
+)
+
+lp u(vw )
+
+ .
+
+Hence, it suffices to upper bound: 
+
+ALG LP =
+
+Eu∈V
+
+hP
+
+> vw ∈
+
+(V 
+
+> 2
+
+) cost u(vw )
+
+i
+
+Eu∈V
+
+hP
+
+> vw ∈
+
+(V 
+
+> 2
+
+) lp u(vw )
+
+i =
+
+P
+
+> uvw ∈
+
+(V 
+
+> 3
+
+) cost (uvw ) + P
+
+> uv ∈
+
+(V 
+
+> 2
+
+) cost (uv )
+
+P
+
+> uvw ∈
+
+(V 
+
+> 3
+
+) lp (uvw ) + P
+
+> uv ∈
+
+(V 
+
+> 2
+
+) lp (uv ) .
+
+Corollary 4.3. Let ρ be such that cost (T )  
+
+> lp (T)
+
+≤ ρ for every (possibly degenerate) triangle T w.r.t. a feasible so-lution to the LP in Figure 1. Then the approximation factor of an algorithm in the framework of Algorithm 1 is upper bounded by ρ.
+
+We now show that using Corollary 4.3 (that is, the standard Triangle Based analysis) we cannot prove any better-than- 16 7 approximating for any strict pivoting algorithm (Algorithm 1). 10 Lemma 4.4. For any strict pivoting algorithm (Algorithm 1) there exist a feasible solution { xuv }uv ∈(V 
+
+> 2
+
+) to the standard LP in Figure 1 and a triangle T such that cost (T )  
+
+> lp (T)
+
+≥ 16 7 .Proof. Let T = tuv be a triangle such that t has two plus incident edges tu and tv with xtu = xtv = 0 .25, while xuv = 0 .5. Assume without loss of generality that there are no friendly constraints, therefore each node is in a singleton supernode ( |s(t)| = |s(u)| = |s(v)| = 1). We show that either when uv ∈ E+ or when 
+
+uv ∈ E−, we get cost (T )  
+
+> lp (T)
+
+≥ 16 7 (with one minor exception which is handled independently). Let q = p(0 .25 , 1, 1), where p(·, ·, ·) depends on the strict pivoting algorithm we focus on (see Algorithm 1), and α be an upper bound on cost (T )  
+
+> lp (T)
+
+. Notice that when u (resp. v) is the pivot, then v (resp. u) is not included in the cluster, directly by Algorithm 1 since xuv = 0 .5. 1. If q = 0 then for the degenerate triangle tu we get lp (tu ) = 2 · 0.25 , cost (tu ) = 2 · 1, therefore 
+
+cost (tu )
+
+lp (tu ) = 4 ≥ 16 7 .
+
+2. For q > 0, consider a (non-degenerate) triangle tuv .Since a strict pivoting algorithm could use correlated rounding, for a plus edge ab such that xab = 0 .25, the value q = p(0 .25 , 1, 1) is the marginal probability of a being added to the cluster given that b is the pivot. Let r denote Pr[ uv is decided |t is pivot]. Notice that 2q = Pr[exactly one of u, v is added to cluster |t is pivot] +2 Pr[both of u, v are added to cluster |t is pivot] .
+
+and similarly 
+
+r = Pr[exactly one of u, v is added to cluster |t is pivot] + Pr[both of u, v are added to cluster |t is pivot] .
+
+(a) Let uv be a plus edge. In this case, one can see that 
+
+cost t(uv ) = Pr[exactly one of u, v is added to cluster |t is pivot] = 2 r − 2q. 
+
+Using the above, 
+
+lp (tuv ) = lp u(tv ) + lp t(uv ) + lp v (tu ) = r · 0.5 + 2 q × 0.25 = 0 .5 · (q + r),
+
+cost (tuv ) = cost u(tv ) + cost t(uv ) + cost v (tu ) = 2( r − q) + 2 q. 
+
+= 2 r. 
+
+By definition of α we have α · lp (tuv ) ≥ cost (tuv ), therefore α 
+
+> 2
+
+· (q + r) ≥ 2r.By rearranging we get α 
+
+> 2
+
+q ≥ (2 − α 
+
+> 2
+
+)r
+
+=⇒ rq ≤ α
+
+4 − α .
+
+(b) Let uv be a minus edge. In this case, 
+
+cost t(uv ) = Pr[both of u, v are added to cluster |t is pivot] = 2 q − r. 
+
+11 Using the above, 
+
+lp (tuv ) = lp u(tv ) + lp t(uv ) + lp v (tu ) = r × 0.5 + 2 q × 0.25 = 0 .5 · (q + r),
+
+cost (tuv ) = cost u(tv ) + cost t(uv ) + cost v (tu ) = (2 q − r) + 2 q
+
+= 4 q − r. 
+
+Again by rearranging we must have α 
+
+> 2
+
+· (q + r) ≥ 4q − r
+
+=⇒ rq ≥ 8 − αα + 2 .
+
+We conclude that if q > 0, then α
+
+4 − α ≥ rq ≥ 8 − αα + 2 .
+
+For α < 4 all denominators are positive, and we get (4 − α)(8 − α) ≤ α(α + 2) 
+
+α2 − 12 α + 32 ≤ α2 + 2 α
+
+16 7 ≤ α. 
+
+which is the desired result. 
+
+# 5 16 /7 Approximation 
+
+Our algorithm (Algorithm 2) is a strict pivoting algorithm (as defined in Algorithm 1). In particular, notice that if a supernode W has LP distance at least 0 .5 to the pivot, then the probability of W being included in the cluster C is 0, by definition of f +, f −. Therefore the output of Algorithm 2 satisfies all hard constraints, by Lemma 4.1. Algorithm 2 processes each supernode independently. Using the notation of Algorithm 1, when the pivot is u, belonging to a supernode U = s(u), and we process supernode W ∋ w, we let βU W = |EU W ||U || W | be the fraction of plus edges over the total pairs between the two supernodes. Then we use 
+
+p(xuw , |EU W |, |U || W |) def 
+
+= |EU W ||U || W | f +(xuw ) + |U || W | − | EU W ||U || W | f −(xuw ) = βU W f +(xuw ) + (1 − βU W )f −(xuw ).
+
+Note that by definition of supernodes, all nodes inside a supernode have LP distance 0 to each other. Therefore, the choice of w ∈ W in the above expression does not matter, as all pairs with one endpoint in U
+
+and the other in W have the same LP distance (by triangle inequality). We now analyze cost (T )  
+
+> lp (T)
+
+. In fact, for technical reasons, we analyze cost (T )+ δ  
+
+> lp (T)
+
+, where δ is a constant. We prove that it suffices to upper bound this quantity in the case where the edges connecting any two different supernodes (each containing some of the vertices of T ) are all of the same type (either all in E+ or all in 
+
+E−). In particular, we prove the following. 
+
+Lemma 5.1. Let u, w, z be distinct nodes, δ be a constant, and T be the set of (non-degenerate) triangles with one endpoint in the supernode s(u), another in s(w), and the other in s(z). Then the expression 
+
+P  
+
+> T∈T
+
+(cost (T ) + δ)
+
+P  
+
+> T∈T
+
+lp (T )
+
+is maximized when for each pair of supernodes in { s(u), s (w), s (z) } either all edges between them belong to 
+
+E+ or they all belong to E−.
+
+12 Algorithm 2: The 16 7 − γ approximation 
+
+Input : Instance G = ( V, E + ⊎ E−, F, H )
+
+Output: A clustering C of V 
+
+> 1
+
+Obtain {xuv }uv ∈(V 
+
+> 2
+
+), a feasible solution to the standard LP (Figure 1)  
+
+> 2
+
+C ← { ∅ }  
+
+> 3
+
+while V̸ = ∅ do  
+
+> 4
+
+Pick a pivot u ∈ V uniformly at random and let U = s(u) be the supernode containing u 
+
+> 5
+
+Initialize a new cluster C ← U 
+
+> 6
+
+foreach supernode W̸ = U do  
+
+> 7
+
+Let EU W be the pairs in E+ with one endpoint in U and the other in W 
+
+> 8
+
+Let w be an arbitrary node in W 
+
+> 9
+
+Let βU W = |EU W ||U || W | 
+
+> 10
+
+Include W into C with probability βU W f +(xuw ) + (1 − βU W )f −(xuw ) 
+
+> 11
+
+Remove C from V 
+
+> 12
+
+C ← C ∪ { C} 
+
+> 13
+
+return C
+
+Similarly, let T ′ be the set of degenerate triangles with one endpoint in s(u) and the other in s(w). Then 
+
+P   
+
+> T′∈T ′
+
+(cost (T ′) + δ)
+
+P   
+
+> T′∈T ′
+
+lp (T ′)
+
+is maximized when either all edges between s(u) and s(v) belong to E+ or they all belong to E−.Proof. Case: T = uwz and all belong to two distinct supernodes ( s(u)̸ = s(w) = s(z)): Let U = s(u)be the supernode containing u and W = s(w) = s(z) the supernode containing w, z . In this case, if u is the pivot, then either w, z both end up in the cluster with u, or neither do. As w, z are in the same supernode, we have wz ∈ E+ and xwz = 0, therefore cost u(wz ) = lp u(wz ) = 0. If w is the pivot, then z ends up in the cluster with w, and u ends up in the same cluster with probability ( βU W f +(xuz ) + (1 − βU W )f −(xuz )). Therefore, if uz ∈ E+ then cost w(uz ) = ( βU W (1 − f +(xuz )) + (1 − βU W )(1 − f −(xuz ))), while if uz ∈
+
+E− then cost w(uz ) = ( βU W f +(xuz ) + (1 − βU W )f −(xuz )). By an analogous argument, we get identical expressions for the case when z is the pivot. Thus, 
+
+X
+
+> u∈U,wz ∈
+
+(W 
+
+> 2
+
+)
+
+cost (uwz ) = ( |W | − 1) · [|EU W | ·  βU W (1 − f +(xuz )) + (1 − βU W )(1 − f −(xuz )) 
+
++ ( |U || W | − | EU W |) ·  βU W f +(xuz ) + (1 − βU W )f −(xuz )].
+
+The above simplifies to 
+
+|W | − 1
+
+|U || W | · (2 f −(xuz ) − 2f +(xuz )) β2 
+
+> U W
+
++ (1 + f +(xuz ) − 3f −(xuz )) · βU W + f −(xuz ) ,
+
+which is convex in βU W since the coefficient of β2 
+
+> U W
+
+is nonnegative (by Lemma 2.5). Now, if w is the pivot, then z is included in its cluster, therefore lp w(uz ) = xuz if uz ∈ E+ and 1 − xuz 
+
+otherwise. An analogous argument holds also for the case when z is the pivot. Thus, 
+
+X
+
+> u∈U,wz ∈
+
+(W 
+
+> 2
+
+)
+
+lp (uwz ) = |W | − 1
+
+|U || W | · [βU W · xuz + (1 − βU W ) · (1 − xuz )] .
+
+13 is linear in βU W . Hence, in order to check whether 
+
+X
+
+> u∈U,wz ∈
+
+(W 
+
+> 2
+
+)
+
+cost (uvw ) − α X
+
+> u∈U,wz ∈
+
+(W 
+
+> 2
+
+)
+
+lp (uvw ) + δ ≤ 0,
+
+for all βU W ∈ [0 , 1], one simply needs to determine that the maximum value of the convex (in βU W ) function 
+
+X
+
+> u∈U,wz ∈
+
+(W 
+
+> 2
+
+)
+
+cost (uvw ) − α X
+
+> u∈U,wz ∈
+
+(W 
+
+> 2
+
+)
+
+lp (uvw ) + δ
+
+is non-positive. In particular, this amounts to considering only the cases that βU W ∈ { 0, 1 }.This means that if u, w, z are such that s(u)̸ = s(w) = s(z), we can upper bound cost (uwz )+ δ 
+
+> lp (uwz )
+
+by upper bounding the cases where all edges between s(u) and s(w) are minus (corresponding to βU W = 0) and all edges between s(u) and s(w) are plus (corresponding to βU W = 1). 
+
+Case: T = uwz and all belong to distinct supernodes ( |{ s(u), s (w), s (z)}| = 3 ): Consider an arbitrary iteration of the main while loop of Algorithm 2. Let U be the supernode containing the pivot u.Let W, Z ̸ = U be distinct supernodes in that iteration. For w ∈ W, z ∈ Z such that wz ∈ E+, we have cost u(wz ) is the probability that exactly one of w, z is included in C and the other is not. 
+
+XU W Z 
+
+> def
+
+=  βU W f +(xuw ) + (1 − βU W )f −(xuw ) ·  βU Z (1 − f +(xuz )) + (1 − βU Z )(1 − f −(xuz )) 
+
++  βU W (1 − f +(xuw )) + (1 − βU W )(1 − f −(xuw ))  ·  βU Z f +(xuz ) + (1 − βU Z )f −(xuz ) .
+
+Similarly, for w ∈ W, z ∈ Z such that wz ∈ E−, we have cost u(wz ) is the probability that both the supernodes W, Z are included in the cluster formed with U as pivot, which is 
+
+YU W Z 
+
+> def
+
+=  βU W f +(xuw ) + (1 − βU W )f −(xuw ) ·  βU Z f +(xuz ) + (1 − βU Z )f −(xuz ) .
+
+It is clear from the above expressions that cost u(wz ) depends only on whether wz ∈ E+ or wz ∈ E−,hence: 
+
+X
+
+> w∈W,z ∈Z
+
+cost u(wz ) = |W || Z| [βW Z XU W Z + (1 − βW Z )YU W Z ] .
+
+The above sum is a multilinear polynomial in βU W , β U Z , β W Z .Let AU W Z denote the probability that at least one of w, z is included in C, that is 
+
+AU W Z 
+
+> def
+
+= ( βU W f +(xuw ) + (1 − βU W )f −(xuw )) · (βU Z f +(xuz ) + (1 − βU Z )f −(xuz )) + ( βU W f +(xuw ) + (1 − βU W )f −(xuw )) · (βU Z (1 − f +(xuz )) + (1 − βU Z )(1 − f −(xuz ))) + ( βU W (1 − f +(xuw )) + (1 − βU W )(1 − f −(xuw ))) · (βU Z f +(xuz ) + (1 − βU Z )f −(xuz )) .
+
+Now, lp u(wz ) = AU W Z · xwz if wz is a plus edge and lp u(wz ) = AU W Z · (1 − xwz ) otherwise. Hence, 
+
+lp u(wz ) depends only on whether the edge wz ∈ E+ or wz ∈ E−.Thus, 
+
+X
+
+> w∈W,z ∈Z
+
+lp u(wz ) = |W || Z| · AU W Z · (βW Z xwz + (1 − βW Z )(1 − xwz )) ,
+
+which is also multilinear in βU W , β U Z , β W Z .Hence, P 
+
+> u∈U,w ∈W,z ∈Z
+
+cost (uwz ) and P 
+
+> u∈U,w ∈W,z ∈Z
+
+lp (uwz ) are also multilinear in βU W , β U Z , β W Z .Therefore, an inequality of the form 
+
+X
+
+> u∈U,w ∈W,z ∈Z
+
+cost (uwz ) ≤ α · X
+
+> u∈U,w ∈W,z ∈Z
+
+lp (uwz ) − δ
+
+14 is satisfied if it is satisfied for βU W , β U Z , β W Z ∈ { 0, 1}.This means that if u, w, z are all in different supernodes, we can upper bound cost (uwz )+ δ 
+
+> lp (uwz )
+
+by upper bound-ing the cases where, out of βU W , β U Z , β W Z ∈ { 0, 1} (i) all are 0, (ii) one is 1 and two are 0, (iii) two are 1 and one is 0, (iv) all three are 1. 
+
+Case: T = uw and they belong to distinct supernodes ( s(u)̸ = s(w)): Let U = s(u) be the supernode containing u and W = s(w) the supernode containing w. If u is the pivot, then w ends up in the same cluster with probability ( βU W f +(xuw ) + (1 − βU W )f −(xuw )). Therefore, if uw ∈ E+
+
+then cost u(uw ) = ( βU W (1 − f +(xuw )) + (1 − βU W )(1 − f −(xuw ))), while if uz ∈ E− then cost u(uw ) = (βU W f +(xuw ) + (1 − βU W )f −(xuw )). The expressions for cost w(uw ) are identical. As the pivot always ends up in the cluster, we get that lp u(uw ) = lp w(uw ) = xuw if uw ∈ E+ and 1 − xuw 
+
+otherwise. Again, we get that to prove an expression of the form: 
+
+X
+
+> u∈U,w ∈W
+
+cost (uw ) ≤ α X
+
+> u∈U,w ∈W
+
+lp (uw ) − δ
+
+it suffices to prove it for βU W ∈ { 0, 1 }.
+
+## 5.1 Upper Bounding each type of Triangle 
+
+In the rest of this section, we always assume that for any two supernodes, the edges between them are all of the same type (either all in E+ or all in E−). This type of analysis suffices, because of Lemma 5.1. Therefore, if u is the pivot and v is a node in a different supernode than u, then the probability of v
+
+being included in the same cluster with u is f +(uv ) if uv ∈ E+, and f −(uv ) if uv ∈ E−. We now analyze each different type of triangle. For technical reasons, relating to breaking beyond the 16 7 barrier (Section 6), in what follows we do not only analyze the quantity cost (uwz ) 
+
+> lp (uwz )
+
+. We also analyze cases where the numerator is slightly decreased or slightly increased, for particular cases of triangles. For this reason we introduce the small positive constants 
+
+γ = 10 −6, η = 5 × 10 −3, κ = 10 −6.We first prove a helpful lemma we are using throughout the paper: 
+
+Lemma 5.2. Let uvw be in distinct supernodes, and xuv ∈ 0.25 ± η. Then lp u(uv ) > 0.2 and lp (uv ) > 0.4.Furthermore, if xuw ∈ 0.25 ± η, then lp v (uw ) > 0.1 and lp (uvw ) > 0.2.Proof. lp u(uv ) is equal to xuv if uv ∈ E+, and 1 − xuv otherwise; it follows that lp u(uv ) ≥ 0.25 − η > 0.2. As lp u(uv ) = lp v (uv ), we get lp (uv ) > 0.4. Furthermore, if v is the pivot, we have that the probability of u being in the cluster of v is at least 0 .5(by definition of f + and f −), and therefore lp v (uw ) ≥ 0.5(0 .25 − η) > 0.1. The same holds for lp w(uv ), and thus lp (uvw ) > 0.2. Now we show that it suffices to only analyze triangles where all their nodes belong to different supernodes. 
+
+Lemma 5.3. If the nodes of a triangle T belong to at most two distinct supernodes, then 
+
+cost (T )
+
+lp (T ) ≤ 2.
+
+Furthermore, if uv ⊆ T and xuv ∈ 0.25 ± η, then cost (T )+9 κ  
+
+> lp (T)
+
+≤ 2.1.Proof. If the nodes of a triangle T all belong to the same supernode, then they all end up in the same cluster. Furthermore they are all connected by edges in E+, therefore cost (T ) = 0. Notice that in this case the LP distances x are all 0, therefore we cannot have xuv ∈ 0.25 ± η.15 If T = uv (degenerate triangle) then by definition we have: 
+
+cost (uv ) = cost u(uv ) + cost v (uv ),
+
+lp (uv ) = lp u(uv ) + lp v (uv ).
+
+By symmetry, the contribution when u is the pivot is the same as when v is the pivot, so cost (uv ) 
+
+> lp (uv )
+
+= cost u(uv ) 
+
+> lp u(uv )
+
+.The term cost u(uv ) is the probability of violating edge uv when u is the pivot. The term lp u(uv ) is the LP cost of uv , since the probability of the edge uv being decided is 1. We proceed with a case analysis on the sign of the edge. (i) uv is a negative edge. The LP cost is 1 − xuv . A violation occurs if v is clustered with u, which happens with probability f −(xuv ). The ratio cost (uv ) 
+
+> lp (uv )
+
+is thus f −(xuv )1−xuv . For xuv ∈ [0 , 0.5), the definition 
+
+f −(xuv ) = 1 − xuv makes the ratio exactly 1. For xuv ∈ [0 .5, 1], the definition f −(xuv ) = 0 gives  
+
+> cost (uv )
+> lp (uv )
+
+= 0. (ii) uv is a positive edge. The LP cost is xuv . A violation occurs if v is not clustered with u, which happens with probability 1 − f +(xuv ), making the ratio cost (uv ) 
+
+> lp (uv )
+
+= 1−f +(xuv ) 
+
+> xuv
+
+. For xuv ∈ [0 , 0.5), using Lemma 2.3 we have f +(xuv ) ≥ 1 − 32 xuv , which implies the ratio is at most 32 . For xuv ∈ [0 .5, 1], the definition f +(xuv ) = 0 makes the ratio 1 
+
+> xuv
+
+which is maximized at xuv = 0 .5, yielding cost (uv ) 
+
+> lp (uv )
+
+≤ 2. Finally, if xuv ∈ 0.25 ± η, then cost (uv )+9 κ 
+
+> lp (uv )
+
+≤ 2 + 90.4 κ ≤ 2.1, by Lemma 5.2. Now if T = uvw and s(u)̸ = s(v) = s(w), we get that vw ∈ E+. If u is the pivot then either both or none of vw are included in the cluster of u, meaning that cost u(vw ) = 0. If v is the pivot, w is included in its cluster, while u is included with probability f +(xuv ) if uv ∈ E+, and f −(xuv ) otherwise. The expressions are identical when w is the pivot because xuw = xuv and both uv, uw are of the same type (either both in 
+
+E+ or both in E−). Therefore cost (T )  
+
+> lp (T)
+
+≤ 2, exactly as in the case of a degenerate triangle. Finally, if xuv = xuw ∈ 0.25 ± η, then cost (T )+9 κ  
+
+> lp (T)
+
+≤ 2 + 90.2 κ ≤ 2.1, by Lemma 5.2. Therefore, for the rest of this section we only consider triangles where all nodes belong to distinct supernodes. 
+
+5.1.1 − − − Triangles Lemma 5.4. For a − − − triangle T = uvw ,
+
+cost (T )
+
+lp (T ) ≤ 1.
+
+Furthermore, if xuv , x uw ∈ 0.25 ± η, then cost (T )+9 κ  
+
+> lp (T)
+
+≤ 1.1.Proof. We first compute the cost () and lp () contributions for each of the three pivots. Let us consider the case where u is the pivot. A violation of the edge vw occurs if and only if both of v and w are included in the cluster seeded by u. This happens with probability 
+
+cost u(vw ) = f −(xuv )f −(xuw ).
+
+The corresponding lp () value of the edge is 1 − xvw , multiplied by the probability that it is decided, which is 
+
+lp u(vw ) = (1 − xvw )
+
+
+
+1 − (1 − f −(xuv ))(1 − f −(xuw )) 
+
+
+
+.
+
+16 The contributions for pivots v and w are defined symmetrically. To prove the lemma, we must show that the sum of cost () terms is no more than the sum of lp () terms: 
+
+X
+
+> u
+
+f −(xuv )f −(xuw ) ≤ X
+
+> u
+
+(1 − xvw )
+
+
+
+1 − (1 − f −(xuv ))(1 − f −(xuw )) 
+
+
+
+,
+
+where the sum is cyclic over uvw . We consider three exhaustive scenarios: (i) at least two of xuv , xuw and 
+
+xvw are at least 0.5, (ii) exactly one of these values is at least 0.5, and (iii) all three values are less than 0.5. For case (i), without loss of generality, assume xuv ≥ 0.5 and xuw ≥ 0.5. By definition, f −(xuv ) = 
+
+f −(xuw ) = 0, which implies that all three terms on the left-hand side of the inequality are zero. The inequality holds trivially as the right-hand side is non-negative. For case (ii), without loss of generality, assume xuw ≥ 0.5, while xuv < 0.5 and xvw < 0.5. Then since 
+
+f −(xuw ) = 0, the left-hand side is simplified to f −(xuv )f −(xvw ). The right-hand side is a sum of three non-negative terms. Since the terms for pivots v and w are non-negative, the inequality holds if the LHS is bounded by the term for pivot u, which is simplified to (1 − xvw )f −(xuv ). Thus, it suffices to show 
+
+f −(xuv )f −(xvw ) ≤ (1 − xvw )f −(xuv ).
+
+As xvw < 0.5, we have f −(xvw ) = 1 − xvw , and therefore the required inequality holds with equality. For case (iii), all three LP values are less than 0.5, so f −(x) = 1 − x for all relevant terms. The inequality becomes: (1 − xuv )(1 − xuw ) + (1 − xvw )(1 − xuv ) + (1 − xvw )(1 − xuw )
+
+≤ (1 − xvw )(1 − xuv xuw ) + (1 − xuw )(1 − xvw xuv ) + (1 − xuv )(1 − xvw xuw )The third term on the left is at most the first term on the right since (1 − xuw ) ≤ (1 − xuv xuw ). Analogous arguments show that the second term on the left is at most the third term on the right and that the third term on the left is at most the second term on the right, and this proves the inequality. Since the inequality is satisfied in all cases, the proof of cost (T )  
+
+> lp (T)
+
+≤ 1 is complete. Finally, if xuv , x uw ∈ 0.25 ± η, then cost (T )+9 κ  
+
+> lp (T)
+
+≤ 1 + 90.2 κ ≤ 1.1, by Lemma 5.2. 
+
+5.1.2 − − + Triangles Lemma 5.5. For a − − + triangle T = uvw ,
+
+cost (T )
+
+lp (T ) ≤ 2.
+
+Furthermore, if xuv , x uw ∈ 0.25 ± η, then cost (T )+9 κ  
+
+> lp (T)
+
+≤ 2.1.Proof. Without loss of generality, assume vw is the positive edge, while uv and uw are negative. We first establish the cost () and lp () contributions for each of the three pivots. 
+
+cost u(vw ) = (1 − f −(xuv )) · f −(xuw ) + f −(xuv ) · (1 − f −(xuw )) ,
+
+lp u(vw ) = xvw ·
+
+
+
+1 − (1 − f −(xuv ))(1 − f −(xuw )) 
+
+
+
+,
+
+cost v (uw ) = f −(xuv )f +(xvw ),
+
+lp v (uw ) = (1 − xuw )
+
+
+
+1 − (1 − f −(xuv ))(1 − f +(xvw )) 
+
+
+
+,
+
+cost w(uv ) = f −(xuw )f +(xvw ),
+
+lp w(uv ) = (1 − xuv )
+
+
+
+1 − (1 − f −(xuw ))(1 − f +(xvw )) 
+
+
+
+.
+
+17 Note that the expression for cost u(vw ) accounts for a violation of the positive edge ( v, w ) when u is the pivot, which occurs if exactly one of v or w joins the cluster. To prove the lemma, we must show that the sum of cost () terms is at most twice the sum of lp () terms: 
+
+X
+
+> u
+
+cost u(vw ) ≤ 2 · X
+
+> u
+
+lp u(vw ),
+
+where the sum is cyclic over uvw . The proof proceeds by a case analysis on the LP values, which we partition into three exhaustive cases: (i) xvw ≥ 0.5, (ii) at least one of xuv and xuw is at least 0.5 while xvw < 0.5, and (iii) all are less than 0.5. 
+
+• For case (i), by definition we have f +(xvw ) = 0. The sum of cost () terms simplifies to: 
+
+X
+
+> u
+
+cost u(vw ) = f −(xuv ) + f −(xuw ) − 2f −(xuv )f −(xuw ).
+
+To bound the sum of lp () terms, we note that the terms are non-negative, so we can lower bound the sum by a single term: 
+
+X
+
+> u
+
+lp u(vw ) ≥ lp u(vw ) = xvw ·
+
+
+
+f −(xuv ) + f −(xuw ) − f −(xuv )f −(xuw )
+
+
+
+.
+
+Since xvw ≥ 0.5 we have 
+
+X
+
+> u
+
+cost u(vw ) = f −(xuv ) + f −(xuw ) − 2f −(xuv )f −(xuw )
+
+≤ f −(xuv ) + f −(xuw ) − f −(xuv )f −(xuw )
+
+≤ 2xvw ·
+
+
+
+f −(xuv ) + f −(xuw ) − f −(xuv )f −(xuw )
+
+
+
+≤ 2 · X
+
+> u
+
+lp u(vw ).
+
+• For case (ii), without loss of generality, assume xuv ≥ 0.5. If xuw is also at least 0.5, then f −(xuv ) = 
+
+f −(xuw ) = 0, which causes the sum P 
+
+> u
+
+cost u(vw ) to be zero. The inequality holds trivially, as each term in P 
+
+> u
+
+lp u(vw ) is non-negative. We therefore proceed assuming xuv ≥ 0.5 while xuw < 0.5 and 
+
+xvw < 0.5. First, we establish a lower bound for the sum of lp () terms. We can bound the term lp w(uv )as follows, using the fact that 1 − f +(xvw ) ≤ 1: 
+
+lp w(uv ) = (1 − xuv )
+
+
+
+1 − (1 − f −(xuw )) · (1 − f +(xvw )) 
+
+
+
+≥ (1 − xuv )
+
+
+
+1 − (1 − f −(xuw )) · 1
+
+
+
+= (1 − xuv ) · f −(xuw ).
+
+Using this along with f −(xuv ) = 0, we can bound the sum of lp () terms: 
+
+X
+
+> u
+
+lp u(vw ) = xvw · f −(xuw ) + (1 − xuw ) · f +(xvw ) + lp w(uv )
+
+≥
+
+
+
+1 − (xuv − xvw )
+
+
+
+· f −(xuw ) + (1 − xuw ) · f +(xvw ).
+
+Next, by substituting f −(xuv ) = 0, we simplify the sum of cost () terms: 
+
+X
+
+> u
+
+cost u(vw ) = f −(xuw ) + f −(xuw )f +(xvw ).
+
+By triangle inequality, we have xuv − xvw ≤ xuw . Therefore: 2 · X
+
+> u
+
+lp u(vw ) ≥ 2 · (1 − xuw ) · f −(xuw ) + 2 · (1 − xuw ) · f +(xvw )
+
+≥ f −(xuw ) + f +(xvw ) ≥ f −(xuw ) + f −(xuw )f +(xvw ) = X
+
+> u
+
+cost u(vw ).
+
+18 • For the final case (iii), since lp u(vw ) is non-negative, it suffices to show 2 ·
+
+
+
+lp v (uw ) + lp w(uv )
+
+
+
+≥ X
+
+> u
+
+cost u(vw ).
+
+We first establish a lower bound on the left-hand side. Since xuv < 0.5 and xuw < 0.5, it follows that 2 · (1 − xuv ) > 1 and 2 · (1 − xuw ) > 1. This allows us to bound the expression as follows: 2 ·
+
+
+
+lp v (uw ) + lp w(uv )
+
+
+
+≥ f −(xuv ) + f −(xuw ) + f +(xvw )
+
+
+
+2 − f −(xuv ) − f −(xuw )
+
+
+
+.
+
+Therefore, it suffices to prove that the sum of cost () terms is less than or equal to this lower bound. By expanding the definition of cost () terms, this is equivalent to proving: 
+
+X
+
+> u
+
+cost u(vw ) = 
+
+
+
+f −(xuv ) + f −(xuw )
+
+
+
+· (f +(xvw ) + 1) − 2 · f −(xuv )f −(xuw )
+
+≤ f −(xuv ) + f −(xuw ) + f +(xvw )
+
+
+
+2 − f −(xuv ) − f −(xuw )
+
+
+
+.
+
+Rearranging terms, this inequality simplifies to: 2f −(xuv )f −(xuw ) ≥ f +(xvw )
+
+
+
+2f −(xuv ) + 2 f −(xuw ) − 2
+
+
+
+.
+
+To verify this, let X = f −(xuv ), Y = f −(xuw ), and Z = f +(xvw ). We must prove for all X, Y, Z ∈ [0 , 1] that: 2XY ≥ Z · (2 X + 2 Y − 2) .
+
+The right-hand side is linear in Z, so we need to only verify the inequality at the endpoints of the interval [0 , 1]. If Z = 0, the inequality becomes 2 XY ≥ 0, which holds. If Z = 1, the inequality becomes 2XY ≥ 2X + 2 Y − 2,
+
+which is equivalent to 2 · (1 − X)(1 − Y ) ≥ 0.
+
+This also holds for any X, Y ∈ [0 , 1], which completes the proof for this case. The required inequality is satisfied in all cases. Finally, if xuv , x uw ∈ 0.25 ± η, then cost (T )+9 κ  
+
+> lp (T)
+
+≤ 1 + 90.2 κ ≤ 2.1, by Lemma 5.2. 
+
+5.1.3 − + + Triangles Lemma 5.6. For a − + + triangle T = uvw ,
+
+cost (T )
+
+lp (T ) ≤ 16 7 .
+
+Furthermore: 
+
+• if xuw , x vw ∈ 0.25 ± η and xuv ∈ 0.5 ± η, then cost (T )−κ  
+
+> lp (T)
+
+≤ 16 7 − γ,
+
+• if xuw , x vw ∈ 0.25 ± η and xuv ̸ ∈ 0.5 ± η, then cost (T )+9 κ  
+
+> lp (T)
+
+≤ 16 7 − γ,
+
+• in all other cases cost (T )  
+
+> lp (T)
+
+≤ 16 7 − γ.
+
+19 Proof. Without loss of generality, assume uv is the negative edge, while uw and vw are positive. We begin by computing the cost () and lp () terms for each of the three pivots. 
+
+cost u(vw ) = (1 − f −(xuv )) · f +(xuw ) + f −(xuv ) · (1 − f +(xuw )) ,
+
+lp u(vw ) = xvw ·
+
+
+
+1 − (1 − f −(xuv ))(1 − f +(xuw )) 
+
+
+
+,
+
+cost v (uw ) = (1 − f −(xuv )) · f +(xvw ) + f −(xuv ) · (1 − f +(xvw )) ,
+
+lp v (uw ) = xuw ·
+
+
+
+1 − (1 − f −(xuv ))(1 − f +(xvw )) 
+
+
+
+,
+
+cost w(uv ) = f +(xuw )f +(xvw ),
+
+lp w(uv ) = (1 − xuv )
+
+
+
+1 − (1 − f +(xuw ))(1 − f +(xvw )) 
+
+
+
+.
+
+Note that since lp (T ) is a sum of 3 terms, each being at most one, it is clearly upper bounded by three. Therefore, since γ ≤ 3 · κ, for xuw , x vw ∈ 0.25 ± η and xuv ∈ 0.5 ± η,
+
+cost (T ) − κ
+
+lp (T ) = cost (T )
+
+lp (T ) − κ
+
+lp (T ) ≤ cost (T )
+
+lp (T ) − κ
+
+3 ≤ cost (T )
+
+lp (T ) − γ. 
+
+So in this case, it remains to prove that cost (T )  
+
+> lp (T)
+
+≤ 16 7 . Also if xuw , x vw ∈ 0.25 ± η, by Lemma 5.2, lp (T ) ≥ 0.2. Therefore if xuv /∈ 0.5 ± η,
+
+cost (T ) + 9 κ
+
+lp (T ) = cost (T )
+
+lp (T ) + 9 κ
+
+lp (T ) ≤ cost (T )
+
+lp (T ) + 45 · κ. 
+
+So in this case it remains to prove cost (T )  
+
+> lp (T)
+
+≤ 16 7 − 45 · κ − γ. In all other cases, we must prove cost (T )  
+
+> lp (T)
+
+≤ 16 7 − γ,thus in each case we must prove that cost (T )  
+
+> lp (T)
+
+is upper bounded by some constant. Let α be a parameter in [2 , 16 7 ]. We show that: X
+
+> u
+
+cost u(vw ) ≤ α · X
+
+> u
+
+lp u(vw ),
+
+where the sum is cyclic over {u, v, w }. The proof proceeds by a case analysis on the LP values, which we partition into three exhaustive cases: (i) at least one of xuw and xvw is at least 0.5, (ii) xuv ≥ 0.5, and (iii) all three are less than 0.5. 
+
+• For case (i), without loss of generality, assume that xuw ≥ 0.5. If xuv is also at least 0 .5, then cost (T ) = 
+
+lp (T ) = f +(xvw ), and therefore the desired inequality follows. If xvw ≥ 0.5, f +(xuw ) = f +(xvw ) = 0 simplifies the inequality to 2 · f −(xuv ) ≤ α · (xvw · f −(xuv ) + xuw · f −(xuv )) ,
+
+which clearly holds, because xvw + xuw ≥ 0.5 + 0 .5 = 1 and α ≥ 2. We therefore proceed assuming 
+
+xuv , x vw < 0.5. By definition, f +(xuw ) = 0, which simplifies the sum of cost () terms to 
+
+X
+
+> u
+
+cost u(vw ) = f −(xuv ) + f −(xuv ) · (1 − f +(xvw )) + f +(xvw ) · (1 − f −(xuv )) .
+
+As xuv < 0.5 and xuw ≥ 0.5, it follows that both 1 − xuv and xuw are at least 0.5. Therefore we can get the following lower bound on the sum of lp () terms: 
+
+X
+
+> u
+
+lp u(vw ) ≥ (1 − xuv ) · f +(xvw ) + xuw · (f +(xvw ) + f −(xuv ) · (1 − f +(xvw ))) + xvw · f −(xuv )
+
+≥ 12 f +(xvw ) + 12 (f +(xvw ) + f −(xuv ) · (1 − f +(xvw ))) + xvw · f −(xuv ).
+
+20 Therefore it suffices to prove that the sum of cost () terms is not greater than this lower bound multiplied by α. Rearranging terms, this inequality is equivalent to (α − 1) · f +(xvw ) + αx vw · f −(xuv ) ≥ (2 − α
+
+2 ) · (1 − f +(xvw )) · f −(xuv ).
+
+Since α > 1, it suffices to prove 
+
+αx vw · f −(xuv ) ≥ (2 − α
+
+2 ) · (1 − f +(xvw )) · f −(xuv ).
+
+If f −(xuv ) = 0, the inequality follows, otherwise we can cancel this term from both sides and get to the following equivalent inequality 
+
+αx vw ≥ (2 − α
+
+2 ) · (1 − f +(xvw )) .
+
+By Lemma 2.3, we know that 1 − f +(xvw ) ≤ 32 xvw , so it suffices to prove 
+
+α
+
+2 − α
+
+> 2
+
+≥ 32 ,
+
+and this is equivalent to α ≥ 12 7 . Thus in this case, the inequality holds for α = 2. 
+
+• For case (ii), by definition f −(xuv ) = 0, which simplifies the sum of cost () and lp () terms: 
+
+X
+
+> u
+
+cost u(vw ) = f +(xuw ) · f +(xvw ) + f +(xvw ) + f +(xuw ),
+
+X
+
+> u
+
+lp u(vw ) = (1 − xuv )
+
+
+
+1 − (1 − f +(xuw ))(1 − f +(xvw )) 
+
+
+
++ xuw · f +(xvw ) + xvw · f +(xuw ).
+
+We must prove that the sum of cost () terms is not greater than α times the sum of lp () terms, which is equivalent to rearranging the terms as: (‡)
+
+α(1 −xuv +xuw )−1
+
+
+
+f +(xvw )+ 
+
+
+
+α(1 −xuv +xvw )−1
+
+
+
+f +(xuw ) ≥
+
+
+
+α(1 −xuv )+1 
+
+
+
+f +(xuw )f +(xvw ).
+
+When xuv increases by an amount ϵ > 0, the left-hand side decreases by α(f +(xvw ) + f +(xuw )) ϵ, while the right-hand side decreases by αf +(xvw )f +(xuw )ϵ < α (f +(xvw ) + f +(xuw )) ϵ. Therefore it suffices to prove the inequality for the largest feasible value xuv = xuw + xvw , obtaining (⋆)
+
+
+
+α(1 −xvw )−1
+
+
+
+f +(xvw )+ 
+
+
+
+α(1 −xuw )−1
+
+
+
+f +(xuw ) ≥
+
+
+
+α(1 −xuw −xvw )+1 
+
+
+
+f +(xuw )f +(xvw ).
+
+To prove Inequality ⋆, we first prove that the function gα(x) = ( α(1 − x) − 1) · f +(x) is convex. 
+
+Claim 5.7. gα(x) is convex on [0 , 0.5) .Proof. Using Lemma 2.2 and the product rule, the derivative of g exists and is: 
+
+g′
+
+> α
+
+(x) = −αf +(x) +  α(1 − x) − 1f ′+(x),
+
+By evaluating this on the sub-domains [0 , 0.25) and [0 .25 , 0.5), we obtain: 
+
+g′
+
+> α
+
+(x) = 30 αx − 19 α + 10 3√9 − 20 x (∀x ∈ [0 , 0.25)) ,g′
+
+> α
+
+(x) = 10 3 αx − 33 12 α + 53 (∀x ∈ [0 .25 , 0.5)) .
+
+First, notice that g′ 
+
+> α
+
+is continuous on [0 .25 , 0.5) as g′
+
+> α
+
+(0 .25 −) = g′
+
+> α
+
+(0 .25) = − 23 12 α + 53 . Furthermore, on the domain [0 , 0.25), the numerator of g′
+
+> α
+
+(x) is increasing and the positive denominator is decreasing, and on the domain [0 .25 , 0.5), the expression is linear and increasing; this implies g′ 
+
+> α
+
+is increasing. Therefore gα is convex on [0 , 0.5). 21 We first consider the case that xvw , x uw ∈ 0.25 ± η. The convexity of g(x) along with Lemma 2.4, imply that setting xuw = xvw is the tightest case for Inequality ⋆.Thus, without loss of generality, we can take xuw = xvw = x ≥ 0.25. The inequality becomes: 2
+
+
+
+α(1 − x) − 1
+
+
+
+f +(x) ≥
+
+
+
+α(1 − 2x) + 1 
+
+
+
+f +(x)2,
+
+which, after substituting the definition of f +(x) for x ∈ [0 .25 , 0.5), reduces to showing: 2α − 2αx − 2
+
+α − 2αx + 1 ≥ 13 12 − 53 x. 
+
+The function on the left-hand side is concave for x ∈ [0 .25 , 0.5), while the right-hand side is linear, therefore it suffices to consider the inequality at endpoints. If xuv ∈ 0.5 ± η, the endpoints we must consider the inequality at are x = 0 .25 and x = 0 .5. For these points, the inequality reduce to α ≥ 16 7
+
+and α ≥ 94 , and therefore the inequality holds for α = 16 7 . If xuv /∈ 0.5 ± η, since xuv ≥ 0.5, we must have 2 x = xuv ≥ 0.5 + η, and therefore x ≥ 0.25 + η 
+
+> 2
+
+, so the endpoints we must consider in this case are x = 0 .25 + η 
+
+> 2
+
+and x = 0 .5. At x = 0 .25 + η 
+
+> 2
+
+, expanding gives the following equivalent inequality: 
+
+α ≥ 
+
+> 83
+
+− 56 η 
+
+> 76
+
++ 112 η − 56 η2 ≈ 2.282 .
+
+Thus, it only remains to verify 16 7 − 45 · κ − γ ≥ max 
+
+
+
+2.282 , 94
+
+
+
+,
+
+which holds. The remaining cases are when xuw /∈ 0.25 ± η or xvw /∈ 0.25 ± η. If xuw + xvw ≥ 0.5 + η, we can apply the previous argument as is, where we assumed xvw = xuw . The only remaining case is when 0.5 ≤ xuv = xuw + xvw < 0.5 + η. For this case, we no longer assume that xuw = xvw . Without loss of generality, let xvw ≥ xuw . Then if xvw ∈ 0.25 ± η, since xvw ≥ 0.25, we have 0 .25 ≤ xvw < 0.25 + η.Combining this with 0 .5 ≤ xuw + xvw < 0.5 + η, yields 0 .25 − η ≤ xuw ≤ 0.25 + η, which contradicts the case assumption. Hence, we must have xvw ≥ 0.25 + η, which implies xuw ≤ 0.25. Denote xuw + xvw and 0 .25 + η by s and c respectively. We now prove that replacing ( xuw , x vw ) in the Inequality ⋆ by ( s − c, c ) strengthens the inequality. Since xuw ≤ s − c ≤ c ≤ xvw and xuw + xvw = s,we can write c and s − c as a convex combination of xuw and xvw . Thus, there exists r ∈ [0 , 1] for which 
+
+c = r · xvw + (1 − r) · xuw , s − c = (1 − r) · xvw + r · xuw .
+
+By Lemma 2.4, ln( f +(x)) is concave, therefore ln( f +(c)) = ln 
+
+
+
+f + r · xvw + (1 − r) · xuw 
+
+
+
+≥ r · ln( f +(xvw )) + (1 − r) · ln( f +(xuw )) ,
+
+ln( f +(s − c)) = ln 
+
+
+
+f + (1 − r) · xvw + r · xuw 
+
+
+
+≥ (1 − r) · ln( f +(xvw )) + r · ln( f +(xuw )) .
+
+Summing the two inequalities above, we obtain ln( f +(c)) + ln( f +(s − c)) ≥ ln( f +(xvw )) + ln( f +(xuw )) .
+
+Consequently, 
+
+f +(c) · f +(s − c) ≥ f +(xvw ) · f +(xuw ).
+
+Therefore, replacing ( xvw , x uw ) by ( c, s −c) strengthens the right-hand side of Inequality ⋆. Since gα(x)is convex, we can similarly show that this replacement weakens the left-hand side of Inequality ⋆. In 22 total, this replacement strengthens the inequality and we may assume xvw = c and xuw = s − c. The resulting inequality is: 
+
+
+
+α(1 − c) − 1
+
+
+
+f +(c) + 
+
+
+
+α(1 − s + c) − 1
+
+
+
+f +(s − c) ≥
+
+
+
+α(1 − s) + 1 
+
+
+
+f +(c)f +(s − c).
+
+Denoting s − c by x, substituting c = 0 .25 + η, and dividing both sides by f +(c)f +(s − c) gives 
+
+T (x) def 
+
+= α(0 .75 − η) − 1
+
+f +(x) + α(1 − x) − 1
+
+f +(0 .25 + η) − α(0 .75 − η − x) − 1 ≥ 0.
+
+The first term is convex while the other terms are linear, and therefore T (x) is a convex function. Since 0.5 ≤ (0 .25 + η) + x ≤ 0.5 + η, we have 0 .25 − η ≤ x ≤ 0.25 and we must prove the inequality on [0 .25 − η, 0.25]. Since T (x) is convex, it suffices to consider this inequality at the endpoints and also the roots of T ′(x) in this interval. First, let us show that T ′(x) has no root on this interval. 
+
+Claim 5.8. T ′(x) has no root on [0 .25 − η, 0.25] .Proof. By expanding, we have 
+
+T ′(x) = 
+
+ α(0 .75 − η) − 1
+
+f +(x)
+
+′
+
+− αf +(0 .25 + η) + α =
+
+
+
+α(0 .75 − η) − 1
+
+
+
+· −f ′+(x)
+
+f +(x)2 − α( 1
+
+f +(0 .25 + η) − 1) .
+
+Therefore, since −f ′+(x) is increasing and f (x) is decreasing, by substituting η = 0 .005, we get 
+
+−f ′+(x)
+
+f (x)2 ≥ −f ′+(0 .25 − η)
+
+f +(0 .25 − η)2 = 10 9 f +(0 .25 − η)3 = 10 9 f +(0 .245) 3 > 3.61 .
+
+Consequently, 
+
+T ′(x) ≥
+
+
+
+α · 0.745 − 1
+
+
+
+· 3.61 − α( 1
+
+f +(0 .255) − 1) > 2.68 α − 3.61 − α · 0.6 = 2 .08 α − 3.61 > 0,
+
+which holds, since α ≥ 2. Thus, it suffices to consider the inequality at endpoints x = 0 .25 − η, and x = 0 .25. At x = 0 .25, by rearranging the terms, the inequality simplifies to 
+
+α ≥ 
+
+> 52
+
++ 1  
+
+> f+(0 .25+ η)58
+
+− 12 η + 34 f +(0 .25+ η)
+
+= 
+
+> 52
+
++ 1  
+
+> f+(0 .255) 58
+
+− 0.005 2 + 34 f +(0 .255) 
+
+≈ 2.282 .
+
+At x = 0 .25 − η, by rearranging the terms, the inequality simplifies to 
+
+α ≥  
+
+> 1
+> f+(0 .25+ η)
+
++ 1  
+
+> f+(0 .25 −η)
+
++ 1   
+
+> 0.75 −ηf+(0 .25 −η)
+
++ 0.75+ ηf +(0 .25+ η) − 12
+
+=  
+
+> 1
+> f+(0 .255)
+
++ 1  
+
+> f+(0 .245)
+
++ 1   
+
+> 0.74
+> f+(0 .245)
+
++ 0.76   
+
+> f+(0 .265)
+
+− 12
+
+≈ 2.2852 .
+
+Hence, it remains to verify 16 7 − γ ≥ max (2 .282 , 2.2852) = 2 .2852 ,
+
+which clearly holds. 
+
+• For final case (iii), assume xuw and xvw are fixed. Therefore, by rearranging, the required inequality becomes 
+
+l(xuv ) def 
+
+= Ax uv + Bf −(xuv ) + C ≥ 0,
+
+23 where A, B and C are defined as follows: 
+
+A = α · f +(xuw ) · f +(xvw ) − α · f +(xuw ) − α · f +(xvw ),B = α · (xuw + xvw ) + 2 f +(xvw ) + 2 f +(xuw ) − αx uw f +(xvw ) − αx vw f +(xuw ) − 2,C =
+
+
+
+α(1 + xvw ) − 1
+
+
+
+f +(xuw ) + 
+
+
+
+α(1 + xuw ) − 1
+
+
+
+f +(xvw ) − (α + 1) · f +(xuw ) · f +(xvw ).
+
+The derivative of the function l(xuv ) is: 
+
+l′(xuv ) = A + B · df −
+
+dx (xuv ) = A − B. 
+
+Since f +(xvw )f +(xuw ) < f +(xvw ) + f +(xuw ), the expression A is non-positive. Hence, to show that 
+
+l′(xuv ) ≤ 0, it is sufficient to prove that B ≥ 0. This can be shown by combining the following two inequalities, which hold by Lemma 2.3 and xuw , x vw < 0.5. For any p ∈ [0 , 1]: 
+
+ 32 xuw + f +(xuw )
+
+
+
+p +
+
+ 32 xvw + f +(xvw )
+
+
+
+p ≥ 2p, 
+
+
+
+α − 32 p
+
+
+
+(xuw + xvw ) + 34 p(f +(xuw ) + f +(xvw )) ≥ αx uw f +(xvw ) + αx vw f +(xuw ).
+
+Combining these gives the bound: (†) B ≥ (2 − 74 p)( f +(xuw ) + f +(xvw )) − (2 − 2p).
+
+Setting p = 1 yields 
+
+B ≥ 14 (f +(xuw ) + f +(xvw )) ≥ 0.
+
+Therefore, B ≥ 0 and consequently, l(xuv ) is a decreasing function of xuv and we may take xuv =min( xuw + xvw , 0.5−). If xuw + xvw ≥ 0.5, since B and f −(xuv ) are both non-negative, it suffices to prove 
+
+Ax uv + C ≥ 0.
+
+By rearranging, this transforms to 
+
+
+
+α(1 + xvw − xuv ) − 1
+
+
+
+f +(xuw ) + 
+
+
+
+α(1 + xuw − xuw ) − 1
+
+
+
+f +(xvw ) ≥
+
+
+
+α(1 − xuv ) + 1 
+
+
+
+f +(xuw )f +(xvw ).
+
+This inequality is identical to Inequality ‡, which has been proved in Case (ii). Now, let us consider the case that xuw + xvw < 0.5, and it follows from the above discussion that 
+
+xuv = xuw + xvw . Now set p = 47 in Inequality † to obtain 
+
+B ≥ (f +(xvw ) + f +(xuw )) − 67 .
+
+With this, it now suffices to show 
+
+Ax uv +
+
+
+
+(f +(xvw ) + f +(xuw )) − 67
+
+
+
+· f −(xuv ) + C ≥ 0.
+
+Let c′ = xuv = xuw + xvw be fixed and c = f −(c′). As in the earlier convexity argument, one can similarly show that the function gα(x) = 
+
+
+
+α(1 − x) − 1 + c
+
+
+
+f +(x) is convex. By rearranging the above inequality, we can obtain the equivalent inequality 
+
+gα(xuw ) + gα(xvw ) ≥
+
+
+
+α(1 − c′) + 1 
+
+
+
+f +(xuw )f +(xvw ) + 67 c. 
+
+24 Therefore, by Lemma 2.4, the setting xuw = xvw = x < 0.25 is the tightest case for the inequality above. Then, c′ = 2 x and c = f −(2 x) = 1 − 2x. So, we must show 2
+
+
+
+α(1 − x) − 1 + (1 − 2x)
+
+
+
+f +(x) ≥
+
+
+
+α(1 − 2x) + 1 
+
+
+
+f +(x)2 + 67 (1 − 2x).
+
+Let us define the function Φ( x) as the left-hand side minus the right-hand side: Φ( x) def 
+
+= 2 
+
+
+
+α(1 − x) − 1 + (1 − 2x)
+
+
+
+f +(x) −
+
+
+
+α(1 − 2x) + 1 
+
+
+
+f +(x)2 − 67 (1 − 2x).
+
+We analyze Φ( x) for x ∈ [0 , 0.25) by performing a change of variables. Let 
+
+u := f +(x) = 
+
+r
+
+1 − 20 9 x ∈
+
+ 23 , 1
+
+i
+
+.
+
+Then, x = 920 (1 − u2), 1 − 2x = 1+9 u2 
+
+> 10
+
+. With these substitutions and by letting α = 2, we compute the necessary coefficients: 
+
+α(1 − x) − 1 + (1 − 2x) = 9u2 + 1 5 ,α(1 − 2x) + 1 = 9u2 + 6 5 .
+
+Substituting, we get 35 Φ( x) = Q(u) := −63 u4 + 126 u3 − 69 u2 + 14 u − 3.
+
+Since u ∈ ( 23 , 1], we have ( u − 23 )( u − 1) ≤ 0. Expanding gives u2 + 23 ≤ 53 u, which is equivalent to 
+
+u − 35 u2 − 25 ≥ 0.
+
+By rearranging, we get 
+
+Q(u) = 126 u2 · (u − 35 u2 − 25 ) + 14 · (u − 35 u2 − 25 ) + ( 63 5 u4 − 51 5 u2 + 13 5 ).
+
+The first two terms above are clearly nonnegative, therefore for proving Q(u) ≥ 0, it suffices to prove the last term is also nonnegative. Denoting u2 by r leaves us with 
+
+T (r) = 63 r2 − 51 r + 13 ≥ 0.T (r) is a quadratic function and therefore attains its minimum at 51 126 . Since T ( 51 126 ) = 13 − 51 2 
+
+> 2·126
+
+> 0, 
+
+T is positive on its entire domain. Hence Q(u) ≥ 0 on the interval ( 23 , 1], consequently Φ( x) ≥ 0 on the interval [0 , 0.25) for α ≥ 2. In this case we have cost (T )  
+
+> lp (T)
+
+≤ 2, so it remains to verify 16 7 − 45 · κ − γ ≥ 2,
+
+which holds. 
+
+5.1.4 + + + Triangles Lemma 5.9. For a + + + triangle T = uvw ,
+
+cost (T )
+
+lp (T ) ≤ 16 7 .
+
+Furthermore: 
+
+25 • if xuw , x vw ∈ 0.25 ± η and xuv ∈ 0.5 ± η, then cost (T )−κ  
+
+> lp (T)
+
+≤ 16 7 − γ,
+
+• if xuw , x vw ∈ 0.25 ± η and xuv ̸ ∈ 0.5 ± η, then cost (T )+9 κ  
+
+> lp (T)
+
+≤ 16 7 − γ,
+
+• in all other cases cost (T )  
+
+> lp (T)
+
+≤ 16 7 − γ.Proof. We begin by computing the cost () and lp () terms for each of the three pivots. 
+
+cost u(vw ) = (1 − f +(xuv )) · f +(xuw ) + f +(xuv ) · (1 − f +(xuw )) ,
+
+lp u(vw ) = xvw ·
+
+
+
+1 − (1 − f +(xuv ))(1 − f +(xuw )) 
+
+
+
+,
+
+cost v (uw ) = (1 − f +(xuv )) · f +(xvw ) + f +(xuv ) · (1 − f +(xvw )) ,
+
+lp v (uw ) = xuw ·
+
+
+
+1 − (1 − f +(xuv ))(1 − f +(xvw )) 
+
+
+
+,
+
+cost w(uv ) = (1 − f +(xuw )) · f +(xvw ) + f +(xuw ) · (1 − f +(xvw )) ,
+
+lp w(uv ) = xuv ·
+
+
+
+1 − (1 − f +(xuw ))(1 − f +(xvw )) 
+
+
+
+.
+
+Note that since lp (T ) is sum of 3 terms, each being at most one, it is clearly upper bounded by three. Therefore, since γ ≤ 3 · κ, for xuw , x vw ∈ 0.25 ± η and xuv ∈ 0.5 ± η,
+
+cost (T ) − κ
+
+lp (T ) = cost (T )
+
+lp (T ) − κ
+
+lp (T ) ≤ cost (T )
+
+lp (T ) − κ
+
+3 ≤ cost (T )
+
+lp (T ) − γ. 
+
+So in this case, it remains to prove that cost (T )  
+
+> lp (T)
+
+≤ 16 7 . Also if xuw , x vw ∈ 0.25 ±η, x uv ̸ ∈ 0.5±η, by Lemma 5.2: 
+
+cost (T ) + 9 κ
+
+lp (T ) = cost (T )
+
+lp (T ) + 90.2 κ ≤ cost (T )
+
+lp (T ) + 45 · κ. 
+
+So in this case it remains to prove cost (T )  
+
+> lp (T)
+
+≤ 16 7 − 45 · κ − γ. In all other cases, we must prove cost (T )  
+
+> lp (T)
+
+≤ 16 7 − γ,thus in each case we must prove that cost (T )  
+
+> lp (T)
+
+is upper bounded by some constant. Let α ∈ [2 , 16 7 ] be a parameter. We show that: 
+
+X
+
+> u
+
+cost u(vw ) ≤ α · X
+
+> u
+
+lp u(vw ),
+
+where the sum is cyclic over uvw . We now divide into cases: (i) at least two of xuv , xuw and xvw are at least 0.5, (ii) exactly one of these values is at least 0.5, and (iii) all three are less than 0.5. 
+
+• For case (i), without loss of generality, assume xuv , x uw ≥ 0.5. This implies f +(xuv ) = f +(xuw ) = 0, and hence we can simplify the sum of cost () and lp () terms into 
+
+X
+
+> u
+
+cost u(vw ) = 2 f +(xvw ),
+
+X
+
+> u
+
+lp u(vw ) = ( xuv + xuw ) · f +(xvw ).
+
+Since xuv and xuw are both at least 0.5, it follows that P 
+
+> u
+
+cost u(vw ) ≤ 2 · P 
+
+> u
+
+lp u(vw ). 
+
+• For case (ii), without loss of generality, assume xuv ≥ 0.5, while xuw ≤ xvw < 0.5. The sum of cost () and lp () terms simplifies to 
+
+X
+
+> u
+
+cost u(vw ) = 2 f +(xuw ) + 2 f +(xvw ) − 2f +(xuw )f +(xvw ),
+
+X
+
+> u
+
+lp u(vw ) = xuv ·
+
+
+
+f +(xuw ) + f +(xvw ) − f +(xuw )f +(xvw )
+
+
+
++ xuw · f +(xvw ) + xvw · f +(xuw ).
+
+26 Since the sum of cost () terms is independent of xuv , while the sum of lp () terms is increasing in xuv ,it suffices to prove the claim for the minimum possible value of xuv , that is max { 0.5, |xuw − xvw | } 
+
+(xuv ≥ 0.5 by assumption, and xuv ≥ | xuw − xvw | by triangle inequality). As both xuw , x vw < 0.5, we have |xuw − xvw | < 0.5, and thus it suffices to prove the claim for xuv = 0 .5. By rearranging, it remains to prove 
+
+α(xuw · f +(xvw ) + xvw · f +(xuw )) ≥ (2 − α
+
+2 )
+
+
+
+f +(xuw ) + f +(xvw ) − f +(xuw )f +(xvw )
+
+
+
+.
+
+Let s = xuw + xvw , f = f +. Notice that s ∈ [0 .5, 1] as 0 .5 = xuv ≤ xuw + xvw < 0.5 + 0 .5 = 1. Define Φs,α (x) = α
+
+
+
+xf (s − x) + ( s − x)f (x)
+
+
+
+− (2 − α
+
+2 )
+
+
+
+f (x) + f (s − x) − f (x)f (s − x)
+
+
+
+.
+
+We now show that Φ s,α (x) is convex. As Φ s,α (x) = Φ s,α (s−x), the convexity proves that the minimum of Φ s,α is attained at x = s/ 2, which means that it suffices to show that Φ s,α (s/ 2) ≥ 0. 
+
+Claim 5.10. Φs,α (x) is convex in [xuw , s ].Proof. By Lemma 2.2, f is continuous and has a continuous first derivative on [0 , 0.5). Hence Φ s,α is also continuous and has a continuous first derivative on ( s − 12 , 12 ), that is the interval where both x
+
+and s − x are in [0 , 0.5). Φ′
+
+> s,α
+
+(x) = α
+
+
+
+f (s − x) − xf ′(s − x) − f (x) + ( s − x)f ′(x)
+
+
+
+− (2 − α
+
+2 )
+
+
+
+f ′(x) − f ′(s − x) − f ′(x)f (s − x) + f (x)f ′(s − x)
+
+
+
+,
+
+and where f ′′ exists, Φ′′ 
+
+> s,α
+
+(x) = α
+
+
+
+−2f ′(s − x) + xf ′′ (s − x) − 2f ′(x) + ( s − x)f ′′ (x)
+
+
+
+− (2 − α
+
+2 )
+
+
+
+f ′′ (x) + f ′′ (s − x) − f ′′ (x)f (s − x) − f (x)f ′′ (s − x) + 2 f ′(x)f ′(s − x)
+
+
+
+.
+
+Note that by definition of f +, we have that f ′′ exists for every x̸ = 0 .25; but if 0 .25 ∈ [xuw , s ], then 
+
+s − 0.5 < s − xvw = xuw ≤ 0.25 < 0.5, therefore 0 .25 is included in the interval where Φ s,α has a continuous first derivative. We conclude that to prove convexity of Φ s,α , it suffices to prove Φ ′′  
+
+> s,α
+
+> 0where it is defined. When both x, s − x ≥ 14 we have f (x) = f +(x) = 13 12 − 53 x, and thus, f ′′ ≡ 0 and f ′ ≡ − 53 , hence Φ′′ 
+
+> s,α
+
+(x) = α · 4 · 53 − (2 − α
+
+2 ) · 2 ·
+
+ 53
+
+2
+
+> 0,
+
+because α ≥ 2. When x < 14 ≤ s − x, writing u := f (x) ∈ ( 23 , 1] and L := f (s − x), using 
+
+f ′(x) = − 10 91
+
+u , f ′′ (x) = − 100 81 1
+
+u3 , f ′(s − x) = − 53 , f ′′ (s − x) = 0 ,
+
+one obtains Φ′′ 
+
+> s,α
+
+(x) = α
+
+ 10 3 + 20 91
+
+u − (s − x) 100 81 1
+
+u3
+
+
+
+− (2 − α
+
+2 )
+
+ 100 81 
+
+Lu3 − 100 81 1
+
+u3 + 100 27 1
+
+u
+
+
+
+.
+
+Since L = 13 12 − 53 (s − x) with rearranging and multiplying by 243, 243 Φ ′′ 
+
+> s,α
+
+(x) = 810 α + 990 α − 1800 
+
+u + 1000( s − x) − 550 α(s − x) − 50 + 12 .5αu3 .
+
+27 Since the coefficient of α is positive, it suffices to prove convexity for α = 2, where 243 Φ ′′  
+
+> s,α
+
+simplifies to 1620 + 180 
+
+u − 100( s − x) + 25 
+
+u3 ≥ 1620 − 100( s − x) + 25 
+
+u3 ≥ 1620 − (100 + 25) ·
+
+ 32
+
+3
+
+> 0.
+
+Thus Φ ′′ 
+
+> s,α
+
+(x) > 0 when x < 14 ≤ s − x. Therefore Φ s,α is convex. We conclude that Φ s,α (x) attains its minimum at x = s 
+
+> 2
+
+. Thus, it suffices to show that Φ s,α (s/ 2) ≥ 0for s ∈ [0 .5, 1], or equivalently that for x ∈ [ 14 , 12 ), 2αxf +(x) ≥
+
+
+
+2 − α
+
+2
+
+ 2f +(x) − f +(x)2,
+
+which for α = 16 7 is equivalent to 16 x ≥ 3
+
+
+
+2 −   13 12 − 53 x
+
+,
+
+i.e., x ≥ 14 , which holds. Furthermore, for xuv , x uw ∈ 0.25 ± η and xvw /∈ 0.5 ± η, since xuv ≥ 0.5, we have xuv > 0.5 + η, which means s = xuw + xvw > 0.5 + η. Thus, in this case Φ s,α attains its minimum at x = s 
+
+> 2
+
+> 0.25 + η 
+
+> 2
+
+. As it suffices to prove 2α
+
+2 − α
+
+> 2
+
+≥ 2 − f +(x)
+
+x ,
+
+hence it remains to show 2α
+
+2 − α
+
+> 2
+
+≥ 11 12(0 .25 + η 
+
+> 2
+
+) + 53 .
+
+By rearranging, this transforms to 
+
+α ≥ 
+
+> 22 3+12 η
+
++ 10 317 6 + 11 6+24 η
+
+≈ 2.273 .
+
+Therefore, it suffices to verify 16 7 − 45 · κ − γ ≥ 2.273 ,
+
+which holds. The only remaining cases are when one of xuw , x vw /∈ 0.25 ± η. Without loss of generality, assume 
+
+xvw ≥ xuw . Note that if xuw + xvw > 0.5 + η, the same argument as before applies, so we may assume 
+
+xuw + xvw ≤ 0.5 + η. If xvw ∈ 0.25 ± η, since xvw ≥ 0.25, we must have 0 .25 ≤ xvw ≤ 0.25 + η, but this along with 0 .5 ≤ xuw + xvw ≤ 0.5 + η, imply 0 .25 − η ≤ xuw ≤ 0.25 + η, which is a contradiction. Thus, we assume xvw > 0.25 + η, which implies xuw ≤ 0.25. Let c = 0 .25 + η. Since xvw ≥ 0.25 + η ≥ s − 0.25 − η ≥ xuw , there exists r ∈ [0 , 1] such that 
+
+c = r · xvw + (1 − r) · xuw , s − c = (1 − r) · xvw + r · xuw .
+
+Since Φ s,α is convex, Φs,α (c) = Φ s,α (r · xvw + (1 − r) · xuw ) ≤ r · Φs,α (xvw ) + (1 − r) · Φs,α (xuw ),
+
+Φs,α (s − c) = Φ s,α ((1 − r) · xvw + r · xuw ) ≤ (1 − r) · Φs,α (xvw ) + r · Φs,α (xuw ).
+
+Summing the two inequalities above, we obtain Φs,α (c) + Φ s,α (s − c) ≤ Φs,α (xuw ) + Φ s,α (xvw ),
+
+28 as Φ s,α (x) = Φ s,α (s − x), this is equivalent to Φs,α (c) ≤ Φs,α (xvw ).
+
+We can therefore without loss of generality, assume that xvw = c. Denoting s − c by y and substituting 
+
+c, it suffices to prove for y ∈ [0 .25 − η, 0.25], 
+
+T (y) = α
+
+
+
+(0 .25 + η)f (y) + yf (0 .25 + η)
+
+
+
+− (2 − α
+
+2 )
+
+
+
+f (0 .25 + η) + f (y) − f (0 .25 + η)f (y)
+
+
+
+≥ 0.
+
+Claim 5.11. T (y) is an increasing fucntion on the domain [0 .25 − η, 0.25] .Proof. It suffices to prove T ′(y) ≥ 0 on this interval. We have 
+
+T ′(y) = f ′(y)
+
+
+
+α(0 .25 + η) − (2 − α
+
+2 )(1 − f (0 .25 + η)) 
+
+
+
++ αf (0 .25 + η).
+
+Since f ′ is a negative decreasing function and αf (0 .25 + η) is positive, if the term 
+
+
+
+α(0 .25 + η) −
+
+(2 − α 
+
+> 2
+
+)(1 − f (0 .25 + η)) 
+
+
+
+is negative, T ′(y) ≥ 0 immediately follows. Otherwise it suffices to consider 
+
+y = 0 .25. For this choice, by substituting η = 0 .005, since 0 .65 < f +(0 .255) < 0.66 
+
+T ′(0 .25) ≥ −53
+
+
+
+0.255 α − (2 − α
+
+2 )(1 − 0.66) 
+
+
+
++ α · 0.65 .
+
+Thus, 
+
+T ′(0 .25) ≥ 1.13 − 0.059 α > 0,
+
+which holds for α < 19 .1. So it suffices to consider y = 0 .25 − η. For this choice, since η = 0 .005, we have 
+
+T (y) = α
+
+
+
+0.255 · f (0 .245) + 0 .245 · f (0 .255) 
+
+
+
+− (2 − α
+
+2 )
+
+
+
+f (0 .245) + f (0 .255) − f (0 .245) f (0 .255) 
+
+
+
+.
+
+Thus, 
+
+T (y) ≥ 0.3334 · α − 0.889 · (2 − α
+
+2 ) = 0 .7779 · α − 1.778 .T (y) ≥ 0 holds for α ∈ [2 .28565 , 16 7 ]. Since 16 7 − γ ≥ 2.28565, the desired result is proved. 
+
+• For case (iii), the inequality to prove is 
+
+α X
+
+> u
+
+xvw 
+
+
+
+f +(uv ) + f +(uw ) − f +(uv )f +(uw )
+
+
+
+≥ 2 X
+
+> u
+
+f +(xvw ) − 2 X
+
+> u
+
+f +(uv )f +(uw ).
+
+where the sums are cyclic over uvw . Lemma 2.3 implies x ≥ 920 (1 − f +(x)2), therefore it suffices to show 
+
+α X
+
+> u
+
+ 920 (1 −f +(xvw )2)
+
+ 
+
+f +(uv )+ f +(uw )−f +(uv )f +(uw )
+
+
+
+≥ 2 X
+
+> u
+
+f +(xvw )−2 X
+
+> u
+
+f +(uv )f +(uw ).
+
+Let A = f +(xvw ), B = f +(xuv ), C = f +(uw ). For the remaining of this case, sums are cyclic over 
+
+ABC . Expanding, and setting β = 920 α we get 
+
+β
+
+
+
+2 X A − X AB + ABC (A + B + C) − X AB (A + B)
+
+
+
+≥ 2 X A − 2 X AB. 
+
+29 Let a = 1 − A, b = 1 − B, c = 1 − C, and define S = a + b + c, P = ab + ac + bc , R = abc . Then 
+
+X A = 3 − S, 
+
+X AB = 3 − 2S + P, ABC = 1 − S + P − R, 
+
+X AB (A + B) = ( X AB )( X A) − 3ABC = 6 − 6S + 2 S2 − SP + 3 R. 
+
+Substituting, the inequality becomes (−2 + 2 β)S − βS 2 + (2 + 2 β)P + β(S − 6) R ≥ 0.
+
+Since A, B, C ∈ ( 14 , 1] (by definition of f +), we have a, b, c ∈ [0 , 34 ) and thus S − 6 < 0. By Lemma 2.3,  
+
+> 10 9
+
+xvw ≤ a ≤ 32 xvw , and similarly for b, c . Hence 910 a + 910 b ≥ xvw + xuv ≥ xvw ≥ 23 c ⇒ c ≤ 27 47 S, 
+
+and the same bound holds for a and b.Let Φ( a, b, c ) = ( −2 + 2 β)S − βS 2 + (2 + 2 β)P + β(S − 6) R
+
+and without loss of generality, assume a ≥ b. Consider p(t) = Φ( a + t, b − t, c ). For any t > 0, 
+
+p′(t) = −(2 + 2 β)( a − b + 2 t) + βc (6 − S)(( a − b) + 2 t) ≤ (a − b + 2 t)
+
+
+
+βc (6 − S) − (2 + 2 β)
+
+
+
+.
+
+Since c ≤ 34 we have c(6 − S) ≤ c(6 − c) ≤ 34 · 21 4 , hence 
+
+p′(t) ≤ (a − b + 2 t)
+
+ 63 16 β − (2 + 2 β)
+
+
+
+.
+
+which is negative for β < 32 31 .Thus, for such values of β, it suffices to prove Φ( a, b, c ) ≥ 0 under the constraints: 
+
+– a, b, c ∈ [0 , max { 0.75 , 27 47 S }]
+
+– a + b + c = S
+
+– among any two of a, b, c , either one equals 27 47 S or one is 0. We note that this is only a subset of the actual conditions a, b, c must satisfy; for example, we allow for values of a, b, c that would violate the triangle inequality on xuv , x uw , x vw . Therefore, proving Φ( a, b, c ) ≥ 0 under these conditions is sufficient. If S > 0, we cannot have more than one of a, b, c equal to 0 (because then the other one would be equal to S and therefore larger than 27 47 S), and we cannot have two of a, b, c equal to 27 47 S because then the sum is 54 47 S > S . Therefore, it suffices to consider ( a, b, c ) = ( 27 47 S, 20 47 S, 0); notice that this covers the case S = 0. For this choice, we get (−2 + 2 β)S +
+
+
+
+(2 + 2 β) · 27 · 20 47 2 − β
+
+
+
+S2 ≥ 0.
+
+For β = 37 36 < 32 31 (therefore α = 20 9 · 37 36 = 185 81 < 16 7 ) this is true when S ∈ [0 , 1.527134]. As 0 ≤ S = a + b + c ≤ 0.75 + 0 .75 + 0 = 1 .5, the result follows. 30 To bound cost (T )+9 κ  
+
+> lp (T)
+
+when xuv , x uw ∈ 0.25 ± η, we have cost (T )+9 κ  
+
+> lp (T)
+
+≤ 185 81 + 9κ  
+
+> lp (T)
+
+.By Lemma 5.2, lp (T ) ≥ 0.2. Therefore, 
+
+cost (T ) + 9 κ
+
+lp (T ) ≤ 185 81 + 9κ
+
+lp (T ) ≤ 185 81 + 45 · κ ≤ 16 7 − γ, 
+
+which holds. 
+
+# 6 Approximation beyond 16 /7
+
+In this section, we again use Algorithm 2, but instead of solving the standard LP (Figure 1), we solve the Sherali-Adams relaxation (Figure 2), which also gives us an LP distance xuv for each pair of points. To go beyond 16 7 , we employ a strategy similar to the one from [CLN22]. The idea is that there cannot be too many bad triangles (i.e., triangles with ratio very close to 16 7 ); there will always exist a fraction of triangles with much smaller ratio, and these “drag” the approximation ratio below 16 7 .To formalize this intuition, we define bad triangles to be triangles uvw with xuv ∈ 0.25 ± η, x uw ∈
+
+0.25 ± η, x vw ∈ 0.5 ± η (recall that yuv = 1 − xuv , therefore yuv ∈ 0.75 ± η, y uw ∈ 0.75 ± η, y vw ∈ 0.5 ± η). We say that such a bad triangle is centered at u. All other triangles are good triangles. We say that a chargeable triangle is either a degenerate triangle uv with xuv ∈ 0.25 ± η (yuv ∈ 0.75 ± η), or a triangle 
+
+uvw with xuv ∈ 0.25 ± η, x uw ∈ 0.25 ± η, x vw ̸ ∈ 0.5 ± η (yuv ∈ 0.75 ± η, y uw ∈ 0.75 ± η, y vw ̸ ∈ 0.5 ± η). A chargeable triangle, by definition, is not a bad triangle. We also define the function h :  V
+
+> 3
+
+ ∪  V
+
+> 2
+
+ → R such that h(t) = −κ if t is a bad triangle, h(t) = 9 · κ if t
+
+is chargeable, and h(t) = 0 otherwise. We want to show that P
+
+> t∈
+
+(V 
+
+> 3
+
+)∪(V 
+
+> 2
+
+) h(t) ≥ 0. This suffices, because it allows us to overestimate the actual cost of the algorithm by adding P
+
+> t∈
+
+(V 
+
+> 3
+
+)∪(V 
+
+> 2
+
+) h(t). Repeating a triangle based analysis, now the bad triangles have smaller cost (because h(t) < 0 when t is a bad triangle) and therefore their ratio is below 16 7 . This comes with increasing the ratio of chargeable triangles; however, h(t) is small enough to guarantee that their ratio stays below 16 7 .
+
+Global charging scheme Given any u ∈ V , let Gu = ( Vu, E u) be a simple graph such that Vu = { v ∈
+
+V | yuv ∈ 0.75 ± η }, and Eu = { vw ∈  Vu
+
+> 2
+
+ | yuv ∈ 0.5 ± η }. The definition of Gu is such that it captures the bad triangles and the chargeable triangles centered at u.
+
+Lemma 6.1. For any u, the graph Gu is K5-free. Proof. Assume there exist nodes v1, v 2, v 3, v 4, v 5 ∈ Vu that are pairwise connected in Gu. We want to show that this implies yuv 1 > 0.75 + η, which is a contradiction. We have yuv 1 ≥ yuv 1|v2 + yuv 1v2|v3 + yuv 1v2v3|v4 + yuv 1v2v3v4|v5 . We lower bound each of these terms. 
+
+Claim 6.2. For any i, j ∈ [5] , i ̸ = j we have 0.25 − 2η ≤ yuv i|vj ≤ 0.25 + η.Proof. For the lower bound: yuv i|vj = yuv i − yuv ivj ≥ yuv i − yvivj ≥ (0 .75 − η) − (0 .5 + η). For the upper bound we have yuv i|vj ≤ 1 − yuv j ≤ 0.25 + η.
+
+Claim 6.3. For any i ∈ { 3, 4, 5 } we have yuv 1...v i−1|vi ≥ 0.25 − (3 i − 2) η.Proof. We have yuv 1...v i−1|vi ≥ yu|vi − Pi−1
+
+> j=1
+
+(yu|vivj + yu|vi|vj ), by union bound as u|vivj and u|vi|vj are exactly the events that neither vi nor vj is with u.It thus suffices to bound yu|vivj +yu|vi|vj . Notice that yuv j |vi +yu|vivj +yu|vi|vj = yu|vi = 1 −yuv i ≤ 0.25+ η.But by Claim 6.2 we have 0 .25 − 2η ≤ yuv j |vi , and therefore yu|vivj + yu|vi|vj ≤ 3η.31 We conclude that 
+
+yuv 1...v i−1|vi ≥ yu|vi −
+
+> i−1
+
+X
+
+> j=1
+
+(yu|vivj + yu|vi|vj ) ≥ yu|vi − 3( i − 1) η ≥ 0.25 − (3 i − 2) η. 
+
+The two claims prove our lemma, as they imply 
+
+yuv 1 ≥ yuv 1|v2 + yuv 1v2|v3 + yuv 1v2v3|v4 + yuv 1v2v3v4|v5 ≥ 1 − 32 η > 0.75 + η. 
+
+We are now ready to prove that P
+
+> t∈
+
+(V 
+
+> 3
+
+)∪(V 
+
+> 2
+
+) h(t) ≥ 0. 
+
+Lemma 6.4. P
+
+> t∈
+
+(V 
+
+> 3
+
+)∪(V 
+
+> 2
+
+) h(t) ≥ 0.Proof. Notice that there is a natural bijection between bad triangles centered at u and edges in Gu, as well as a natural bijection between non-degenerate chargeable triangles containing u and non-edges in Gu. Finally, there is a bijection between degenerate chargeable triangles containing u and vertices of Gu.Now fix any u. As Gu is K5-free, by Turan’s theorem we have |Eu| ≤ 0.75 |Vu|2 
+
+> 2
+
+≤ 0.75  |Vu|
+
+> 2
+
+ + 0 .75 |Vu| 
+
+> 2
+
+.This means that the ratio |Eu||(Vu  
+
+> 2
+
+)\Eu|+|Vu| is at most 3. This is the ratio of bad triangles centered at u over the chargeable triangles containing u.Now notice that P 
+
+> u
+
+|Eu| is exactly the number of bad triangles, while P 
+
+> u
+
+| Vu
+
+> 2
+
+ \ Eu| + |Vu| counts chargeable triangles and may at most triple count a chargeable triangle. Therefore, the ratio of bad triangles over chargeable triangles is at most 3 · 3 = 9. We conclude that P
+
+> t∈
+
+(V 
+
+> 3
+
+)∪(V 
+
+> 2
+
+) h(t) ≥ 0, as the h-value of a chargeable triangle is 9 times larger than the 
+
+h-value of a bad triangle. We now overestimate the actual cost of the algorithm, by adding P
+
+> t∈
+
+(V 
+
+> 3
+
+)∪(V 
+
+> 2
+
+) h(t) ≥ 0. Therefore, if we repeat the Triangle-Based analysis, the cost of a bad triangle uvw is decreased by −κ, while the cost of chargeable triangles is increased by 9 κ. The cost of all other triangles remains the same. 
+
+Theorem 1.3. There exists a 16 7 − γ approximation for Constrained Correlation Clustering, for some con-stant γ > 0.Proof. By Lemma 4.2, the approximation factor is upper bounded by 
+
+P
+
+> uvw ∈
+
+(V 
+
+> 3
+
+) cost (uvw ) + P
+
+> uv ∈
+
+(V 
+
+> 2
+
+) cost (uv )
+
+P
+
+> uvw ∈
+
+(V 
+
+> 3
+
+) lp (uvw ) + P
+
+> uv ∈
+
+(V 
+
+> 2
+
+) lp (uv ) .
+
+By Lemma 6.4, this is upper bounded by 
+
+P
+
+> uvw ∈
+
+(V 
+
+> 3
+
+)(cost (uvw ) + h(uvw )) + P
+
+> uv ∈
+
+(V 
+
+> 2
+
+)(cost (uv ) + h(uv )) 
+
+P
+
+> uvw ∈
+
+(V 
+
+> 3
+
+) lp (uvw ) + P
+
+> uv ∈
+
+(V 
+
+> 2
+
+) lp (uv ) .
+
+We partition the triangles into classes based on the multiset of the supernodes their endpoints belong to. Let T be the triangles in such a category, then it suffices to upper bound         
+
+> P
+> T∈T (cost (T)+ h(T))
+> P
+> T∈T lp (T)
+
+for every class; the maximum upper bound obtained also upper bounds the approximation factor. If the multiset of a class has at most two distinct supernodes, then Lemmas 5.1 and 5.3 show an upper bound of 2 .1 ≤ 16 7 − γ. If it has three distinct supernodes, then Lemma 5.1, along with Lemmas 5.4 to 5.6 and 5.9 prove an upper bound of 16 7 − γ.32 References 
+
+[AC11] Nir Ailon and Moses Charikar. Fitting tree metrics: Hierarchical clustering and phylogeny. SIAM J. Comput. , 40(5):1275–1291, 2011. Announced at FOCS’05. [ACN08] Nir Ailon, Moses Charikar, and Alantha Newman. Aggregating inconsistent information: Rank-ing and clustering. J. ACM , 55(5):23:1–23:27, 2008. Announced in STOC 2005. [AHK +09] Rakesh Agrawal, Alan Halverson, Krishnaram Kenthapadi, Nina Mishra, and Panayiotis Tsaparas. Generating labels from clicks. In Ricardo Baeza-Yates, Paolo Boldi, Berthier A. Ribeiro-Neto, and Berkant Barla Cambazoglu, editors, Proceedings of the Second International Conference on Web Search and Web Data Mining, WSDM 2009, Barcelona, Spain, February 9-11, 2009 , pages 172–181. ACM, 2009. [ARS09] Arvind Arasu, Christopher R´ e, and Dan Suciu. Large-scale deduplication with constraints using dedupalog. In Yannis E. Ioannidis, Dik Lun Lee, and Raymond T. Ng, editors, Proceedings of the 25th International Conference on Data Engineering, ICDE 2009, March 29 2009 - April 2 2009, Shanghai, China , pages 952–963. IEEE Computer Society, 2009. [AW22] Sepehr Assadi and Chen Wang. Sublinear time and space algorithms for correlation clustering via sparse-dense decompositions. In Mark Braverman, editor, 13th Innovations in Theoretical Computer Science Conference, ITCS 2022, January 31 - February 3, 2022, Berkeley, CA, USA ,volume 215 of LIPIcs , pages 10:1–10:20. Schloss Dagstuhl - Leibniz-Zentrum f¨ ur Informatik, 2022. [BBC04] Nikhil Bansal, Avrim Blum, and Shuchi Chawla. Correlation clustering. Mach. Learn. , 56(1-3):89–113, 2004. [BCMT22] Soheil Behnezhad, Moses Charikar, Weiyun Ma, and Li-Yang Tan. Almost 3-approximate cor-relation clustering in constant rounds. In 63rd IEEE Annual Symposium on Foundations of Computer Science, FOCS 2022, Denver, CO, USA, October 31 - November 3, 2022 , pages 720– 731. IEEE, 2022. [BCMT23] Soheil Behnezhad, Moses Charikar, Weiyun Ma, and Li-Yang Tan. Single-pass streaming algo-rithms for correlation clustering. In Nikhil Bansal and Viswanath Nagarajan, editors, Proceedings of the 2023 ACM-SIAM Symposium on Discrete Algorithms, SODA 2023, Florence, Italy, Jan-uary 22-25, 2023 , pages 819–849. SIAM, 2023. [BEK21] Mark Bun, Marek Eli´ as, and Janardhan Kulkarni. Differentially private correlation clustering. In Marina Meila and Tong Zhang, editors, Proceedings of the 38th International Conference on Machine Learning, ICML 2021, 18-24 July 2021, Virtual Event , volume 139 of Proceedings of Machine Learning Research , pages 1136–1146. PMLR, 2021. [BGU13] Francesco Bonchi, Aristides Gionis, and Antti Ukkonen. Overlapping correlation clustering. 
+
+Knowl. Inf. Syst. , 35(1):1–32, 2013. [BVDM10] Paola Bonizzoni, Gianluca Della Vedova, Riccardo Dondi, and Giancarlo Mauri. Fingerprint clustering with bounded number of missing values. Algorithmica , 58(2):282–303, 2010. [BXCV24] Vicente Balmaseda, Ying Xu, Yixin Cao, and Nate Veldt. Combinatorial approximations for cluster deletion: Simpler, faster, and better. In Forty-first International Conference on Machine Learning, ICML 2024, Vienna, Austria, July 21-27, 2024 . OpenReview.net, 2024. [CCL +24] Nairen Cao, Vincent Cohen-Addad, Euiwoong Lee, Shi Li, Alantha Newman, and Lukas Vogl. Understanding the cluster linear program for correlation clustering. In Bojan Mohar, Igor 33 Shinkar, and Ryan O’Donnell, editors, Proceedings of the 56th Annual ACM Symposium on The-ory of Computing, STOC 2024, Vancouver, BC, Canada, June 24-28, 2024 , pages 1605–1616. ACM, 2024. [CCL +25] Nairen Cao, Vincent Cohen-Addad, Shi Li, Euiwoong Lee, David Rasmussen Lolck, Alantha Newman, Mikkel Thorup, Lukas Vogl, Shuyi Yan, and Hanwen Zhang. Solving the correlation cluster LP in nearly linear time. In Proceedings of the 56th Annual ACM Symposium on Theory of Computing, STOC 2025, Prague, Czech Republic, June 23-27, 2025 . ACM, 2025. Accepted at STOC 2025 (not published yet). [CGW05] Moses Charikar, Venkatesan Guruswami, and Anthony Wirth. Clustering with qualitative infor-mation. J. Comput. Syst. Sci. , 71(3):360–383, 2005. Announced in FOCS 2003. [CHS24] Nairen Cao, Shang-En Huang, and Hsin-Hao Su. Breaking 3-factor approximation for correlation clustering in polylogarithmic rounds. In David P. Woodruff, editor, Proceedings of the 2024 ACM-SIAM Symposium on Discrete Algorithms, SODA 2024, Alexandria, VA, USA, January 7-10, 2024 , pages 4124–4154. SIAM, 2024. [CKL +24] M´ elanie Cambus, Fabian Kuhn, Etna Lindy, Shreyas Pai, and Jara Uitto. A (3 + ε)-approximate correlation clustering algorithm in dynamic streams. In David P. Woodruff, editor, Proceedings of the 2024 ACM-SIAM Symposium on Discrete Algorithms, SODA 2024, Alexandria, VA, USA, January 7-10, 2024 , pages 2861–2880. SIAM, 2024. [CKP08] Deepayan Chakrabarti, Ravi Kumar, and Kunal Punera. A graph-theoretic approach to webpage segmentation. In Jinpeng Huai, Robin Chen, Hsiao-Wuen Hon, Yunhao Liu, Wei-Ying Ma, Andrew Tomkins, and Xiaodong Zhang, editors, Proceedings of the 17th International Conference on World Wide Web, WWW 2008, Beijing, China, April 21-25, 2008 , pages 377–386. ACM, 2008. [CLLN23] Vincent Cohen-Addad, Euiwoong Lee, Shi Li, and Alantha Newman. Handling correlated round-ing error via preclustering: A 1.73-approximation for correlation clustering. In 64th IEEE Annual Symposium on Foundations of Computer Science, FOCS 2023, Santa Cruz, CA, USA, November 6-9, 2023 , pages 1082–1104. IEEE, 2023. [CLM +21] Vincent Cohen-Addad, Silvio Lattanzi, Slobodan Mitrovic, Ashkan Norouzi-Fard, Nikos Parot-sidis, and Jakub Tarnawski. Correlation clustering in constant many parallel rounds. In Marina Meila and Tong Zhang, editors, Proceedings of the 38th International Conference on Machine Learning, ICML 2021, 18-24 July 2021, Virtual Event , volume 139 of Proceedings of Machine Learning Research , pages 2069–2078. PMLR, 2021. [CLMP24] Vincent Cohen-Addad, Silvio Lattanzi, Andreas Maggiori, and Nikos Parotsidis. Dynamic cor-relation clustering in sublinear update time. In Forty-first International Conference on Machine Learning, ICML 2024, Vienna, Austria, July 21-27, 2024 . OpenReview.net, 2024. [CLN22] Vincent Cohen-Addad, Euiwoong Lee, and Alantha Newman. Correlation clustering with Sherali-Adams. In 63rd IEEE Annual Symposium on Foundations of Computer Science, FOCS 2022, Denver, CO, USA, October 31 - November 3, 2022 , pages 651–661. IEEE, 2022. [CLP +24] Vincent Cohen-Addad, David Rasmussen Lolck, Marcin Pilipczuk, Mikkel Thorup, Shuyi Yan, and Hanwen Zhang. Combinatorial correlation clustering. In Bojan Mohar, Igor Shinkar, and Ryan O’Donnell, editors, Proceedings of the 56th Annual ACM Symposium on Theory of Com-puting, STOC 2024, Vancouver, BC, Canada, June 24-28, 2024 , pages 1617–1628. ACM, 2024. [CMSY15] Shuchi Chawla, Konstantin Makarychev, Tselil Schramm, and Grigory Yaroslavtsev. Near opti-mal LP rounding algorithm for correlation clustering on complete and complete k-partite graphs. 34 In Rocco A. Servedio and Ronitt Rubinfeld, editors, Proceedings of the Forty-Seventh Annual ACM on Symposium on Theory of Computing, STOC 2015, Portland, OR, USA, June 14-17, 2015 , pages 219–228. ACM, 2015. [CSX12] Yudong Chen, Sujay Sanghavi, and Huan Xu. Clustering sparse graphs. In Peter L. Bartlett, Fernando C. N. Pereira, Christopher J. C. Burges, L´ eon Bottou, and Kilian Q. Weinberger, editors, Advances in Neural Information Processing Systems 25: 26th Annual Conference on Neural Information Processing Systems 2012. Proceedings of a meeting held December 3-6, 2012, Lake Tahoe, Nevada, United States , pages 2213–2221, 2012. [CX26] Yixin Cao and Ying Xu. Cluster deletion is as hard to approximate as vertex cover, 2026. [DKS26] Debarati Das, Evangelos Kipouridis, and Joachim Spoerhase. Tree violation distance under constraints. In 9th Symposium on Simplicity in Algorithms, SOSA@SODA 2026, Vancouver, Canada, January 12-13, 2026 . SIAM, 2026. [FKKT24] Nick Fischer, Jonas Klausen, Evangelos Kipouridis, and Mikkel Thorup. A faster algorithm for constrained correlation clustering. CoRR , abs/2501.03154, 2024. To appear at STACS 2025. [FKP +14] Fedor V. Fomin, Stefan Kratsch, Marcin Pilipczuk, Michal Pilipczuk, and Yngve Villanger. Tight bounds for parameterized complexity of cluster editing with a small number of clusters. 
+
+J. Comput. Syst. Sci. , 80(7):1430–1447, 2014. [FKW95] Martin Farach, Sampath Kannan, and Tandy J. Warnow. A robust model for finding optimal evolutionary trees. Algorithmica , 13(1/2):155–179, 1995. Announced at STOC 1993. [GHR25] Nicola Galesi, Tony Huynh, and Fariba Ranjbar. Cluster deletion and clique partitioning in graphs with bounded clique number. CoRR , abs/2505.00922, 2025. [GZ07] Jurgen Van Gael and Xiaojin Zhu. Correlation clustering for crosslingual link detection. In Manuela M. Veloso, editor, IJCAI 2007, Proceedings of the 20th International Joint Conference on Artificial Intelligence, Hyderabad, India, January 6-12, 2007 , pages 1744–1749, 2007. [KCMN08] Dmitri V. Kalashnikov, Zhaoqi Chen, Sharad Mehrotra, and Rabia Nuray-Turan. Web people search via connection analysis. IEEE Trans. Knowl. Data Eng. , 20(11):1550–1565, 2008. [Kho02] Subhash Khot. On the power of unique 2-prover 1-round games. In John H. Reif, editor, Proceed-ings on 34th Annual ACM Symposium on Theory of Computing, May 19-21, 2002, Montr´ eal, Qu´ ebec, Canada , pages 767–775. ACM, 2002. [KKV25] Andreas Kalavas, Evangelos Kipouridis, and Nithin Varma. Towards better-than-2 approxima-tion for constrained correlation clustering. In Aarti Singh, Maryam Fazel, Daniel Hsu, Simon Lacoste-Julien, Felix Berkenkamp, Tegan Maharaj, Kiri Wagstaff, and Jerry Zhu, editors, Pro-ceedings of the 42nd International Conference on Machine Learning , volume 267 of Proceedings of Machine Learning Research , pages 28721–28734. PMLR, 13–19 Jul 2025. [KNKY11] Sungwoong Kim, Sebastian Nowozin, Pushmeet Kohli, and Chang Dong Yoo. Higher-order correlation clustering for image segmentation. In John Shawe-Taylor, Richard S. Zemel, Pe-ter L. Bartlett, Fernando C. N. Pereira, and Kilian Q. Weinberger, editors, Advances in Neural Information Processing Systems 24: 25th Annual Conference on Neural Information Process-ing Systems 2011. Proceedings of a meeting held 12-14 December 2011, Granada, Spain , pages 1530–1538, 2011. [KR08] Subhash Khot and Oded Regev. Vertex cover might be hard to approximate to within 2 − ε. J. Comput. Syst. Sci. , 74(3):335–349, 2008. 35 [LFL25a] Dahoon Lee, Chenglin Fan, and Euiwoong Lee. 1.64-approximation for chromatic correlation clustering via chromatic cluster LP. CoRR , abs/2507.15417, 2025. [LFL25b] Dahoon Lee, Chenglin Fan, and Euiwoong Lee. Improved approximation algorithms for chromatic and pseudometric-weighted correlation clustering. CoRR , abs/2505.21939, 2025. [MC23] Konstantin Makarychev and Sayak Chakrabarty. Single-pass pivot algorithm for correlation clustering. Keep it simple! In Alice Oh, Tristan Naumann, Amir Globerson, Kate Saenko, Moritz Hardt, and Sergey Levine, editors, Advances in Neural Information Processing Systems 36: Annual Conference on Neural Information Processing Systems 2023, NeurIPS 2023, New Orleans, LA, USA, December 10 - 16, 2023 , 2023. [MWZ99] Bin Ma, Lusheng Wang, and Louxin Zhang. Fitting distances by tree metrics with increment error. J. Comb. Optim. , 3(2-3):213–225, 1999. [Pha02] Dzung L Pham. Fuzzy clustering with spatial constraints. In Proceedings. International Confer-ence on Image Processing , volume 2, pages II–II. IEEE, 2002. [PM15] Gregory J. Puleo and Olgica Milenkovic. Correlation clustering with constrained cluster sizes and extended weights bounds. SIAM J. Optim. , 25(3):1857–1872, 2015. [Vel22] Nate Veldt. Correlation clustering via strong triadic closure labeling: Fast approximation algo-rithms and practical lower bounds. In Kamalika Chaudhuri, Stefanie Jegelka, Le Song, Csaba Szepesv´ ari, Gang Niu, and Sivan Sabato, editors, International Conference on Machine Learn-ing, ICML 2022, 17-23 July 2022, Baltimore, Maryland, USA , volume 162 of Proceedings of Machine Learning Research , pages 22060–22083. PMLR, 2022. [Vel26] Nate Veldt. A simple and fast (3+ ε)-approximation for constrained correlation clustering. In 
+
+9th Symposium on Simplicity in Algorithms, SOSA@SODA 2026, Vancouver, Canada, January 12-13, 2026 . SIAM, 2026. [VGW18] Nate Veldt, David F. Gleich, and Anthony Wirth. A correlation clustering framework for commu-nity detection. In Pierre-Antoine Champin, Fabien Gandon, Mounia Lalmas, and Panagiotis G. Ipeirotis, editors, Proceedings of the 2018 World Wide Web Conference on World Wide Web, WWW 2018, Lyon, France, April 23-27, 2018 , pages 439–448. ACM, 2018. [vZW09] Anke van Zuylen and David P. Williamson. Deterministic pivoting algorithms for constrained ranking and clustering problems. Math. Oper. Res. , 34(3):594–620, 2009. Announced in SODA 2007. [WCR +01] Kiri Wagstaff, Claire Cardie, Seth Rogers, Stefan Schr¨ odl, et al. Constrained k-means clustering with background knowledge. In ICML , volume 1, pages 577–584, 2001. [WD10] Xiang Wang and Ian Davidson. Flexible constrained spectral clustering. In Proceedings of the 16th ACM SIGKDD international conference on Knowledge discovery and data mining , pages 563–572, 2010. [YIF12] Julian Yarkony, Alexander T. Ihler, and Charless C. Fowlkes. Fast planar correlation clustering for image segmentation. In Andrew W. Fitzgibbon, Svetlana Lazebnik, Pietro Perona, Yoichi Sato, and Cordelia Schmid, editors, Computer Vision - ECCV 2012 - 12th European Conference on Computer Vision, Florence, Italy, October 7-13, 2012, Proceedings, Part VI , volume 7577 of 
+
+Lecture Notes in Computer Science , pages 568–581. Springer, 2012. 36 A Properties of f +, f −
+
+In this section we present several properties of f + and f −:
+
+f +(x) = 
+
+q
+
+1 − 20 9 x if x < 0.25  
+
+> 13 12
+
+− 53 x if x < 0.5, f −(x) = 
+
+(
+
+1 − x if x < 0.50 if x ≥ 0.50 if x ≥ 0.5
+
+Lemma 2.2. The function f +(x) is continuous on [0 , 0.5) and has a continuous first derivative on this domain. Proof. The only potential junction within [0 , 0.5) is at x = 0 .25. We verify the values and one-sided deriva-tives match. For the values, 
+
+f +(0 .25) = 13 12 − 53 · 0.25 = 23 ,f +(0 .25 −) = lim 
+
+> x→0.25 −
+
+r
+
+1 − 20 9 x =
+
+r
+
+1 − 20 9 · 0.25 = 23 .
+
+For the derivatives, for x ∈ [0 , 0.25) we have 
+
+f ′+(x) = − 10 9 · 1
+
+q
+
+1 − 20 9 x,
+
+and for x ∈ [0 .25 , 0.5) we have f ′+(x) = − 53 . Hence 
+
+f ′+(0 .25 −) = lim 
+
+> x→0.25 −
+
+−10 9
+
+q
+
+1 − 20 9 x
+
+= −10 9 · 23
+
+= − 53 = f ′+(0 .25) .
+
+Thus f + and its first derivative are continuous on [0 , 0.5). 
+
+Lemma 2.3. For all x:
+
+(i) If x ∈ [0 , 0.5) , then 
+
+q
+
+1 − 20 9 x ≤ f +(x) ≤ 13 12 − 53 x.
+
+(ii ) If x ∈ [0 , 0.5) , then 1 − 10 9 x ≥ f +(x) ≥ 1 − 32 x.Proof. (i) By definition of f +(x), it is either equal to 
+
+q
+
+1 − 20 9 x or 13 12 − 53 x, therefore it suffices to prove for any x ∈ [0 , 0.5) r
+
+1 − 20 9 x ≤ 13 12 − 53 x. 
+
+Both sides are nonnegative, therefore it suffices to prove : 1 − 20 9 x ≤
+
+ 13 12 − 53 x
+
+2
+
+.
+
+Expanding gives  13 12 − 53 x
+
+2
+
+−
+
+
+
+1 − 20 9 x
+
+
+
+= 25 9
+
+
+
+x − 14
+
+2
+
+≥ 0,
+
+as required. 37 (ii ) The branches 
+
+q
+
+1 − 20 9 x and 13 12 − 53 x are concave. By Lemma 2.2, f + is concave on [0 , 0.5). Hence for 
+
+x ∈ [0 , 0.5), 
+
+f +(x) ≥ 2x · f +(0 .5−) + (1 − 2x) · f +(0) = 2 x · 14 + (1 − 2x) · 1 = 1 − 32 x, 
+
+and the tangent bound at x = 0 gives 
+
+f +(x) ≤ f +(0) + x f ′+(0) = 1 − 10 9 x. 
+
+Lemma 2.4. The function ln( f +(x)) is a concave function on [0 , 0.5) .Proof. Note that for x ∈ [0 , 0.25) we have 
+
+f ′+(x) = − 10 9 · 1
+
+q
+
+1 − 20 9 x,
+
+which is a decreasing function and is negative on the entire domain. For x ∈ [0 .25 , 0.5), by definition of 
+
+f +, we have f ′+(x) = −53 . By Lemma 2.2, f ′+ is continuous. Consequently f ′+ is a continuous decreasing function which is negative on the entire domain. We have 
+
+
+
+ln( f +(x)) 
+
+′
+
+= f ′+(x)
+
+f +(x) .
+
+Since f ′+(x) is decreasing and negative, its absolute value is increasing. By definition of f +(x), it is decreasing and positive, so its absolute value is also decreasing. Therefore, f ′+(x)  
+
+> f+(x)
+
+is increasing, but since f ′+(x) is negative, we conclude that the first derivative of ln( f +(x)) is decreasing, and hence it is concave. 
+
+Lemma 2.5. For all x ∈ [0 , 1] , we have f +(x) ≤ f −(x).Proof. Note that if x ∈ [0 .5, 1], both f +(x), and f −(x) are zero and the inequality follows. If x ∈ [0 .25 , 0.5), by definition of f +, f −, and x ≥ 0.25, we have 
+
+f +(x) = 13 12 − 53 x = (1 − x) + ( 112 − 23 x) ≤ (1 − x) + ( 112 − 212 ) ≤ (1 − x) = f −(x).
+
+For the final case x ∈ [0 , 0.25), we must prove 
+
+q
+
+1 − 20 9 x ≤ 1 − x. By squarring both sides, this is equivalent to 1 − 20 9 x ≤ 1 − 2x + x2,
+
+which simplifies to 0 ≤ 29 x + x2,
+
+and this holds. 38

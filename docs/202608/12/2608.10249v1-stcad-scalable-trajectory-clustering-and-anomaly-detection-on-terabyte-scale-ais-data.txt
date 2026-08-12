@@ -1,0 +1,144 @@
+Title: STCAD: Scalable Trajectory Clustering and Anomaly Detection on Terabyte-Scale AIS Data
+
+URL Source: https://arxiv.org/pdf/2608.10249v1
+
+Published Time: Wed, 12 Aug 2026 00:31:08 GMT
+
+Number of Pages: 5
+
+Markdown Content:
+# STCAD: SCALABLE TRAJECTORY CLUSTERING AND ANOMALY DETECTION ON TERABYTE-SCALE AIS DATA 
+
+Bertram Hage , Alexander Schiøtz , Felix Thomsen , Christian Rand , Peder Heiselberg 
+
+Technical University of Denmark 
+
+Anker Engelunds Vej 101 2800 Kongens Lyngby, Denmark ph@space.dtu.dk 
+
+Abstract —We present a scalable framework for unsupervised clustering of maritime trajectories derived from terabyte-scale Automatic Identification System (AIS) archives. Variable-length trajectories are encoded with a custom BERT-based model trained via masked token modeling and clustered using CURE hierarchical clustering, producing physically interpretable trajec-tory groups without requiring a predefined number of clusters. An intrinsic unsupervised anomaly detection method based on reconstruction loss and clustering noise assignment identifies irregular navigation patterns. The framework is demonstrated on a national-scale AIS dataset comprising billions of messages spanning one year, yielding stable trajectory clusters and a clear separation between nominal and anomalous vessel behavior. 
+
+Index Terms —Automatic Identification System (AIS), unsuper-vised clustering, hierarchical clustering, anomaly detection. 
+
+I. I NTRODUCTION 
+
+Ensuring maritime safety requires the ability to analyze extremely large and noisy AIS datasets to detect irregular vessel behaviors and potential risks. Maritime domain aware-ness relies heavily on data from the Automatic Identification System (AIS), which provides continuous, large-scale tracking of vessels. AIS is mandated for most commercial vessels and is widely used for collision avoidance, traffic monitoring, and maritime safety enforcement. As a result, national and regional AIS archives now contain billions of messages collected over long time periods [1]. These data consist of irregularly sampled and often noisy observations that, when aggregated, form variable-length vessel trajectories. The combination of scale, heterogeneity, and data quality issues poses substantial challenges. Anomaly detection is typically formulated through clustering-based outlier identification or as the detection of deviations from learned normal behavior. Early frameworks focused on vessel pattern extraction and anomaly detection [2]. Subsequent studies emphasized clustering-based approaches for their robustness to noise and irregular sampling [3–5], often combined with anomaly detection to identify irregular navigation patterns [6]. Transformer architectures are able to 
+
+© 2026 IEEE. Personal use of this material is permitted. Permission from IEEE must be obtained for all other uses, in any current or future media, including reprinting/republishing this material for advertising or promotional purposes, creating new collective works, for resale or redistribution to servers or lists, or reuse of any copyrighted component of this work in other works. 
+
+capture long-range dependencies in variable-length sequences and have therefore become a standard in AIS trajectory modeling [7–12]. The Bidirectional Encoder Representations from Transformers (BERT) architecture [13, 14] demonstrated that, with sufficient training, encoders can learn rich semantic representations of sequences solely through Masked Token Modeling (MTM). In this self-supervised approach, the model learns the underlying structure of a sequence by predicting randomly masked tokens within the input. In recent research, these unsupervised techniques have been applied to the maritime domain for trajectory pattern extraction [15, 16] and the identification of behavioral irregularities [17]. In this work, we present STCAD, a scalable unsupervised framework for trajectory clustering and anomaly detection on terabyte-scale AIS data. We combine a self-supervised BERT-style Transformer encoder [13, 14] trained via masked token modeling with the CURE hierarchical clustering algo-rithm [18]. The framework is supported by a preprocessing pipeline, enabling year-scale analysis of billions of AIS mes-sages. STCAD provides a unified framework for unsupervised anomaly detection on extremely large AIS datasets imple-mented using standard Python libraries [19–24]. II. D ATA 
+
+This study uses a national-scale AIS dataset provided by the Danish Maritime Authority (DMA) [1] gathered via their AIS network covering the Danish waters. This study uses data spanning the entire 2024 calendar year. This dataset has approximately 6.89 billion messages totaling 1.2 TB of raw data. This scale represents one of the largest temporal and spatial AIS datasets utilized in current maritime anomaly de-tection literature. Each observation in the dataset corresponds to a single AIS message consisting of the Maritime Mobile Service Identity (MMSI) number vessel identifier, latitude, longitude, Speed over Ground (SOG) in knots, and Course over Ground (COG) in degrees. While the DMA archive contains auxiliary static and voyage-related features, these often exhibit significant sparsity, particularly among smaller vessel classes, and were therefore excluded them. The dataset consists of 38,026 unique vessels, of which 19,597 are sailing or pleasure crafts, 8,627 are cargo or tanker vessels, 1,632 are fishing vessels, and 8,170 are another category or undefined. arXiv:2608.10249v1 [cs.LG] 10 Aug 2026 A. Data preprocessing 
+
+The raw AIS messages were converted into regularly sam-pled, valid, individual voyages in two phases: a global phase and a per-vessel (MMSI) phase. First, we applied global filters to remove erroneous mes-sages outside the geographical region of Denmark (lat ∈
+
+[54 , 59] , lon ∈ [5 , 17] ) and messages with unrealistic values (SOG > 30 knots or COG outside [0 , 360] ). This resulted in a dataset of 5,383,009,610 messages. The per-vessel phase involved computationally intensive tasks, with initial experiments showing that processing a single MMSI could require up to ∼1GB of memory. This resulted in an estimated sequential runtime of ∼170 hours, or more than 7 days. To mitigate this, we implemented a distributed processing pipeline by mapping the data by MMSI and saving it as serialized pickle files in vessel-specific directories. This created key-value pairs of the form: 
+
+⟨MMSI , {mn, 1, m n, 2, . . . , m n,T }⟩ ,
+
+where mn,t represents the t-th message for an MMSI on day 
+
+n ∈ { 1, 2, . . . , 366 }.The subsequent reduction phase, performed in parallel using the DTU Computing Center (DCC) [25], applied vessel-specific preprocessing rules. We defined a voyage as a con-tiguous trajectory where the interval between consecutive mes-sages is less than 2 hours. Voyages exceeding 20 hours were split into shorter segments, while those shorter than 4 hours or containing fewer than 20 messages were discarded. To en-sure robustness against outliers, we removed messages where the empirical speed (calculated via distance and timestamp) exceeded 40 knots. Finally, we applied linear interpolation to enforce a regular 5-minute sampling interval and performed min-max normalization on each feature. By utilizing 64 CPU cores with 4GB of memory each (128 threads in total), we reduced the processing time to 
+
+∼80 minutes. Ultimately, these preprocessing steps reduced the dataset from 1,342,406 initial trajectories to 453,712 final voyages while staying below a feasible memory usage. III. M ETHODOLOGY 
+
+This section describes the transformation of variable-length trajectory sequences into fixed-size embeddings and the subse-quent clustering to identify distinct behaviors and anomalies. 
+
+A. Sequence encoding 
+
+Variable-length vessel trajectories are encoded into fixed-dimensional representations using a Transformer with a stack of self-attention layers capturing global dependencies. A clas-sification token ( [CLS] ) is prepended to each sequence, and its final hidden state serves as the trajectory embedding. Given the homogeneous structure of AIS data, compared to natural language, a reduced Transformer is employed with four encoder layers, four attention heads per layer, and a hidden size of 256, in contrast to larger architectures such as BERT-base [13]. Training uses masked token modeling with a 15% masking probability, and dropout of 0.1 is applied to both hidden states and attention probabilities. Each AIS message is represented by the spatial and kine-matic features: 
+
+[lat , lon , SOG , COG ] ∈ R4
+
+which are projected into the model hidden space using a linear mapping, 
+
+f : R4 → R256 ,
+
+after which positional encodings are added to preserve tempo-ral ordering. The [CLS] token is represented by the fixed vector [−1.0, −1.0, −1.0, −1.0] ⊤ prior to projection and is processed identically to all other tokens during encoding. 
+
+B. Hierarchical clustering with CURE 
+
+Agglomerative Clustering (AC) is powerful because it builds hierarchies without requiring a preset number of clusters, allowing us to characterize stable trajectory cluster sizes in our embeddings. However, standard AC is computationally prohibitive for large datasets due to its O(n3) time complexity. To address this, we employ Clustering Using REpresentatives (CURE) [18]. By clustering a sample (N = 1000 ) and assigning the remaining points to the nearest representative set, CURE reduces the fitting time to linear O(n) complexity. Prior to clustering, the embeddings are L2-normalized, ensuring that the Euclidean distance used by the algorithm corresponds to the cosine similarity, the standard metric for assessing semantic similarity. We define an assignment threshold where a point is labelled as noise if the distance to the nearest representative of a cluster is greater than the threshold. To avoid accidentally including a noisy point as part of our representatives, we discard samples from the AC sample set that remain isolated after the first N ·ρ
+
+merges, where we set ρ = 0 .05 .IV. E XPERIMENTS AND RESULTS 
+
+We train our encoder model described in III-A on 80% of our preprocessed dataset, keeping a 20% hold out validation set. The model reached a stable validation MSE loss of ∼
+
+0.0044 after 17 epochs of training on an A100 Nvidia GPU with batch size 512 and the Adam optimizer [26] with learning rate 5 · 10 −5.The two-dimensional Uniform Manifold Approximation and Projection (UMAP) [22] visualization of the embedding space (Figure 1) exhibits clusters with non-spherical geometries. This characteristic motivates the consideration of hierarchical clustering approaches that do not impose spherical cluster assumptions. Single linkage clustering [27] was evaluated but exhibited pronounced chaining effects, whereby isolated noise points induced premature cluster merging. Average linkage [28] pro-duced a highly fragmented and unstable dendrogram, limiting interpretability and robustness. Despite the apparent non-spherical structure suggested by the UMAP projection, agglomerative clustering with Within-Cluster Sum of Squares (WARD) linkage [29] yielded the Fig. 1. 2D UMAP visualisation of the embeddings.  
+
+> Fig. 2. Dendrogram from the Agglomerative Clustering with WARD linkage for 1000 samples. Truncated to the last 75 merges.
+
+most coherent and stable cluster partitions and was therefore adopted in the subsequent analysis. CURE hyperparameters were selected based on preliminary experiments, with the compression factor set to 0.6 and the number of representative points set to 20. Inspection of the dendrogram in Figure 2 indicates stable partitioning at cluster counts k ∈ { 2, 3, 5, 8}. Subsequent analyses are conducted for 
+
+k = 3 and k = 5 , which provide a balance between partition stability and analytical granularity. Representative trajectories for these cluster resolutions are shown in Figure 3. At k = 3 , one cluster is primarily associ-ated with trajectories located north of the Jutland Peninsula. Increasing the resolution to k = 5 (Figure 3 bottom) further subdivides two of the clusters, resulting in more spatially localized trajectory groups with reduced spatial extent. Cluster characterization is performed using the following trajectory-level descriptors:  
+
+> •
+
+Mean latitude and longitude (lat , lon ) 
+
+> •
+
+Mean speed over ground ( Speed ) 
+
+> •
+
+Start-to-end displacement in meters ( Disp. )    
+
+> Fig. 3. The 20 trajectories closest to each cluster centroid, out of the samples used for agglomerative clustering, with 3 (a) and 5 (b) clusters. ⃝and □
+> marks the start and end of trajectories, respectively.
+> •
+
+Course variability σCOG (Turn ) 
+
+> •
+
+Vessel type ( Cargo , Tanker , Fishing , Sailing/Pleasure ,
+
+Other )We use the Z-score to assess deviations in demographic features for the continuous features. 
+
+Z = μcluster ,feature − μglobal ,feature 
+
+σglobal ,feature 
+
+. (1) and Pointwise Mutual Information ( P M I ) score for the cate-gorical vessel types 
+
+P M I V =v = log 2
+
+ P (V = v|cluster )
+
+P (V = v)
+
+
+
+, (2) where V represents the vessel type feature and v denotes a specific category. The log 2 in (2) serves to symmetrize deviations in the negative and positive directions. The cluster descriptors reveal distinct spatial, kinematic, and vessel-type patterns (see Figure 4). Cluster 4 (C4) is Fig. 4. Deviations in physical features for 5 clusters (C0-C4). (Top) Z-score for continuous features and (Bottom) P M I for vessel types.     
+
+> Fig. 5. Noise percentages and RCR at various cluster sizes and assignment thresholds. Colour scales are log 10 -normalised.
+
+characterized by high latitudes and low longitudes, consistent with the spatial patterns in Figure 3, and shows a predom-inance of fishing vessels. Clusters 1 and 2 (C1, C2) are dominated by cargo vessels with high speed and displacement, corresponding to transit through the Kiel Canal and onward routing toward Danish harbors. In contrast, clusters 0 and 3 (C0, C3) primarily consist of low-speed, low-displacement pleasure crafts spatially concentrated south of Jutland and around the island of Funen, respectively. 
+
+A. Anomaly detection 
+
+AC and CURE are applied with intrinsic noise detection to identify anomalous trajectories in the embedding space. The procedure is controlled by two task-specific hyperparameters:   
+
+> Fig. 6. Z-score and P M I for physical features for noise labelled points at 12 clusters with assignment threshold of 0.22. The two scores can be regarded as of similar scales and can be confidently compared.
+
+the number of clusters and the assignment threshold. Trajec-tories classified as noise exhibit higher reconstruction error, as the encoder is optimized on frequently occurring trajectory patterns, resulting in larger mean squared error (MSE) values for noise-labelled trajectories than for trajectories assigned to clusters. To quantify this separation, a Reconstruction Contrast Ratio (RCR) is defined as 
+
+RCR = E[MSE noise ]
+
+E[MSE cluster ] ,
+
+where E[MSE noise ] and E[MSE cluster ] denote the average reconstruction error of trajectories classified as noise and as cluster members, respectively. Figure 5 illustrates the trade-off between noise proportion and RCR as a function of cluster count and assignment threshold. An assignment threshold of 0.22 with 12 clusters is used in subsequent analyses, corresponding to 1.4% noise and an RCR of 1.5. Assessing the demographic features characterising the noise-labelled trajectories on Figure 6 we see that noise points at this setting tend to exhibit high speed and are situated at lower longitudes than cluster points. Additionally, noise trajectory are twice as likely than cluster points to be marked with label types other than Cargo, Fishing, Tanker, Sailing or Pleasure, with an especially low representation of Sailing/Pleasure vessels in noise trajectories, suggesting a high degree of cluster purity for recreational vessels. V. C ONCLUSION 
+
+This study presents a framework that combines BERT encoders with hierarchical clustering to effectively model and monitor large-scale maritime traffic. Processing 1.2 terabytes of AIS data produced physically interpretable clusters captur-ing distinct behaviors and fishing activities. Anomaly detection identified irregular trajectories in noisy, real-world maritime data. All code used in this study is available here. REFERENCES 
+
+[1] Danish Maritime Authority (DMA), “Ais data,” https: //www.dma.dk/safety-at-sea/navigational-information/ais-data, 2025, accessed: November 21, 2025. [2] G. Pallotta, M. Vespe, and K. Bryan, “Vessel pattern knowledge discovery from ais data: A framework for anomaly detection and route prediction,” Entropy , vol. 15, no. 6, pp. 2218–2245, 2013. [3] X. Han, C. Armenakis, and M. Jadidi, “Modeling vessel behaviours by clustering ais data using optimized dbscan,” 
+
+Sustainability , vol. 13, no. 15, p. 8162, 2021. [4] L. Wang, P. Chen, L. Chen, and J. Mou, “Ship ais trajectory clustering: An hdbscan-based approach,” Journal of Marine Science and Engineering , vol. 9, no. 6, p. 566, 2021. [5] S.-M. Wang, W.-R. Yang, Q.-Y. Zhuang, W.-H. Lin, M.-Y. Tian, T.-J. Su, and J.-C. Cheng, “Application of three-dimensional hierarchical density-based spatial clustering of applications with noise in ship automatic identification system trajectory-cluster analysis,” Applied Sciences , vol. 15, no. 5, p. 2621, 2025. [6] C. Zhang, S. Liu, M. Guo, and Y. Liu, “A novel ship trajectory clustering analysis and anomaly detection method based on ais data,” Ocean Engineering , vol. 288, p. 116082, 2023. [7] A. Vaswani, N. Shazeer, N. Parmar, J. Uszkoreit, L. Jones, A. N. Gomez, L. Kaiser, and I. Polosukhin, “Attention is all you need,” CoRR , vol. abs/1706.03762, 2017. [Online]. Available: http://arxiv.org/abs/1706.03762 [8] N. P. Juan, V. N. Valdecantos, and P. Troch, “Advancing artificial intelligence in ocean and maritime engineering: Trends, progress, and future directions,” Ocean Engineering , vol. 339, p. 122077, 2025. [9] Y. Yang, Y. Liu, G. Li, Z. Zhang, and Y. Liu, “Harnessing the power of machine learning for ais data-driven maritime research: A comprehensive review,” Transportation research part E: logistics and transportation review , vol. 183, p. 103426, 2024. [10] D. Nguyen and R. Fablet, “Traisformer-a generative transformer for AIS trajectory prediction,” CoRR , vol. abs/2109.03958, 2021. [Online]. Available: https://arxiv.org/abs/2109.03958 [11] G. Spadon, J. Kumar, D. Eden, J. van Berkel, T. Foster, A. Soares, R. Fablet, S. Matwin, and R. Pelot, “Multi-path long-term vessel trajectories forecasting with probabilistic feature fusion for problem shifting,” Ocean Engineering , vol. 312, p. 119138, 2024. [12] K. A. Sørensen, P. Heiselberg, and H. Heiselberg, “Probabilistic maritime trajectory prediction in complex scenarios using deep learning,” Sensors , vol. 22, no. 5, p. 2058, 2022. [13] J. Devlin, M. Chang, K. Lee, and K. Toutanova, “BERT: pre-training of deep bidirectional transformers for language understanding,” CoRR , vol. abs/1810.04805, 2018. [Online]. Available: http://arxiv.org/abs/1810.04805 [14] Y. Liu, M. Ott, N. Goyal, J. Du, M. Joshi, D. Chen, O. Levy, M. Lewis, L. Zettlemoyer, and V. Stoyanov, “Roberta: A robustly optimized BERT pretraining approach,” 
+
+CoRR , vol. abs/1907.11692, 2019. [Online]. Available: http: //arxiv.org/abs/1907.11692 [15] G. B. Karatas ¸, P. Karagoz, and O. Ayran, “Trajectory pattern extraction and anomaly detection for maritime vessels,” Internet of Things , vol. 16, p. 100436, 2021. [16] I. Fujino and C. Claramunt, “Navigation pattern extraction from ais trajectory big data via topic model,” The Journal of Navigation , vol. 76, no. 4-5, pp. 506–524, 2023. [17] M. Liang, L. Weng, R. Gao, Y. Li, and L. Du, “Unsupervised maritime anomaly detection for intelligent situational awareness using ais data,” Knowledge-Based Systems , vol. 284, p. 111313, 2024. [18] S. Guha, R. Rastogi, and K. Shim, “Cure: An efficient clustering algorithm for large databases,” ACM Sigmod record , vol. 27, no. 2, pp. 73–84, 1998. [19] C. R. Harris, K. J. Millman, S. J. van der Walt et al. , “Array programming with NumPy,” Nature , vol. 585, no. 7825, pp. 357–362, 2020. [20] W. McKinney et al. , “Data structures for statistical computing in Python,” in Proceedings of the 9th Python in Science Con-ference , vol. 445. Austin, TX, 2010, pp. 51–56. [21] A. Paszke, S. Gross, F. Massa, A. Lerer, J. Bradbury, G. Chanan, T. Killeen, Z. Lin, N. Gimelshein, L. Antiga, A. Desmaison, A. Kopf, E. Yang, Z. DeVito, M. Raison, A. Tejani, S. Chil-amkurthy, B. Steiner, L. Fang, J. Bai, and S. Chintala, “Pytorch: An imperative style, high-performance deep learning library,” in 
+
+Advances in Neural Information Processing Systems 32 , 2019, pp. 8024–8035. [22] L. McInnes, J. Healy, and J. Melville, “Umap: Uniform man-ifold approximation and projection for dimension reduction,” 
+
+arXiv preprint arXiv:1802.03426 , 2018. [23] T. Wolf, L. Debut, V. Sanh, J. Chaumond, C. Delangue, A. Moi, P. Cistac, T. Rault, R. Louf, M. Funtowicz, J. Davison, S. Shleifer, P. von Platen, C. Ma, Y. Jernite, J. Plu, C. Xu, T. Le Scao, S. Gugger, M. Drame, Q. Lhoest, and A. Rush, “Transformers: State-of-the-art natural language processing,” in 
+
+Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing: System Demonstrations . Asso-ciation for Computational Linguistics, 2020, pp. 38–45. [24] R. Vink et al. , “Polars: Dataframe library for rust and python,” 2020. [Online]. Available: https://doi.org/10.5281/ zenodo.11182668 [25] D. C. Center, “Dtu computing center resources,” 2025. [Online]. Available: https://doi.org/10.48714/DTU.HPC.0001 [26] I. Loshchilov and F. Hutter, “Decoupled weight decay regular-ization,” arXiv preprint arXiv:1711.05101 , 2017. [27] R. Sibson, “Slink: an optimally efficient algorithm for the single-link cluster method,” The computer journal , vol. 16, no. 1, pp. 30–34, 1973. [28] H. K. Seifoddini, “Single linkage versus average linkage clus-tering in machine cells formation applications,” Computers & Industrial Engineering , vol. 16, no. 3, pp. 419–426, 1989. [29] J. H. Ward Jr, “Hierarchical grouping to optimize an objec-tive function,” Journal of the American statistical association ,vol. 58, no. 301, pp. 236–244, 1963.
