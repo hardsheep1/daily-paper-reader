@@ -6,29 +6,22 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-08-12
-- 运行时间：2026-08-12 20:55:54 UTC
+- 最新运行日期：2026-08-15
+- 运行时间：2026-08-15 20:37:41 UTC
 - 运行状态：成功
-- 本次总论文数：2
+- 本次总论文数：0
 - 精读区：0
-- 速读区：2
+- 速读区：0
 
 ### 今日简报（AI）
-今日速读两篇聚类方向论文，均为6分，覆盖约束相关聚类与大尺度轨迹异常检测。  
-较值得关注的是《Constrained Correlation Clustering: Towards Optimality》的优化思路，以及《STCAD》对TB级AIS数据的可扩展处理方法。  
-建议后续选取其中一篇做精读，或结合真实业务数据验证轨迹聚类与异常检测效果。
-- 详情：[/202608/12/README](/202608/12/README)
+> 今日无新推荐，系统未产出可展示论文。
+- 详情：[/202608/15/README](/202608/15/README)
 
 ### 精读区论文标签
 - 本次无精读推荐。
 
 ### 速读区论文标签
-1. [Constrained Correlation Clustering: Towards Optimality](/202608/12/2608.05700v1-constrained-correlation-clustering-towards-optimality)  
-   标签：评分：6.0/10、query:active-clust
-   evidence：约束相关聚类求解器，可复用于主动与半监督聚类流程
-2. [STCAD: Scalable Trajectory Clustering and Anomaly Detection on Terabyte-Scale AIS Data](/202608/12/2608.10249v1-stcad-scalable-trajectory-clustering-and-anomaly-detection-on-terabyte-scale-ais-data)  
-   标签：评分：6.0/10、query:ac
-   evidence：使用BERT式语言模型编码轨迹并做层次聚类，展示基于大模型表示的聚类方法
+- 本次无速读推荐。
 
 
 <div class="dpr-home-promo-card">
