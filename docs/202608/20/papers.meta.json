@@ -1,0 +1,24 @@
+{
+  "label": "2026-08-20",
+  "date": "2026-08-20",
+  "generated_at": "2026-08-20T21:09:05",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "202608/20/2608.12027v1-uncertainty-aware-probabilistic-constrained-clustering-from-entangled-pairwise-supervision",
+      "section": "quick",
+      "title_en": "Uncertainty-Aware Probabilistic Constrained Clustering from Entangled Pairwise Supervision",
+      "authors": "Shaojie Zhang, Ke Chen",
+      "date": "2026-08-12",
+      "pdf": "https://arxiv.org/pdf/2608.12027v1",
+      "score": "7.0",
+      "evidence": "基于成对监督的概率约束聚类，与半监督及主动聚类相关",
+      "tldr": "现实中的成对约束常为实值且包含歧义和噪声，现有深度约束聚类主要处理硬约束。该文将此类问题形式化为不确定性感知的概率约束聚类，提出概率成对目标ProbPair，并构建估计-校正-集成框架ECI-PP，通过置信度估计、纠错和可靠性加权整合来精炼监督信息。在多个概率监督基准上优于现有方法且对默认配置鲁棒。",
+      "tags": "query:active-clust",
+      "abstract_en": "Pairwise constrained clustering typically relies on hard must-link/cannot-link labels, whereas realistic pairwise supervision may be real-valued and entangle intrinsic ambiguity, expert judgment, and stochastic corruption. Existing deep constrained clustering (DCC) methods mainly target hard, expert-agnostic constraints, treating soft labels mostly numerically rather than semantically. We formalize this setting as uncertainty-aware probabilistic constrained clustering (UPCC), defining a canonical aleatoric target through a heterogeneous observation process and analyzing its conditional identifiability. We introduce ProbPair, an angular pairwise objective for probabilistic relations, and build ECI-PP, an estimator--corrector--integrator framework that refines imperfect supervision via belief estimation, correction, and reliability-aware integration. Across challenging probabilistic supervision settings, experiments on diverse benchmarks show that ECI-PP outperforms state-of-the-art DCC methods and remains robust with a shared default configuration.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}
