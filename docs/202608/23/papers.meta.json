@@ -1,0 +1,24 @@
+{
+  "label": "2026-08-23",
+  "date": "2026-08-23",
+  "generated_at": "2026-08-23T20:34:46",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "202608/23/2608.15311v1-moe-router-guided-clustering-for-heterogeneous-federated-instruction-tuning",
+      "section": "deep",
+      "title_en": "MoE Router-Guided Clustering for Heterogeneous Federated Instruction Tuning",
+      "authors": "Ankita Sharma, Bahar Farahani, Sanaz Rahimi Moosavi, Amir Rrahmani, Farshad Firouzi, Krishnendu Chakrabarty",
+      "date": "2026-08-15",
+      "pdf": "https://arxiv.org/pdf/2608.15311v1",
+      "score": "8.0",
+      "evidence": "利用MoE路由行为对客户聚类，服务联邦LLM微调",
+      "tldr": "联邦指令微调面临异构指令分布下无差别聚合导致的负迁移问题，而现有联邦MoE方法主要聚焦参数聚合，忽视了路由行为这一信息源。为此提出ClientMorpher框架，利用预训练MoE的路由签名组织客户端协作，包括直接对专家激活聚类的ClientMorpher-C和基于专家跨客户端使用推导协作组的ClientMorpher-E。在Dolly-15K数据集上，通过病理和Dirichlet异构划分实验，路由感知聚类在相同通信开销下一致优于联邦平均与本地训练。这验证了路由签名可有效识别协作伙伴，为大规模稀疏MoE的个性化联邦微调提供可扩展方案。",
+      "tags": "query:ac",
+      "abstract_en": "Federated instruction fine-tuning enables Large Language Models (LLMs) to adapt to decentralized, privacy-sensitive data without requiring data sharing. Recent Mixture-of-Experts (MoE) LLMs are particularly attractive for federated learning because their sparse activation reduces computation and communication while scaling model capacity. However, existing federated MoE methods primarily focus on parameter aggregation and personalization, overlooking the routing behavior of MoE models as a source of information for client collaboration. Under heterogeneous instruction distributions, indiscriminate aggregation can lead to negative transfer, highlighting the need to identify which clients should collaborate during federated optimization. We propose ClientMorpher, a routing-aware, personalized federated instruction fine-tuning framework that leverages routing signatures from pretrained MoE models to organize client collaboration prior to aggregation. We investigate two complementary clustering strategies: ClientMorpher-C, which directly clusters clients using expert activation profiles, and ClientMorpher-E, which first clusters experts based on their cross-client usage signatures and then derives client collaboration groups. We evaluate ClientMorpher for federated instruction fine-tuning on the Databricks Dolly-15K dataset, using pathological and Dirichlet-based heterogeneous client distributions across multiple instruction-following tasks. Experimental results show that routing-aware collaboration consistently improves personalized performance compared to conventional federated averaging and local training, while maintaining the same communication cost. Furthermore, our study shows that client-centric and expert-centric clustering provides an effective and scalable approach for personalized federated instruction fine-tuning of sparse MoE LLMs.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

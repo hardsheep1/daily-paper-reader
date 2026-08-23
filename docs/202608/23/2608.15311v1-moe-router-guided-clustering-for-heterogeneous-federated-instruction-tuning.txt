@@ -1,0 +1,400 @@
+Title: MoE Router-Guided Clustering for Heterogeneous Federated Instruction Tuning
+
+URL Source: https://arxiv.org/pdf/2608.15311v1
+
+Published Time: Tue, 18 Aug 2026 00:43:43 GMT
+
+Number of Pages: 6
+
+Markdown Content:
+# MoE Router-Guided Clustering for Heterogeneous Federated Instruction Tuning 
+
+Ankita Sharma 1, Bahar Farahani 2, Sanaz Rahimi Moosavi 3, Amir Rahmani 4,Farshad Firouzi 1,5, and Krishnendu Chakrabarty 1
+
+> 1
+
+Arizona State University 2Member, IEEE 3California State University, Dominguez Hills 
+
+> 4
+
+University of California, Irvine 5Johns Hopkins University 
+
+Abstract —Federated instruction fine-tuning enables Large Language Models (LLMs) to adapt to decentralized, privacy-sensitive data without requiring data sharing. Recent Mixture-of-Experts (MoE) LLMs are particularly attractive for federated learning because their sparse activation reduces computation and communication while scaling model capacity. However, existing federated MoE methods primarily focus on parameter aggre-gation and personalization, overlooking the routing behavior of MoE models as a source of information for client collabora-tion. Under heterogeneous instruction distributions, indiscrim-inate aggregation can lead to negative transfer, highlighting the need to identify which clients should collaborate during federated optimization. We propose ClientMorpher , a routing-aware, personalized federated instruction fine-tuning framework that leverages routing signatures from pretrained MoE models to organize client collaboration prior to aggregation. We inves-tigate two complementary clustering strategies: ClientMorpher-C, which directly clusters clients using expert activation pro-files, and ClientMorpher-E , which first clusters experts based on their cross-client usage signatures and then derives client collaboration groups. Together, these strategies exploit routing behavior as a structural signal for personalization while main-taining the communication efficiency of sparse MoE fine-tuning. We evaluate ClientMorpher for federated instruction fine-tuning on the Databricks Dolly-15K dataset, using pathological and Dirichlet-based heterogeneous client distributions across multiple instruction-following tasks. Experimental results demonstrate that routing-aware collaboration consistently improves personal-ized performance compared to conventional federated averaging and local training, while maintaining the same communication cost. Furthermore, our study shows that client-centric and expert-centric clustering capture complementary forms of task similar-ity, providing an effective and scalable approach for personalized federated instruction fine-tuning of sparse MoE LLMs. 
+
+Index Terms —Large Language Model, Mixture of Experts, Federated Instruction Tuning, Personalization. 
+
+I. I NTRODUCTION 
+
+Large Language Models (LLMs) have significantly ad-vanced natural language processing by achieving state-of-the-art performance across a wide range of instruction-following tasks, including text classification, summarization, question answering, and information extraction. As these models be-come increasingly integrated into real-world applications, fine-tuning them on organization-specific data has become essential for adapting to specialized domains and user requirements [1]. However, such data are often distributed across multiple orga-nizations, institutions, or edge devices and cannot be central-ized because of privacy regulations, proprietary constraints, (a) Local Training. (b) MoE + FedAvg. (c) ClientMorpher. Global Model Client 1 Client 2 Client 3 Client 4 Cluster 1 Cluster 2 Client 1 Client 2 Client 3 Client 4 Model 1 Client 1 Client 2 Client 3 Client 4 Model 2 Model 3 Model 4 
+
+Fig. 1. Motivation for ClientMorpher. (a) Local training provides personal-ization but no collaboration. (b) FedAvg aggregates all MoE experts across clients, ignoring expert usage patterns. (c) ClientMorpher clusters clients using sparse expert activation profiles and performs cluster-wise aggregation of shared parameters. 
+
+or communication limitations. Federated Learning (FL) [2]– [4] addresses this challenge by enabling multiple clients to collaboratively fine-tune a shared model while keeping local data decentralized. More recently, Mixture-of-Experts (MoE) architectures [5] have emerged as an attractive foundation for large-scale federated deployment because they activate only a sparse subset of experts for each input token, allowing models to scale to billions of parameters while maintaining efficient computation and communication [6]. Beyond computational efficiency, the routing mechanism of MoE models determines which experts process each token, implicitly capturing charac-teristics of the underlying instruction distribution. This routing behavior provides an additional source of information that is unique to sparse MoE models [7], [8] and has not yet been fully exploited in federated instruction fine-tuning. Despite these advantages, federated instruction fine-tuning presents significant challenges under heterogeneous client distributions. In practical deployments, clients rarely possess identically distributed data; instead, they often specialize in different domains or instruction types, such as summarization, classification, question answering, or information extraction, as depicted in Fig. 1. Conventional Federated Averaging (FedAvg) aggregates updates from all participating clients into a single global model, implicitly assuming that every client should contribute equally to a shared representation. Under highly heterogeneous settings, however, indiscriminate aggre-gation frequently introduces negative transfer, reducing both personalization and overall model quality [9], [10]. Recent per-sonalized federated learning methods [11] attempt to alleviate arXiv:2608.15311v1 [cs.AI] 15 Aug 2026 Fig. 2. The end-to-end workflow of the ClientMorpher Framework. 
+
+this issue by adapting subsets of parameters or maintaining client-specific models, while federated MoE frameworks such as FedMoE [12], FedMoE-DA [13], and OpenFedLLM [14] further exploit sparse architectures to reduce communication overhead and improve scalability. Nevertheless, these methods largely treat collaboration as a predefined optimization process and overlook MoE model’s routing behavior. In particular, existing approaches do not investigate whether routing patterns can reveal latent similarities among clients before federated optimization begins, nor whether such information can guide more effective collaboration among heterogeneous participants supporting clustering [15]. Since the router dynamically selects experts for each in-struction, clients with similar instruction distributions are expected to exhibit similar routing behavior. These routing signatures, therefore, offer an observable representation of client similarity before federated optimization begins. Based on this insight, we propose ClientMorpher, a routing-aware personalized federated learning framework that leverages rout-ing signatures to form collaboration groups prior to model aggregation. We investigate two complementary perspectives: ClientMorpher-C, which groups clients directly according to their expert activation profiles, and ClientMorpher-E, which first discovers expert communities from expert usage signa-tures and then derives client collaboration groups. In summary, this paper makes the following contributions:  
+
+> •
+
+We propose ClientMorpher, a routing-aware personalized federated instruction fine-tuning framework as illustrated in Fig. 2 that exploits the routing behavior of sparse MoE LLMs to guide client collaboration.  
+
+> •
+
+We develop two complementary clustering strategies: ClientMorpher-C, which clusters clients using expert ac-tivation profiles, and ClientMorpher-E, which clusters ex-perts using cross-client usage signatures before assigning clients to expert-induced collaboration groups.  
+
+> •
+
+We conduct an empirical study on heterogeneous splits of the Dolly-15k dataset [16], comparing local training, MoE-FedAvg, ClientMorpher-C, and ClientMorpher-E across pathological and Dirichlet partitions with varying instruction-task skew. The remainder of this paper is organized as follows. Section II reviews related work. Section III presents the proposed frame-work. Section IV describes the experimental setup, evaluation, and results. Finally, Section V concludes the paper. II. R ELATED WORK 
+
+A. Clustering Clients for Personalization 
+
+Client clustering is an effective personalization strategy for federated learning in the presence of statistical heterogeneity. Instead of optimizing a single global model, clustered fed-erated learning groups clients with similar data distributions or optimization behavior and trains a shared model for each cluster, improving convergence while reducing negative trans-fer. Representative approaches include IFCA [15], CFL [17], FedSEM [18], FedGroup [19], and StoCFL [20], which con-struct client clusters using gradients, model parameters, feature representations, or optimization dynamics. Although these methods have demonstrated strong performance with conven-tional neural networks, they are not designed for Mixture-of-Experts (MoE) models, in which sparse expert routing naturally captures functional specialization. However, existing clustering methods fail to leverage routing behavior as a lightweight, semantically meaningful signal to identify similar clients. 
+
+B. Federated Learning with Mixture-of-Experts Models 
+
+Mixture-of-Experts (MoE) architectures have recently been introduced into federated learning to increase model capacity while maintaining communication and computational effi-ciency through sparse expert activation. Existing methods, including PFL-MoE [21], FedMoE [12], Fed-MoE, pFed-MoE [22], PM-MoE [23], and FLEx [24], primarily focus on personalized adaptation, expert selection, modular aggregation, or communication-efficient training. While these approaches leverage the MoE routing mechanism during optimization, they largely treat routing as a means of personalization rather than as a source of structural information about client relation-ships. In contrast, our work utilizes expert-routing statistics to construct expert signatures, discover client similarity through expert-overlap clustering, and perform cluster-personalized federated optimization without exchanging expert parameters. III. M ETHODOLOGY 
+
+We present ClientMorpher , a routing-aware personalization framework for federated fine-tuning of MoE-LLMs. The core idea is that the router of a pretrained MoE model provides a compact signature of each client’s data distribution. Clients who activate similar experts are likely to require similar adaptation behavior, whereas clients who route to different experts should not necessarily share a single globally averaged model. ClientMorpher, therefore, replaces global aggregation Clients Router Clustering MoE-based LLM Backbone  
+
+> Activated Expert Other Expert
+> Clustered Clients
+> Tokens
+> Trainable
+
+Fig. 3. The depiction of router-guided client clustering for MoE-LLMs. 
+
+with cluster-specific federated optimization as illustrated in Fig. 3. We study two variants of the same framework. 
+
+ClientMorpher-C clusters clients directly using their expert-activation profiles. ClientMorpher-E first clusters experts ac-cording to their cross-client usage signatures and then assigns clients to expert clusters. Both variants share the same profiling step and the same cluster-personalized federated training step; they differ only in how client clusters are constructed, as explained in Algorithm 1. 
+
+A. Federated MoE Setup 
+
+Consider N clients indexed by i ∈ { 1, . . . , N }, where client 
+
+i owns a local dataset Di. The server initializes a pretrained MoE language model with E routed experts. For an input token, the MoE router produces logits over the experts and selects the top-k experts. The pretrained MoE backbone and expert parameters are kept frozen, and only a small set of adaptation parameters θa is optimized. The objective is to learn personalized adaptation parameters without requiring each client to train in isolation or forcing all clients into a single global FedAvg model. ClientMorpher solves this by learning a cluster assignment ai ∈ { 1, . . . , K } for each client and maintaining one adaptation state θ(k) 
+
+> a
+
+per cluster. 
+
+B. Phase 0: Shared Client Expert-Usage Profiling 
+
+Both ClientMorpher-C and ClientMorpher-E begin by pro-filing how each client’s local data activates the frozen MoE router. For client i, we run up to B batches from Di through the model without updating parameters. Let Ti denote the profiled token positions across all captured MoE layers. For token position t ∈ T i, let TopK i,t ⊆ { 1, . . . , E } be the set of top-k experts selected by the router. We count how often each expert is selected: 
+
+ci,e = X
+
+> t∈T i
+
+1 e ∈ TopK i,t 
+
+ , (1) where ci,e is the number of routing assignments from client i
+
+to expert e. The normalized expert-usage profile for client i is 
+
+ui,e = ci,e 
+
+PEe′=1 ci,e ′
+
+, ui = [ ui, 1, . . . , u i,E ] ∈ [0 , 1] E . (2) 
+
+Algorithm 1 The ClientMorpher Workflow. 
+
+Require: Client datasets {D i}Ni=1 ; pretrained MoE model with E experts; top-k router selections; profile budget B; clusters K; rounds R; local steps L; variant v ∈ { C, E}
+
+Ensure: Cluster-specific adaptation states {θ(k,R ) 
+
+> a
+
+}Kk=1 
+
+1: Freeze pretrained MoE backbone and expert parameters 2: Initialize trainable adaptation parameters θa ▷ Shared routing profiling 3: for each client i ∈ { 1, . . . , N } do 
+
+4: Run up to B batches from Di through the frozen MoE router 5: Count expert selections ci,e = P 
+
+> t∈T i
+
+1[e ∈ TopK i,t ]
+
+6: Normalize ui,e = ci,e / PEe′=1 ci,e ′
+
+7: Store client profile ui = [ ui, 1, . . . , u i,E ]
+
+8: end for 
+
+9: Build client-expert matrix U ∈ [0 , 1] N ×E from rows ui ▷
+
+Variant-specific clustering 10: if v = C then 
+
+11: Apply K-Means to client profiles {ui}Ni=1 
+
+12: Assign clients directly: ai = arg min ℓ∈{ 1,...,K } ∥ui − μℓ∥22
+
+13: else 
+
+14: for each expert e ∈ { 1, . . . , E } do 
+
+15: Construct and normalize expert signature se = U:,e /∥U:,e ∥2
+
+16: end for 
+
+17: Apply K-Means to expert signatures {se}Ee=1 
+
+18: Obtain expert labels ze = arg min ℓ∈{ 1,...,K } ∥se − νℓ∥22
+
+19: Build M ∈ { 0, 1}E×K where Me,ℓ = 1 iff ze = ℓ
+
+20: Assign clients by expert-cluster mass: ai =arg max ℓ∈{ 1,...,K }
+
+PEe=1 ui,e Me,ℓ 
+
+21: end if 
+
+22: Form client clusters Ck = {i : ai = k} ▷ Shared cluster-PFL 23: for each cluster k ∈ { 1, . . . , K } do 
+
+24: Initialize cluster state θ(k, 0)  
+
+> a
+
+← θa
+
+25: end for 
+
+26: for round r = 0 , . . . , R − 1 do 
+
+27: for each non-empty cluster Ck do 
+
+28: for each client i ∈ C k do 
+
+29: Send θ(k,r ) 
+
+> a
+
+to client i
+
+30: θ(r+1)  
+
+> a,i
+
+← LocalTrain( θ(k,r ) 
+
+> a
+
+, Di, L )
+
+31: end for 
+
+32: Aggregate within cluster: θ(k,r +1)  
+
+> a
+
+← P  
+
+> i∈C k
+> niP
+> j∈C knj
+
+θ(r+1) 
+
+> a,i
+
+33: end for 
+
+34: end for 
+
+35: return {θ(k,R ) 
+
+> a
+
+}Kk=1 
+
+The vectors are stacked into the client-expert usage matrix 
+
+U =
+
+
+
+u⊤
+
+> 1
+
+u⊤
+
+> 2
+
+...
+
+u⊤
+
+> N
+
+ ∈ [0 , 1] N ×E . (3) The i-th row of U represents the routing profile of client 
+
+i. This matrix is the common input to both ClientMorpher variants. 
+
+C. ClientMorpher-C: Direct Client-Profile Clustering 
+
+ClientMorpher-C directly clusters clients in the expert-usage space. Each client is represented by its row vector ui from the usage matrix U. We apply K-Means to the set of client profiles 
+
+{ui}Ni=1 :
+
+ai = arg min  
+
+> k∈{ 1,...,K }
+
+∥ui − μk∥22 , (4) where μk is the centroid of cluster k. This produces client clusters Ck = {i : ai = k}. This variant treats the entire expert-activation profile as a client signature. If two clients route to experts with similar frequencies, they are assigned to the same aggregation group. 
+
+D. ClientMorpher-E: Expert-Overlap Clustering 
+
+ClientMorpher-E uses the same usage matrix U, but it clusters experts before assigning clients. The routing signature of expert e is the cross-client usage vector given by the e-th column of U: se = U:,e ∈ RN . Each expert signature is normalized before clustering. We then compute pairwise expert similarity using cosine similarity. The experts are clus-tered into K expert groups. We use K-Means on the expert signatures: 
+
+ze = arg min  
+
+> k∈{ 1,...,K }
+
+∥se − νk∥22 , (5) where ze is the expert-cluster assignment and νk is an expert-cluster centroid. We define an expert-membership matrix M ∈{0, 1}E×K :
+
+Me,k =
+
+(
+
+1, ze = k, 
+
+0, otherwise . (6) Each client is then assigned to the expert cluster that receives the largest mass from its local routing profile. The score of client i for the expert cluster k is 
+
+qi,k =
+
+> E
+
+X
+
+> e=1
+
+ui,e Me,k . (7) The final client assignment is ai = arg max k∈{ 1,...,K } qi,k .
+
+The resulting client clusters are again Ck = {i : ai = k}.This variant is denoted ClientMorpher-E in the experimental section. Unlike ClientMorpher-C, which clusters clients di-rectly, ClientMorpher-E first discovers groups of experts that are shared across clients and then derives client groups from those expert clusters. 
+
+E. Shared Phase 2: Cluster-Personalized Federated Learning 
+
+After either ClientMorpher-C or ClientMorpher-E produces client clusters, the training phase is identical. The server maintains one adaptation state θ(k) 
+
+> a
+
+for each non-empty cluster 
+
+Ck. At communication round r, the server sends θ(k,r ) 
+
+> a
+
+to clients in cluster Ck. Each client performs local optimization on its dataset Di for a fixed number of local steps: 
+
+θ(r+1)  
+
+> a,i
+
+= LocalTrain 
+
+
+
+θ(ai,r ) 
+
+> a
+
+, Di
+
+
+
+. (8) The server then aggregates updates only within the same cluster using FedAvg: 
+
+θ(k,r +1)  
+
+> a
+
+= X
+
+> i∈C k
+
+ni
+
+P 
+
+> j∈C k
+
+nj
+
+θ(r+1)  
+
+> a,i
+
+, (9) where ni = |D i| is the number of local training samples for client i. If a cluster contains a single client, its cluster state is simply that client’s locally trained state.                                                     
+
+> TABLE I COMPARISON OF THE TWO CLUSTERING STRATEGIES .
+> CC EC K-Means input Client profiles Expert signatures Input shape N×EE×N
+> Output Client labels aiExpert labels ze
+> Assignment Direct ( ai)arg max k
+> P
+> eui,e Me,k
+> Aggregation Cluster-wise FedAvg Cluster-wise FedAvg
+> TABLE II 4-CLIENT PATHOLOGICAL SPLIT . A LL FEDERATED METHODS EXCHANGE IDENTICAL LORA PARAMETERS (0.0878% OF MODEL /ROUND ).
+> Method CLF CQA IE SUM Avg. Comm.% Local 0.6036 0.4096 0.5087 0.4075 0.4824 0.00 MoE-FedAvg (LoRA) 0.6299 0.4232 0.5085 0.4090 0.4927 0.0878 ClientMorpher-C 0.5937 0.3785 0.5243 0.3960 0.4731 0.0878 ClientMorpher-E 0.6411 0.4254 0.5099 0.4181 0.4986 0.0878
+
+IV. E XPERIMENTAL DESIGN AND EVALUATION RESULTS 
+
+A. Federated Setting 
+
+We consider a federated learning setting with N clients, each holding a local dataset Di drawn from a heterogeneous data distribution. Each client is associated with one or more NLP tasks, including text classification, closed-domain ques-tion answering, information extraction, and summarization. To evaluate the proposed method under varying degrees of statis-tical heterogeneity, we consider two non-IID data partitioning strategies. First, the Pathological partition, in which each client receives data exclusively from a single task. Second, the 
+
+Dirichlet partition, where the task distribution of each client is sampled from a Dirichlet distribution with concentration parameter α. We evaluate α = 0 .1, which represents highly heterogeneous client distributions, and α = 1 .0, which repre-sents a substantially more balanced non-IID setting. 
+
+B. Dataset and Client Partitioning 
+
+The Databricks Dolly-15k instruction-following dataset is used as the source dataset. Dolly-15k consists of instruction-response examples organized into multiple task categories. To simulate a strongly heterogeneous federated learning environ-ment, we construct a pathological non-IID split in which each client receives examples from only one task category based on data distribution. The federated setting contains four tasks:  
+
+> •
+
+CLS: classification  
+
+> •
+
+QA: closed-domain question answering  
+
+> •
+
+IE: information extraction  
+
+> •
+
+Summ: summarization This partitioning creates distinct client distributions and allows us to evaluate whether a federated method can avoid negative transfer between task-specific clients. Each exam-ple is formatted as an Alpaca-style instruction-following prompt [25]. During training, the response is included in the sequence, but the loss is computed only over response tokens by masking the prompt tokens. During evaluation, only the TABLE III COMPARISON OF LOCAL TRAINING , M OE-F ED AVG , C LIENT CLUSTERING , AND EXPERT CLUSTERING UNDER DIFFERENT DIRICHLET CONCENTRATION PARAMETERS (α). C LIENT ID S REMAIN FIXED ACROSS EXPERIMENTS , WHILE TASK ASSIGNMENTS MAY DIFFER UNDER DIFFERENT α VALUES .ROUGE-L IS REPORTED FOR EACH CLIENT (HIGHER IS BETTER ).                                                                                                                    
+
+> α= 0 .1α= 1 .0
+> Client Task Local MoE-FedAvg Client Cluster Expert Cluster Task Client Cluster Expert Cluster
+> C0 QA 0.4679 0.5175 0.4732 0.4702 CLS 0.4833 0.4748 C1 IE 0.4660 0.5215 0.5085 0.5129 Summ 0.5174 0.4953 C2 Summ 0.3179 0.3552 0.3849 0.3798 Summ 0.4253 0.4269 C3 CLS 0.5383 0.5529 0.5472 0.5327 CLS 0.5648 0.5835 C4 QA 0.4013 0.4294 0.4767 0.4875 IE 0.4781 0.4766 C5 IE 0.4274 0.5102 0.5323 0.5301 IE 0.4972 0.5176 C6 IE 0.4294 0.5183 0.4940 0.4988 CLS 0.5549 0.5517 C7 IE 0.4642 0.5627 0.5502 0.5318 Summ 0.4088 0.4220
+> Average –0.4391 0.4960 0.4959 0.4929 –0.4912 0.4936
+> Classification –0.5383 0.5529 0.5472 0.5327 –0.5343 0.5367
+> Information Extraction –0.4467 0.5282 0.5213 0.5184 –0.4876 0.4971
+> Closed QA –0.4346 0.4734 0.4750 0.4788 –––
+> Summarization –0.3179 0.3552 0.3849 0.3798 –0.4505 0.4481
+
+prompt is given to the model, and the generated response is compared with the reference answer. 
+
+C. Compared Methods 
+
+We compare the following adaptation strategies: Local Training , MoE-FedAvg , Client Clustering , and Expert Clus-tering .
+
+1) Local Training: In this baseline, each client fine-tunes its own LoRA [26] parameters using only its local data. No model parameters are exchanged or aggregated during training, resulting in zero communication overhead and no cross-client collaboration. Each client learns a fully personalized model tailored to its local data distribution. 
+
+2) MoE FedAvg: MoE-FedAvg implements the standard FedAvg algorithm in the proposed MoE architecture. In each communication round, every client performs local fine-tuning on its private data, after which the server aggregates the train-able non-expert parameters using sample-weighted averaging. The resulting global adaptation state is then broadcast back to all clients for the next training round. The server computes a sample-weighted average over all client updates. 
+
+3) ClientMorpher-C: The server first computes an expert-activation profile for each client using the frozen MoE router. Clients are then clustered directly using these profiles, and federated averaging is performed only within each cluster. 
+
+4) ClientMorpher-E: This variant first summarizes how experts are used across clients. Experts are clustered by their cross-client usage signatures. Each client is then assigned to the expert cluster where most of its routing mass goes. Federated averaging is again performed within the induced client groups. 
+
+D. Baseline Comparison 
+
+Table II compares Local Training, MoE-FedAvg, ClientMorpher-C, and ClientMorpher-E on the four-client pathological split. All federated methods share the same trainable LoRA parameters, which correspond to only 0.0878% of the full model per communication round. Consequently, all federated methods operate under an identical communication budget, allowing improvements to be attributed solely to more effective client collaboration rather than additional communication. Among the compared methods, ClientMorpher-E achieves the highest average ROUGE-L score (0.4986), outperforming both Local Training (0.4824) and MoE-FedAvg (0.4927). It also achieves the best performance in Classification, Closed Question Answering, and Summarization, while ClientMorpher-C achieves the highest score in Information Extraction. These results suggest that organizing collaboration according to routing signatures enables more effective knowledge sharing than aggregating updates globally, particularly when clients exhibit highly heterogeneous instruction distributions. 
+
+E. Task-Wise Results Across Heterogeneity 
+
+Table III compares ClientMorpher-C and ClientMorpher-E under two heterogeneous data distributions generated using Dirichlet parameters α = 0.1 and α = 1.0. Across both settings, the MoE backbone, LoRA configuration, clustering parameters, and training schedule remain identical. Under the highly heterogeneous setting ( α = 0.1), both Client-Morpher variants achieve performance comparable to MoE-FedAvg while substantially improving over Local Training. ClientMorpher-C achieves the best performance on Summa-rization and remains competitive on Closed Question Answer-ing, whereas ClientMorpher-E performs better on Classifica-tion and maintains competitive performance on Information Extraction. As the client distribution becomes more balanced (α = 1 .0), the performance gap between the two variants nar-rows, with ClientMorpher-E achieving the highest overall av-erage ROUGE-L (0.4936) and stronger performance on Clas-sification and Information Extraction, while ClientMorpher-C remains slightly better on Summarization. These observations suggest that the two routing-aware clustering strategies capture complementary aspects of client similarity. Directly clustering clients using activation profiles is particularly effective when routing patterns are highly separated under extreme hetero-geneity. In contrast, clustering experts based on shared usage signatures produces more stable collaboration groups as client distributions become less skewed. Finally, because no client is dominated by the Closed Question Answering task under the sampled α = 1 .0 partition, task-specific results for that category are not reported. V. C ONCLUSION 
+
+This paper introduces ClientMorpher, a routing-aware, per-sonalized, federated instruction fine-tuning framework for sparse Mixture-of-Experts (MoE) LLMs. We addressed the challenge of collaborative learning under heterogeneous client instruction distributions by leveraging routing signatures as a signal for client data distribution. ClientMorpher forms per-sonalized groups based on routing behavior, enabling clients with similar instruction characteristics to exchange knowl-edge more effectively. To investigate different perspectives on routing-aware collaboration, we proposed two variants: ClientMorpher-C, which clusters clients directly using expert activation profiles, and ClientMorpher-E, which uses expert clusters via cross-client expert usage signatures before building client groups. Extensive experiments on federated instruction fine-tuning using the Databricks Dolly-15K dataset under both pathological and Dirichlet-based heterogeneous data distribu-tions demonstrate that routing-aware collaboration consistently improves personalized performance over traditional Federated Averaging and local training while maintaining the same communication cost. Our analysis further shows that client-centric and expert-centric clustering capture complementary aspects of task similarity. Direct client clustering is particularly effective under highly skewed client distributions, whereas expert-centric clustering provides more robust collaboration as client heterogeneity decreases. REFERENCES [1] F. Firouzi, A. Ray, B. Farahani, M. Daneshmand, J. Song, S. Wu, and K. Chakrabarty, “Generative iot (giot): Advancing iot with generative ai and large language models,” Digital Communications and Networks ,2026. [2] B. McMahan, E. Moore, D. Ramage, S. Hampson, and B. A. y Arcas, “Communication-efficient learning of deep networks from decentralized data,” in Artificial intelligence and statistics . Pmlr, 2017, pp. 1273– 1282. [3] S. Jiang, Y. Li, F. Firouzi, and K. Chakrabarty, “Federated clustered multi-domain learning for health monitoring,” Scientific reports , vol. 14, no. 1, p. 903, 2024. [4] S. Jiang, F. Firouzi, and K. Chakrabarty, “Low-overhead clustered federated learning for personalized stress monitoring,” IEEE Internet of Things Journal , vol. 11, no. 3, pp. 4335–4347, 2023. [5] N. Shazeer, A. Mirhoseini, K. Maziarz, A. Davis, Q. Le, G. Hinton, and J. Dean, “Outrageously large neural networks: The sparsely-gated mixture-of-experts layer,” arXiv preprint arXiv:1701.06538 , 2017. [6] W. Fedus, B. Zoph, and N. Shazeer, “Switch transformers: Scaling to trillion parameter models with simple and efficient sparsity,” Journal of Machine Learning Research , vol. 23, no. 120, pp. 1–39, 2022. [7] X. Wang, S. Hayou, and E. Nalisnick, “The myth of expert specializa-tion in moes: Why routing reflects geometry, not necessarily domain expertise,” arXiv preprint arXiv:2604.09780 , 2026. [8] M. S. R. Avinash, “Task-conditioned routing signatures in sparse mixture-of-experts transformers,” arXiv preprint arXiv:2603.11114 ,2026. [9] P. Kairouz and H. B. McMahan, “Advances and open problems in federated learning,” Foundations and trends in machine learning , vol. 14, no. 1-2, pp. 1–210, 2021. [10] T. Li, A. K. Sahu, M. Zaheer, M. Sanjabi, A. Talwalkar, and V. Smith, “Federated optimization in heterogeneous networks,” Proceedings of Machine learning and systems , vol. 2, pp. 429–450, 2020. [11] A. Z. Tan, H. Yu, L. Cui, and Q. Yang, “Towards personalized federated learning,” IEEE transactions on neural networks and learning systems ,vol. 34, no. 12, pp. 9587–9603, 2022. [12] H. Mei, D. Cai, A. Zhou, S. Wang, and M. Xu, “Fedmoe: Personalized federated learning via heterogeneous mixture of experts,” arXiv preprint arXiv:2408.11304 , 2024. [13] Z. Zhan, W. Zhao, Y. Li, W. Liu, X. Zhang, C. W. Tan, C. Wu, D. Guo, and X. Chen, “Fedmoe-da: Federated mixture of experts via domain aware fine-grained aggregation,” arXiv preprint arXiv:2411.02115 , 2024. [14] R. Ye, W. Wang, J. Chai, D. Li, Z. Li, Y. Xu, Y. Du, Y. Wang, and S. Chen, “Openfedllm: Training large language models on decentralized private data via federated learning,” in Proceedings of the 30th ACM SIGKDD conference on knowledge discovery and data mining , 2024, pp. 6137–6147. [15] A. Ghosh, J. Chung, D. Yin, and K. Ramchandran, “An efficient frame-work for clustered federated learning,” Advances in neural information processing systems , vol. 33, pp. 19 586–19 597, 2020. [16] M. Conover, M. Hayes, A. Mathur, J. Xie, J. Wan, S. Shah, A. Ghodsi, P. Wendell, M. Zaharia, and R. Xin. (2023) Free dolly: Introducing the world’s first truly open instruction-tuned llm. [Online]. Available: https://www.databricks.com/blog/2023/04/12/dolly-first-open-commercially-viable-instruction-tuned-llm [17] F. Sattler, K.-R. M¨ uller, and W. Samek, “Clustered federated learning: Model-agnostic distributed multitask optimization under privacy constraints,” IEEE Transactions on Neural Networks and Learning Systems , vol. 32, pp. 3710–3722, 2019. [Online]. Available: https://api.semanticscholar.org/CorpusID:203736521 [18] X. Zhou, Y. Li, and J. Zhao, “Fedsem: A resource allocation scheme for federated learning assisted semantic communication,” arXiv preprint arXiv:2503.06058 , 2025. [19] M. Duan, D. Liu, X. Ji, R. Liu, L. Liang, X. Chen, and Y. Tan, “Fedgroup: Efficient federated learning via decomposed similarity-based clustering,” in 2021 IEEE Intl Conf on parallel & distributed processing with applications, big data & cloud computing, sustain-able computing & communications, social computing & networking (ISPA/BDCloud/SocialCom/SustainCom) . IEEE, 2021, pp. 228–237. [20] D. Zeng, X. Hu, S. Liu, Y. Yu, Q. Wang, and Z. Xu, “Stocfl: A stochas-tically clustered federated learning framework for non-iid data with dynamic client participation,” Neural Networks , vol. 187, p. 107278, 2025. [21] B. Guo, Y. Mei, D. Xiao, W. Wu, Y. Yin, and H. Chang, “Pfl-moe: Personalized federated learning based on mixture of experts,” arXiv preprint arXiv:2012.15589 , 2020. [22] L. Yi, H. Yu, C. Ren, H. Zhang, G. Wang, X. Liu, and X. Li, “pfedmoe: Data-level personalization with mixture of experts for model-heterogeneous personalized federated learning,” ArXiv , vol. abs/2402.01350, 2024. [Online]. Available: https://api.semanticscholar.org/CorpusID:267548169 [23] J. Jiang, Y. Chen, X. Liu, H. Jiang, and C. Fan, “Heterogeneous federated learning with scalable server mixture-of-experts,” in Proceedings of the Thirty-Fourth International Joint Conference on Artificial Intelligence ,2025, pp. 5480–5488. [24] F. Liu, B. Pan, Z. Wang, X. Yao, X. Tang, J. Wang, and Y. Shi, “Flex: Personalized federated learning for mixture-of-experts llms via expert grafting,” arXiv preprint arXiv:2506.00965 , 2025. [25] C. A. K¨ ohler, D. Ulianych, S. Gr¨ un, S. Decker, and M. Denker, “Fa-cilitating the sharing of electrophysiology data analysis results through in-depth provenance capture,” 2023. [26] E. J. Hu, Y. Shen, P. Wallis, Z. Allen-Zhu, Y. Li, S. Wang, L. Wang, W. Chen et al. , “Lora: Low-rank adaptation of large language models.” 
+
+Iclr , vol. 1, no. 2, p. 3, 2022.
