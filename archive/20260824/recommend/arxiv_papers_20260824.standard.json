@@ -1,0 +1,55 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-08-24T20:42:35.937719+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 0,
+    "deep_cap": 7,
+    "deep_selected": 0,
+    "quick_candidates": 1,
+    "quick_skim_target": 12,
+    "quick_selected": 1
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2608.18634v1",
+      "source": "arxiv",
+      "title": "Coordination on a Budget: Federated Active Learning with Few Labels",
+      "abstract": "Federated Active Learning (FAL) addresses the dual challenges of data privacy and label scarcity, where the absence of a global data view introduces additional hurdles for coordinated query selection. We study cross-silo FAL in the low-budget regime, where annotation decisions are most critical. We characterize, both theoretically and empirically, a heterogeneity reversal: in low-budget settings, homogeneous (IID) data requires stronger coordination to avoid redundant queries, whereas heterogeneous data naturally promotes diversity; this trend reverses at higher budgets. Thus, in contrast to the standard federated learning (FL) narrative where heterogeneity is a primary challenge, we show that IID settings are more challenging for query selection in FAL.   Motivated by these findings, we propose a new FAL framework that utilizes federated representation learning to align client data in a shared embedding space. This enables the server to perform globally coordinated active selection over optionally obfuscated client embeddings, while annotation remains local to each client. Although our framework operates in the more challenging low-budget regime, it achieves performance that surpasses existing FAL methods even when they are given substantially larger annotation budgets, demonstrating the value of centralized coordination under privacy constraints.",
+      "authors": [
+        "Liam Mohr",
+        "Daphna Weinshall"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-08-19T07:31:46+00:00",
+      "link": "https://arxiv.org/pdf/2608.18634v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Federated active learning query selection, transferable to active clustering query strategies",
+      "llm_evidence_cn": "联邦主动学习的查询选择策略，可迁移至主动聚类查询策略",
+      "llm_evidence": "联邦主动学习的查询选择策略，可迁移至主动聚类查询策略",
+      "canonical_evidence": "联邦主动学习的查询选择策略，可迁移至主动聚类查询策略",
+      "llm_tldr_en": "Federated active learning query selection under low budgets, revealing a heterogeneity reversal where IID data needs stronger coordination. Insights are transferable to designing query strategies for active clustering.",
+      "llm_tldr_cn": "论文研究低标注预算下联邦主动学习中的协同查询选择问题，发现异构性反转现象：低预算时同分布数据需要更强的协作以避免冗余查询，而异构数据天然更具多样性。这一发现为主动学习的查询策略提供了新的设计准则，可迁移到主动聚类场景中，帮助在有限标注预算下更高效地选择需要查询的样本或约束，从而提升聚类性能。",
+      "llm_tldr": "论文研究低标注预算下联邦主动学习中的协同查询选择问题，发现异构性反转现象：低预算时同分布数据需要更强的协作以避免冗余查询，而异构数据天然更具多样性。这一发现为主动学习的查询策略提供了新的设计准则，可迁移到主动聚类场景中，帮助在有限标注预算下更高效地选择需要查询的样本或约束，从而提升聚类性能。",
+      "llm_tags": [
+        "query:active-clust"
+      ],
+      "matched_query_tag": "query:active-clust",
+      "matched_query_text": "query strategy for active clustering",
+      "matched_requirement_id": "req-11",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

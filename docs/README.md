@@ -6,28 +6,24 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-08-23
-- 运行时间：2026-08-23 20:34:41 UTC
+- 最新运行日期：2026-08-24
+- 运行时间：2026-08-24 20:43:38 UTC
 - 运行状态：成功
 - 本次总论文数：1
-- 精读区：1
-- 速读区：0
+- 精读区：0
+- 速读区：1
 
 ### 今日简报（AI）
-今日精读1篇，聚焦联邦指令微调中的异构性问题。
-
-亮点是一篇8.0分论文：用MoE路由器引导聚类，缓解客户端数据异质。
-
-关注联邦学习+多专家模型融合的读者，建议重点看该方案。
-- 详情：[/202608/23/README](/202608/23/README)
+今日仅速读1篇论文，主题聚焦低标签预算下的联邦主动学习。值得关注：如何在标注极少时高效协调数据，方法获6.0分参考价值。若想快速入门，可优先浏览该文的标签分配与聚合策略。
+- 详情：[/202608/24/README](/202608/24/README)
 
 ### 精读区论文标签
-1. [MoE Router-Guided Clustering for Heterogeneous Federated Instruction Tuning](/202608/23/2608.15311v1-moe-router-guided-clustering-for-heterogeneous-federated-instruction-tuning)  
-   标签：评分：8.0/10、query:ac
-   evidence：利用MoE路由行为对客户聚类，服务联邦LLM微调
+- 本次无精读推荐。
 
 ### 速读区论文标签
-- 本次无速读推荐。
+1. [Coordination on a Budget: Federated Active Learning with Few Labels](/202608/24/2608.18634v1-coordination-on-a-budget-federated-active-learning-with-few-labels)  
+   标签：评分：6.0/10、query:active-clust
+   evidence：联邦主动学习的查询选择策略，可迁移至主动聚类查询策略
 
 
 <div class="dpr-home-promo-card">
