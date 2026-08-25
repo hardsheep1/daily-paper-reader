@@ -1,0 +1,54 @@
+{
+  "label": "2026-08-25",
+  "date": "2026-08-25",
+  "generated_at": "2026-08-25T21:01:39",
+  "count": 3,
+  "papers": [
+    {
+      "paper_id": "202608/25/2608.22785v1-omicsync-reliability-aware-spatial-multi-omics-clustering-with-evidence-constrained-llm-reasoning",
+      "section": "deep",
+      "title_en": "OmicSync: Reliability-Aware Spatial Multi-Omics Clustering with Evidence-Constrained LLM Reasoning",
+      "authors": "Rabeya Tus Sadia, Qiang Ye, Qiang Cheng",
+      "date": "2026-08-24",
+      "pdf": "https://arxiv.org/pdf/2608.22785v1",
+      "score": "9.0",
+      "evidence": "空间多组学聚类结合了大语言模型推理与聚类决策",
+      "tldr": "空间多组学技术可在每个组织斑点同时检测基因表达、表面蛋白和组织学信息，但现有空间域发现方法仅提供聚类结果，缺乏可靠性、模态贡献及决策依据。为此提出OmicSync框架，将无监督域聚类与证据约束的大语言模型推理结合，利用模型生成的置信度、路由不确定性和模态权重等信号构建证据字典，生成多种解释。同时引入OmicSync-R，以推理质量分数作为强化学习奖励，闭环优化聚类结构。在四个10x CytAssist基准上取得最佳平均排名，并显著提升乳腺癌聚类性能。",
+      "tags": "query:ac",
+      "abstract_en": "Spatial multi-omics technologies jointly profile gene expression, surface proteins, and histology at each tissue spot, yet most spatial domain discovery methods provide only cluster assignments, without indicating assignment reliability, modality contributions, or why a domain decision should be trusted. We present OmicSync, a reliability-aware spatial multi-omics framework that couples unsupervised domain clustering with evidence-constrained LLM reasoning using model-derived per-spot signals, including assignment confidence, epistemic routing uncertainty, and modality-routing weights. These signals are converted into structured evidence dictionaries and used to generate standard, stepwise, counterfactual, contrastive, and uncertainty-focused explanations. OmicSync integrates a KAN-GCN backbone with spatial encoding, cross-modal fusion, uncertainty-aware routing, cell-type supervision, and missing-modality imputation. We further introduce OmicSync-R, which closes the reasoning-clustering loop by using automatically computed reasoning-quality scores as REINFORCE rewards, allowing reasoning coherence to shape the latent structure without backpropagating through the language model. Across four 10x CytAssist FFPE spatial proteomics benchmarks, OmicSync achieves the best average rank on Human Tonsil (1.44), Glioblastoma (1.78), and Tonsil Add-on (1.22), and second-best on Human Breast Cancer (2.33). OmicSync-R further improves ARI on Human Breast Cancer from 45.73 to 46.72 and outperforms existing methods on six of nine clustering metrics. Together, OmicSync and OmicSync-R enable reliability-aware, spot-level auditable spatial domain discovery guided by evidence-constrained reasoning.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202608/25/2608.23461v1-diversity-based-active-learning-an-evaluation-of-metric-spaces-for-active-learning-selection",
+      "section": "quick",
+      "title_en": "Diversity-Based Active Learning: An Evaluation of Metric Spaces for Active Learning Selection",
+      "authors": "Siddharth Chilamkur, Dorit S. Hochbaum",
+      "date": "2026-08-24",
+      "pdf": "https://arxiv.org/pdf/2608.23461v1",
+      "score": "7.0",
+      "evidence": "基于多样性的主动学习与贪心K中心选择，与主动聚类的查询策略相关",
+      "tldr": "基于池的主动学习通过只查询最有信息量的样本降低标注成本，多样性方法选择代表性子集。本文系统评估贪心K-center算法在原始特征空间、LDA空间以及模型概率空间（有无熵加权）中的主动学习性能，以随机森林为基线。合成与真实数据实验表明，将未标注样本映射到预测概率空间并施加熵加权，往往优于其他度量空间选择。研究为基于多样性的主动学习提供了实践指导。",
+      "tags": "query:active-clust",
+      "abstract_en": "With rapid advancement over the last few years, many different methods are now widely used for classification. However, training these models requires substantial labeled data. Active Learning is a potential solution to this problem. Pool-based active learning minimizes costs by querying only the most informative samples from an unlabeled dataset. Diversity-based approaches, on the other hand, attempt to select a representative subset of the data. There are many different objectives for determining the selection process, including exact K-center, exact K-median, and Greedy K-center. In this paper, we will focus on evaluating the performance of Greedy K-center across a variety of metric spaces: the raw feature space, a Linear Discriminant Analysis (LDA) space, and a model-derived probability space (with and without entropy-based weighting). Using Random Forest classifiers as a baseline evaluator, our empirical results on synthetic and real-world datasets demonstrate that mapping unlabeled instances into a predictive probability space and weighting the result by entropy often dominates the other options for active learning selection with Greedy K-center.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202608/25/2608.16270v1-efficient-coreset-selection-via-k-nearest-neighbor-graphs",
+      "section": "quick",
+      "title_en": "Efficient Coreset Selection via K-Nearest Neighbor Graphs",
+      "authors": "Yingfan Liu, Leiyu Zhang, Jiadong Xie, Mingzhe Wang, Jeffrey Xu Yu, Jiangtao Cui",
+      "date": "2026-08-17",
+      "pdf": "https://arxiv.org/pdf/2608.16270v1",
+      "score": "6.0",
+      "evidence": "基于K近邻图的代表性子集选择可作为主动聚类中的查询策略",
+      "tldr": "核心集选择旨在用小代表子集替代大训练集合以降低训练成本，但现有梯度近似方法（如CRAIG）需维护密集距离或大边界矩阵，选择阶段开销高。本文提出KNNG-CS，基于K近邻图利用局部邻域结构估计数据重要性，并贪心选择代表节点，无需二次距离矩阵，存储仅随边数线性增长。在四个真实数据集上，KNNG-CS在保持与基线相当精度的同时，选择时间减少2.3-41.2倍，峰值内存降至基线0.3%-7.5%。该方法为大规模数据集上的高效核心集选择提供了轻量级解决方案。",
+      "tags": "query:active-clust",
+      "abstract_en": "Coreset selection reduces the cost of model training by replacing a large training set with a small representative subset. Existing gradient-approximation coreset methods such as CRAIG and cluster-based variants can preserve model accuracy. Still, their selection stages often rely on dense pairwise distances or large item-cluster bound matrices, leading to high time and memory costs on large datasets. This paper proposes KNNG-CS, a lightweight coreset selection method based on a $K$-nearest neighbor graph. KNNG-CS exploits local neighborhood structures to estimate the importance of each data item and greedily selects representative nodes without maintaining a quadratic distance matrix. The method requires only linear storage in the number of edges. Experiments on four real-world datasets show that KNNG-CS achieves accuracy comparable to representative gradient-approximation coreset methods, while reducing selection time by $2.3\\times$-$41.2\\times$ and peak memory to $0.3\\%$-$7.5\\%$ of the baselines.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

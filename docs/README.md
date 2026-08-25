@@ -6,24 +6,29 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-08-24
-- 运行时间：2026-08-24 20:43:38 UTC
+- 最新运行日期：2026-08-25
+- 运行时间：2026-08-25 21:01:33 UTC
 - 运行状态：成功
-- 本次总论文数：1
-- 精读区：0
-- 速读区：1
+- 本次总论文数：3
+- 精读区：1
+- 速读区：2
 
 ### 今日简报（AI）
-今日仅速读1篇论文，主题聚焦低标签预算下的联邦主动学习。值得关注：如何在标注极少时高效协调数据，方法获6.0分参考价值。若想快速入门，可优先浏览该文的标签分配与聚合策略。
-- 详情：[/202608/24/README](/202608/24/README)
+今日精读1篇、速读2篇，聚焦空间多组学聚类与数据选择效率。最值得关注的是《OmicSync》（9.0分），其将证据约束的LLM推理用于空间多组学聚类，可靠性感知显著。若对数据优化感兴趣，可速览主动学习与核集选择两篇，但分数略低，建议优先精读高分论文。
+- 详情：[/202608/25/README](/202608/25/README)
 
 ### 精读区论文标签
-- 本次无精读推荐。
+1. [OmicSync: Reliability-Aware Spatial Multi-Omics Clustering with Evidence-Constrained LLM Reasoning](/202608/25/2608.22785v1-omicsync-reliability-aware-spatial-multi-omics-clustering-with-evidence-constrained-llm-reasoning)  
+   标签：评分：9.0/10、query:ac
+   evidence：空间多组学聚类结合了大语言模型推理与聚类决策
 
 ### 速读区论文标签
-1. [Coordination on a Budget: Federated Active Learning with Few Labels](/202608/24/2608.18634v1-coordination-on-a-budget-federated-active-learning-with-few-labels)  
+1. [Diversity-Based Active Learning: An Evaluation of Metric Spaces for Active Learning Selection](/202608/25/2608.23461v1-diversity-based-active-learning-an-evaluation-of-metric-spaces-for-active-learning-selection)  
+   标签：评分：7.0/10、query:active-clust
+   evidence：基于多样性的主动学习与贪心K中心选择，与主动聚类的查询策略相关
+2. [Efficient Coreset Selection via K-Nearest Neighbor Graphs](/202608/25/2608.16270v1-efficient-coreset-selection-via-k-nearest-neighbor-graphs)  
    标签：评分：6.0/10、query:active-clust
-   evidence：联邦主动学习的查询选择策略，可迁移至主动聚类查询策略
+   evidence：基于K近邻图的代表性子集选择可作为主动聚类中的查询策略
 
 
 <div class="dpr-home-promo-card">
