@@ -6,29 +6,22 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-08-25
-- 运行时间：2026-08-25 21:01:33 UTC
+- 最新运行日期：2026-08-26
+- 运行时间：2026-08-26 22:19:08 UTC
 - 运行状态：成功
-- 本次总论文数：3
-- 精读区：1
-- 速读区：2
+- 本次总论文数：0
+- 精读区：0
+- 速读区：0
 
 ### 今日简报（AI）
-今日精读1篇、速读2篇，聚焦空间多组学聚类与数据选择效率。最值得关注的是《OmicSync》（9.0分），其将证据约束的LLM推理用于空间多组学聚类，可靠性感知显著。若对数据优化感兴趣，可速览主动学习与核集选择两篇，但分数略低，建议优先精读高分论文。
-- 详情：[/202608/25/README](/202608/25/README)
+> 今日无新推荐，系统未产出可展示论文。
+- 详情：[/202608/26/README](/202608/26/README)
 
 ### 精读区论文标签
-1. [OmicSync: Reliability-Aware Spatial Multi-Omics Clustering with Evidence-Constrained LLM Reasoning](/202608/25/2608.22785v1-omicsync-reliability-aware-spatial-multi-omics-clustering-with-evidence-constrained-llm-reasoning)  
-   标签：评分：9.0/10、query:ac
-   evidence：空间多组学聚类结合了大语言模型推理与聚类决策
+- 本次无精读推荐。
 
 ### 速读区论文标签
-1. [Diversity-Based Active Learning: An Evaluation of Metric Spaces for Active Learning Selection](/202608/25/2608.23461v1-diversity-based-active-learning-an-evaluation-of-metric-spaces-for-active-learning-selection)  
-   标签：评分：7.0/10、query:active-clust
-   evidence：基于多样性的主动学习与贪心K中心选择，与主动聚类的查询策略相关
-2. [Efficient Coreset Selection via K-Nearest Neighbor Graphs](/202608/25/2608.16270v1-efficient-coreset-selection-via-k-nearest-neighbor-graphs)  
-   标签：评分：6.0/10、query:active-clust
-   evidence：基于K近邻图的代表性子集选择可作为主动聚类中的查询策略
+- 本次无速读推荐。
 
 
 <div class="dpr-home-promo-card">
