@@ -1,0 +1,39 @@
+{
+  "label": "2026-08-28",
+  "date": "2026-08-28",
+  "generated_at": "2026-08-28T04:11:30",
+  "count": 2,
+  "papers": [
+    {
+      "paper_id": "202608/28/2608.25177v1-audiolens-multi-perspective-speech-clustering-with-reasoning-audio-language-models",
+      "section": "deep",
+      "title_en": "AudioLens: Multi-Perspective Speech Clustering with Reasoning Audio-Language Models",
+      "authors": "Wenjun Huang, Qiaosong Chu, Tiger Shao, Pengfei Zhang, Yutong Song, Hanning Chen, Yezi Liu, Weiyi Wu, SungHeon Jeong, Ryozo Masukawa, Sanggeon Yun, Yang Ni, Jiang Gui, Mohsen Imani",
+      "date": "2026-08-25",
+      "pdf": "https://arxiv.org/pdf/2608.25177v1",
+      "score": "9.0",
+      "evidence": "直接面向基于大模型的聚类：利用推理音频语言模型，根据自然语言视角对语音进行聚类并自动推断簇数与分配。",
+      "tldr": "音频聚类面临固定相似度度量或ASR文本管线的限制，难以按用户指定视角重组语音集。本文提出多视角音频聚类任务，并构建基准AudioLens-Bench。提出的AudioLens-R1为端到端大音频语言模型，采用推理蒸馏和偏好优化，可直接根据自然语言视角推断簇数并分配。实验显示其全面超过基线，ARI和V-measure分别提升12.99和11.62点，展现了原生音频语言模型在灵活结构发现中的潜力。",
+      "tags": "query:ac",
+      "abstract_en": "Audio clustering is a fundamental task for organizing rapidly growing speech collections, supporting applications such as conversational analysis and speech-driven discovery. However, existing methods rely on fixed acoustic similarity metrics or ASR-based text pipelines, limiting their ability to reorganize the same audio collection under different user-specified perspectives, especially when clustering depends on both linguistic and paralinguistic cues. We introduce audio multi-perspective clustering, where a model directly partitions speech recordings according to a natural-language perspective while inferring both the number of clusters and their assignments. To study this setting, we construct AudioLens-Bench, a benchmark spanning multiple application domains and evaluating both in-perspective and cross-perspective generalization. We further propose AudioLens-R1, an end-to-end large audio-language model trained with reasoning distillation and preference optimization. Experiments show that AudioLens-R1 consistently outperforms all baselines, improving overall ARI by 12.99 points and V-measure by 11.62 points. These results demonstrate the promise of native audio-language models for flexible, perspective-conditioned structure discovery over speech collections.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202608/28/2608.26750v1-discovering-relationships-in-data-lakes-using-large-language-models-an-industrial-case",
+      "section": "deep",
+      "title_en": "Discovering Relationships in Data Lakes Using Large Language Models: An Industrial Case",
+      "authors": "Ahlame Diouan, Eric Ferey, Sabine Loudcher, Jérôme Darmont",
+      "date": "2026-08-27",
+      "pdf": "https://arxiv.org/pdf/2608.26750v1",
+      "score": "8.0",
+      "evidence": "利用大模型构建列嵌入并生成自然语言描述，在数据湖中发现语义相关的列关系，属于基于大模型的聚类式方法。",
+      "tldr": "数据湖中列关系发现常受限于元数据质量，ERP等工业数据的编码缩写使问题更难。本文提出ColRel两阶段方法，先从元数据和数据构建列嵌入，再用业务词典解释编码列名并生成自然语言描述辅助挖掘。在公共基准和工业ERP数据集上，该方法在语义相关弱信号场景表现突出，验证了利用LLM和业务词典提升数据湖关系发现的有效性。",
+      "tags": "query:ac",
+      "abstract_en": "Data lakes rely on metadata to remain usable, yet this meta data is often limited or weakly informative for column relationship discovery, especially in ERP-derived datasets with coded or abbreviated schema labels. We propose ColRel, a two-stage method that builds column embeddings from metadata and data available at ingestion time. In difficult cases, such as coded schemata, business dictionaries help better interpret column names and support the generation of short natural-language descriptions used in the second stage. Experiments on public benchmarks and an industrial ERP dataset show that ColRel is particularly effective in semantically related, weak-signal settings.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}

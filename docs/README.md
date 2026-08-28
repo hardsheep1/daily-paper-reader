@@ -6,19 +6,24 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-08-26
-- 运行时间：2026-08-26 22:19:08 UTC
+- 最新运行日期：2026-08-28
+- 运行时间：2026-08-28 04:11:26 UTC
 - 运行状态：成功
-- 本次总论文数：0
-- 精读区：0
+- 本次总论文数：2
+- 精读区：2
 - 速读区：0
 
 ### 今日简报（AI）
-> 今日无新推荐，系统未产出可展示论文。
-- 详情：[/202608/26/README](/202608/26/README)
+今日精读两篇高分论文，聚焦AI前沿：AudioLens用推理音频语言模型实现多视角语音聚类，工业案例则用大模型挖掘数据湖中的潜在关系。最值得关注的是语音场景的智能聚类方法，以及大模型在数据管理中的实战价值。下一步建议先浏览AudioLens，若关注工程落地再读数据湖案例。
+- 详情：[/202608/28/README](/202608/28/README)
 
 ### 精读区论文标签
-- 本次无精读推荐。
+1. [AudioLens: Multi-Perspective Speech Clustering with Reasoning Audio-Language Models](/202608/28/2608.25177v1-audiolens-multi-perspective-speech-clustering-with-reasoning-audio-language-models)  
+   标签：评分：9.0/10、query:ac
+   evidence：直接面向基于大模型的聚类：利用推理音频语言模型，根据自然语言视角对语音进行聚类并自动推断簇数与分配。
+2. [Discovering Relationships in Data Lakes Using Large Language Models: An Industrial Case](/202608/28/2608.26750v1-discovering-relationships-in-data-lakes-using-large-language-models-an-industrial-case)  
+   标签：评分：8.0/10、query:ac
+   evidence：利用大模型构建列嵌入并生成自然语言描述，在数据湖中发现语义相关的列关系，属于基于大模型的聚类式方法。
 
 ### 速读区论文标签
 - 本次无速读推荐。
