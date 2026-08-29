@@ -1,21 +1,21 @@
 {
   "label": "2026-08-29",
   "date": "2026-08-29",
-  "generated_at": "2026-08-29T02:32:26",
+  "generated_at": "2026-08-29T22:45:21",
   "count": 1,
   "papers": [
     {
-      "paper_id": "202608/29/2608.24721v1-enhancing-bayesian-optimization-and-active-learning-through-kernel-diversity",
-      "section": "quick",
-      "title_en": "Enhancing Bayesian Optimization and Active Learning Through Kernel Diversity",
-      "authors": "Heng Zhang, Haotian Xiang, Qin Lu, Konstantinos D. Polyzos, Tara Javidi",
-      "date": "2026-08-25",
-      "pdf": "https://arxiv.org/pdf/2608.24721v1",
-      "score": "7.0",
-      "evidence": "主动学习采集策略，直接相关于主动聚类的查询策略",
-      "tldr": "贝叶斯优化和主动学习面临超参数选择难题，模型误设会导致性能下降，而完整贝叶斯方法依赖昂贵的MCMC采样。本文提出KENDO框架，通过集成高斯过程和分歧感知采集策略，用核集成与自适应加权替代超参数采样，统一处理两类任务。实验中KENDO-BO在保持性能的同时降低最高5倍计算成本，KENDO-AL获得更好校准并提速27倍。该框架为高效鲁棒的超参数自适应提供了新途径。",
-      "tags": "query:active-clust",
-      "abstract_en": "Hyperparameter selection remains a key challenge in Bayesian optimization (BO) and Bayesian active learning (AL), as model misspecification can lead to suboptimal performance, while more accurate fully Bayesian treatments typically rely on computationally expensive MCMC sampling. This paper proposes a unified framework, KENDO (Kernel ENsemble Disagreement-aware Operator), that integrates Ensemble Gaussian Processes (EGP) with disagreement-aware acquisition strategies. The central idea is to replace hyperparameter sampling with a kernel ensemble and adaptive Bayesian weighting, combined with disagreement-aware acquisition strategies. Within this unified framework, we instantiate KENDO-BO for BO and KENDO-AL for Bayesian AL, demonstrating that both arise from a common self-correcting mechanism with task-specific acquisition objectives. We further extend the approach to multi-objective optimization via random scalarization that preserves the single-optimizer conditioning structure. Thorough numerical tests on synthetic and real-world benchmarks across single-objective optimization, multi-objective optimization, and active learning demonstrate that (i) KENDO-BO achieves competitive or superior optimization performance compared to state-of-the-art methods while reducing computational overhead by up to $5\\times$ and (ii) KENDO-AL achieves superior predictive calibration over MCMC-based active learning baselines with up to $27\\times$ speedup.",
+      "paper_id": "202608/29/2608.22785v2-omicsync-reliability-aware-spatial-multi-omics-clustering-with-evidence-constrained-llm-reasoning",
+      "section": "deep",
+      "title_en": "OmicSync: Reliability-Aware Spatial Multi-Omics Clustering with Evidence-Constrained LLM Reasoning",
+      "authors": "Rabeya Tus Sadia, Qiang Ye, Qiang Cheng",
+      "date": "2026-08-24",
+      "pdf": "https://arxiv.org/pdf/2608.22785v2",
+      "score": "9.0",
+      "evidence": "利用大语言模型进行聚类，通过证据约束推理增强聚类可靠性",
+      "tldr": "空间多组学聚类仅给出簇分配，缺乏可靠性度量和可解释性，限制了实际应用。为此，提出OmicSync框架，结合KAN-GCN骨干、空间编码和跨模态融合，从模型中提取置信度、认知不确定性和模态权重信号，并利用证据约束的大语言模型生成标准、反事实等多样化解释。进一步引入OmicSync-R，用推理质量分数作为强化学习奖励，闭环优化聚类结构。在四个基准数据集上取得最优或次优聚类性能，显著提升乳腺癌的调整兰德指数，实现了可靠性感知、可审计的空间域发现。",
+      "tags": "query:ac",
+      "abstract_en": "Spatial multi-omics technologies jointly profile gene expression, surface proteins, and histology at each tissue spot, yet most spatial domain discovery methods provide only cluster assignments, without indicating assignment reliability, modality contributions, or why a domain decision should be trusted. We present OmicSync, a reliability-aware spatial multi-omics framework that couples unsupervised domain clustering with evidence-constrained LLM reasoning using model-derived per-spot signals, including assignment confidence, epistemic routing uncertainty, and modality-routing weights. These signals are converted into structured evidence dictionaries and used to generate standard, stepwise, counterfactual, contrastive, and uncertainty-focused explanations. OmicSync integrates a KAN-GCN backbone with spatial encoding, cross-modal fusion, uncertainty-aware routing, cell-type supervision, and missing-modality imputation. We further introduce OmicSync-R, which closes the reasoning-clustering loop by using automatically computed reasoning-quality scores as REINFORCE rewards, allowing reasoning coherence to shape the latent structure without backpropagating through the language model. Across four 10x CytAssist FFPE spatial proteomics benchmarks, OmicSync achieves the best average rank on Human Tonsil (1.44), Glioblastoma (1.78), and Tonsil Add-on (1.22), and second-best on Human Breast Cancer (2.33). OmicSync-R further improves ARI on Human Breast Cancer from 45.73 to 46.72 and outperforms existing methods on six of nine clustering metrics. Together, OmicSync and OmicSync-R enable reliability-aware, spot-level auditable spatial domain discovery guided by evidence-constrained reasoning.",
       "source": "arxiv",
       "selection_source": "fresh_fetch"
     }
