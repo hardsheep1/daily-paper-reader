@@ -1,0 +1,59 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-08-29T02:31:06.221844+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 0,
+    "deep_cap": 7,
+    "deep_selected": 0,
+    "quick_candidates": 1,
+    "quick_skim_target": 12,
+    "quick_selected": 1
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2608.24721v1",
+      "source": "arxiv",
+      "title": "Enhancing Bayesian Optimization and Active Learning Through Kernel Diversity",
+      "abstract": "Hyperparameter selection remains a key challenge in Bayesian optimization (BO) and Bayesian active learning (AL), as model misspecification can lead to suboptimal performance, while more accurate fully Bayesian treatments typically rely on computationally expensive MCMC sampling. This paper proposes a unified framework, KENDO (Kernel ENsemble Disagreement-aware Operator), that integrates Ensemble Gaussian Processes (EGP) with disagreement-aware acquisition strategies. The central idea is to replace hyperparameter sampling with a kernel ensemble and adaptive Bayesian weighting, combined with disagreement-aware acquisition strategies. Within this unified framework, we instantiate KENDO-BO for BO and KENDO-AL for Bayesian AL, demonstrating that both arise from a common self-correcting mechanism with task-specific acquisition objectives. We further extend the approach to multi-objective optimization via random scalarization that preserves the single-optimizer conditioning structure. Thorough numerical tests on synthetic and real-world benchmarks across single-objective optimization, multi-objective optimization, and active learning demonstrate that (i) KENDO-BO achieves competitive or superior optimization performance compared to state-of-the-art methods while reducing computational overhead by up to $5\\times$ and (ii) KENDO-AL achieves superior predictive calibration over MCMC-based active learning baselines with up to $27\\times$ speedup.",
+      "authors": [
+        "Heng Zhang",
+        "Haotian Xiang",
+        "Qin Lu",
+        "Konstantinos D. Polyzos",
+        "Tara Javidi"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-08-25T15:35:47+00:00",
+      "link": "https://arxiv.org/pdf/2608.24721v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Active learning acquisition strategies, directly relevant to query strategy for active clustering",
+      "llm_evidence_cn": "主动学习采集策略，直接相关于主动聚类的查询策略",
+      "llm_evidence": "主动学习采集策略，直接相关于主动聚类的查询策略",
+      "canonical_evidence": "主动学习采集策略，直接相关于主动聚类的查询策略",
+      "llm_tldr_en": "KENDO replaces hyperparameter sampling with kernel ensembles and disagreement-aware acquisition, improving both Bayesian optimization and active learning under model misspecification.",
+      "llm_tldr_cn": "贝叶斯优化与主动学习常受模型误设困扰，而完全贝叶斯方法又依赖昂贵的MCMC。为此提出KENDO框架，利用核集成与自适应贝叶斯加权替代超参数采样，结合不一致感知采集策略，在BO和AL场景中均显著提升性能。实验证明核多样性能够缓解误设并提高采集质量，为主动学习的方法设计提供了通用新思路。",
+      "llm_tldr": "贝叶斯优化与主动学习常受模型误设困扰，而完全贝叶斯方法又依赖昂贵的MCMC。为此提出KENDO框架，利用核集成与自适应贝叶斯加权替代超参数采样，结合不一致感知采集策略，在BO和AL场景中均显著提升性能。实验证明核多样性能够缓解误设并提高采集质量，为主动学习的方法设计提供了通用新思路。",
+      "llm_tags": [
+        "query:active-clust"
+      ],
+      "matched_query_tag": "query:active-clust",
+      "matched_query_text": "query strategy for active clustering",
+      "matched_requirement_id": "req-11",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}

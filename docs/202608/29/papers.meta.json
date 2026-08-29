@@ -1,0 +1,24 @@
+{
+  "label": "2026-08-29",
+  "date": "2026-08-29",
+  "generated_at": "2026-08-29T02:32:26",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "202608/29/2608.24721v1-enhancing-bayesian-optimization-and-active-learning-through-kernel-diversity",
+      "section": "quick",
+      "title_en": "Enhancing Bayesian Optimization and Active Learning Through Kernel Diversity",
+      "authors": "Heng Zhang, Haotian Xiang, Qin Lu, Konstantinos D. Polyzos, Tara Javidi",
+      "date": "2026-08-25",
+      "pdf": "https://arxiv.org/pdf/2608.24721v1",
+      "score": "7.0",
+      "evidence": "主动学习采集策略，直接相关于主动聚类的查询策略",
+      "tldr": "贝叶斯优化和主动学习面临超参数选择难题，模型误设会导致性能下降，而完整贝叶斯方法依赖昂贵的MCMC采样。本文提出KENDO框架，通过集成高斯过程和分歧感知采集策略，用核集成与自适应加权替代超参数采样，统一处理两类任务。实验中KENDO-BO在保持性能的同时降低最高5倍计算成本，KENDO-AL获得更好校准并提速27倍。该框架为高效鲁棒的超参数自适应提供了新途径。",
+      "tags": "query:active-clust",
+      "abstract_en": "Hyperparameter selection remains a key challenge in Bayesian optimization (BO) and Bayesian active learning (AL), as model misspecification can lead to suboptimal performance, while more accurate fully Bayesian treatments typically rely on computationally expensive MCMC sampling. This paper proposes a unified framework, KENDO (Kernel ENsemble Disagreement-aware Operator), that integrates Ensemble Gaussian Processes (EGP) with disagreement-aware acquisition strategies. The central idea is to replace hyperparameter sampling with a kernel ensemble and adaptive Bayesian weighting, combined with disagreement-aware acquisition strategies. Within this unified framework, we instantiate KENDO-BO for BO and KENDO-AL for Bayesian AL, demonstrating that both arise from a common self-correcting mechanism with task-specific acquisition objectives. We further extend the approach to multi-objective optimization via random scalarization that preserves the single-optimizer conditioning structure. Thorough numerical tests on synthetic and real-world benchmarks across single-objective optimization, multi-objective optimization, and active learning demonstrate that (i) KENDO-BO achieves competitive or superior optimization performance compared to state-of-the-art methods while reducing computational overhead by up to $5\\times$ and (ii) KENDO-AL achieves superior predictive calibration over MCMC-based active learning baselines with up to $27\\times$ speedup.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}
