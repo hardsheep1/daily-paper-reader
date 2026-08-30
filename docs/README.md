@@ -6,24 +6,28 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-08-29
-- 运行时间：2026-08-29 22:45:17 UTC
+- 最新运行日期：2026-08-30
+- 运行时间：2026-08-30 22:49:43 UTC
 - 运行状态：成功
 - 本次总论文数：1
-- 精读区：1
-- 速读区：0
+- 精读区：0
+- 速读区：1
 
 ### 今日简报（AI）
-今日精读1篇高分论文，聚焦空间多组学聚类新方法。最值得关注的是《OmicSync》引入可靠性感知与LLM推理，兼顾精度与可解释性。建议关注多组学数据整合中不确定性建模的后续应用。
-- 详情：[/202608/29/README](/202608/29/README)
+今日仅速读1篇论文，聚焦贝叶斯优化与主动学习中的核多样性增强方法，整体关注度中等。
+
+最值得关注的方向是：通过提升核多样性来改善优化效率与采样质量，适合对自动调参和高效采样感兴趣的读者。
+
+下一步可速读该文的实验对比部分，或顺藤摸瓜查找其引用的核心方法，以便快速掌握可复用的改进思路。
+- 详情：[/202608/30/README](/202608/30/README)
 
 ### 精读区论文标签
-1. [OmicSync: Reliability-Aware Spatial Multi-Omics Clustering with Evidence-Constrained LLM Reasoning](/202608/29/2608.22785v2-omicsync-reliability-aware-spatial-multi-omics-clustering-with-evidence-constrained-llm-reasoning)  
-   标签：评分：9.0/10、query:ac
-   evidence：利用大语言模型进行聚类，通过证据约束推理增强聚类可靠性
+- 本次无精读推荐。
 
 ### 速读区论文标签
-- 本次无速读推荐。
+1. [Enhancing Bayesian Optimization and Active Learning Through Kernel Diversity](/202608/30/2608.24721v1-enhancing-bayesian-optimization-and-active-learning-through-kernel-diversity)  
+   标签：评分：6.0/10、query:active-clust
+   evidence：基于核集成的贝叶斯主动学习方法可迁移至主动聚类查询策略设计。
 
 
 <div class="dpr-home-promo-card">

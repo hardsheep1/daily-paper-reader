@@ -1,0 +1,59 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-08-30T22:49:04.730700+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 0,
+    "deep_cap": 7,
+    "deep_selected": 0,
+    "quick_candidates": 1,
+    "quick_skim_target": 12,
+    "quick_selected": 1
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2608.24721v1",
+      "source": "arxiv",
+      "title": "Enhancing Bayesian Optimization and Active Learning Through Kernel Diversity",
+      "abstract": "Hyperparameter selection remains a key challenge in Bayesian optimization (BO) and Bayesian active learning (AL), as model misspecification can lead to suboptimal performance, while more accurate fully Bayesian treatments typically rely on computationally expensive MCMC sampling. This paper proposes a unified framework, KENDO (Kernel ENsemble Disagreement-aware Operator), that integrates Ensemble Gaussian Processes (EGP) with disagreement-aware acquisition strategies. The central idea is to replace hyperparameter sampling with a kernel ensemble and adaptive Bayesian weighting, combined with disagreement-aware acquisition strategies. Within this unified framework, we instantiate KENDO-BO for BO and KENDO-AL for Bayesian AL, demonstrating that both arise from a common self-correcting mechanism with task-specific acquisition objectives. We further extend the approach to multi-objective optimization via random scalarization that preserves the single-optimizer conditioning structure. Thorough numerical tests on synthetic and real-world benchmarks across single-objective optimization, multi-objective optimization, and active learning demonstrate that (i) KENDO-BO achieves competitive or superior optimization performance compared to state-of-the-art methods while reducing computational overhead by up to $5\\times$ and (ii) KENDO-AL achieves superior predictive calibration over MCMC-based active learning baselines with up to $27\\times$ speedup.",
+      "authors": [
+        "Heng Zhang",
+        "Haotian Xiang",
+        "Qin Lu",
+        "Konstantinos D. Polyzos",
+        "Tara Javidi"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-08-25T15:35:47+00:00",
+      "link": "https://arxiv.org/pdf/2608.24721v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Bayesian active learning with kernel ensemble and disagreement-aware acquisition, transferable to robust query design for active clustering.",
+      "llm_evidence_cn": "基于核集成的贝叶斯主动学习方法可迁移至主动聚类查询策略设计。",
+      "llm_evidence": "基于核集成的贝叶斯主动学习方法可迁移至主动聚类查询策略设计。",
+      "canonical_evidence": "基于核集成的贝叶斯主动学习方法可迁移至主动聚类查询策略设计。",
+      "llm_tldr_en": "Proposes KENDO, a unified framework for Bayesian optimization and active learning using Gaussian process ensembles with disagreement-aware acquisition, improving robustness and performance, with transferable implications for active clustering query strategies.",
+      "llm_tldr_cn": "该文针对贝叶斯优化与贝叶斯主动学习中模型误设导致性能不佳的问题，提出KENDO统一框架。方法以高斯过程集成替代超参数采样，结合自适应贝叶斯加权与不一致性感知的采集策略。在贝叶斯优化与主动学习任务上，KENDO均取得了更优的效果。其核集成与不确定性量化的思想可推广至主动聚类中的查询策略设计，提升鲁棒性。",
+      "llm_tldr": "该文针对贝叶斯优化与贝叶斯主动学习中模型误设导致性能不佳的问题，提出KENDO统一框架。方法以高斯过程集成替代超参数采样，结合自适应贝叶斯加权与不一致性感知的采集策略。在贝叶斯优化与主动学习任务上，KENDO均取得了更优的效果。其核集成与不确定性量化的思想可推广至主动聚类中的查询策略设计，提升鲁棒性。",
+      "llm_tags": [
+        "query:active-clust"
+      ],
+      "matched_query_tag": "query:active-clust",
+      "matched_query_text": "active learning clustering methods",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}
