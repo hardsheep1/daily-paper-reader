@@ -1,0 +1,98 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-09-01T00:33:57.374534+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 0,
+    "deep_cap": 7,
+    "deep_selected": 0,
+    "quick_candidates": 2,
+    "quick_skim_target": 12,
+    "quick_selected": 2
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2608.27153v1",
+      "source": "arxiv",
+      "title": "Inductive Correlation Clustering with Graph Neural Networks",
+      "abstract": "Correlation Clustering (CC) is a natural formulation of clustering in combinatorial optimization, which uses a graph representation of the input and does not require a pre-specified number of clusters. Given $n$ objects and a pairwise similarity function, the goal is to cluster the objects so that similar objects are put in the same cluster and dissimilar objects are put in different clusters. Despite its versatility, existing CC algorithms suffer from significant scalability issues and are inherently transductive: i.e., the algorithm must be executed from scratch for any new problem instance.   In this work, we bridge this gap by leveraging Graph Neural Networks (GNNs) to solve Inductive Correlation Clustering, a novel generalization of the CC problem designed to handle unseen graph instances. By learning to exploit common structural patterns and node features during training, our framework generalizes to new graphs drawn from the same distribution with minimal computational overhead with respect to standard algorithms. We demonstrate the effectiveness and scalability of our approach through extensive experiments. Our framework not only excels in the inductive setting, e.g., lowering the inference time up to $5$ order of magnitude, while maintaining an approximation ratio within $~10\\%$ of the best baseline solution, but also achieves competitive results on standard (transductive) CC benchmarks. Finally, we showcase a practical application of our framework as a learnable pooling mechanism for graph classification. Our results indicate that our method serves as an efficient pooling layer, enhancing the ability of GNNs to capture hierarchical structural information in networks.",
+      "authors": [
+        "Francesco Paolo Nerini",
+        "Francesco Bonchi",
+        "Arijit Khan",
+        "André Panisson"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.DS"
+      ],
+      "published": "2026-08-27T14:05:48+00:00",
+      "link": "https://arxiv.org/pdf/2608.27153v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Inductive correlation clustering with GNNs, a modern deep clustering method used in pairwise-similarity settings common to active clustering",
+      "llm_evidence_cn": "基于图神经网络的归纳相关聚类，是主动聚类常用成对相似度设置下的一种现代深度聚类方法",
+      "llm_evidence": "基于图神经网络的归纳相关聚类，是主动聚类常用成对相似度设置下的一种现代深度聚类方法",
+      "canonical_evidence": "基于图神经网络的归纳相关聚类，是主动聚类常用成对相似度设置下的一种现代深度聚类方法",
+      "llm_tldr_en": "Presents Inductive Correlation Clustering via GNNs, learning clustering from pairwise similarities to generalize to unseen instances and scale to large graphs, offering a reusable modern clustering base for active learning.",
+      "llm_tldr_cn": "相关聚类是一种无需预设类别数的组合优化聚类范式，在主动学习聚类中常用于成对相似度查询场景。现有相关聚类算法扩展性差且本质上是直推式的，遇到新实例必须从头运行。本文提出归纳相关聚类，利用图神经网络从成对相似度图中学习聚类策略，从而对新实例直接给出聚类结果，避免重复计算。实验结果显示该方法可扩展到大规模图并具有良好的泛化能力。该工作为主动学习聚类提供了一个可迁移的现代聚类基座，展示了从经典聚类到深度聚类的发展路径。",
+      "llm_tldr": "相关聚类是一种无需预设类别数的组合优化聚类范式，在主动学习聚类中常用于成对相似度查询场景。现有相关聚类算法扩展性差且本质上是直推式的，遇到新实例必须从头运行。本文提出归纳相关聚类，利用图神经网络从成对相似度图中学习聚类策略，从而对新实例直接给出聚类结果，避免重复计算。实验结果显示该方法可扩展到大规模图并具有良好的泛化能力。该工作为主动学习聚类提供了一个可迁移的现代聚类基座，展示了从经典聚类到深度聚类的发展路径。",
+      "llm_tags": [
+        "query:active-clust:composite"
+      ],
+      "matched_query_tag": "query:active-clust:composite",
+      "matched_query_text": "Papers central to 帮助我研究一下传统的最新的主动学习聚类是怎么发展的，我想从中找一下能加入大模型优化的创新点, especially work that connects or combines: active learning clustering methods; traditional active learning algorithms for clustering; deep active learning for clustering; semi-supervised clustering with active learning; query strategy for active clustering; evolution of active learning clustering methods from traditional to modern; recent advances in active clustering with large language models.",
+      "matched_requirement_id": "req-composite-active-clust",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2608.25692v1",
+      "source": "arxiv",
+      "title": "CloSeR: Unified Relational Distillation from Closed-Set Teachers for Category Discovery",
+      "abstract": "Generalized Category Discovery (GCD) is an intriguing open-world problem that has garnered increasing attention: given partially labelled data, the goal is to correctly recognize known classes while discovering coherent novel categories from unlabelled samples. Recent GCD methods typically adapt foundation models by jointly optimizing supervised classification and unsupervised discovery objectives on mixed labelled and unlabelled data. While effective, this coupled training can entangle closed-set recognition and open-set discovery, leading to objective conflict and biased predictions, and may disturb the semantic geometry of pretrained representations under limited labels and noisy pseudo-labels. We propose CloSeR, a simple plug-and-play framework that injects Closed-Set Relational knowledge into GCD training. CloSeR first builds a domain-adapted closed-set teacher by tuning lightweight block-wise adapters on labelled known-class data while keeping the foundation model backbone frozen, thereby preserving pretrained priors at low training cost. It then transfers the teacher's knowledge to downstream GCD via Unified Relational Distillation (URD), which distills complementary global sample-to-prototype relations to anchor known-class semantics and local sample-to-sample relations to preserve neighborhood structure, using separate feature pathways to reduce optimization interference. CloSeR is head-agnostic and readily integrates with both parametric and non-parametric GCD methods. Extensive experiments with DINO and DINOv2 backbones on six benchmarks (CIFAR-10/100, ImageNet-100, CUB, Stanford-Cars, and FGVC-Aircraft) show consistent gains over GCD baselines, achieving state-of-the-art performance. Project page: https://visual-ai.github.io/closer/",
+      "authors": [
+        "Yuanpei Liu",
+        "Zhenqi He",
+        "Jialu Tang",
+        "Kai Han"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-08-26T12:10:54+00:00",
+      "link": "https://arxiv.org/pdf/2608.25692v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Modern generalized category discovery method with partially labelled data; relevant to evolution of semi-supervised clustering and active clustering.",
+      "llm_evidence_cn": "现代的广义类别发现方法，利用部分标签数据；与半监督聚类和主动聚类的发展相关。",
+      "llm_evidence": "现代的广义类别发现方法，利用部分标签数据；与半监督聚类和主动聚类的发展相关。",
+      "canonical_evidence": "现代的广义类别发现方法，利用部分标签数据；与半监督聚类和主动聚类的发展相关。",
+      "llm_tldr_en": "Proposes CloSeR, a relational distillation framework from closed-set teachers for generalized category discovery, decoupling closed-set recognition from open-set discovery to reduce objective conflicts and improve novel category clustering.",
+      "llm_tldr_cn": "广义类别发现要求在部分标注数据上识别已知类并发现新类。CloSeR提出从闭集教师模型进行统一关系蒸馏，将闭集识别与开放集发现解耦，缓解目标冲突和伪标签噪声。实验表明该方法在多个数据集上提升了新类聚类性能，同时保持了已知类准确率。该工作反映了现代聚类方法在有限标签条件下利用预训练基础模型的发展趋势，为主动聚类研究提供了可借鉴的框架。",
+      "llm_tldr": "广义类别发现要求在部分标注数据上识别已知类并发现新类。CloSeR提出从闭集教师模型进行统一关系蒸馏，将闭集识别与开放集发现解耦，缓解目标冲突和伪标签噪声。实验表明该方法在多个数据集上提升了新类聚类性能，同时保持了已知类准确率。该工作反映了现代聚类方法在有限标签条件下利用预训练基础模型的发展趋势，为主动聚类研究提供了可借鉴的框架。",
+      "llm_tags": [
+        "query:active-clust:composite"
+      ],
+      "matched_query_tag": "query:active-clust:composite",
+      "matched_query_text": "Papers central to 帮助我研究一下传统的最新的主动学习聚类是怎么发展的，我想从中找一下能加入大模型优化的创新点, especially work that connects or combines: active learning clustering methods; traditional active learning algorithms for clustering; deep active learning for clustering; semi-supervised clustering with active learning; query strategy for active clustering; evolution of active learning clustering methods from traditional to modern; recent advances in active clustering with large language models.",
+      "matched_requirement_id": "req-composite-active-clust",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

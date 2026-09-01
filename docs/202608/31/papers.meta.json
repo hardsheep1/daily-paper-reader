@@ -1,0 +1,39 @@
+{
+  "label": "2026-08-31",
+  "date": "2026-08-31",
+  "generated_at": "2026-09-01T00:35:14",
+  "count": 2,
+  "papers": [
+    {
+      "paper_id": "202608/31/2608.27153v1-inductive-correlation-clustering-with-graph-neural-networks",
+      "section": "quick",
+      "title_en": "Inductive Correlation Clustering with Graph Neural Networks",
+      "authors": "Francesco Paolo Nerini, Francesco Bonchi, Arijit Khan, André Panisson",
+      "date": "2026-08-27",
+      "pdf": "https://arxiv.org/pdf/2608.27153v1",
+      "score": "7.0",
+      "evidence": "基于图神经网络的归纳相关聚类，是主动聚类常用成对相似度设置下的一种现代深度聚类方法",
+      "tldr": "相关性聚类（CC）是组合优化中广泛使用的聚类形式，以图表示输入且无需预设簇数，但现有算法面临严重扩展性问题且本质上是直推式的——每个新实例都需从头运行。本文利用图神经网络（GNN）提出归纳相关性聚类，学习训练图中结构模式与节点特征，从而高效处理未见图。实验显示推理时间最高降低5个数量级，近似比保持在最好基线约10%以内，并在标准直推式基准上表现优异。此外，该方法可作为可学习池化层，增强GNN捕获网络层次结构信息的能力，具有实用价值。",
+      "tags": "query:active-clust",
+      "abstract_en": "Correlation Clustering (CC) is a natural formulation of clustering in combinatorial optimization, which uses a graph representation of the input and does not require a pre-specified number of clusters. Given $n$ objects and a pairwise similarity function, the goal is to cluster the objects so that similar objects are put in the same cluster and dissimilar objects are put in different clusters. Despite its versatility, existing CC algorithms suffer from significant scalability issues and are inherently transductive: i.e., the algorithm must be executed from scratch for any new problem instance.   In this work, we bridge this gap by leveraging Graph Neural Networks (GNNs) to solve Inductive Correlation Clustering, a novel generalization of the CC problem designed to handle unseen graph instances. By learning to exploit common structural patterns and node features during training, our framework generalizes to new graphs drawn from the same distribution with minimal computational overhead with respect to standard algorithms. We demonstrate the effectiveness and scalability of our approach through extensive experiments. Our framework not only excels in the inductive setting, e.g., lowering the inference time up to $5$ order of magnitude, while maintaining an approximation ratio within $~10\\%$ of the best baseline solution, but also achieves competitive results on standard (transductive) CC benchmarks. Finally, we showcase a practical application of our framework as a learnable pooling mechanism for graph classification. Our results indicate that our method serves as an efficient pooling layer, enhancing the ability of GNNs to capture hierarchical structural information in networks.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "paper_id": "202608/31/2608.25692v1-closer-unified-relational-distillation-from-closed-set-teachers-for-category-discovery",
+      "section": "quick",
+      "title_en": "CloSeR: Unified Relational Distillation from Closed-Set Teachers for Category Discovery",
+      "authors": "Yuanpei Liu, Zhenqi He, Jialu Tang, Kai Han",
+      "date": "2026-08-26",
+      "pdf": "https://arxiv.org/pdf/2608.25692v1",
+      "score": "6.0",
+      "evidence": "现代的广义类别发现方法，利用部分标签数据；与半监督聚类和主动聚类的发展相关。",
+      "tldr": "广义类别发现（GCD）需同时识别已知类与发现新类，现有方法耦合训练易致目标冲突与语义扭曲。本文提出CloSeR，用冻结主干加轻量适配器构建闭集教师，再通过统一关系蒸馏将样本-原型与样本-样本关系传给GCD模型，且用独立特征通路减少干扰。在六个基准上稳定提升，达最优性能。",
+      "tags": "query:active-clust",
+      "abstract_en": "Generalized Category Discovery (GCD) is an intriguing open-world problem that has garnered increasing attention: given partially labelled data, the goal is to correctly recognize known classes while discovering coherent novel categories from unlabelled samples. Recent GCD methods typically adapt foundation models by jointly optimizing supervised classification and unsupervised discovery objectives on mixed labelled and unlabelled data. While effective, this coupled training can entangle closed-set recognition and open-set discovery, leading to objective conflict and biased predictions, and may disturb the semantic geometry of pretrained representations under limited labels and noisy pseudo-labels. We propose CloSeR, a simple plug-and-play framework that injects Closed-Set Relational knowledge into GCD training. CloSeR first builds a domain-adapted closed-set teacher by tuning lightweight block-wise adapters on labelled known-class data while keeping the foundation model backbone frozen, thereby preserving pretrained priors at low training cost. It then transfers the teacher's knowledge to downstream GCD via Unified Relational Distillation (URD), which distills complementary global sample-to-prototype relations to anchor known-class semantics and local sample-to-sample relations to preserve neighborhood structure, using separate feature pathways to reduce optimization interference. CloSeR is head-agnostic and readily integrates with both parametric and non-parametric GCD methods. Extensive experiments with DINO and DINOv2 backbones on six benchmarks (CIFAR-10/100, ImageNet-100, CUB, Stanford-Cars, and FGVC-Aircraft) show consistent gains over GCD baselines, achieving state-of-the-art performance. Project page: https://visual-ai.github.io/closer/",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}
