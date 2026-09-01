@@ -1,0 +1,1997 @@
+Title: When Can We Work in Embedding Space? What Text Embeddings Preserve
+
+URL Source: https://arxiv.org/pdf/2608.31059v1
+
+Published Time: Tue, 01 Sep 2026 03:10:16 GMT
+
+Number of Pages: 81
+
+Markdown Content:
+# When Can We Work in Embedding Space? What Text Embeddings Preserve 
+
+## Simon Freyaldenhoven 
+
+## Federal Reserve Bank of Philadelphia ∗
+
+## August 2026 
+
+Abstract 
+
+When do text embeddings work as inputs to empirical analysis? Their use rests on an assumption: that we can trade text for its low-dimensional embedding, and lose little in doing so. I make that assumption precise under a generative model in which documents are mixtures of latent topics. I study two uses— 
+
+clustering units in embedding space and controlling for high-dimensional text. A cluster of embeddings is a set of documents with similar topic mixtures; controlling for the embedding is equivalent to controlling for the topic mixture, so validity reduces to whether that mixture captures the confounding. In an application to 363 U.S. metropolitan areas, embedding-based clusters of LLM-generated economic descriptions recover interpretable economic archetypes and separate local employment dynamics more sharply than clustering on model residuals, or on a curated set of industry and demographic covariates. 
+
+JEL-Classification: C21, C38, C45, C55 
+
+Keywords : Text embeddings, topic models, text as data, clustering, high-dimensional controls, Word2Vec, Large Language Models 
+
+> ∗
+
+The views expressed herein are those of the author and do not necessarily reflect the views of the Federal Reserve Bank of Philadelphia, or the Federal Reserve System. Email: si-mon.freyaldenhoven@phil.frb.org arXiv:2608.31059v1 [econ.EM] 31 Aug 2026 1 Introduction 
+
+Text embeddings are now a standard tool in empirical economics. Researchers turn product descriptions (Bajari et al., 2025; Bach et al., 2025), central bank communi-cation (Casella et al. (2026)), labor-market histories (Vafa et al., 2022, 2025), and word meanings (Kozlowski et al., 2019) into vectors (embeddings) and use those in subsequent analysis. The appeal is dimension: While text itself is extremely high-dimensional, its embedding is (relatively) low-dimensional. The justification, either explicitly or implicitly, is that little should be lost by working in embedding space if the information contained in a text can be represented in a low-dimensional space. 1
+
+I make this argument precise and study when text embeddings work as inputs to empirical analysis. Any reduction of text to a vector may discard something the analysis needed. Existing theoretical work rules this out via a high level sufficiency assumption: that a low-dimensional attribute vector exists and the embedding proxies it (Christensen and Compiani, 2026), or that whatever the representation discards induces a bias vanishing faster than n−1/2 (Vafa et al., 2025). But how plausible is such an assump-tion? In order to answer this, my starting point is a simple generative model of text, which allows me to derive exactly what embeddings preserve. I first show that, under a standard model in which documents are mixtures of 
+
+K latent topics (Blei et al., 2003; Hofmann, 1999), the corpus’s matrix of word co-occurrence ratios, centered at independence, is positive semi-definite of rank ex-actly K − 1 (Proposition 1). Any embedding that matches this matrix inherits the topic-loading geometry — plainly speaking: words with similar loadings receive similar embeddings (Theorem 1). Standard embedding methods do not target this matrix directly, and instead factorize a logarithmic transform of the co-occurrence ratios (Table 1), which is generically full rank. Focusing on one leading embed-ding — Word2Vec (Mikolov et al., 2013a,c), in its skip-gram-with-negative-sampling (SGNS) form — I then prove that it recovers the same geometry up to a distortion (Proposition 2). At the document level, averaging word embeddings yields an invertible linear image of the topic mixture (Proposition 3). I then consider two concrete use cases. The first groups units by latent type: clustering in embedding space discretizes unobserved heterogeneity into peer groups. Because distinct topic mixtures cannot share an embedding, a cluster is a set of documents with similar mixtures, and its 
+
+> 1For example, Bajari et al. (2025) states that the success of their approach “depends on the ex-istence of parsimonious structures behind images and text” and that they “believe that information in images and sentences can be effectively represented in a much lower-dimensional space”.
+
+1centroid corresponds to a well-defined mixture (Corollary 1). Recovering the latent partition exactly is a stronger claim: when documents concentrate tightly enough around a small number of common mixture-types, that partition is a fixed point of k-means (Proposition 4), but separation alone does not make it the unique optimum. The second conditions on textual embeddings: the embedding enters a regression as a control. Adjusting for the embedding is equivalent to adjusting for the topic mixture, so the high-level assumption that “the embedding is a sufficient control” reduces to a transparent condition that the topic mixture captures the confounding. (Corollary 2). To make the grouping use concrete, consider a researcher who wants to model local employment dynamics. A natural starting point is an autoregressive model for log employment in location i, e.g.: 
+
+yit = αi + ρi
+
+> 1
+
+yi,t −1 + · · · + ρipyi,t −p + εit , (1) where yit is log employment in year t for a given Core-Based Statistical Area (CBSA) 
+
+i. Pooling across all locations imposes implausible homogeneity, while estimating each city separately throws away cross-sectional information and can result in very noisy estimates. I propose the following compromise: cluster units by their textual description. Concretely, for each unit CBSA (i) generate a 500-word economic nar-rative using a large language model, (ii) embed the narrative in Rr, and (iii) apply 
+
+k-means in embedding space. Our theoretical results from Section 2 provide a lens into this algorithm: If the corpus can be reasonably approximated by a topic model, 
+
+k-means clustering recovers peer groups with similar topic mixtures. I find that the peer groups that emerge indeed encode similarity (e.g., “deindustrialized Eds-and-Meds”, “Sunbelt growth”, “energy and resource extraction”), and that the resulting clusters capture meaningful heterogeneity in employment dynamics which clustering on outcome residuals, or on observed covariates, misses. 
+
+Related Literature. This paper connects several literatures. The generative model builds on the topic model literature, including probabilistic latent semantic indexing (Hofmann, 1999) and Latent Dirichlet Allocation (Blei et al., 2003). Our use of a topic model as the data-generating process is not only analytical convenience: a recent literature argues that large language models themselves behave as implicit latent-variable models, inferring a latent concept from context and generating text conditional on it (Xie et al., 2022; Wang et al., 2023). On the embedding side, the Word2Vec model was introduced by Mikolov et al. (2013a,c), and Levy and Goldberg (2014) established that skip-gram with negative sampling implicitly factorizes a shifted pointwise mutual information matrix when the embedding dimension is unrestricted. Arora et al. (2016) model the writing of a 2document as a random walk over a latent topic vector in a way that justifies what Word2Vec and GloVe (Pennington et al., 2014) estimate. I instead take the topic model as the data-generating process—a model that is easy to interpret and that economists already use to summarize text—and ask what it implies for embeddings. Dieng et al. (2020) put words and topics in the same embedding space by assump-tion, giving each topic its own vector. I derive what they assume: under our model each topic has a centroid in embedding space, and document embeddings lie in the simplex those centroids span (Proposition 3)—for an embedding estimated without any knowledge of the topics. Finally, Li et al. (2023) show that the attention layers of a transformer can also recover topic information, but under the restrictive assump-tion that each word belongs to a single topic, so that topics have no vocabulary in common. Veitch et al. (2020) use text embeddings as a control for confounding. They construct an embedding that captures the confounding by explicitly supervising it on both treatment and outcome, while I consider “standard” unsupervised embeddings in this paper. Other papers studying causal inference with text include Roberts et al. (2020) and Egami et al. (2022). Finally, Battaglia et al. (2024), Vafa et al. (2025) and Christensen and Compiani (2026) study the gap between the representation a researcher has and the object the model requires, and each closes it downstream: a bias correction for a noisy estimate of the right target, a characterization of the omitted-variable bias induced by coarsening, and a correction for an imperfect proxy, respectively. Our paper is complementary to this literature: there, the object the representation recovers is taken as given; here, I ask what an unsupervised embedding recovers in the first place. 
+
+# 2 Theoretical Results 
+
+## 2.1 Generative Model 
+
+Suppose we generate a corpus of text, meaning a collection of D documents from a vocabulary of size V . Each document d consists of Nd terms: {wd, 1, . . . , w d,N d }.Within document d, each term is drawn i.i.d. according to the column-stochastic distribution Π •d, where Π is a column-stochastic V × D matrix; that is, Π vd denotes the probability that a randomly drawn term in document d equals word v. Through-out, I use P (·) exclusively as the probability operator and reserve Π for the matrix of word–document probabilities. For a matrix A, σmax (A) and σmin (A) denote its largest and smallest singular values. I further assume that Π = BΘ, where B is V × K (word-topic matrix) and Θ 3is K × D (topic-document matrix); I take K ≥ 2 throughout to avoid degeneracy. Both B and Θ have non-negative entries, and each column of Π and B sums to 1. The probability for a given term v is thus given by P (w = v|d) = ( BΘ•d)v. and does not depend on the position in the document. Following Hofmann (1999), I assume that for each document dN•d|(B, Θ) ∼ Multinomial ( Nd, B Θ•d) , (2) where N•d = ( N1d, . . . , N V d )⊤ is the vector of word counts in document d, and the vectors of counts N•d are independent across documents, conditional on ( B, Θ). Once we add a Dirichlet prior on the per-document topic distribution we obtain a proper generative model for new documents in the form of standard LDA (Blei et al., 2003). On the other hand, treating the topic mixture θd as a fixed (unknown) parameter rather than a random variable, this has been studied in the Non-negative Matrix Factorization (NMF) literature (Lee and Seung, 1999; Donoho and Stodden, 2003; Arora et al., 2013). 
+
+Notation. Consider two words v and u appearing in the same document d. Un-der the i.i.d.-given-document model, conditional on d a target word and a separately drawn context word are independent, so: 
+
+P (w = v, c = u|d) = Π vd · Πud = ( BΘ•d)v(BΘ•d)u. (3) Define the word co-occurrence matrix M ∈ RV ×V by aggregating over documents: 
+
+Mvu = P (w = v, c = u) = 
+
+> D
+
+X
+
+> d=1
+
+pd(BΘ•d)v(BΘ•d)u, (4) where pd = Nd/ P 
+
+> d′
+
+Nd′ weights documents by length and P 
+
+> d
+
+pd = 1. Equivalently, with p = [ p1, . . . , p D]⊤ and G := P 
+
+> d
+
+pdΘ•dΘ⊤•d = Θ diag( p) Θ ⊤ ∈ RK×K denoting the corpus second-moment matrix of topic mixtures, 
+
+M = B G B ⊤. (5) Let ¯θ := P 
+
+> d
+
+pdΘ•d denote the corpus-mean topic mixture, let q := B ¯θ collect the marginal word probabilities, qv = P (w=v) = P (c=v), and let Dq := diag( q) denote the corresponding diagonal matrix. Define the probability-ratio matrix 
+
+R := D−1 
+
+> q
+
+M D −1 
+
+> q
+
+∈ RV ×V>0 , Rvu = P (w = v, c = u)
+
+P (w = v) P (c = u). (6) 4Finally, define the marginal-normalized loading matrix ˜B := D−1 
+
+> q
+
+B ∈ RV ×K and the topic-mixture covariance 
+
+ΣΘ := 
+
+> D
+
+X
+
+> d=1
+
+pd (Θ •d − ¯θ)(Θ •d − ¯θ)⊤ = G − ¯θ ¯θ⊤ ∈ RK×K . (7) 
+
+## 2.2 Word Embeddings 
+
+This section derives our theoretical results on word embeddings. I first introduce a matrix I call the centered probability ratio and show that it is positive semi-definite (PSD) of rank K − 1 (Proposition 1). I then construct an explicit embedding β
+
+whose entries are written directly in the topic-model primitives B and Θ (Lemma 1) that factorize the centered probability ratio. Our main word-embedding result (The-orem 1) then shows that any embedding ˆβ matching this factorization inherits the marginal-normalized topic-loading geometry. Simply stated: words with similar topic loadings receive similar embeddings. I maintain the following regularity conditions. 
+
+Assumption 1 (Topic regularity) . I maintain the following regularity conditions on the topic model throughout: (a) rank B = K;(b) rank Σ Θ = K − 1; (c) qv > 0 for all v ∈ [V ]. The full column rank of B rules out redundant topics. Because the columns of Θ lie on the simplex ∆ K−1, Σ Θ 1K = 0, so rank Σ Θ ≤ K − 1. Assumption 1(b) is thus a maximal rank condition that is implied by the existence of K documents whose topic mixtures are affinely independent in ∆ K−1. The marginal-positivity condition simply rules out terms with zero marginal probability and is used to invert Dq.2
+
+Proposition 1 (Exact rank-( K − 1) factorization) . Under Assumption 1, the cen-tered probability ratio (R − 1V 1⊤ 
+
+> V
+
+) is PSD of rank K − 1, such that the top-(K − 1) 
+
+eigendecomposition R−1V 1⊤ 
+
+> V
+
+= ΦΛΦ ⊤ yields a factor βSVD := Φ Λ 1/2 ∈ RV ×(K−1) ,
+
+with 
+
+βSVD β⊤ 
+
+> SVD
+
+= R − 1V 1⊤ 
+
+> V
+
+.             
+
+> 2Note that, if there exists a term vwith qv= 0, this term is not used in any document. Removing any unused terms from the dictionary and using the smaller vocabulary V′immediately implies that
+> qv>0 for all v∈[V′].
+
+5Proof. By (5), M = BGB ⊤, hence 
+
+R = D−1 
+
+> q
+
+(BGB ⊤)D−1 
+
+> q
+
+= ˜BG ˜B⊤. (8) Substituting G = Σ Θ + ¯θ ¯θ⊤ and using ˜B ¯θ = D−1 
+
+> q
+
+q = 1V ,
+
+R − 1V 1⊤ 
+
+> V
+
+= ˜B ΣΘ ˜B⊤. (9) Since Σ Θ is a covariance matrix it is PSD, hence ˜BΣΘ ˜B⊤ is PSD. By Assump-tions 1(a) and (c), ˜B has full column rank K.It follows that rank( R − 1V 1⊤ 
+
+> V
+
+) = rank(Σ Θ) = K − 1by Assumption 1(b). The factorization follows. Proposition 1 delivers an embedding βSVD from the centered probability ratio 
+
+R − 1V 1⊤ 
+
+> V
+
+alone, with no reference to the topic-model primitives. The next result gives a second, equivalent representative whose entries are written directly in those primitives ( B, Θ). 
+
+Lemma 1 (Topic-primitive representation) . Under Assumption 1, take the compact eigendecomposition of the topic-mixture covariance defined in (7) :
+
+ΣΘ = Φ Θ ΛΘ Φ⊤
+
+> Θ
+
+.3
+
+For each v ∈ [V ], define 
+
+βv := Λ1/2Θ Φ⊤ 
+
+> Θ
+
+B⊤
+
+> v•
+
+qv
+
+∈ RK−1. (10) 
+
+Then, the matrix β ∈ RV ×(K−1) with rows β⊤ 
+
+> v
+
+satisfies 
+
+R − 1V 1⊤ 
+
+> V
+
+= β β ⊤, (11) 
+
+and is related to βSVD from Proposition 1 by an orthogonal transformation: there exists an orthogonal Q (Q⊤Q = IK−1) with β = βSVD Q.       
+
+> 3Formally, Φ Θ∈RK×(K−1) holds orthonormal eigenvectors of the nonzero eigenvalues (Φ ⊤
+> ΘΦΘ=
+> IK−1) and Λ Θ∈R(K−1) ×(K−1) is the diagonal matrix of corresponding (positive) eigenvalues.
+
+6Proof. For any v, u ∈ [V ], 
+
+β⊤ 
+
+> v
+
+βu = Bv• ΦΘΛΘΦ⊤ 
+
+> Θ
+
+B⊤
+
+> u•
+
+qvqu
+
+= Bv• ΣΘ B⊤
+
+> u•
+
+qvqu
+
+= ( ˜B ΣΘ ˜B⊤)vu = ( R − 1V 1⊤ 
+
+> V
+
+)vu ,
+
+where the last step follows from (9). Both β and βSVD are full-column-rank V ×(K−1) factors of the same rank-( K − 1) PSD matrix, so they coincide up to an orthogonal transformation. The inner product β⊤ 
+
+> v
+
+βu = P (w=v, c =u)    
+
+> P(w=v)P(c=u)
+
+− 1 can be interpreted as the lift of the joint above independence: zero if w and c are independent, positive if they co-occur more than under independence, and negative if less. I next show that any (K − 1)-dimensional embedding matching this factorization inherits the marginal-normalized topic-loading geometry. 
+
+Theorem 1 (Topic-loading geometry) . Suppose Assumption 1 holds and let ˆβ ∈
+
+RV ×(K−1) satisfy ˆβ ˆβ⊤ = R − 1V 1⊤ 
+
+> V
+
+. Then, for all v, u ∈ [V ],
+
+∥ ˆβv − ˆβu∥2 = ( ˜Bv• − ˜Bu•)⊤ΣΘ ( ˜Bv• − ˜Bu•). (12) 
+
+In particular, Bv• = λB u• for some λ > 0 implies ˆβv = ˆβu: words with proportional topic loadings receive identical embeddings. Proof. By Lemma 1, the topic-primitive representative β satisfies ββ ⊤ = R−1V 1⊤ 
+
+> V
+
+=ˆβ ˆβ⊤, so both are full-column-rank V × (K − 1) factors of the same rank-( K − 1) PSD matrix and coincide up to an orthogonal transformation: ˆβ = βQ with Q⊤Q = IK−1.From the closed form, βv − βu = Λ 1/2Θ Φ⊤
+
+> Θ
+
+( ˜Bv• − ˜Bu•), so 
+
+∥βv − βu∥2 = ( ˜Bv• − ˜Bu•)⊤ΦΘΛΘΦ⊤
+
+> Θ
+
+( ˜Bv• − ˜Bu•) = ( ˜Bv• − ˜Bu•)⊤ΣΘ ( ˜Bv• − ˜Bu•),
+
+using Σ Θ = Φ ΘΛΘΦ⊤
+
+> Θ
+
+. Finally, ∥ ˆβv − ˆβu∥ = ∥ ˆβvQ− ˆβuQ∥ = ∥( ˆβv − ˆβu)Q∥ = ∥βv −βu∥
+
+since orthogonality of Q preserves the Euclidean norm. This completes the proof of (12). The proportional case follows from Bv• = λB u• ⇒ ˜Bv• = ˜Bu• ⇒ βv = βu ⇒
+
+ˆβv = ˆβu.I call the metric on the right of (12) — the Σ Θ-weighted distance between marginal-normalized topic loadings — the topic-loading geometry . Theorem 1 pro-vides an algorithm-agnostic reading: any procedure that matches the centered prob-ability ratio R − 1V 1⊤ 
+
+> V
+
+in dimension K − 1 recovers the topic-loading geometry, regardless of the construction. The direct example is the rank-( K − 1) singular value decomposition of R − 1V 1⊤ 
+
+> V
+
+(Proposition 1). I next analyze some of the word embeddings commonly used in the literature. 7Remark 1 (Dimensions above K −1) . Theorem 1 is stated at r = K −1, but nothing in it requires equality. Let ˆβ ∈ RV ×r with r ≥ K − 1 satisfy ˆβ ˆβ⊤ = R − 1V 1⊤ 
+
+> V
+
+. The right-hand side has rank K − 1 by Proposition 1, so ˆβ = βQ for some Q ∈ R(K−1) ×r
+
+with orthonormal rows, QQ ⊤ = IK−1, and 
+
+∥ ˆβv − ˆβu∥2 = ( βv − βu)⊤QQ ⊤(βv − βu) = ∥βv − βu∥2,
+
+so (12) holds unchanged. The proof above is the special case r = K − 1, where Q is square and orthogonal. The extra r − (K − 1) coordinates are identically zero and drop out of every distance. Thus, any r ≥ K − 1 delivers the same geometry. This matters because K is rarely known in practice. Section 4 sets r = 50 on this basis. 
+
+Remark 2 (Identification-invariance) . The factorization Π = BΘ is not unique absent further structure: for any invertible K × K matrix A (that preserves the column-stochasticity of both factors), the reparameterization B′ = BA , Θ ′ = A−1Θgenerates the same observable joint distribution (see, e.g., Donoho and Stodden (2003), Fu et al. (2019)). However, under any such reparameterization the quadratic form in Theorem 1 transforms as ( ˜B′ 
+
+> v•
+
+− ˜B′
+
+> u•
+
+)⊤Σ′ 
+
+> Θ
+
+( ˜B′ 
+
+> v•
+
+− ˜B′
+
+> u•
+
+) = ( ˜Bv• − ˜Bu•)⊤A (A−1ΣΘA−⊤ ) A⊤( ˜Bv• − ˜Bu•)= ( ˜Bv• − ˜Bu•)⊤ΣΘ ( ˜Bv• − ˜Bu•),
+
+so it is invariant. Theorem 1 therefore holds for any valid factorization, and the geometry it characterizes is identification-free. 
+
+## 2.3 Relationship to Standard Algorithms 
+
+Word2Vec (Mikolov et al., 2013a,c) and GloVe (Pennington et al., 2014) are some of the most widely used word embeddings in practice, and this section asks what they recover under our model. I treat three objectives: skip-gram with a full softmax (the idealized version that is costly to estimate), its negative-sampling approximation SGNS (Levy and Goldberg, 2014) (which is what practitioners usually run), and GloVe. 4
+
+None of these fit R − 1V 1⊤ 
+
+> V
+
+. Each scores a word–context pair ( v, u ) by an inner product Xvu = w⊤ 
+
+> v
+
+˜wu between a target vector wv and a context vector ˜ wu, the rows of 
+
+W, ˜W ∈ RV ×r, and fits that score to the corpus. They differ in only three ingredients: 
+
+> 4Word2Vec’s other architecture, CBOW, generally admits no closed-form target, and I return to it at the end of the section.
+
+8Response tvu Generator ϕ Weight ωvu Target ϕ′(tvu ) Free offsets                                                  
+
+> βSVD Rvu −1squared 1R−1V1⊤
+> V—Full softmax P(w=v|c=u)entropy qulog R+ log q1⊤
+> V1Vg⊤
+> SGNS Rvu /(Rvu +ν)binary entropy qvqu(Rvu +ν) log R−log ν1V1⊤
+> V—GloVe log Mvu squared f(Mvu )log Rb1⊤
+> V+1V˜b⊤
+
+Table 1: The four objectives as weighted low-rank fits. The response tvu and the generator 
+
+ϕ determine the target ϕ′(tvu ); the weights ωvu do not. The generators squared, entropy and binary entropy give squared-error, Kullback–Leibler and Bernoulli losses. “Free offsets” are the row- or column-constant terms the objective leaves undetermined: the softmax column gauge g and GloVe’s per-word biases b, ˜b. ν ≥ 1 is the negative-sampling rate and f is GloVe’s weighting function. Row one attains its target exactly at rank K − 1(Proposition 1); the other three attain theirs only where the rank constraint does not bind. For more detail, see Appendix A. 
+
+a response tvu read off the corpus, a strictly convex generator ϕ that fixes the loss, and 
+
+weights ωvu on pairs. Where the rank constraint of the inner product does not bind, the fitted scores are ϕ′(tvu ) entrywise. I therefore call that matrix the algorithm’s 
+
+target . Table 1 lists the three ingredients and the target for each algorithm, alongside 
+
+βSVD from the previous section. I derive its entries in Appendix A. Since none of these targets is R − 1V 1⊤ 
+
+> V
+
+, Theorem 1 does not apply to the em-beddings that fit them. However, I still obtain the following result on how word embeddings vary with the loadings, analogous to Theorem 1 for the SGNS target. 
+
+Assumption 2 (Word co-occurrence) . Rvu > 0 for all v, u ∈ [V ]. Assumption 2 requires every pair of words to co-occur and guarantees that every entry of log R is finite. Write Rmin := min v,u Rvu , Rmax := max v,u Rvu and κR := 
+
+Rmax /R min , so that log κR is the range of entries in log R.
+
+Proposition 2 (Recovery from the SGNS target) . Let Assumptions 1 and 2 hold. Suppose ˆW ˆ˜W ⊤ = log R − log ν 1V 1⊤ 
+
+> V
+
+, the SGNS target of Table 1, with ˆ˜W ∈ RV ×r
+
+of full column rank. Then, for all v, v ′ ∈ [V ],
+
+σmin (β)
+
+Rmax σmax ( ˆ˜W )
+
+∥βv − βv′ ∥ ≤ ∥ ˆwv − ˆwv′ ∥ ≤ σmax (β)
+
+Rmin σmin ( ˆ˜W )
+
+∥βv − βv′ ∥, (13) 
+
+where ∥βv − βv′ ∥2 = ( ˜Bv• − ˜Bv′•)⊤ΣΘ ( ˜Bv• − ˜Bv′•) is the topic-loading distance of Theorem 1. In particular, Bv• = λB v′• for some λ > 0 implies ˆwv = ˆ wv′ .
+
+9Proof. Since the shift log ν 1V 1⊤ 
+
+> V
+
+is constant and cancels in row differences, (log R)v•−
+
+(log R)v′• = ( ˆ wv − ˆwv′ ) ˆ˜W ⊤. All entries of R lie in [ Rmin , R max ], so the mean value the-orem applied to log gives |Rvu −Rv′u|/R max ≤ | log Rvu −log Rv′u| ≤ | Rvu −Rv′u|/R min 
+
+for each u. Thus, for the entire vector: 1
+
+Rmax 
+
+∥Rv• − Rv′•∥ ≤ ∥ ( ˆ wv − ˆwv′ ) ˆ˜W ⊤∥ ≤ 1
+
+Rmin 
+
+∥Rv• − Rv′•∥.
+
+By Lemma 1, ββ ⊤ = R − 1V 1⊤ 
+
+> V
+
+. All rows of 1V 1⊤ 
+
+> V
+
+are equal, so they cancel in the row difference: Rv• − Rv′• = ( βv − βv′ )⊤β⊤. Since β has full column rank K − 1(Proposition 1), σmin (β) > 0 and 
+
+σmin (β) ∥βv − βv′ ∥ ≤ ∥ Rv• − Rv′•∥ ≤ σmax (β) ∥βv − βv′ ∥.
+
+Combining with the display above gives 
+
+σmin (β)
+
+Rmax 
+
+∥βv − βv′ ∥ ≤ ∥ ( ˆ wv − ˆwv′ ) ˆ˜W ⊤∥ ≤ σmax (β)
+
+Rmin 
+
+∥βv − βv′ ∥.
+
+Finally, full column rank of ˆ˜W gives σmin ( ˆ˜W )∥x∥ ≤ ∥ x ˆ˜W ⊤∥ ≤ σmax ( ˆ˜W )∥x∥ for every 
+
+x. Substituting into the display above gives (13). The proportional case follows from Bv• = λB v′• ⇒ ˜Bv• = ˜Bv′• ⇒ βv = βv′ , which makes the right-hand side of (13) zero. Proposition 2 is the analogue of Theorem 1 for the SGNS target: any ˆW , ˆ˜W
+
+that attain that target induce a metric equivalent to the one β induces, reproducing the topic-loading geometry up to a distortion of at most κR cond( β) cond( ˆ˜W ). In particular, words with proportional topic loadings receive identical embeddings under any such factorization, exactly as in Theorem 1. 
+
+Remark 3 (Target versus embedding) . Proposition 2 is a statement about the SGNS target, not about the trained embedding. Since generically the SGNS target is full rank, the trained embedding can only approximate the target, and is instead the weighted low-rank fit of Table 1, with the weights determining which approximation (Levy and Goldberg, 2014). The proposition’s practical content therefore depends on the quality of this approximation, and hence on the spectrum of the target. 5
+
+> 5
+
+To bound the spectrum theoretically requires strong assumptions I deem unlikely to hold in practice. Two examples: i) Call v an anchor word for topic k if Bvk > 0 and Bvk ′ = 0 for all 
+
+k′̸ = k (Donoho and Stodden, 2003; Arora et al., 2013). If every word is an anchor, then log R,and hence the target, has at most rank K; this is the population analogue of the block structure Li et al. (2023) obtain for transformers under disjoint topics. ii) Write ϱ := ∥R − 1V 1⊤ 
+
+> V
+
+∥∞ for the maximum distance from independence. Then, ϱ < 1 gives log R = ββ ⊤ + O(ϱ2) entrywise, so the target is of rank at most K up to an O(V ϱ 2) perturbation. 
+
+10 I explore this further in Section 3, where I compute the spectrum exactly under our simulation designs and find the target approximately low rank. In our application in Section 4 I simply set r = 50 to ensure r > K and that the rank constraint is not too binding. 
+
+Remark 4 (The other log targets) . Proposition 2 uses only that the SGNS target is log R up to a constant, so it covers any target that is log R up to an offset constant down each column. However, both full-softmax skip-gram and GloVe carry an offset constant along each row , which does not cancel in a row difference. For example, for full softmax that offset is log q 1⊤ 
+
+> V
+
+, so Rv• = Rv′• gives ( ˆ wv − ˆwv′ ) ˆ˜W ⊤ = (log qv − log qv′ ) 1⊤ 
+
+> V
+
+,
+
+and the two embeddings coincide if and only if qv = qv′ : same-loading words agree up to a single marginal direction. Lemma OA.5 gives the general statement: for any entrywise transform of R and any offsets constant along a row or a column, words with proportional loadings have target rows differing by the row-offset difference alone. CBOW (Mikolov et al., 2013a) predicts the target word from the average of its context embeddings. With a one-word context the average is trivial: under negative sampling its target is again log R − log ν 1V 1⊤ 
+
+> V
+
+, so Proposition 2 applies verbatim. The averaging is what removes the theory: with more than one context word the score depends on the context only through the averaged embedding, so no closed-form V × V target exists. Given its prevalence in the literature, I nevertheless treat CBOW empirically in Sections 3–4. 
+
+## 2.4 Document Embeddings 
+
+Word embeddings can be aggregated to create document representations. A natural approach is to represent each document by the average of its word embeddings: ¯hd = 1
+
+NdNdX
+
+> j=1
+
+hwdj , (14) where hw is the embedding assigned to word w—for instance, the ˆβw ∈ RK−1 of Theorem 1, with explicit representative βw given by Lemma 1—and wdj is the j-th word in document d.First, note that averaging is the natural aggregator under the model of Section 2.1, since the tokens wd, 1, . . . , w d,N d are i.i.d. draws from the document’s word distribution 11 Π•d. Averaging is also the operation behind a broad class of document- and sentence-embedding methods that are used in practice. Unweighted averages of static word vectors are a widely used baseline (Wieting et al., 2016; Iyyer et al., 2015); Arora et al. (2017) reweight the average by smooth inverse frequency (down-weighting fre-quent words), and Joulin et al. (2017) average word- and n-gram vectors for text classification. The same pooling extends to contextual models, where transformer sentence encoders mean-pool token embeddings into a fixed-length vector (Reimers and Gurevych, 2019). 6
+
+Intuitively, under our topic model, documents with similar topic mixture θd
+
+should have similar document embeddings, since they draw words from similar dis-tributions over the vocabulary. I now formalize this intuition. Define the expected document embedding for a document with topic mixture θd as: 
+
+μd = E[¯hd|θd] = 
+
+> V
+
+X
+
+> v=1
+
+P (w = v|d)hv =
+
+> V
+
+X
+
+> v=1
+
+(BΘ•d)vhv. (15) Further, because the words within document d, wd, 1, . . . , w d,N d are i.i.d. conditional on θd, clearly ¯hd = 1
+
+> Nd
+
+P 
+
+> j
+
+hwdj 
+
+> p
+
+−→ μd as Nd → ∞ by the law of large numbers. Finally, define the topic centroid embeddings 
+
+ck := 
+
+> V
+
+X
+
+> v=1
+
+Bvk hv, k = 1 , . . . , K, (16) and let C ≡ [c1 · · · cK ] denote the matrix with the centroids as columns. I obtain the following result. 
+
+Proposition 3 (Linearity in the topic mixture) . Suppose Π = BΘ and the topic model is identified. 7 Then, for every document d:(i) the expected document embedding is a linear function of the topic mixture, 
+
+μd = C Θ•d; (17)   
+
+> 6The main alternative learns document vectors directly rather than by averaging (Paragraph Vector, or doc2vec; Le and Mikolov, 2014), which I do not treat here.
+> 7The anchor-word condition — every topic has at least one word exclusive to it — is one sufficient condition for identification (Donoho and Stodden (2003); Arora et al. (2013); Fu et al. (2019)), also see the discussion in Freyaldenhoven et al. (2025). However, it is not necessary; see the recent work of Chen et al. (2022) that uses the sufficiently-scattered condition in Huang et al. (2013) and Huang et al. (2016).
+
+12 (ii) μd lies in the centroid simplex, μd ∈ conv {c1, . . . , c K }.Proof. For (i), simply expanding the definition of μd in (15) and rearranging the sums yields 
+
+μd =
+
+> V
+
+X
+
+> v=1
+
+(BΘ•d)v hv =
+
+> V
+
+X
+
+> v=1
+> K
+
+X
+
+> k=1
+
+Bvk θdk hv
+
+=
+
+> K
+
+X
+
+> k=1
+
+θdk VX
+
+> v=1
+
+Bvk hv =
+
+> K
+
+X
+
+> k=1
+
+θdk ck = C Θ•d.
+
+For (ii), the topic mixture satisfies θdk ≥ 0 and P 
+
+> k
+
+θdk = 1, which immediately implies μd ∈ conv {c1, . . . , c K }.Note that, beyond the topic-model decomposition Π = BΘ, Proposition 3 im-poses no further conditions on the word embeddings hv: the linear decomposition 
+
+μd = C Θ•d and the simplex containment follow from linearity of averaging and hold for arbitrary—even random—embeddings. Proposition 3 characterizes the space in which document embeddings live: a low-dimensional simplex spanned by the topic centroids, with each document’s position encoding its topic mixture. Corollary 1 be-low characterizes the metric on that space—the pairwise distances between document embeddings when the word embeddings satisfy the factorization of Theorem 1. 8
+
+Corollary 1 (Document-embedding metric) . Suppose Assumption 1 holds, Π = BΘ,and the topic model is identified. If the word embeddings H = [ h1, . . . , h V ]⊤ satisfy 
+
+HH ⊤ = R − 1V 1⊤ 
+
+> V
+
+(such as the explicit construction in Lemma 1), the pairwise distance between expected document embeddings is given by 
+
+∥μd − μd′ ∥22 = (Π •d − Π•d′ )⊤ (R − 1V 1⊤ 
+
+> V
+
+) (Π •d − Π•d′ ). (19) 
+
+Equivalently, 
+
+∥μd − μd′ ∥22 = (Θ •d − Θ•d′ )⊤ GB ΣΘ GB (Θ •d − Θ•d′ ), (20) 
+
+where GB := B⊤D−1 
+
+> q
+
+B. Moreover, this distance is strictly positive whenever Θ•d̸ =Θ•d′ .                     
+
+> 8Note that linearity of μd=CΘ•dalready implies a Lipschitz bound between expected document embeddings and topic mixtures: for any two documents,
+> ∥μd−μd′∥2≤ ∥ C∥op ∥Θ•d−Θ•d′∥2,(18) with Lipschitz constant equal to the operator norm of the centroid matrix. Corollary 1 sharpens this bound once the word embeddings satisfy HH ⊤=R−1V1⊤
+> V.
+
+13 Proof. Using μd = H⊤Π•d, we have 
+
+∥μd − μd′ ∥22 = ( H⊤Π•d − H⊤Π•d′ )⊤(H⊤Π•d − H⊤Π•d′ )= (Π •d − Π•d′ )⊤ HH ⊤ (Π •d − Π•d′ )= (Π •d − Π•d′ )⊤ (R − 1V 1⊤ 
+
+> V
+
+) (Π •d − Π•d′ ).
+
+Using (9) to substitute R − 1V 1⊤ 
+
+> V
+
+= D−1 
+
+> q
+
+B ΣΘ B⊤D−1 
+
+> q
+
+and using Π •d = B Θ•d yields 
+
+∥μd − μd′ ∥22 = (Π •d − Π•d′ )⊤ (R − 1V 1⊤ 
+
+> V
+
+) (Π •d − Π•d′ )= (Θ •d − Θ•d′ )⊤ B⊤D−1 
+
+> q
+
+B ΣΘ B⊤D−1 
+
+> q
+
+B (Θ •d − Θ•d′ ).
+
+For the final claim, write x := Θ •d − Θ•d′̸ = 0, and note 1⊤ 
+
+> K
+
+x = 0 because both mixtures lie on the simplex. Since rank Σ Θ = K − 1 and Σ Θ1K = 0, we have ker Σ Θ = span( 1K ), so (20) vanishes if and only if GB x = λ1K for some λ ∈ R. In that case x = λG −1 
+
+> B
+
+1K , and 1⊤ 
+
+> K
+
+x = 0 gives λ 1⊤ 
+
+> K
+
+G−1 
+
+> B
+
+1K = 0. Under Assumption 1, 
+
+GB is positive definite, hence so is G−1 
+
+> B
+
+and 1⊤ 
+
+> K
+
+G−1 
+
+> B
+
+1K > 0; therefore λ = 0 and 
+
+GB x = 0, so x = 0, a contradiction. Equation (19) expresses the document-embedding distance through the centered probability ratio R − 1V 1⊤ 
+
+> V
+
+and the word-distribution profiles Π •d with no reference to the topic-model primitives. 9 The equivalent form (20) rewrites the same distance in latent topic coordinates as weighted topic-mixture differences. Those weights de-pend on the topic-mixture covariance Σ Θ and the overlap among the topic loadings, 
+
+GB . Taken together, Proposition 3 and Corollary 1 show that the document em-bedding is a linear—and, under Assumption 1, invertible—encoding of the latent topic mixture Θ •d. In other words, μd is a sufficient statistic for Θ •d, so a cluster of nearby embeddings is a set of documents with similar mixtures, and the map from an embedding-space centroid to a mixture is well defined. It requires no assumption about how documents are distributed over the simplex. I next apply the results in this section to two uses of embeddings: one groups units by latent type, where I show that k-means in embedding space 10 recovers structure on the topic mixtures, Section 2.5. The other conditions on them, where I show that adjusting for the embedding is equivalent to adjusting for the topic mixture, Section 2.6.                     
+
+> 9Note that, because R−1V1⊤
+> Vhas rank K−1 (Proposition 1), the distance depends only on the projection of Π •d−Π•d′onto the ( K−1)-dimensional topic subspace; word-frequency variation orthogonal to it leaves the embedding distance unchanged.
+> 10 Throughout, I call the Euclidean space in which the word embeddings hv, document embed-dings μd, and centroids cklive the embedding space — RK−1under the exact factorization of Proposition 1.
+
+14 2.5 Grouping: Clustering Documents 
+
+I next ask when k-means clustering recovers meaningful structure. I begin with the simplest case—cluster centers at the topic centroids—and then generalize. 
+
+Lemma 2 (Voronoi-cell membership for concentrated documents) . Suppose As-sumption 1 holds, the topic model is identified, and the word embeddings satisfy 
+
+HH ⊤ = R − 1V 1⊤ 
+
+> V
+
+(such as the explicit construction in Lemma 1). Let Vk de-note the Voronoi cell of ck under the Euclidean metric in embedding space, 11 and 
+
+k∗(d) = arg max k θdk . Define 
+
+η := 12min k̸ =k′ ∥ck − ck′ ∥2
+
+max k̸ =k′ ∥ck − ck′ ∥2
+
+∈ (0 , 1/2] . (21) 
+
+Then, for any document d with dominant-topic weight θd,k ∗(d) > 1 − η, μd ∈ V k∗(d) ∩
+
+conv {c1, . . . , c K }.Proof. The centroids are distinct: ck = Ce k is the embedding of a pure-topic docu-ment, and ek̸ = ek′ for k̸ = k′, so Corollary 1 gives ∥ck − ck′ ∥2 > 0. Hence η ∈ (0 , 1/2] is well defined. Next, fix document d and let k∗ = k∗(d). Write Θ •d = (1 − δ)ek∗ + δz with 
+
+δ = 1 − θd,k ∗ ∈ [0 , 1] and z ∈ ∆K−1. With μd = C Θ•d (Proposition 3), 
+
+μd − ck∗ = CΘ•d − ck∗ = C(1 − δ)ek∗ + Cδz − ck∗ = (1 − δ)ck∗ + Cδz − ck∗
+
+= δ(Cz − ck∗ ).
+
+Since z 7 → ∥ Cz − ck∗ ∥2 is convex on the simplex ∆ K−1, its maximum is attained at a vertex; hence ∥Cz − ck∗ ∥2 ≤ max k′ ∥ck′ − ck∗ ∥2 ≤ Cmax , where Cmax := max k̸ =k′ ∥ck −
+
+ck′ ∥2. Therefore, since δ = 1 − θd,k ∗ ,
+
+∥μd − ck∗ ∥2 ≤ δ C max = (1 − θd,k ∗ ) Cmax . (22) For any k′̸ = k∗, the triangle inequality gives 
+
+∥μd − ck′ ∥2 ≥ ∥ ck∗ − ck′ ∥2 − ∥ μd − ck∗ ∥2 ≥ ∆∗ − δC max ,
+
+where ∆ ∗ := min k̸ =k′ ∥ck − ck′ ∥2 > 0. 
+
+> 11
+
+Given a simplex with vertices c1, . . . , c K , the Voronoi cell of ck is Vk = {x : ∥x − ck∥2 ≤∥x − ck′ ∥2 for all k′̸ = k}, the points at least as close to ck as to any other vertex. The cells 
+
+{V 1, . . . , VK } partition the simplex into convex polytopes meeting at the perpendicular bisectors of the vertex pairs; assigning each point to its nearest vertex is the nearest-centroid rule used by 
+
+k-means with fixed centers. 
+
+15 V1 V2
+
+## V3
+
+c1 c2
+
+c3    
+
+> (a) Unequal centroid triangle: η≈0.27.
+
+## V1 V2
+
+## V3
+
+c1 c2
+
+c3      
+
+> (b) Equilateral centroid triangle: η=1/2(maximal).
+
+Figure 1: Illustration of Lemma 2 for K = 3. In each panel, the topic centroids c1, c 2, c 3
+
+(black) span the convex hull conv {c1, c 2, c 3} (solid triangle). The perpendicular bisectors of the centroid pairs (dashed) partition the triangle into three Voronoi cells V1, V2, V3, with 
+
+Vk containing the points closer to ck than to any other centroid. Green shading marks the regions where the lemma guarantees correct assignment, θd,k ∗(d) > 1 − η. Orange dots illustrate document embeddings μd = C Θ•d for ten documents with varying topic mixtures. 
+
+It follows that, whenever δC max < ∆∗ −δC max , or equivalently, δ < ∆∗/(2 Cmax ) =          
+
+> min k̸=k′∥ck−ck′∥2
+> 2 max k̸=k′∥ck−ck′∥2
+
+= η, we have: 
+
+∥μd − ck∗ ∥2 ≤ δC max < ∆∗ − δC max ≤ ∥ μd − ck′ ∥2 for all k′̸ = k∗.
+
+Since δ < η , and θd,k ∗ > 1 − η are equivalent, θd,k ∗ > 1 − η thus implies μd ∈ V k∗ .Finally, since, by Proposition 3, μd ∈ conv {c1, . . . , c K } for all d, this completes the proof. In words, Lemma 2 states that documents whose mass is concentrated on a single topic vertex of ∆ K−1 end up in the Voronoi cell of the corresponding centroid. The constant η in Lemma 2 is defined as half the ratio of minimum to maximum pairwise centroid distance. η = 1 /2 is achieved when the centroids are equidistant, i.e., when they form an equilateral K-simplex; For the other extreme, η → 0 when some pair of centroids becomes much closer than the others. I illustrate in Figure 1. Lemma 2 is the vertex case: documents close to a vertex will be assigned to the corresponding Voronoi cell. But the logic behind this is not special to the vertices: Below, I establish the more general result that, for any set of “archetypes” μ∗
+
+> 1
+
+, . . . , μ ∗
+
+> L
+
+,16 V1
+
+## V2
+
+c1 c2
+
+c3
+
+μ∗
+
+> 1
+
+μ∗
+
+> 2
+
+Figure 2: Illustration of the nearest-archetype membership for K = 3 and two archetypes (L = 2). The convex hull conv {c1, c 2, c 3} (solid black) is partitioned by the perpendicular bisectors of archetype pairs (dashed) into Voronoi cells V ′ 
+
+> ℓ
+
+of the archetype embeddings μ∗
+
+> ℓ
+
+(black dots in the interior or on the hull boundary). Green shading marks the guaranteed regions {μd : ∥μd − μ∗ 
+
+> ℓ
+
+∥2 < ∆′∗ /2} — disks of radius ∆ ′∗ /2 around each archetype, clipped to the hull. Orange dots illustrate document embeddings μd = C Θ•d. Documents inside a green disk are guaranteed by the triangle-inequality argument to lie in the corresponding Voronoi cell. 
+
+documents whose embeddings are sufficiently close to an archetype μ∗ 
+
+> ℓ
+
+will be assigned to the Voronoi cell of μ∗ 
+
+> ℓ
+
+. Thus, the recovered clusters then reflect mixture-type 
+
+similarity rather than dominant-topic similarity, and the number of clusters L need not equal the number of topics K. Figure 2 illustrates the archetype geometry. Formally, extending the argument from a single document to the full corpus, I obtain the following proposition. 
+
+Proposition 4 (k-means identification under archetype concentration) . Suppose As-sumption 1 holds. Let π∗ 
+
+> 1
+
+, . . . , π ∗ 
+
+> L
+
+∈ ∆K−1 be L ≥ 2 distinct archetype mixtures —points in ∆K−1 around which documents concentrate—with minimum separation 
+
+∆′∗ := min  
+
+> ℓ̸=ℓ′
+
+∥C(π∗ 
+
+> ℓ
+
+− π∗ 
+
+> ℓ′
+
+)∥2 > 0,
+
+and let ℓ(d) := arg min ℓ ∥C(Θ •d − π∗ 
+
+> ℓ
+
+)∥2 denote the nearest-archetype assignment in topic-mixture space. If every document satisfies 
+
+∥C(Θ •d − π∗
+
+> ℓ(d)
+
+)∥2 < ∆′∗ /4,
+
+then the partition P∗ := {d : ℓ(d) = ℓ}Lℓ=1 is a fixed point of k-means: assigning each document to the nearest cell mean of P∗ returns P∗, and recomputing the means 
+
+17 returns the same means. Equivalently, P∗ is simultaneously the Voronoi partition of the archetype embeddings {μ∗ 
+
+> ℓ
+
+} and of its own cell means. Proof. Let Gℓ := {d : ℓ(d) = ℓ}, μ∗ 
+
+> ℓ
+
+:= C π ∗ 
+
+> ℓ
+
+and μd = C Θ•d. Within-cluster pairwise distances then satisfy, for d, d ′ ∈ G ℓ,
+
+∥μd − μd′ ∥2 ≤ ∥ μd − μ∗ 
+
+> ℓ
+
+∥2 + ∥μd′ − μ∗ 
+
+> ℓ
+
+∥2 < ∆′∗  
+
+> 4
+
++ ∆′∗  
+
+> 4
+
+= ∆′∗  
+
+> 2
+
+,
+
+while for d ∈ G ℓ, d ′ ∈ G ℓ′ with ℓ̸ = ℓ′,
+
+∥μd − μd′ ∥2 ≥ ∥ μ∗ 
+
+> ℓ
+
+− μ∗ 
+
+> ℓ′
+
+∥2 − ∥ μd − μ∗ 
+
+> ℓ
+
+∥2 − ∥ μd′ − μ∗ 
+
+> ℓ′
+
+∥2 ≥ ∆′∗ − 2 ∆′∗  
+
+> 4
+
+= ∆′∗  
+
+> 2
+
+.
+
+so within-cluster pairwise distances are strictly smaller than cross-cluster ones. For the fixed-point claim, let mℓ := ¯ μGℓ denote the cell means. Each mℓ is a convex combination of points within ∆ ′∗ /4 of μ∗ 
+
+> ℓ
+
+, so ∥mℓ − μ∗ 
+
+> ℓ
+
+∥2 < ∆′∗ /4. For d ∈ G ℓ,
+
+∥μd − mℓ∥2 ≤ ∥ μd − μ∗ 
+
+> ℓ
+
+∥2 + ∥μ∗ 
+
+> ℓ
+
+− mℓ∥2 < ∆′∗  
+
+> 2
+
+,
+
+while for ℓ′̸ = ℓ,
+
+∥μd − mℓ′ ∥2 ≥ ∥ μ∗ 
+
+> ℓ
+
+− μ∗ 
+
+> ℓ′
+
+∥2 − ∥ μd − μ∗ 
+
+> ℓ
+
+∥2 − ∥ μ∗ 
+
+> ℓ′
+
+− mℓ′ ∥2 > ∆′∗ − ∆′∗  
+
+> 2
+
+= ∆′∗  
+
+> 2
+
+.
+
+Every document is therefore strictly closer to its own cell mean than to any other, so the assignment step reproduces P∗; the update step then returns the same means. At the simplex vertices, Proposition 4 specializes to the dominant-topic case, translating the embedding-distance condition back into a sufficient threshold on θ.It is worth noting that Proposition 4 is a stability statement, not a recovery state-ment. 12 Global optimality requires even stronger conditions. However, even the weaker separation condition in Proposition 4 is not satisfied in our application. Itherefore claim no recovery of a latent partition in our application. Instead, I rely on Corollary 1, which connects embedding distance to the difference of topic mix-tures. A cluster is thus a set of documents with similar mixtures. This is what the interpretation of the clusters in Section 4 rests on, and it requires no concentration assumption. 
+
+> 12
+
+Note that the archetypes in Proposition 4 need not be fixed in advance. A natural choice is the k-means centers at convergence: by construction they lie in conv {c1, . . . , c K } and equal Cπ ∗
+
+> ℓ
+
+for some π∗ 
+
+> ℓ
+
+∈ ∆K−1. Proposition 4 then applies to these centers: if they are separated and every document lies within ∆ ′∗ /4 of its assigned center, the converged partition is a k-means fixed point. 
+
+18 2.6 Conditioning: Embeddings as Controls 
+
+The second use of document embeddings I consider is as a control . A researcher who wants to control for a high-dimensional text Xd—a firm disclosure, a court filing, a job posting—cannot condition on the raw text and instead conditions on its embed-ding, implicitly assuming that adjustment for the embedding suffices. Proposition 3, and in particular the identity μd = C Θ•d, immediately makes the content of that assumption precise. Formally, let Zd ∈ { 0, 1} be a treatment, Yd(0) , Y d(1) the potential outcomes for unit d, and Yd = Yd(Zd) the observed outcome. 
+
+Assumption 3 (Topic unconfoundedness) . {Yd(0) , Y d(1) } ⊥ Zd | Θ•d, and 0 <P (Zd = 1 | Θ•d) < 1. Assumption 3 states that the document’s topic mixture captures all confounding between treatment and potential outcomes: given Θ •d, the realized words carry no further information about ( Zd, Y d(0) , Y d(1)). This is the explicit content of the informal claim that the text is a sufficient control. 
+
+Corollary 2 (Embedding adjustment) . Suppose Assumption 1 holds, the topic model is identified, and C is injective on ∆K−1.Then, controlling for document embedding is valid if and only if controlling for the topic mixture is. In particular, under As-sumption 3, the average treatment effect is identified by 
+
+τ = E E[Yd | Zd = 1 , μ d] − E[Yd | Zd = 0 , μ d] .
+
+Proof. Since Π = BΘ and the topic model is identified, μd = C Θ•d (Proposition 3). Since C is injective on ∆ K−1, μd and Θ •d are one-to-one functions of each other: conditioning on one is the same as conditioning on the other. Adjustment on the embedding is therefore valid exactly when adjustment on the topic mixture is. In particular, under Assumption 3, {Yd(0) , Y d(1) } ⊥ Zd | μd and 0 < P (Zd = 1 | μd) <
+
+1, so τ is identified by adjustment on μd (Rosenbaum and Rubin, 1983). Corollary 2 is an identification statement at the population level; it is exact only under three conditions. First, it uses the expected embedding μd. With finite document length, both μd and Θ •d will be measured with error (e.g., ¯hd = μd +
+
+Op(N −1/2 
+
+> d
+
+); see the discussion in Section 2.4). Also see Battaglia et al. (2024) for a more general discussion of measurement error in AI/ML-generated variables. Second, it requires embedding dimension r ≥ K − 1: with r < K − 1 the map μd = C, Θ•d
+
+cannot be injective and conditions on only a projection of Θ •d, leaving residual confounding regardless of Nd. However, for the high-dimensional embeddings used 19 in practice I believe this bound is slack. Third, C must be injective on ∆ K−1. For an embedding satisfying HH ⊤ = R − 1V 1⊤ 
+
+> V
+
+this holds by construction (Corollary 1). For Word2Vec, GloVe, or pretrained embeddings, it is a maintained assumption; see the discussion in Section 2.3. The point is not that embedding-based adjustment is valid, but that its validity reduces to a transparent condition on the topic mixture. This connects to a growing literature on causal inference with text (Roberts et al., 2020; Egami et al., 2022); relative to that work, I derive the sufficiency condition from the generative model rather than assert it. Although Corollary 2 is stated for the topic model, its two structural requirements are general. Suppose the confounding is driven by a latent summary of the text of dimension s (here s = K − 1, the topic mixture). Embedding-based control then requires, first, an embedding of dimension r ≥ s—otherwise it encodes only a projection of that summary and leaves residual confounding; and second, that the embedding actually recover the summary, so that its low-dimensional geometry coincides with the one the confounding lives in. Dimension alone thus does not suffice—an embedding can be low-dimensional in a geometry that has little to do with the text’s, and adjusting for it then controls for the wrong object. 
+
+# 3 Numerical Illustration 
+
+I next simulate data from the model described in Section 2.1 and compare two em-bedding constructions: (i) the closed-form SVD-β embedding of Proposition 1, and (ii) skip-gram with negative sampling (SGNS) (Mikolov et al., 2013c) as implemented in gensim ( ˇReh˚ uˇ rek and Sojka, 2010) (cf. Table 1). Theorem 1 predicts that SVD-β
+
+inherits the topic-loading geometry, and Proposition 2 carries the prediction over to the SGNS target. 13 
+
+Both embeddings use dimension r = K. By Proposition 1, r = K − 1 is the minimum sufficient embedding dimension for SVD-β. The extra dimension should have population eigenvalue zero and be genuine slack, and I confirm this in the figures below. The SGNS target is the approximately rank-( K − 1) log R shifted by the constant − log ν. We quantify that approximation in the last paragraph of this section. Because the shift is constant, it raises the rank of the target without spreading words apart, so it does not appear in the centered projections plotted below. 
+
+> 13 Appendix C.4 repeats the exercise with continuous bag-of-words (CBOW). The results are qualitatively similar to SGNS.
+
+20 To illustrate our theoretical results, consider two simulation designs on a common 
+
+V = 16 vocabulary of fruits and vegetables: a two-topic case (Design 1) and a three-topic extension (Design 2). Documents are generated with topic mixtures drawn from a symmetric Dirichlet ( α = 1) prior on the simplex, with D = 363 documents and Nd = 487 words per document, matching the dimensions of the application in Section 4, and the full document as context. 14 
+
+Design 1: Two Topics ( K = 2 ). The topic-word matrix is 
+
+B =
+
+
+
+0.08 0.00 
+
+0.08 0.01 
+
+0.08 0.00 
+
+0.12 0.00 
+
+0.06 0.04 
+
+0.07 0.00 
+
+0.10 0.02 
+
+0.12 0.00 
+
+0.10 0.01 
+
+0.13 0.00 0.01 0.10 
+
+0.02 0.18 
+
+0.00 0.30 
+
+0.01 0.05 
+
+0.01 0.12 
+
+0.01 0.17 
+
+
+
+with rows corresponding to: Apple Banana Pear Mango Peach Cherry Orange Lemon Mandarin Grapefruit Cucumber Tomato Kale Pepper Carrot Onion 
+
+. (23) Apple, Pear, Mango, Cherry, Lemon, and Grapefruit are anchor words for topic 1 (fruits) with varying prevalence, and Kale is an anchor word for topic 2 (vegetables). The remaining words load on both topics with varying intensity. Figure 3 shows the resulting word embeddings. Both methods recover the same qualitative structure: words separate cleanly along their dominant topic, with fruits (red) and vegetables (green) forming distinct clusters. The SGNS and SVD-β geome-tries are nearly identical up to rotation and scaling. Both clouds are one-dimensional, which is what the theory implies: SVD-β has population rank K −1 = 1, and SGNS’s second direction is the common offset, which the centered projection removes. Propo-sition 2 predicts only that the two induce equivalent metrics on the words; here the distortion it permits is evidently small. Within each cluster, the relative positions      
+
+> 14 Appendix C repeats this exercise with two further specifications: i) a larger corpus, D= 1 ,000 and Nd= 10 ,000 (Appendix C.1); and ii) a more concentrated topic-mixture distribution ( α= 0 .01) that puts more mass near the simplex vertices (Appendix C.2).
+
+21 (a) SVD-β (b) SGNS         
+
+> Figure 3: Word embeddings for Design 1 ( K= 2): SGNS vs. the closed-form SVD-β
+> construction of Proposition 1, both computed on the same corpus ( D= 363, Nd= 487). Colors mark the dominant topic from the true Bmatrix.
+
+of words reflect their loadings: anchor words (e.g., Mango, Grapefruit, Kale) lie at the extremes, while mixed words (e.g., Peach, Orange) sit closer to the boundary between clusters, with their positions reflecting their relative loadings. This pattern holds exactly for SVD-β, and approximately for SGNS. On the other hand, the SVD-
+
+β embedding appears somewhat noisier (further from rank 1), perhaps reflecting the difficulty in directly matrix-factorizing the noisy sample co-occurrence structure. 
+
+Design 2: Three Topics ( K = 3 ). I next split the ”fruit” category into a ”citrus” topic (orange) and a ”non-citrus” topic (red), while keeping the same 22 vegetable topic (green). The topic-word matrix is 
+
+B =
+
+
+
+0.10 0.05 0.00 
+
+0.15 0.02 0.01 
+
+0.13 0.04 0.00 
+
+0.19 0.05 0.00 
+
+0.10 0.03 0.04 
+
+0.10 0.04 0.00 0.05 0.15 0.02 0.05 0.18 0.00 0.03 0.16 0.01 0.04 0.22 0.00 0.02 0.00 0.10 
+
+0.02 0.02 0.18 
+
+0.00 0.00 0.30 
+
+0.00 0.02 0.05 
+
+0.01 0.01 0.12 
+
+0.01 0.01 0.17 
+
+
+
+with rows corresponding to: Apple Banana Pear Mango Peach Cherry Orange Lemon Mandarin Grapefruit Cucumber Tomato Kale Pepper Carrot Onion (24) Kale is an anchor word for topic 3 (vegetables), but topics 1 (non-citrus fruits) and 2 (citrus) have no anchor words, though they differ in their relative loadings on the same set of words. Figure 4 shows the resulting word embeddings. With r = K = 3, the embeddings live in R3, and I project to two dimensions by simply retaining the first two coordi-nates. For SVD-β, β•1 and β•2 span the two largest-variance directions and the third column corresponds to a zero eigenvalue in population. For SGNS, the coordinate basis is chosen by the gradient-based optimizer and is arbitrary. Dropping the third coordinate projects out one mixture of the three coordinates. Both methods produce embeddings in which the three topics are clearly separated, with words organized into three distinguishable groups corresponding to non-citrus fruits (red), citrus fruits (orange), and vegetables (green). The anchor word for vegetables (Kale) sits on the edge of the convex hull, consistent with the theory: anchor words receive embeddings proportional to a single topic centroid, while non-anchor words are pulled toward mixtures of centroids in proportion to their topic loadings. Notably, the absence of anchor words for topics 1 and 2 does not prevent the embeddings from separating these two groups—the differing relative loadings of shared words across the two topics are sufficient to recover the distinction. The SGNS and SVD-β embeddings again yield qualitatively similar geometries, providing empirical support for the theoretical connections established in Section 2.3. 23 (a) SVD-β (b) SGNS 
+
+Figure 4: Word embeddings for Design 2 ( K = 3), projected into two dimensions. Both embeddings recover topic structure even though topic 3 lacks an anchor word. 
+
+Document Embeddings. Next, I compute document embeddings as the average of word embeddings within each document (cf. Equation (14)). By Proposition 3, documents with similar topic mixtures Θ •d should have similar embeddings, and document embeddings should lie in the ( K − 1)-dimensional simplex spanned by the topic centroids. Figure 5 shows the document embeddings for Design 2 ( K = 3), colored by dominant topic (projected into 2-d following the same step as in Figure 4). 15 With Dirichlet concentration parameter α = 1, the topic mixtures are well spread across the simplex, and the document embeddings fill out the simplex spanned by the three topic centroids. The two embedding methods yield similar document-embedding geometries. Appendix C.3 shows additional document-embedding figures for a version that replaces the Dirichlet prior on Θ •d with an archetype mixture in the interior of the topic simplex, with documents concentrated around the two archetypes. I note that all of the figures above are based on a single corpus. However, I found the results to be representative across multiple realizations. 
+
+> 15 Alternatively, Appendix C.5 presents a UMAP-projected version of Figure 4. UMAP’s nonlinear transformation distorts the geomerty and “warps” the simplex, but the results are qualitatively similar. I use UMAP projections in our empirical application in Section 4, where the dimensionality is much larger.
+
+24 (a) SVD-β (b) SGNS 
+
+Figure 5: Document embeddings for Design 2 ( K = 3), projected in two dimensions. Color indicates the dominant topic. 
+
+The rank of the SGNS target. Remark 3 reduces the gap between the SGNS target and the trained embedding to a property of the spectrum of T = log R −
+
+log ν 1V 1⊤ 
+
+> V
+
+. The shift is a known constant and cancels in the row differences, so the question is how much of log R the remaining K − 1 directions capture. I measure that by 
+
+πK−1 =
+
+P 
+
+> i≤K−1
+
+|λi(log R)|
+
+P 
+
+> i
+
+|λi(log R)| , (25) the share of spectral mass in the leading K − 1 eigenvalues. Under the two designs above the spectrum is available exactly — R = ˜BG ˜B⊤ from the design B and the closed-form Dirichlet moments — and gives πK−1 = 0 .88 for Design 1 and 0 .91 for Design 2. In these designs we can therefore think of Proposition 2 approximately describing the trained embedding and not only its target, in line with the empirical results above. Table 2 reports πK−1 on a grid of vocabulary sizes and topic counts un-der a generic data-generating process: each column of B and each topic mixture Θ •d
+
+is an independent draw from a symmetric Dirichlet( α = 1), uniform on its simplex. Across the grid, a rank-K approximation remains close to the SGNS target. 16   
+
+> 16 It is worth noting that the quality of the approximation degrades for smaller values of α(cf. Appendix C.6.
+
+25 V K = 2 K = 3 K = 5 K = 10 K = 25 K = 50 100 0.909 0.926 0.946 0.968 0.987 0.995 250 0.905 0.924 0.943 0.966 0.985 0.993 500 0.905 0.923 0.943 0.964 0.984 0.992 1,000 0.905 0.924 0.943 0.964 0.983 0.991 2,500 0.905 0.923 0.943 0.963 0.983 0.991 
+
+Table 2: Share of the spectral mass of log R carried by its leading K − 1 eigenvalues, 
+
+πK−1 = P 
+
+> i≤K−1
+
+|λi|/ P 
+
+> i
+
+|λi|, at α = 1. Each column of B and each topic mixture Θ •d is drawn from a symmetric Dirichlet( α); R is then formed in population from B and G, so no corpus is sampled. Means over 8 draws; the largest standard deviation in any cell is 0.004. The negative-sampling shift contributes one further eigenvalue, of size V log ν, and is excluded. 
+
+# 4 Application: Clustering Metropolitan Economies 
+
+I now apply the embedding-then-cluster pipeline to 363 U.S. Core-Based Statistical Areas (CBSAs). The empirical setup is straightforward: generate a textual economic description of each CBSA, embed the descriptions, and apply k-means. The theory in Section 2 provides a principled reading of what this pipeline does. Corollary 1 gives the pairwise document-embedding distance in closed form: 
+
+∥μd − μd′ ∥22 = (Π •d − Π•d′ )⊤ (R − 1V 1⊤ 
+
+> V
+
+) (Π •d − Π•d′ ).
+
+Running k-means on these embeddings groups CBSAs whose descriptions imply sim-ilar mixtures. The clusters therefore reflect narrative similarity , and each centroid corresponds to a well-defined mixture. Our main empirical analysis considers five embedding models: (i) the closed-form SVD-β embedding of Proposition 1; (ii) corpus-trained skip-gram with nega-tive sampling (SGNS; Proposition 2); (iii) corpus-trained continuous bag-of-words (CBOW) 17 ; (iv) pretrained Word2Vec averaging, using the Google News vectors; and (v) a transformer-based variant using OpenAI’s text-embedding-3-large .18 
+
+Detailed method descriptions are collected in Appendix B.2. 
+
+> 17
+
+Both corpus-trained arms and SVD-β use the full document as context. Note that the model from Section 2.1 suggests this choice: since the words of document d are drawn from the same mixture Π •d, positions within a document are exchangeable, so R does not depend on the window at all in population and every within-document pair is another draw on the same object. Widening the window therefore reduces estimation variance without moving the target, and taking all pairs is the efficient choice. I show in Appendix B.8 that results are robust to shorter context windows, although SVD-β tends to deteriorate for very short windows J.
+
+> 18
+
+Alternatively, one could ask an LLM to form the clusters and assign labels directly, skipping 
+
+26 Remark 5 (Theoretical coverage of the five methods) . The five differ in how much of Section 2 applies to them. Method (i) is the theory’s own construction: it computes the rank-( K − 1) factorization of Proposition 1 directly, and averaging within a doc-ument returns exactly the μd of Proposition 3. Method (ii) is the corpus-trained arm the theory covers: the SGNS target is log R up to a constant, so by Proposition 2 it recovers the topic-loading geometry up to a distortion bounded by κR, the exponen-tiated spread of log R (Section 2.3). Method (iii), CBOW, is not covered: it has no closed-form V × V target once the context holds more than one word (Section 2.3), and the context here is the full document. Method (iv) runs the same architecture on a different corpus, so the geometry it carries is that of the corpus it was trained on—the object of interest only if that corpus and ours share their topic structure. Method (v) falls outside the framework altogether: it is a contextual transformer rather than an average of word vectors. I include it as a benchmark for a modern state-of-the-art approach to embeddings. For each Core-Based Statistical Area (CBSA), a 500-word economic description is generated by Claude Opus 4.8. I provide the exact prompt in Appendix B.1. I then apply k-means with L = 5 clusters to group the 363 CBSAs. Table 3 summarizes the five approaches.                              
+
+> Method LCluster sizes Max share Within-cluster share
+> Corpus CBOW 557/62/68/85/91 25% 0.90 Corpus SGNS 560/71/109/34/89 30% 0.78 SVD-β(r= 50) 597/154/75/21/16 42% 0.77 Pretrained (Google News) 589/33/109/64/68 30% 0.83 LLM Embeddings 525/114/59/101/64 31% 0.90
+> Table 3: Comparison of clustering approaches (363 CBSAs). Cluster sizes are member counts by k-means label index. “Within-cluster share” is the fraction of embedding variance within clusters.
+
+All five identify recognizable archetypes: energy dependence, university and gov-ernment anchoring, deindustrialization, and diversified growth. I give per-cluster interpretations for all methods in Appendix B.10. The number of clusters is chosen to balance interpretability and flexibility. I consider alternative values for L in the Appendix (e.g., Online Appendix Figures OA.1 and OA.3). The qualitative finding 
+
+> the embedding step. This did not work at this scale: prompted with all 363 descriptions, the model returned partitions covering only part of the sample and including locations absent from the input list.
+
+27 that these groupings separate economic narratives (and employment dynamics, cf Section 4.1) holds across different choices of L.
+
+## 4.1 Local Employment Dynamics 
+
+I return to our motivating example in the introduction: modelling local employment dynamics. In order to do so, I estimate autoregressive models for log employment across 363 CBSAs and examine whether the text-based clusters we derived above capture meaningful heterogeneity in employment dynamics. Specifically, for each of the five embedding-based clustering methods (SVD-β, corpus-trained SGNS, corpus-trained CBOW, pretrained Word2Vec averaging, and LLM embeddings), I estimate: 
+
+yit = αi + ρ(gi)1 yi,t −1 + ρ(gi)2 yi,t −2 + εit , (26) where yit is log total employment in year t at the CBSA level, and gi ∈ { 1, . . . , L }
+
+denotes the cluster membership of CBSA i.19 I take p = 2 as the primary specification based on our discussion in Appendix B.7. I thus allow the AR(2) slope coefficients in (1) to vary across groups, but remain common within each group—using our text-based cluster assignments. The hope is that similarity in economic conditions between CBSAs translates into similar local employment dynamics. Under the topic model of Section 2, I can make this condition more precise: that similarity in topic shares between CBSAs translates into similar local employment dynamics. As a concrete example, this might entail that descriptions with a relatively large share of words about manufacturing decline (treating this as a “topic”), are associated with similar employment dynamics. Figure 6 depicts the group-specific implied impulse response functions (IRF) over a 10-year horizon under each clustering method. The top four panels use embedding-based groupings. The bottom row gives the two groupings that do not use the text. The bottom left uses residual k-means, which is formed by applying k-means clus-tering to the residuals from a pooled AR(2) specification—analogous to the first step of Bonhomme et al. (2022). The bottom right is observables k-means, applied to 1970 covariates (standardized industry mix, government and military employ-ment shares, education, foreign-born and minority shares and population density; 
+
+> 19 I construct a panel of geographically-harmonized metropolitan areas for which I can measure employment at an annual frequency starting in 1969. I use 2019 as the last year of analysis to avoid complications from the COVID-19 pandemic and recession. I focus on wage and salary employment, which is constructed by the Bureau of Economic Analysis (BEA) using administrative data and is less sensitive than self employment to changes over time in the tax code. The covariates used for the observables benchmark in Section 4.1 are 1970 cross-sections from the same source.
+
+28 Figure 6: Group-specific AR(2) impulse responses under each clustering ( L = 5), with the pooled FE estimate (dashed) for reference. The top four panels are embedding-based groupings; corpus CBOW is omitted here for space and appears in Table 4. The bottom row gives the two groupings that do not use the text—residual k-means and observables 
+
+k-means, on the 1970 covariates. 
+
+see Appendix B.9 for more detail). I use L = 5 throughout to match the number of clusters used by the text-based methods and report alternative specifications in Appendix B.5. To quantify how well each clustering method captures heterogeneity in employ-29 ment dynamics, I compare the between-group variance of the 363 unit-specific IRFs across clustering methods in Table 4. I do this in two ways: first, I compute the ratio of between-group variance to total variance, which is a standard measure of how well a grouping explains variation in a variable of interest (column 1). Since the total variance includes estimation error in the unit-specific responses, which is substantial in our application, I also include a version that normalizes the between-group vari-ance relative to a permutation floor, which is the mean between-group variance over 2,000 random relabelings that hold the realized group sizes fixed (column 2). This is the level of between-group variance a random partition of the same sizes would deliver and provides a reference point for evaluating whether a given partition cap-tures real heterogeneity in employment dynamics. The last two columns count how frequently the grouping exceeds the two non-text based benchmarks when I vary the number of clusters L ∈ { 2, 3, 4, 5, 6, 8, 10 }.
+
+Grouping % Between Ratio to floor Exceeds benchmark, of 7 L values Residual k-means Observables k-means Corpus SGNS 28.3% 25.7 × 7 6LLM Embeddings 27.1% 24.7 × 7 6SVD-β (r = 50) 24.3% 21.8 × 7 6Corpus CBOW 22.5% 20.4 × 7 5Pretrained (Google News) 18.8% 16.8 × 6 5Observables k-means 16.7% 15.5 × 7 —Residual k-means 13.9% 12.6 × — 0
+
+Table 4: Grouping-level summary at L = 5, AR(2). “% Between” is the share of total cross-city IRF variance explained by between-group differences in group-mean IRFs. “Ratio to floor” is the between-group variance of the 363 unit-specific impulse responses divided by that grouping’s own size-matched permutation floor. The last two columns count how frequently the grouping exceeds each benchmark out of 7 cluster counts we consider. The upper block is the four embedding-based groupings, the lower the two that do not use the text. 
+
+At L = 5, every grouping separates employment dynamics far more sharply than chance, and the five text-based groupings tend to separate it more sharply than the two benchmarks. 20 Varying L does not change the main finding: The textual    
+
+> 20 I date the covariates to 1970, so that they are effectively predetermined for a panel beginning in 1969. Repeating the exercise at later vintages raises its ratio monotonically, from 15 .5×at 1970 to 18 .6×at 2000. Nevertheless four of the five text methods exceed the benchmark at every vintage. I acknowledge that the same objection (not being predetermined) applies to the textual descriptions, which span 1979–2019 and are thus concurrent with the outcome window. This is because it is
+
+30 descriptions seem to carry real information about employment dynamics, more so than the two benchmarks I consider. Among the text-based methods, pretrained Word2Vec averaging tends to perform worst, while SVD-β, corpus-trained SGNS, and the LLM embeddings tend to perform best, trading top spots at different values of L (cf. Appendix B.5). It is perhaps worth noting that a simple closed-form factorization computed from the corpus in seconds matches a commercial transformer embedding on this task. 
+
+In-sample vs Out-of-sample. Our exercise in this section is entirely in-sample.I read the evidence as establishing that narrative text encodes economically meaningful structure about local labor markets—more of it than either benchmark recovers, including the curated covariate set—but not as establishing that text-based peer groups are the preferred way to model this panel for forecasting purposes. 
+
+# 5 Conclusion 
+
+Embeddings are ubiquitous in NLP and increasingly used in economics. This paper asks what replacing a text with its embedding preserves, under a generative model in which documents are mixtures of K latent topics. At the word level, an embedding built from how often words appear together reflects the topic geometry: words that play the same role across topics end up close together. Extra dimensions do no harm, so a researcher need not know how many topics a corpus contains. At the document level, proximity in embedding space is proximity in topic mixture. This means that a cluster of document embeddings corresponds to a set of documents with similar mixtures, and that adjusting for the embedding is equivalent to adjusting for the topic mixture. Another lesson is that dimension alone is not the relevant property. Two align-ments matter: the embedding must recover the text’s low-dimensional structure, and that structure must be the one the analysis requires. My theory delivers the first. At the same time, connecting embeddings to the parameters of an underlying topic model makes the second an assumption about the economics rather than the algorithm. Take the control use: the informal premise that “the embedding is a suf-ficient control” reduces to the transparent condition that the topic mixture captures  
+
+> challenging to obtain a good textual description of the economy in the 1960s for some of the smaller CBSAs in the sample. Perhaps the modest increase in performance from using later vintages of observables, well short of the margin by which text exceeds the two benchmarks, is reassuring in that regard.
+
+31 the confounding—an assumption with economic content that a practitioner can de-fend. Directly assuming that d-dimensional embedding vectors in Euclidean space are a sufficient control is much harder to justify on economic grounds. In my application, I find that clustering LLM-generated descriptions of 363 U.S. metropolitan areas yields interpretable economic types, and those types separate local employment dynamics more sharply than a curated set of industry and demo-graphic covariates. The comparisons line up with the theory: SVD-β and corpus-trained SGNS, which target closely related population objects, perform similarly, while pretrained averaging, which carries the geometry of a different corpus, trails at almost every number of clusters. Remarkably, our closed-form embedding matches a commercial transformer embedding on this task, at a fraction of the cost and with a guarantee attached. Several extensions merit investigation. Transformer embeddings currently fall outside our theoretical framework. Characterizing what transformer architectures learn about topic structure—building on Li et al. (2023)—would bring the embed-dings practitioners actually use inside the theory. A second extension is dynamic topic models (Blei and Lafferty, 2006): characterizing how embeddings track changes in word meaning over time. Finally, the pipeline studied here—generate text with a language model, embed it, then use the embedding downstream—retains the representational power of a large model while leaving every downstream step inspectable and reproducible. That division of labour seems a reasonable way to incorporate such models into empirical work. 32 Online Appendix 
+
+# A Other Word-Embedding Algorithms under the Topic Model 
+
+Section 2.3 of the main paper states what other standard embedding algorithms target and what those targets recover. This appendix supplies the background. Section A.1 writes the four objectives in a common form. Sections A.2–A.5 derive the specific target of this algorithm by algorithm. Section A.6 then shows what the embedding inherits from the topic model, using only that every pair of words co-occurs. 
+
+## A.1 The algorithms as weighted low-rank fits 
+
+In the word embedding literature, log (R) is called the pointwise mutual information PMI( v, u ) = log Rvu (Levy and Goldberg, 2014), and I follow this convention here. Set 
+
+Rmin := min  
+
+> v,u
+
+Rvu , Rmax := max  
+
+> v,u
+
+Rvu , κR := Rmax /R min . (OA.1) Each of the four algorithms scores the pair ( v, u ) by an inner product Xvu = w⊤ 
+
+> v
+
+˜wu and fits that score to the data by minimizing a loss. Three ingredients pin the loss down: a response 
+
+tvu read off the corpus, a convex generator ϕ, and weights ωvu > 0 on the pairs. Response and score are different kinds of object. The response is data, fixed once the corpus is given; the score is the parameter, constrained to rank r. Lemma OA.1 then shows that the weights drop out of the population optimum, so what the score converges to is determined by tvu and 
+
+ϕ alone. Take the generator first. Fix a strictly convex, differentiable ϕ on an interval I and set 
+
+Dϕ(t, y ) := ϕ(t) − ϕ(y) − ϕ′(y)( t − y), t, y ∈ I , (OA.2) the vertical gap at t between ϕ and its tangent line at y — the Bregman divergence generated by ϕ (Bregman, 1967) (Also see Collins et al. (2001); Udell et al. (2016)). Convexity makes 
+
+Dϕ ≥ 0 and strict convexity makes it vanish only at t = y, so Dϕ(t, ·) measures discrepancy from t; it is not symmetric and is not a metric. Every loss below is a Dϕ for one of three generators, 
+
+ϕ(y) = 12 y2, ϕ(y) = P 
+
+> v
+
+yv log yv, ϕ(y) = y log y + (1 − y) log(1 − y),
+
+which give squared error, the Kullback–Leibler divergence, and the Bernoulli log-loss respec-tively. The previous paragraph gave us a discrepancy, the Bregman divergence. But there is a scale mismatch: the score Xvu lives in R. On the other hand, the domain of the response tvu ,33 I, depends on the algorithm, but generally R̸ = I (cf. Table 1). The derivative ϕ′ is the link 
+
+that maps R onto the response scale: Strict convexity makes ϕ′ strictly increasing and hence invertible, so ( ϕ′)−1(Xvu ) is the score expressed on the response’s scale — the fitted value for 
+
+tvu . A loss of the form Dϕ
+
+ tvu , (ϕ′)−1(Xvu ) therefore compares response with fitted value, and I call the matrix with entries ϕ′(tvu ) the algorithm’s target .
+
+Lemma OA.1 (Weights do not move the target) . Let ωvu > 0 and tvu ∈ int I for all v, u .Then, the unconstrained minimizer of P 
+
+> v,u
+
+ωvu Dϕ
+
+ tvu , (ϕ′)−1(Xvu ) over X ∈ RV ×V is Xvu =
+
+ϕ′(tvu ), entrywise and independently of the weights. Proof. Each term is nonnegative and vanishes iff ( ϕ′)−1(Xvu ) = tvu ; ϕ′ is strictly increasing, hence invertible, so this holds iff Xvu = ϕ′(tvu ). The weights are positive, so minimizing the sum minimizes each term. Lemma OA.1 states that the score equals the target whenever the rank constraint is non-binding. 
+
+## A.2 Full-softmax skip-gram 
+
+The population full-softmax skip-gram objective is 
+
+Lfull (W, ˜W ) := X 
+
+> v,u ∈[V]
+
+Mvu log exp( w⊤ 
+
+> v
+
+˜wu)
+
+P  
+
+> v′∈[V]
+
+exp( w⊤ 
+
+> v′
+
+˜wu), (OA.3) where wv is the v-th row of W and ˜ wu is the u-th row of ˜W , so that X := W ˜W ⊤ collects the scores Xvu = w⊤ 
+
+> v
+
+˜wu. Equation (OA.3) is the population counterpart of the skip-gram model of Mikolov et al. (2013c, eqs. 1–2), whose objective averageslog P (w | c) over corpus positions within a context window; here that average is replaced by the population co-occurrence M .
+
+Lemma OA.2 (Full-softmax skip-gram target) . Under Assumptions 1 and 2, the uncon-strained maximizers of (OA.3) satisfy X∗ = log R + log q 1⊤ − 1g⊤ for some g ∈ RV .Proof. Lemma OA.1 does not apply directly: the softmax in (OA.3) normalizes over the whole column X•u, so the loss is not separable across v within a column, and we need to consider entire columns instead. Writing Mvu = quP (w=v | c=u) and svu := softmax( X•u)v,
+
+Lfull = − X
+
+> u
+
+qu KL  P (w | c=u) s•u
+
+ − X
+
+> u
+
+quH P (w | c=u), (OA.4) whose second term does not involve X. So the objective is again a weighted Bregman fit, with response tvu = P (w=v | c=u), the entropy generator, and weight ωvu = qu; what differs from Lemma OA.1 is only that the divergence is taken one column at a time rather than one entry at a time. It is maximized at s•u = P (w | c=u) for every u, that is at 
+
+Xvu = log P (w=v | c=u) + gu, the column gauge g being free because softmax is invariant to adding a constant to a column. Finally log P (w=v | c=u) = log Rvu + log qv by definition of 
+
+R.34 A.3 SGNS 
+
+Computing the population full-softmax skip-gram objective is computationally difficult. Mikolov et al. (2013c) therefore introduce negative sampling as an approximation used in practice, which I consider next. Summing the pair-specific objective of Levy and Goldberg (2014, eq. 5) over ( v, u ) and normalizing counts by corpus size gives the population SGNS objective 
+
+Lpop (W, ˜W ) := X 
+
+> v,u ∈[V]
+
+n
+
+Mvu log σ(w⊤ 
+
+> v
+
+˜wu) + ν q vqu log σ(−w⊤ 
+
+> v
+
+˜wu)
+
+o
+
+, (OA.5) with σ(x) := 1 /(1 + e−x), ν ≥ 1 the negative-sampling rate, and wv, ˜wu as above. 21 
+
+Lemma OA.3 (SGNS target) . Under Assumptions 1 and 2, (OA.5) is a weighted Bernoulli-likelihood fit with weights ωvu = qvqu(Rvu + ν) and responses tvu = Rvu /(Rvu + ν), and its unconstrained maximizers satisfy X∗ = log R − log ν 1V 1⊤ 
+
+> V
+
+.Proof. With ωvu := Mvu + νq vqu = qvqu(Rvu + ν) and tvu := Mvu /ω vu = Rvu /(Rvu + ν), 
+
+Lpop (W, ˜W ) = X
+
+> v,u
+
+ωvu 
+
+n
+
+tvu log σ(Xvu ) + (1 − tvu ) log σ(−Xvu )
+
+o
+
+= − X
+
+> v,u
+
+ωvu Dϕ
+
+ tvu , σ (Xvu ) + const ,
+
+where X := W ˜W ⊤ and ϕ(y) = y log y + (1 − y) log(1 − y), for which (OA.2) is the Bernoulli Kullback–Leibler divergence and ϕ′ = logit = σ−1. Assumption 2 puts tvu in (0 , 1), so Lemma OA.1 applies and gives X∗ 
+
+> vu
+
+= logit( tvu ) = log( Rvu /ν ). The target is Levy and Goldberg (2014, eqs. 6–7): they let the inner products vary freely, which is the step Lemma OA.1 formalizes, and solve for ⃗w ·⃗c = PMI( w, c ) − log ν. The weighted-Bernoulli form is what I add. Levy and Goldberg (2014, Section 3.2) observe that the loss on a pair depends on its co-occurrence count and its expected negative-sample count, and conclude that SGNS performs a weighted matrix factorization; they do not identify the weight ωvu and response tvu that make it one, and those are what place SGNS in the same frame as the other three algorithms in Table 1. 
+
+## A.4 GloVe 
+
+The GloVe model (Pennington et al., 2014) minimizes the population objective 
+
+LGloVe (W, ˜W , b, ˜b) := X 
+
+> v,u ∈[V]
+
+f (Mvu )
+
+
+
+w⊤ 
+
+> v
+
+˜wu + bv + ˜bu − log Mvu 
+
+2
+
+, (OA.6)                 
+
+> 21 Implementations draw negatives from a smoothed unigram distribution rather than from q:gensim uses
+> P0.75 (u)∝q3/4
+> u(Mikolov et al., 2013c; Levy et al., 2015). This replaces qvquby qvP0.75 (u) in (OA.5) and shifts the target to log Rvu + log  qu/P 0.75 (u)−log ν. The added term is constant down each column, so it cancels in the row differences that Proposition 2 uses (cf. Remark 4); I therefore work with the unsmoothed objective.
+
+35 where f : [0 , ∞) → [0 , ∞) is positive on the support of M and bv, ˜bu ∈ R are learned per-word biases. 
+
+Lemma OA.4 (GloVe target) . Under Assumptions 1 and 2 and with f positive on supp( M ),the unconstrained minimizers of (OA.6) satisfy Xvu + bv + ˜bu = log Mvu entrywise. With 
+
+b∗ 
+
+> v
+
+= − log qv and ˜b∗ 
+
+> u
+
+= − log qu the implied score matrix is X∗ = log R.Proof. Apply Lemma OA.1 with ϕ(y) = y2/2, response log Mvu , and weights f (Mvu ). Decom-posing log Mvu = log qv + log qu + log Rvu and absorbing the marginals into the biases leaves 
+
+Xvu = log Rvu .The biases do here what the gauge g does in Lemma OA.2: both absorb the marginal offsets that separate log M from log R.
+
+## A.5 CBOW 
+
+CBOW (Mikolov et al., 2013a) reverses the conditioning relative to skip-gram: it predicts the target word from the average of its surrounding context embeddings. The population objective is 
+
+LCBOW (W, ˜W ) := X
+
+> w, u
+
+P (w, u) log exp  h⊤ 
+
+> w
+
+¯hu
+
+P  
+
+> w′∈[V]
+
+exp  h⊤ 
+
+> w′
+
+¯hu
+
+, (OA.7) where u = ( u1, . . . , u 2J ) is the context window and ¯hu := 12J
+
+P2Jj=1 huj is the average context embedding. At the population optimum the softmax form yields h⊤ 
+
+> w
+
+¯hu = log P (w | u) + κ(u)with κ(u) the per-context log-normalizer. With a single-word context this is Lemma OA.2.. The same relabeling applies under negative sampling: with a one-word context the CBOW negative-sampling objective is (OA.5) with W and ˜W exchanged, and M is symmetric, so its target is again log R − log ν 1V 1⊤ 
+
+> V
+
+and Proposition 2 applies verbatim. With more than one context word it does not: h⊤ 
+
+> w
+
+¯hu is a function of the context bundle rather than of pairs ( w, c ), so there is no V × V target matrix analogous to those in Table 1, and a PMI factorization for CBOW analogous to Lemma OA.3 remains open in the literature. 
+
+## A.6 What the targets inherit from the topic model 
+
+The proof of Proposition 2 bounds distances between rows of log R and then carries them to the embedding. That proposition is stated for the SGNS target, whose only offset is a scalar. The following lemma isolates its first step and states it more generally — for an arbitrary entrywise transform and arbitrary offsets constant along a row or a column. The row offsets are what it takes to cover the full-softmax and GloVe targets: both carry an offset constant along a row, and a row offset does not cancel in a row difference (Remark 4). 
+
+Lemma OA.5 (Index sufficiency) . Let Assumptions 1 and 2 hold, let ψ be any function on 
+
+(0 , ∞), let a, b ∈ RV , and set Tvu := ψ(Rvu ) + av + bu. Then, for all v, v ′ ∈ [V ], ˜Bv• = ˜Bv′•
+
+implies Tv• − Tv′• = ( av − av′ )1⊤.
+
+36 Proof. R = ˜BG ˜B⊤ (8) gives Rvu = ˜B⊤
+
+> v•
+
+G ˜Bu•, so ˜Bv• = ˜Bv′• gives Rv• = Rv′• and hence 
+
+ψ(Rv•) = ψ(Rv′•) entrywise. The column offsets bu cancel in the difference. The hypothesis is the one used throughout: since ˜B = D−1 
+
+> q
+
+B, ˜Bv• = ˜Bv′• holds exactly when Bv• = λB v′• for some λ > 0, in which case qv = λq v′ . Words with proportional loadings therefore have target rows that differ by the constant av − av′ , in every one of the targets and whatever transformation produced them. Whether that constant is zero is what separates the algorithms: for SGNS a = 0, so the rows coincide and Proposition 2 carries this to the embedding; for full-softmax and GloVe a̸ = 0, and Remark 4 works out what survives. 37 B Additional Application Results 
+
+## B.1 Prompts and Generation Settings 
+
+Three separate calls to a language model appear in the application, and only the first affects the partitions. This subsection records all three, since the corpus is the one input to the exercise that a reader cannot inspect directly. 
+
+Generating the descriptions. Each of the 363 descriptions comes from a single call to 
+
+claude-opus-4-8 with a 1,500-token cap. The user message is    
+
+> Summarize the economic development of {city }from 1979-2019 in around 500 words with a focus on the labor market. Focus on broad trends rather than specific numbers, and on aspects that make it unique relative to the US as a whole.
+
+and the system message is   
+
+> Write a substantive, best-effort description using your general knowledge of the place. You do not need verified statistics or sources, and you should not refuse or add disclaimers about lacking data or access -- always produce a description, doing the best you can even when you are uncertain. Start right away with the description, without an opening sentence like ‘Here’s a 500-word summary of Philadelphia’s economic development:’.
+
+Four features of this are deliberate and worth stating. First, “broad trends rather than specific numbers” is there to discourage invented statistics. The exercise needs qualitative economic structure, not a list of numbers, and the model is known to hallucinate statistics. Further, it will tend to recall numbers for locations it knows well and revert to broad trends for those it knows less well anyways, which would systematically change the structure of the description across locations. Second, and relatedly, the refusal suppression is what makes the corpus complete. Without it the model declines or hedges for the smaller CBSAs it knows least about. Third, “unique relative to the US as a whole” pushes the descriptions toward cross-sectional differentiation. A prompt asking simply for an economic history would return text dominated by features common to all US metros—national recessions, the general decline of manufacturing—which contribute a near-constant component to every document embedding and so cannot separate cities. Fourth, the instruction to start immediately, without a preamble, matters for the same reason. A boilerplate opening clause repeated across 363 documents is a constant vector added to every average of word embeddings, which shrinks the relative distances the clustering depends on. The resulting corpus is 363 descriptions of 476 to 510 words, median 495, so document length is close to constant. 38 Labelling the clusters. The cluster names in Section B.10 come from a second call, made once per cluster per method, to claude-opus-5 at low reasoning effort with a 2,000-token cap. It is given the member city names and their descriptions and asked       
+
+> Your response should include less than 60 words. Start right away to list the common themes. Cities: {cities }.Based on the following documents, what do these cities have in common? Identify the common themes: {documents }
+
+These labels are purely ex post . They are produced after the partitions are fixed, play no part in forming them, and enter no statistic reported anywhere in the paper—they exist only to interpret the clusters. 
+
+The direct-LLM alternative. The comparison in Section 4’s footnote asks claude-opus-5 ,with a 4,000-token cap, to partition the cities itself rather than embed them: it receives all 363 descriptions at once and is asked to return exactly L clusters as JSON, each with a name, a member list and a short explanation, with the instruction that every city belong to exactly one cluster. It did not comply at this scale. The returned partition covered only part of the sample and included place names absent from the input list, which is why the paper routes through embeddings instead. 
+
+## B.2 Application Embedding Implementation 
+
+This section specifies the five embedding methods compared in Section 4. 
+
+Common to all five. Every method starts from the same 363 descriptions and differs only in the map from a description to a vector. Text is lower-cased and tokenized on the regular expression [A-Za-z]+(?:’[A-Za-z]+)? , which keeps letter strings with internal apostrophes and drops digits and punctuation. The result is 183 ,633 tokens and 7 ,411 distinct word types, with documents between 485 and 525 tokens long (median 506), so the averages below are taken over a near-constant number of terms. The four word-level methods embed words and then take the unweighted within-document average, which is the μd of Proposition 3; the fifth embeds the document directly. Each of the five is then clustered by k-means with L = 5, 
+
+k-means++ seeding (Arthur and Vassilvitskii, 2007) and 500 restarts, keeping the best fit. 
+
+B.2.1 Closed-Form SVD-β Embedding 
+
+We directly estimate bR from the corpus word-context co-occurrence matrix (taking the full document as context), center to bR − 1V 1⊤ 
+
+> V
+
+, and take the top-r eigendecomposition. The resulting bβ = ΦΛ 1/2 satisfies bβ bβ⊤ = bR−1V 1⊤ 
+
+> V
+
+on the top-r eigenspace. Document embeddings are the within-document average of bβv. The eigenpairs are computed by Lanczos iteration. 
+
+Vocabulary filter. We restrict to words appearing in at least 5 documents, giving V = 2 ,440 types and 94 .1% token coverage. Rare words have very small marginal probabilities P (w), inflating 1 /P (w) in the centered ratio, making it computationally unstable, and dominating the resulting eigendecomposition. 39 Choice of dimension. Proposition 1 gives rank K − 1, and K is not observable for the CBSA corpus. By Remark 1 we do not need it: any r ≥ K − 1 recovers the same geometry in population, so the dimension only has to be chosen large enough. We set r = 50 as the primary specification. Section B.6 reports the sweep over r ∈ { 10 , 25 , 50 , 100 , 200 } in place of the elbow the spectrum does not supply. 
+
+B.2.2 Corpus-Trained Word2Vec: SGNS 
+
+Skip-gram with negative sampling using the gensim implementation ( ˇReh˚ uˇ rek and Sojka, 2010): r = 50 dimensions, min count = 2, 5 epochs, and the full document as context, implemented as window J = 10 ,000, which exceeds every document length. gensim draws the effective half-window uniformly on {1, . . . , window } per token, so about 95% of tokens see the entire document and the rest a narrower one. Section B.8 reports the sweep over 
+
+J ∈ { 5, 10 , 20 , 50 } The remaining hyperparameters are gensim defaults: ν = 5 negative samples per update drawn from the unigram distribution raised to the 0 .75 power, frequent-word downsampling at threshold 10 −3, and an initial learning rate of 0 .025 decayed linearly. 
+
+Epochs. The 5 epochs are set against the 200 of the CBOW arm (Section B.2.3) because a common count would not be equal training. CBOW makes one update per target token, while SGNS makes one per (target, context) pair, so at full-document context SGNS performs roughly 500 times as many updates per epoch. Matching CBOW’s 200 epochs would give SGNS about 500 times CBOW’s total training rather than the same amount. At 5 epochs SGNS still performs about 12 times CBOW’s total updates, so it is not the under-trained arm. At the narrower windows of Section B.8 the ratio is small enough that both objectives run 200 epochs. 
+
+Coverage. After min count = 2, the trained vocabulary contains 4 ,876 word types covering 98 .6% of the 183 ,633 tokens, against 86 .3% for the pretrained vectors of Section B.2.4, because the vocabulary is learned from the data rather than inherited. The trade-off is corpus size: 184 thousand tokens is arguably small to train a Word2Vec model from scratch. 
+
+B.2.3 Corpus-Trained Word2Vec: CBOW Settings. r = 50 dimensions, min count = 2, 200 epochs, and the full document as context. Full-document context is implemented as window J = 10 ,000. The remaining hyperparameters are gensim defaults: 5 negative samples per update drawn from the unigram distribution raised to the 0 .75 power, frequent-word downsampling at threshold 10 −3, and an initial learning rate of 0 .025 decayed linearly. 
+
+B.2.4 Pretrained Word2Vec: Google News 
+
+We average pretrained Google News Word2Vec vectors—300-dimensional, trained on part of a Google News corpus of about 100 billion words (Mikolov et al., 2013b) and distributed through 
+
+gensim —over each CBSA description, yielding 363 embeddings in R300 . These vectors cover 86 .3% of the corpus tokens; the remainder are dropped from the average. 40 B.2.5 LLM Embedding-Based Clustering 
+
+Using OpenAI’s text-embedding-3-large , I embed each of the 363 descriptions into R3072 .This is a contextual transformer rather than an average of word vectors, so none of the results of Section 2 technically apply to it; it enters as a benchmark for current practice. 
+
+## B.3 Choice of L for the Application Embeddings 
+
+For each embedding method in Section 4, I use L = 5 clusters. Figure OA.1 reports the within-cluster sum of squares (WCSS) as a function of L for all five methods. In each case the elbow is gradual, but L = 5 provides a reasonable trade-off. The absence of a sharp elbow is itself informative: it is what one expects when the document embeddings are spread over the simplex rather than concentrated at a small number of vertices, which is the regime Section 2 distinguishes from exact recovery. The vertical axis is the share of embedding variance within clusters. 41 1 2 3 4 5 6 7 8 9
+
+Number of clusters (L) 
+
+> 0.6 0.7 0.8 0.9 1.0
+> Within-cluster share of variance
+
+(a) SVD-β (r = 50) 1 2 3 4 5 6 7 8 9
+
+Number of clusters (L)  
+
+> 0.6 0.7 0.8 0.9 1.0
+> Within-cluster share of variance
+
+(b) Corpus SGNS 1 2 3 4 5 6 7 8 9
+
+Number of clusters (L) 
+
+> 0.6 0.7 0.8 0.9 1.0
+> Within-cluster share of variance
+
+(c) Corpus CBOW 1 2 3 4 5 6 7 8 9
+
+Number of clusters (L)  
+
+> 0.6 0.7 0.8 0.9 1.0
+> Within-cluster share of variance
+
+(d) Pretrained (Google News) 1 2 3 4 5 6 7 8 9
+
+Number of clusters (L) 
+
+> 0.6 0.7 0.8 0.9 1.0
+> Within-cluster share of variance
+
+(e) LLM embeddings 
+
+Online Appendix Figure OA.1: Within-cluster sum of squares as a function of the number of clusters L for each of the five embedding methods (363 CBSAs), normalized by the total sum of squares. For k-means the centroids are the cluster means, so TSS = WCSS + BCSS holds exactly and the plotted quantity is the share of embedding variance still within clusters; one minus it is the share the partition explains. 
+
+42 B.4 Cluster Visualizations in UMAP Space 
+
+> 43
+
+8 9 10 11 12 13 14 UMAP-1 01234567UMAP-2 
+
+Decatur, IL Lexington-Fayette, KY Sacramento--Arden-Arcade--Roseville, CA Corpus Christi, TX Lawton, OK 
+
+Cluster 1 Cluster 2 Cluster 3 Cluster 4 Cluster 5 (a) SVD-β (r = 50) 5 6 7 8 9 10 11 12 13 UMAP-1 5678910 11 12 UMAP-2 
+
+Albuquerque, NM North Port-Bradenton-Sarasota, FL Waco, TX Longview, TX Bay City, MI 
+
+Cluster 1 Cluster 2 Cluster 3 Cluster 4 Cluster 5 (b) Corpus SGNS 2 1 0 1 2 3 4UMAP-1 1
+
+012345UMAP-2 
+
+Longview, TX Lynchburg, VA North Port-Bradenton-Sarasota, FL Little Rock-North Little Rock-Conway, AR Springfield, OH 
+
+Cluster 1 Cluster 2 Cluster 3 Cluster 4 Cluster 5 
+
+(c) Corpus CBOW 5 4 3 2 1 0 1 2UMAP-1 8
+
+7
+
+6
+
+5
+
+4
+
+3
+
+2
+
+1
+
+0UMAP-2 
+
+Gadsden, AL Shreveport-Bossier City, LA Knoxville, TN Modesto, CA Columbia, SC 
+
+Cluster 1 Cluster 2 Cluster 3 Cluster 4 Cluster 5 (d) Pretrained (Google News) 4 6 8 10 12 UMAP-1 12345678UMAP-2 
+
+Madera-Chowchilla, CA Auburn-Opelika, AL Wichita Falls, TX Evansville, IN-KY North Port-Bradenton-Sarasota, FL 
+
+Cluster 1 Cluster 2 Cluster 3 Cluster 4 Cluster 5 
+
+(e) LLM embeddings 
+
+Online Appendix Figure OA.2: Document embeddings projected to two dimensions with UMAP (McInnes et al., 2018). Labels corresponds to the CBSA closest to that cluster’s centroid in the full embedding space. 
+
+44 B.5 Sensitivity to the Number of Clusters 
+
+Section 4 fixes L = 5. Figure OA.3 sweeps L ∈ { 2, 3, 4, 5, 6, 8, 10 } for each method, recomput-ing the permutation floor at every L so the ratios are comparable down a column. First, every method stays well above its floor at every L, so the finding that these groupings separate employment dynamics more sharply than chance is not an artifact of the cluster count. Second, a text method leads at every L: LLM embeddings at L = 2 and L = 6, SVD-β at 
+
+L = 3, 4, and 8, corpus CBOW at L = 6, corpus SGNS at L = 5 and 10. Residual k-means is below all five text methods at every L except L = 8, and below all three corpus-based methods across the grid. Observables k-means tends to fall between residual k-means and the text-based methods. We conclude that the ordering among the three corpus-based text methods is not stable across the grid. But the finding that text-based groupings separate employment dynamics better than our benchmarks does not depend on the cluster count.     
+
+> Online Appendix Figure OA.3: Between-group variance of unit-specific AR(2) impulse responses relative to the size-matched permutation floor, against the number of clusters L.The floor is re-computed at every L, so ratios are comparable along each line. Dashed lines represent the non-text benchmarks.
+
+## B.6 Sensitivity to the Embedding Dimension 
+
+Remark 1 shows that any r ≥ K−1 recovers the same geometry in population, so the dimension needs only to be chosen large enough—which matters because K is not observable for this corpus. Figure OA.4 sweeps r ∈ { 10 , 25 , 50 , 100 , 200 } for the three corpus-based methods at the full-document window and L = 5. 45 Online Appendix Figure OA.4: Sensitivity to the embedding dimension r at L = 5, p = 2 and the full-document window, for the three corpus-based methods. Left: between-group variance relative to the size-matched permutation floor. Right: share of CBSAs in the largest cluster. SVD-β and corpus SGNS are flat from r = 10 to r = 200, which is what justifies the r = 50 primary specification (dotted) without identifying K. Corpus CBOW alternates between two families of near-equivalent 
+
+> k-means partitions.
+
+SVD-β and corpus SGNS are flat across the entire range: neither ratio trends in r, and their partitions stay comparably balanced throughout. This is what Remark 1 predicts once 
+
+bR is well estimated—coordinates beyond K − 1 contribute nothing in population and, at the full-document window, little in sample either. It justifies r = 50 without an estimate of K:any choice across this range would serve. Corpus CBOW is not flat, but in this case it reflects the instability of k-means. For the CBOW embeddings, the algorithm is choosing among near-equivalent optima, and which one it lands on moves the between-group ratio by a factor of two. 
+
+## B.7 Sensitivity to the Autoregressive Order 
+
+The AR order p is a nuisance parameter of the same kind as the cluster number L, context window J and embedding dimension r. In this section I explore the choice of p.Figure OA.5 shows the share of cross-city IRF dispersion attributable to estimation error. To compute this, I hold the DGP fixed at a common-slope AR (8) whose coefficients are the pooled FE estimates on the same panel, and whose innovations are each unit’s own AR (8) residuals resampled i.i.d. The fitted model is then AR (p), unit by unit, on the simulated paths, averaged over 20 replications. Cross-city IRF dispersion is defined as the mean squared deviation from the cross-unit mean response, horizon by horizon, and Figure OA.5 depicts the ratio between the simulated dipersion (under homogeneity) and the dispersion observed in the data. On that benchmark the share is minimised at p = 2 (74%) and is at least 94% at every other order, reaching 100% at p = 5 and exceeding it from p = 6. One note of caution: We redraw innovations independently across units; employment shocks are not (and likely 46 Online Appendix Figure OA.5: Share of total cross-city IRF variance attributable to estimation error, against the autoregressive order p. The benchmark holds the DGP fixed at a common-slope AR(8) and fits AR( p) to the simulated paths. The dashed line marks the point at which the simulated data generates as much dispersion as the observed data. 
+
+positively correlated). That would bias all depicted ratios up and may be why the share exceeds 100% from p = 5 on. Figure OA.6 depicts the ratio from Table 4 for different values of p. Seven of the eight approaches peak at p = 2, though they all remain above 1 throughout. We thus read p = 2 as the best low-dimensional projection of the dynamics for cross-sectional comparison rather than as a correctly specified model: the pooled panel clearly wants more lags, but fitting them spends per-unit degrees of freedom that a T = 51 series does not have, and a parsimonious fit concentrates whatever genuine heterogeneity exists into few well-estimated coefficients instead of dispersing it across many noisy ones. One caveat applies to both figures. The Nickell bias in ˆ ρ is O(1 /T ), but the horizon-h
+
+impulse response is a compounding function of it, so the bias in the object plotted here is of order h/T ; at h = 10 and T = 51 that is not negligible. Correcting it—by split-panel jackknife or an analytic adjustment—would plausibly shift the levels in both at the expense of even noisier estimates. We leave this for future work. 
+
+## B.8 Sensitivity to the Context Window 
+
+Section 4 uses the full document as context for both corpus-trained arms and SVD-β, on the grounds that positions within a document are exchangeable under the model, so R does not depend on the window in population. Figure OA.7 tests that choice against J ∈ { 5, 10 , 20 , 50 },holding L = 5. Neither corpus CBOW nor corpus SGNS exhibit a clear trend. SVD-β does trend. It holds 21 .8× at the full document and 21 .7× at J = 50, but falls to 12 .1× at J = 5—roughly half. 47 Online Appendix Figure OA.6: Between-group variance of the unit-specific IRFs relative to the size-matched permutation floor, against the autoregressive order p, at L = 5. Chance is at 1 ×.Dashed lines represent the two non-text benchmarks. 
+
+This is in line with our findings from our numerical exercise: With V in the low thousands, bR
+
+has on the order of six million cells, and the ordered word–context pairs the 363 descriptions supply fall from roughly eighty million at the full-document window to a few million at J = 5. With that sample size the estimated SVD-β embeddings start to become somewhat noisier, reflecting the difficulty in directly matrix-factorizing the noisy sample co-occurrence structure. One implementation detail matters for reading the two Word2Vec lines: gensim’s window parameter is a maximum, not a fixed width. For each token the effective window is drawn uniformly between one and that maximum, which is equivalent to weighting contexts by their distance from the focus word (Levy et al., 2015). Any direct comparison to SVD-β based on Figure OA.7 is thus to be treated with caution. 
+
+## B.9 Dating the Observables: Covariate Vintage 
+
+The covariate set consists of ten variables, all at the CBSA level. Four are employment shares—manufacturing, total government, military, and federal civilian. Three are population shares—foreign-born, Black, and Hispanic. Two are education shares—the share with no high-school diploma and the share with a four-year college degree. The tenth covariate is population per square mile. We standardize each to mean zero and unit variance and then apply k-means with L = 5 ( k-means++ , 500 restarts, seed 42). The observables benchmark in Section 4.1 clusters CBSAs on covariates measured at a single Census vintage. We take 1970 as the primary specification: it is the only vintage that is effectively predetermined, being measured one year into a fifty-one-year panel. In this section, I sweep the vintage to measure the contamination induced by using concurrent Census vintages. Table OA.1 reports the sweep.Population density enters at 1970 throughout, being 48 Online Appendix Figure OA.7: Sensitivity to the context window J at L = 5 and p = 2. Between-group variance of the unit-specific IRFs relative to the size-matched permutation floor, with chance at 1 ×. The SVD-β ratio falls by about half as the window narrows to J = 5; neither corpus-trained arm trends either way. 
+
+the only vintage available. The other nine (industry-mix, demographic and education shares) are avilable at 1970, 1980, 1990 and 2000 with complete coverage of the 363 CBSAs.                          
+
+> Vintage Years elapsed Var(Between) Ratio Max share 1970 10.0209 15.5 ×36% 1980 11 0.0238 17.2 ×46% 1990 21 0.0243 17.4 ×44% 2000 31 0.0248 18.6 ×41%
+> Online Appendix Table OA.1: Observables benchmark at each Census vintage, L= 5 and p= 2. “Years elapsed” is the number of years of the 1969–2019 outcome window already observed at the measurement date. “Ratio” is between-group variance over the size-matched permutation floor. All nine covariates are complete at every vintage; population density enters at 1970 throughout, being the only vintage available.
+
+The ratio rises monotonically in the vintage, from 15 .5× the permutation floor at 1970 to 18 .6× at 2000—a gain of about 20% from dating the same nine covariates thirty years later. We read this as a measurement of look-ahead: later measurement is itself partly an outcome of the dynamics being explained. On this metric the advantage is worth roughly a fifth of the benchmark’s apparent performance. That matters beyond the choice of covariates, because the same objection applies to the text. The descriptions span 1979–2019 and so are concurrent with the outcome window rather than predetermined, a limitation Section 4 states but cannot quantify. The vintage sweep gives an order of magnitude for what such concurrency can buy— roughly 20% here—which is well short of the margin by which the text-based groupings exceed the benchmark. 49 B.10 Interpreting the Clusters 
+
+Table OA.2 reports the cluster assignment for each of the 363 CBSAs under seven clustering approaches. Clusters are numbered 1–5 within each method; descriptions for the text-based methods follow below. Figure OA.8 shows the geographic distribution of cluster assignments across the continental United States. 
+
+Online Appendix Table OA.2: Cluster assignments for all 363 CBSAs: corpus CBOW (CB), corpus SGNS (CS), closed-form SVD-β at r = 50 (SB), pretrained Google News vectors (PW), LLM embedding (LE, k-means on OpenAI text-embedding-3-large ), residual k-means (RK, k-means on pooled AR(2) residuals from Section 4.1), and observables k-means (OB, on the 1970 covariates of Section 4.1).Numeric labels correspond to the cluster descriptions below the table. 
+
+Clustering Method CBSA State CB CS SB PW LE RK OB 
+
+Abilene TX 4 3 2 3 3 2 2Akron OH 5 5 1 1 4 1 4Albany GA 2 3 2 3 2 1 3Albany-Schenectady-Troy NY 5 3 2 5 5 3 2Albuquerque NM 3 1 2 5 3 3 2Alexandria LA 4 3 2 5 3 3 3Allentown-Bethlehem-Easton PA-NJ 5 5 1 1 4 1 4Altoona PA 5 5 1 1 4 3 4Amarillo TX 4 3 2 3 3 3 2Ames IA 4 1 2 5 2 3 2Anderson IN 5 5 1 1 4 4 4Anderson SC 2 3 1 1 4 4 4Ann Arbor MI 4 1 2 5 2 4 2Anniston-Oxford AL 5 4 5 1 2 3 3Appleton WI 5 3 1 1 4 1 4Asheville NC 3 2 3 3 2 4 4Athens-Clarke County GA 2 3 2 5 2 1 3Atlanta-Sandy Springs-Marietta GA 2 1 2 3 5 1 3Atlantic City-Hammonton NJ 5 5 1 4 5 1 3Auburn-Opelika AL 2 3 2 3 2 1 3Augusta-Richmond County GA-SC 2 3 2 3 2 3 3Austin-Round Rock-San Marcos TX 4 1 2 5 5 1 2Bakersfield-Delano CA 1 2 3 4 1 3 2Baltimore-Towson MD 2 3 2 5 2 3 3Bangor ME 2 3 2 3 2 3 4
+
+Continued on next page 
+
+50 Table OA.2 continued 
+
+CBSA State CB CS SB PW LE RK OB 
+
+Barnstable Town MA 3 2 3 4 5 1 2Baton Rouge LA 1 4 4 2 3 3 3Battle Creek MI 5 5 1 1 4 4 4Bay City MI 5 5 1 1 4 4 4Beaumont-Port Arthur TX 1 4 4 2 3 2 3Bellingham WA 3 2 3 4 2 3 2Bend OR 3 2 3 4 5 4 2Billings MT 4 3 2 2 3 3 2Binghamton NY 5 5 1 1 4 3 4Birmingham-Hoover AL 2 3 2 1 2 3 3Bismarck ND 4 3 2 2 3 3 2Blacksburg-Christiansburg-Radford VA 4 3 2 5 2 1 4Bloomington IN 4 1 2 5 2 3 2Bloomington-Normal IL 5 1 2 5 2 3 2Boise City-Nampa ID 4 1 2 3 5 3 2Boston-Cambridge-Quincy MA-NH 3 1 2 5 5 1 5Boulder CO 4 1 2 5 5 1 2Bowling Green KY 4 3 2 3 2 4 4Bremerton-Silverdale WA 1 4 5 5 3 3 1Bridgeport-Stamford-Norwalk CT 2 5 1 3 5 1 5Brownsville-Harlingen TX 1 2 3 4 3 3 5Brunswick GA 2 3 3 3 2 1 3Buffalo-Niagara Falls NY 5 5 1 1 4 3 5Burlington NC 2 5 1 3 2 1 4Burlington-South Burlington VT 4 1 2 5 5 1 2Canton-Massillon OH 5 5 1 1 4 1 4Cape Coral-Fort Myers FL 3 2 3 4 5 1 2Cape Girardeau-Jackson MO-IL 4 3 2 3 2 3 4Carson City NV 4 3 2 5 2 4 2Casper WY 4 4 4 2 3 2 2Cedar Rapids IA 4 3 2 3 2 3 4Champaign-Urbana IL 4 1 2 5 2 3 2Charleston WV 5 5 1 1 4 3 4Charleston-North Charleston-Summerville SC 3 1 2 3 5 3 1Charlotte-Gastonia-Rock Hill NC-SC 2 3 2 3 5 1 4
+
+Continued on next page 
+
+51 Table OA.2 continued 
+
+CBSA State CB CS SB PW LE RK OB 
+
+Charlottesville VA 3 1 2 5 2 1 3Chattanooga TN-GA 2 5 1 3 4 4 4Cheyenne WY 1 4 2 2 3 3 2Chicago-Joliet-Naperville IL-IN-WI 2 5 1 3 4 1 5Chico CA 4 2 3 4 1 3 2Cincinnati-Middletown OH-KY-IN 2 3 2 3 4 1 4Clarksville TN-KY 1 4 5 3 3 4 1Cleveland TN 2 3 2 3 2 4 4Cleveland-Elyria-Mentor OH 5 5 1 1 4 1 5Coeur d’Alene ID 3 2 3 4 5 4 2College Station-Bryan TX 4 1 2 5 3 2 3Colorado Springs CO 4 4 5 5 3 1 1Columbia MO 4 3 2 5 2 3 2Columbia SC 2 3 2 5 2 1 3Columbus GA-AL 2 3 2 3 2 3 1Columbus IN 4 5 1 1 4 4 4Columbus OH 4 3 2 3 2 1 2Corpus Christi TX 1 4 4 2 3 2 2Corvallis OR 4 1 2 5 2 3 2Crestview-Fort Walton Beach-Destin FL 3 2 3 4 5 3 1Cumberland MD-WV 5 5 1 3 4 3 4Dallas-Fort Worth-Arlington TX 4 1 2 3 5 1 4Dalton GA 5 5 1 1 4 4 4Danville IL 5 5 1 1 4 4 4Danville VA 5 5 1 1 4 4 3Davenport-Moline-Rock Island IA-IL 5 5 1 1 4 3 4Dayton OH 5 5 1 1 4 1 4Decatur AL 5 5 1 1 4 1 4Decatur IL 5 5 1 1 4 3 4Deltona-Daytona Beach-Ormond Beach FL 3 2 3 4 5 1 2Denver-Aurora-Broomfield CO 4 1 4 2 5 1 2Des Moines-West Des Moines IA 4 1 2 3 5 3 2Detroit-Warren-Livonia MI 5 5 1 1 4 4 5Dothan AL 2 3 2 3 2 4 3Dover DE 1 3 2 5 2 3 1
+
+Continued on next page 
+
+52 Table OA.2 continued 
+
+CBSA State CB CS SB PW LE RK OB 
+
+Dubuque IA 4 3 2 1 4 3 4Duluth MN-WI 5 5 1 1 4 3 2Durham-Chapel Hill NC 4 1 2 5 2 3 3Eau Claire WI 4 3 2 3 2 3 4El Centro CA 1 2 3 4 1 3 5Elizabethtown KY 1 3 2 3 2 3 1Elkhart-Goshen IN 4 2 2 1 4 4 4Elmira NY 5 5 1 1 4 1 4El Paso TX 1 2 2 1 3 3 5Erie PA 5 5 1 1 4 3 4Eugene-Springfield OR 4 3 3 4 2 4 2Evansville IN-KY 2 5 1 3 4 3 4Fargo ND-MN 4 1 2 3 2 3 2Farmington NM 1 4 4 2 3 2 2Fayetteville NC 1 4 5 5 3 3 1Fayetteville-Springdale-Rogers AR-MO 4 1 2 3 2 1 4Flagstaff AZ 3 2 3 4 2 1 2Flint MI 5 5 1 1 4 4 4Florence SC 2 3 2 3 2 1 3Florence-Muscle Shoals AL 5 3 1 3 2 3 4Fond du Lac WI 4 3 2 1 4 3 4Fort Collins-Loveland CO 4 1 2 3 5 1 2Fort Smith AR-OK 5 5 1 1 4 4 4Fort Wayne IN 5 5 1 3 4 4 4Fresno CA 1 2 3 4 1 3 2Gadsden AL 5 5 1 1 4 4 4Gainesville FL 4 1 2 5 2 1 2Gainesville GA 3 2 3 3 2 1 4Glens Falls NY 5 3 2 3 4 3 4Goldsboro NC 1 3 2 4 3 3 3Grand Forks ND-MN 4 3 2 3 3 3 5Grand Junction CO 4 2 4 2 3 2 2Grand Rapids-Wyoming MI 4 1 2 3 4 4 4Great Falls MT 4 3 2 2 3 3 2Greeley CO 1 2 4 2 3 1 2
+
+Continued on next page 
+
+53 Table OA.2 continued 
+
+CBSA State CB CS SB PW LE RK OB 
+
+Green Bay WI 5 3 2 3 4 3 4Greensboro-High Point NC 2 5 1 1 4 4 4Greenville NC 2 3 2 3 2 3 3Greenville-Mauldin-Easley SC 2 5 1 3 4 1 4Gulfport-Biloxi MS 1 4 4 2 5 3 1Hagerstown-Martinsburg MD-WV 5 3 2 3 2 3 4Hanford-Corcoran CA 1 2 3 4 1 3 1Harrisburg-Carlisle PA 4 3 2 3 2 3 2Harrisonburg VA 4 3 2 3 2 3 4Hartford-West Hartford-East Hartford CT 5 1 2 1 5 1 5Hattiesburg MS 2 3 2 3 2 3 3Hickory-Lenoir-Morganton NC 5 5 1 1 4 4 4Hinesville-Fort Stewart GA 1 4 5 5 3 5 1Holland-Grand Haven MI 4 1 2 1 4 4 4Hot Springs AR 3 2 3 4 2 4 4Houma-Bayou Cane-Thibodaux LA 1 4 4 2 3 2 3Houston-Sugar Land-Baytown TX 4 4 4 2 3 2 3Huntington-Ashland WV-KY-OH 5 5 1 1 4 3 4Huntsville AL 2 1 5 5 2 1 1Idaho Falls ID 4 3 2 3 3 3 2Indianapolis-Carmel IN 2 5 2 3 4 1 4Iowa City IA 4 1 2 5 2 3 2Ithaca NY 4 1 2 5 2 3 2Jackson MI 5 5 1 1 4 4 4Jackson MS 2 3 2 5 2 1 3Jackson TN 2 3 2 3 2 4 3Jacksonville FL 2 1 2 3 2 1 3Jacksonville NC 1 4 5 5 3 3 1Janesville WI 5 5 1 1 4 4 4Jefferson City MO 4 3 2 5 2 3 2Johnson City TN 2 3 2 3 2 4 4Johnstown PA 5 5 1 1 4 3 4Jonesboro AR 2 3 2 3 2 3 4Joplin MO 5 3 2 3 2 4 4Kalamazoo-Portage MI 5 1 2 3 2 3 4
+
+Continued on next page 
+
+54 Table OA.2 continued 
+
+CBSA State CB CS SB PW LE RK OB 
+
+Kankakee-Bradley IL 5 5 1 3 4 3 4Kansas City MO-KS 4 3 2 3 2 1 2Kennewick-Pasco-Richland WA 1 2 2 4 3 3 2Killeen-Temple-Fort Hood TX 1 4 5 5 3 3 1Kingsport-Bristol-Bristol TN-VA 5 5 1 3 4 3 4Kingston NY 3 5 1 1 4 3 4Knoxville TN 2 3 2 3 2 3 4Kokomo IN 5 5 1 1 4 4 4La Crosse WI-MN 4 3 2 3 2 3 4Lafayette IN 4 1 2 1 4 3 2Lafayette LA 4 4 4 2 3 2 3Lake Charles LA 1 4 4 2 3 3 3Lake Havasu City-Kingman AZ 3 2 3 4 5 1 2Lakeland-Winter Haven FL 3 2 3 4 5 1 3Lancaster PA 4 1 2 3 2 1 4Lansing-East Lansing MI 4 3 2 5 2 3 2Laredo TX 1 2 3 4 3 2 5Las Cruces NM 1 2 3 4 3 3 1Las Vegas-Paradise NV 3 2 3 4 5 1 2Lawrence KS 3 1 2 5 2 3 2Lawton OK 1 4 5 5 3 3 1Lebanon PA 5 5 1 1 4 3 4Lewiston ID-WA 1 3 2 3 2 3 4Lewiston-Auburn ME 2 5 1 3 4 1 4Lexington-Fayette KY 2 3 2 3 2 4 2Lima OH 5 5 1 1 4 4 4Lincoln NE 4 3 2 5 2 3 2Little Rock-North Little Rock-Conway AR 4 3 2 5 2 3 3Logan UT-ID 4 1 2 3 2 3 2Longview TX 1 4 4 2 3 2 3Longview WA 1 2 3 2 4 1 4Los Angeles-Long Beach-Santa Ana CA 3 2 3 1 5 1 5Louisville/Jefferson County KY-IN 2 3 2 3 2 1 4Lubbock TX 4 3 2 3 3 3 2Lynchburg VA 2 3 2 3 2 1 4
+
+Continued on next page 
+
+55 Table OA.2 continued 
+
+CBSA State CB CS SB PW LE RK OB 
+
+Macon GA 2 3 2 3 2 3 3Madera-Chowchilla CA 1 2 3 4 1 3 4Madison WI 4 1 2 5 2 3 2Manchester-Nashua NH 2 1 2 5 5 1 4Manhattan KS 1 1 5 5 2 3 1Mankato-North Mankato MN 4 3 2 3 2 3 2Mansfield OH 5 5 1 1 4 4 4McAllen-Edinburg-Mission TX 1 2 3 4 3 3 5Medford OR 3 2 3 4 2 4 2Memphis TN-MS-AR 2 3 2 3 2 1 3Merced CA 1 2 3 4 1 3 1Miami-Fort Lauderdale-Pompano Beach FL 3 2 3 4 5 1 5Michigan City-La Porte IN 5 5 1 3 4 1 4Midland TX 1 4 4 2 3 2 2Milwaukee-Waukesha-West Allis WI 2 5 1 3 4 1 5Minneapolis-St. Paul-Bloomington MN-WI 2 1 2 5 5 1 2Missoula MT 3 2 3 3 2 3 2Mobile AL 2 3 2 2 2 3 3Modesto CA 1 2 3 4 1 3 4Monroe LA 2 3 2 3 2 3 3Monroe MI 5 5 1 1 4 4 4Montgomery AL 2 3 2 3 2 3 3Morgantown WV 4 3 2 5 2 3 2Morristown TN 2 3 1 1 4 4 4Mount Vernon-Anacortes WA 1 2 3 4 1 4 2Muncie IN 5 5 1 1 4 4 4Muskegon-Norton Shores MI 5 5 1 1 4 1 4Myrtle Beach-North Myrtle Beach-Conway SC 3 2 3 4 5 3 3Napa CA 3 2 3 4 1 3 2Naples-Marco Island FL 3 2 3 4 5 4 2Nashville-Davidson–Murfreesboro–Franklin TN 3 1 2 3 2 4 3New Haven-Milford CT 2 5 1 5 5 1 5New Orleans-Metairie-Kenner LA 3 4 4 2 5 3 3New York-Northern New Jersey-Long Island NY-NJ-PA 3 1 2 5 5 1 5Niles-Benton Harbor MI 5 5 1 3 4 4 4
+
+Continued on next page 
+
+56 Table OA.2 continued 
+
+CBSA State CB CS SB PW LE RK OB 
+
+North Port-Bradenton-Sarasota FL 3 2 3 4 5 4 2Norwich-New London CT 1 4 5 1 5 3 2Ocala FL 3 2 3 4 2 1 3Ocean City NJ 3 2 3 4 5 3 2Odessa TX 1 4 4 2 3 2 2Ogden-Clearfield UT 4 3 2 3 5 3 1Oklahoma City OK 4 4 4 2 3 3 2Olympia WA 1 3 2 5 2 3 2Omaha-Council Bluffs NE-IA 4 1 2 3 2 3 2Orlando-Kissimmee-Sanford FL 3 2 3 4 5 1 2Oshkosh-Neenah WI 5 3 2 3 4 3 4Owensboro KY 5 3 1 3 4 1 4Oxnard-Thousand Oaks-Ventura CA 3 2 3 4 1 3 2Palm Bay-Melbourne-Titusville FL 3 1 5 5 5 1 2Palm Coast FL 3 2 3 4 5 1 3Panama City-Lynn Haven-Panama City Beach FL 3 2 3 4 5 3 1Parkersburg-Marietta-Vienna WV-OH 5 5 1 1 4 4 4Pascagoula MS 1 4 5 2 3 2 4Pensacola-Ferry Pass-Brent FL 1 4 3 2 3 3 1Peoria IL 5 5 1 1 4 3 4Philadelphia-Camden-Wilmington PA-NJ-DE-MD 2 5 2 3 5 1 5Phoenix-Mesa-Glendale AZ 3 2 3 4 5 1 2Pine Bluff AR 5 5 1 1 4 3 3Pittsburgh PA 5 5 1 1 4 3 4Pittsfield MA 5 5 1 1 4 1 4Pocatello ID 5 3 1 1 2 3 2Portland-South Portland-Biddeford ME 3 3 2 3 5 1 2Portland-Vancouver-Hillsboro OR-WA 3 1 3 3 5 1 2Port St. Lucie FL 3 2 3 4 5 1 3Poughkeepsie-Newburgh-Middletown NY 3 3 2 3 4 3 2Prescott AZ 3 2 3 4 3 4 2Providence-New Bedford-Fall River RI-MA 2 5 1 1 4 1 5Provo-Orem UT 4 1 2 5 5 1 2Pueblo CO 5 5 1 1 4 3 2Punta Gorda FL 3 2 3 4 5 4 2
+
+Continued on next page 
+
+57 Table OA.2 continued 
+
+CBSA State CB CS SB PW LE RK OB 
+
+Racine WI 5 5 1 1 4 1 4Raleigh-Cary NC 3 1 2 5 5 1 3Rapid City SD 3 3 2 4 3 3 2Reading PA 5 5 1 1 4 1 4Redding CA 3 3 3 4 1 3 2Reno-Sparks NV 3 2 3 2 5 1 2Richmond VA 2 3 2 5 2 1 3Riverside-San Bernardino-Ontario CA 1 2 3 4 5 1 2Roanoke VA 5 3 2 3 2 1 4Rochester MN 4 1 2 5 2 3 2Rochester NY 5 5 1 1 2 3 4Rockford IL 5 5 1 1 4 4 4Rocky Mount NC 2 5 1 1 4 4 3Rome GA 2 3 2 3 2 4 4Sacramento–Arden-Arcade–Roseville CA 3 2 3 5 1 3 2Saginaw-Saginaw Township North MI 5 5 1 1 4 4 4St. Cloud MN 4 3 2 3 2 3 4St. George UT 3 2 3 4 5 1 2St. Joseph MO-KS 5 3 2 3 2 3 4St. Louis MO-IL 5 5 2 3 2 1 4Salem OR 3 3 3 4 2 3 2Salinas CA 3 2 3 4 1 3 1Salisbury MD 4 3 2 3 2 1 3Salt Lake City UT 4 1 2 5 5 1 2San Angelo TX 1 4 2 2 3 3 2San Antonio-New Braunfels TX 1 1 2 5 3 3 1San Diego-Carlsbad-San Marcos CA 3 1 3 5 5 1 1Sandusky OH 5 5 1 1 4 4 4San Francisco-Oakland-Fremont CA 3 1 3 1 5 1 5San Jose-Sunnyvale-Santa Clara CA 3 1 3 5 5 1 5San Luis Obispo-Paso Robles CA 3 2 3 4 1 3 2Santa Barbara-Santa Maria-Goleta CA 3 2 3 4 1 3 2Santa Cruz-Watsonville CA 3 2 3 4 1 3 2Santa Fe NM 3 2 3 5 3 3 2Santa Rosa-Petaluma CA 3 2 3 4 1 1 2
+
+Continued on next page 
+
+58 Table OA.2 continued 
+
+CBSA State CB CS SB PW LE RK OB 
+
+Savannah GA 2 3 2 3 2 3 3Scranton–Wilkes-Barre PA 5 5 1 1 4 1 4Seattle-Tacoma-Bellevue WA 3 1 2 5 5 1 2Sebastian-Vero Beach FL 3 2 3 4 5 4 3Sheboygan WI 5 3 1 1 4 1 4Sherman-Denison TX 4 3 2 3 5 1 4Shreveport-Bossier City LA 1 4 4 2 3 3 3Sioux City IA-NE-SD 4 3 2 4 4 3 4Sioux Falls SD 4 1 2 3 2 3 2South Bend-Mishawaka IN-MI 5 5 1 1 4 4 4Spartanburg SC 2 5 1 1 4 1 4Spokane WA 4 3 2 3 2 1 2Springfield IL 5 3 2 5 2 3 2Springfield MA 5 5 1 1 4 1 4Springfield MO 4 3 2 3 2 1 4Springfield OH 5 5 1 1 4 4 4State College PA 4 1 2 5 2 3 2Steubenville-Weirton OH-WV 5 5 1 1 4 3 4Stockton CA 1 2 3 4 1 3 2Sumter SC 2 3 1 3 2 3 3Syracuse NY 5 5 1 1 4 3 2Tallahassee FL 3 1 2 5 2 1 3Tampa-St. Petersburg-Clearwater FL 3 2 3 4 5 1 2Terre Haute IN 5 5 1 1 4 3 4Texarkana, TX-Texarkana AR 5 3 2 3 3 1 3Toledo OH 5 5 1 1 4 4 4Topeka KS 4 3 2 3 2 3 2Trenton-Ewing NJ 2 5 1 5 2 1 5Tucson AZ 1 2 3 5 3 1 2Tulsa OK 4 4 4 2 3 2 4Tuscaloosa AL 2 3 2 1 2 3 3Tyler TX 4 3 2 3 3 3 3Utica-Rome NY 5 5 1 1 4 3 4Valdosta GA 2 3 2 3 2 3 3Vallejo-Fairfield CA 1 2 3 5 1 3 1
+
+Continued on next page 
+
+59 Table OA.2 continued                                                                                                                                                                                                 
+
+> CBSA State CB CS SB PW LE RK OB
+> Victoria TX 1442324Vineland-Millville-Bridgeton NJ 2511414Virginia Beach-Norfolk-Newport News VA-NC 1452531Visalia-Porterville CA 1234132Waco TX 4323333Warner Robins GA 1455331Washington-Arlington-Alexandria DC-VA-MD-WV 3125531Waterloo-Cedar Falls IA 5321434Wausau WI 4323234Wenatchee-East Wenatchee WA 3234132Wheeling WV-OH 5511434Wichita KS 5311312Wichita Falls TX 4322331Williamsport PA 5511414Wilmington NC 3123213Winchester VA-WV 4323244Winston-Salem NC 2111214Worcester MA 2513414Yakima WA 1234132York-Hanover PA 5313414Youngstown-Warren-Boardman OH-PA 5511444Yuba City CA 1234131Yuma AZ 1234131
+
+## Cluster Descriptions by Method 
+
+Corpus CBOW (CB). 
+
+1. Amenity Migration and Population-Led Growth (57 CBSAs). Sun Belt and Western metros whose growth is driven by in-migration of retirees and lifestyle migrants rather than by industry. Construction, real estate, retail, and healthcare are the core employers, which leaves these labor markets acutely exposed to housing cycles and to the 2008 shock. Examples: Asheville, Austin, Boise City, Cape Coral, Dallas. 2. University and Hospital Anchors (62 CBSAs). Flagship universities and major hospital systems dominate employment. Unemployment runs persistently below national aver-ages and educational attainment is high, but the labor market is bifurcated between credentialed professionals and low-wage student and service workers. Examples: Ames, Ann Arbor, Boston, Boulder, Champaign–Urbana. 3. Regional Hubs in Manufacturing Transition (68 CBSAs). Legacy manufacturing—textiles, 60 paper, steel, timber—has declined since 1979 and been partly replaced by “eds and meds,” logistics along interstate and port corridors, and government or defense spend-ing. These metros serve as retail and medical hubs for rural hinterlands, with below-average wages and uneven recoveries. Examples: Allentown, Birmingham, Charlotte, Chattanooga, Cincinnati. 4. Severe Deindustrialization (85 CBSAs). Steel, auto, textile, and tire dependence followed by heavy job losses after 1979. Loss of high-wage unionized work, wage stagnation, population decline, and out-migration of younger workers, with “eds and meds,” retail, and logistics as partial replacements. Examples: Akron, Buffalo, Chicago, Cleveland, Detroit. 5. Agriculture and Resource Extraction (91 CBSAs). Economies anchored in agriculture, oil and gas, timber, or mining, with boom-bust cycles tied to commodity prices and weather. Seasonal low-wage work, chronically high unemployment and poverty, and large Hispanic and immigrant workforces, often near the border. Examples: Bakersfield, Brownsville, Corpus Christi, El Paso, Fresno. 
+
+Corpus SGNS (CS). 
+
+1. Knowledge and Anchor-Institution Economies (60 CBSAs). Universities, hospital sys-tems and research employers dominate, with a shift out of manufacturing, resource extraction and defense into knowledge work and services. Unemployment is persistently low and recoveries—2008 in particular—are fast, but growth arrives with housing pres-sure and a labor market split between credentialed and low-wage service work. Examples: Albuquerque, Ames, Ann Arbor, Atlanta, Austin. 2. Amenity Migration and Tourism (71 CBSAs). Sun Belt, Western and coastal destina-tions growing through retiree and lifestyle in-migration rather than through industry. Tourism, hospitality, retail and healthcare dominate, construction and real estate am-plify the cycle, and the 2008 housing shock hit hard. Seasonal low-wage work and large Hispanic workforces are common. Examples: Asheville, Bakersfield, Barnstable Town, Bend, Cape Coral. 3. Regional Hubs in Transition (109 CBSAs). The largest group: mid-sized metros that lost textiles, paper, timber, mining or tobacco employment and replaced part of it with “eds and meds,” logistics along interstate corridors, and state or federal anchors. Each serves as the retail and medical hub of a broad rural hinterland. Examples: Abilene, Albany (GA), Albany–Schenectady–Troy, Amarillo, Appleton. 4. Defense and Energy Single-Sector Metros (34 CBSAs). One dominant sector—a military installation or oil, gas and petrochemicals—rather than a diversified base, so employment tracks Pentagon budgets or commodity prices. Blue-collar workforces, below-average wages, and Gulf Coast exposure to hurricanes and spills. Examples: Baton Rouge, Beaumont–Port Arthur, Bremerton–Silverdale, Casper, Colorado Springs. 5. Severe Deindustrialization (89 CBSAs). Steel, auto, textile, rubber, glass and coal em-ployment collapsing from the early-1980s recessions onward, often around a single dom-inant employer. High-wage unionized work gives way to services, prisons and warehous-ing, alongside population loss and an aging workforce. Examples: Akron, Allentown, Altoona, Atlantic City, Binghamton. 61 Closed-Form SVD-β at r = 50 (SB). 
+
+1. Deindustrialization (97 CBSAs). Collapse of steel, auto, textile, and machinery em-ployment; loss of unionized blue-collar jobs, population decline, and weak post-2008 recoveries. Examples: Akron, Allentown, Binghamton, Buffalo, Canton. 2. Anchor Institutions and Regional Hubs (154 CBSAs). “Eds and meds” as dominant, recession-resistant employers, often alongside state government, serving as service hubs for rural hinterlands. Low unemployment but below-average wages. Examples: Albu-querque, Ann Arbor, Atlanta, Austin, Madison. 3. Amenity, Tourism and Agriculture (75 CBSAs). Sun Belt and coastal in-migration destinations driven by retirees and lifestyle migration, together with seasonal agricultural and border economies. Heavy tourism and construction exposure and a severe 2008 housing shock. Examples: Asheville, Bakersfield, Bend, Brownsville, Cape Coral. 4. Energy and Resource Extraction (21 CBSAs). Oil, gas, refining, and coal dependence, with boom-bust cycles tied to commodity prices rather than the national business cycle. Examples: Baton Rouge, Beaumont, Casper, Corpus Christi, Houston. 5. Military and Defense Installations (16 CBSAs). A dominant Army post, Navy base, or shipyard anchors each metro; fortunes track federal budgets and BRAC rounds rather than market conditions. Young, transient, diverse populations. Examples: Clarksville, Colorado Springs, Fayetteville, Huntsville, Killeen. 
+
+Pretrained Google News Vectors (PW). 
+
+1. Deindustrialized Manufacturing (89 CBSAs). Steel, auto, textile, rubber, and machinery dependence followed by sustained decline after 1979. High-wage unionized jobs give way to lower-paying service work, with single-employer vulnerability and sharp exposure to the 1981–82 and 2008–09 recessions. Examples: Akron, Allentown, Buffalo, Canton, Cleveland. 2. Energy and Resource Extraction (33 CBSAs). Oil, gas, coal, refining, and petrochemicals anchor these economies, so employment tracks commodity prices rather than the national cycle: the 1980s oil bust, the shale boom of the 2000s and 2010s, and the 2014–16 collapse. Diversification is incomplete. Examples: Baton Rouge, Casper, Corpus Christi, Houston, Lake Charles. 3. Regional Service Hubs (109 CBSAs). Small and mid-sized metros where legacy manu-facturing and agriculture have given way to hospitals and anchor universities, retail and warehousing along interstate corridors, and tourism. They serve as hubs for multi-county rural hinterlands, with military bases and state government as stabilizers. Examples: Abilene, Asheville, Atlanta, Charlotte, Chattanooga. 4. Seasonal and Amenity Economies (64 CBSAs). Tourism, hospitality, and recreation with sharp seasonal swings, retiree and “snowbird” in-migration, and heavy construction and real-estate dependence that left these metros badly exposed to the 2008 housing crash. Agriculture and extraction appear alongside. Examples: Bakersfield, Bend, Brownsville, Cape Coral, Fresno. 5. University and Government Centers (68 CBSAs). Flagship universities, “eds and meds,” state capitals, federal agencies, national labs, and military bases dominate employment. Unemployment sits below national averages and these metros were cushioned in both the 1980s and 2008 downturns. Examples: Albuquerque, Ann Arbor, Austin, Boston, 62 Boulder. 
+
+LLM Embeddings (LE). 
+
+1. Agricultural Economies (25 CBSAs). Agriculture as the economic bedrock, often in high-value specialty crops, with limited diversification. Seasonal low-wage labor, pronounced employment cyclicality, large Latino and immigrant workforces, and above-average un-employment and poverty. Examples: Bakersfield, Fresno, Merced, Modesto, Salinas. 2. Eds and Meds Regional Hubs (114 CBSAs). Universities and hospital systems as dom-inant, recession-resistant employers, following the decline of textiles, timber, steel, and tobacco. Retail, hospitality, and logistics replace blue-collar work, and these metros serve as hubs for rural hinterlands. Examples: Ann Arbor, Asheville, Baltimore, Birmingham, Bloomington. 3. Federal Anchors and Commodity Exposure (59 CBSAs). Regional centers combining military bases, laboratories, and defense spending with boom-bust dependence on oil, gas, or agriculture. Healthcare and education are the growth sectors replacing extrac-tion and manufacturing; wages sit below national averages. Examples: Albuquerque, Amarillo, Baton Rouge, Colorado Springs, Corpus Christi. 4. Heavy Industry and Deindustrialization (101 CBSAs). Metros dependent in 1979 on steel, autos, textiles, paper, chemicals, or coal, often around a single dominant em-ployer, that suffered plant closures and the early-1980s recession shock. Globalization, automation, and offshoring are the recurring drivers. Examples: Akron, Buffalo, Canton, Chicago, Cleveland. 5. Diversified Service and Knowledge Economies (64 CBSAs). A shift from manufacturing and extraction toward services, with “eds and meds” as stable anchors and rising tech-nology and professional-services sectors. In-migration drives growth, and construction exposure made these metros vulnerable in 2008. Examples: Atlanta, Austin, Boston, Boulder, Charlotte. 
+
+Residual k-means (RK). This purely outcome-based clustering applies k-means with 
+
+L = 5 to the residuals from the pooled AR(2) specification with unit fixed effects (Section 4.1). Unlike the text-based methods, groups are formed to minimize within-group variation in em-ployment dynamics rather than narrative similarity. The resulting clusters are less balanced than the text-based approaches—one group is a singleton and the largest contains 47% of all CBSAs—but an ex-post examination of their composition reveals interpretable economic patterns: 1. Diversified, Higher-Density Metros (113 CBSAs, e.g., Atlanta, Austin, Akron, Allen-town, Barnstable Town). The densest group by some margin (1970 population density of 138 against 77–79 elsewhere), with moderate manufacturing (20 .6% in 1980) and the second-highest college-educated share (16 .9%). 2. Energy-Dependent (17 CBSAs, e.g., Houston, Beaumont–Port Arthur, Corpus Christi, Lafayette, Casper). Concentrated in Texas and Louisiana with the lowest manufacturing share of any non-singleton group (11 .8%); employment dynamics shaped by oil and gas cycles rather than the national one. 3. Government-Anchored (170 CBSAs, e.g., Albuquerque, Baltimore, Ames, Amarillo, Augusta–Richmond County). The largest group, holding 47% of the sample, with the 63 highest government employment share (23 .4%) and the highest military share outside the singleton (4 .9%). 4. Manufacturing-Heavy (62 CBSAs, e.g., Battle Creek, Bay City, Chattanooga, Anderson, Asheville). The highest manufacturing share of any group (26 .2%) and the lowest college-educated share (13 .0%). 5. Military Outlier (1 CBSA: Hinesville–Fort Stewart, GA). A singleton with 61 .0% mili-tary and 79 .3% total government employment in 1980. Its impulse response is far from the pooled estimate, making it a residual outlier that no other CBSA resembles. The alignment between these ex-post labels and the text-based cluster themes—particularly the energy and manufacturing archetypes—provides a form of external validation: qualita-tively similar economic groupings emerge whether cities are classified by narrative content or by the time-series behavior of their employment. 64 Corpus CBOW Corpus SGNS           
+
+> SVD-(r= 50 )Pretrained (Google News)
+> LLM Embeddings Residual k-means
+> Observables k-means
+> Cluster 12345
+
+Online Appendix Figure OA.8: Geographic distribution of cluster assignments for 363 CBSAs. Each dot is a CBSA, colored by its cluster. Cluster numbers are assigned within each method, so a color is comparable across CBSAs in one panel but not across panels. 
+
+65 C Additional Numerical Results 
+
+This appendix considers number of alternatives specifications for our numerical illustrations. 
+
+## C.1 Large Corpus 
+
+Figures OA.9–OA.11 repeat Figures 3–5 on the larger corpus ( D = 1 ,000, Nd = 10 ,000, against 
+
+D = 363 and Nd = 487). The comparison to make is panel against its main-text counterpart, and what changes differs by panel. For SVD-β (left) only the sample size changes. We keep the full document as context, so the number of ordered word–context pairs entering bR rises from 8 .6 × 10 7 to 1 .0 × 10 11 , a factor of about 1 ,200, on 56 times as many tokens. The panel is therefore a pure sample-size comparison, and it is the cleanest picture of Proposition 1 in the paper: at K = 2 the cloud collapses onto a line. For SGNS (right) it does not. Full-document context is not feasible at this scale. We therefore run J = 5 (the default in gensim ), and the two changes work against each other. 
+
+gensim draws the effective half-window uniformly on {1, . . . , J }, so at J = 5 each target sees about six contexts: the objective consumes roughly 6 .0 × 10 7 pairs per epoch, against 8 .6 × 10 7
+
+in Figure 3. So effectively, the training sample is about 30% smaller in pairs compared to its main-text counterpart.      
+
+> (a) SVD-β, full document (b) SGNS, J= 5
+
+Online Appendix Figure OA.9: Word embeddings for Design 1 ( K = 2) on the larger corpus (D = 1 ,000, Nd = 10 ,000). SVD-β uses the full document as context, as in the main text; SGNS uses 
+
+J = 5, which is what is feasible at this scale. Counterpart of Figure 3. Colors mark the dominant topic in the true B. Both panels are drawn at equal aspect: in population the embedding has rank 
+
+K − 1 = 1, so the cloud is one-dimensional and the vertical spread is estimation noise. 
+
+66 (a) SVD-β, full document (b) SGNS, J = 5 
+
+Online Appendix Figure OA.10: Word embeddings for Design 2 ( K = 3) on the larger corpus. SVD-β uses the full document as context; SGNS uses J = 5. Counterpart of Figure 4. Both methods separate the three topics. Each panel is projected onto its own leading two principal directions rather than onto the first two raw coordinates: for SVD-β the two coincide, since β is built from the ordered eigenvectors of bR − 1V 1⊤ 
+
+> V
+
+, but the CBOW coordinate basis is chosen by the optimizer and is arbitrary, so a raw two-coordinate slice would cut obliquely through the topic plane. 
+
+67 (a) SVD-β, full document (b) SGNS, J = 5 
+
+Online Appendix Figure OA.11: Document embeddings for Design 2 ( K = 3) on the larger corpus, SVD-β at full-document context and SGNS at J = 5, colored by dominant topic. Counterpart of Figure 5. With α = 1 the topic mixtures are spread across the simplex and the document embeddings fill the triangle spanned by the three topic centroids, as Proposition 3 predicts. 
+
+68 C.2 Sparse Topic Mixtures: Dirichlet (α = 0 .01) 
+
+The simulations in Section 3 use a symmetric Dirichlet( α = 1) prior, which is uniform on the topic simplex. As a contrast, I repeat both designs with α = 0 .01 (Holding D = 363 and 
+
+Nd = 487). Under Dirichlet(0 .01), almost all mass concentrates at the simplex vertices: most documents are nearly pure-topic, with topic mixtures Θ •d close to a single ek. By Proposition 3, document embeddings μd = C Θ•d then concentrate at the topic centroids {ck} rather than filling the centroid simplex. Figures OA.12–OA.15 show the resulting embeddings. The B matrices and pipeline are identical to Section 3; only the Dirichlet concentration parameter differs.    
+
+> (a) CBOW (b) SVD-β
+
+Online Appendix Figure OA.12: Word embeddings for Design 1 ( K = 2) under Dirichlet( α =0.01).    
+
+> (a) CBOW (b) SVD-β
+
+Online Appendix Figure OA.13: Word embeddings for Design 2 ( K = 3) under Dirichlet( α =0.01). 
+
+69 The sparse-prior case illustrates the boundary regime for Lemma 2: when θd,k ∗(d) ≈ 1, the dominant-topic threshold θd,k ∗(d) > 1 − η is met for essentially every document, and k-means recovers the dominant-topic partition. At α = 0 .01, Pr( θd,k ∗ > 0.5) ≈ 1 for both K = 2 and 
+
+K = 3, consistent with the visible vertex concentration.    
+
+> (a) CBOW (b) SVD-β
+
+Online Appendix Figure OA.14: Document embeddings for Design 1 (K = 2) under Dirichlet( α = 0 .01). Documents cluster at the two endpoints of the line segment [ c1, c 2] rather than filling it; color indicates the share of topic 1. 
+
+70 (a) CBOW (b) SVD-β
+
+Online Appendix Figure OA.15: Document embeddings for Design 2 (K = 3) under Dirichlet( α = 0 .01), colored by dominant topic. With most documents near-pure on a single topic, the dominant-topic partition is well-separated and is recovered cleanly by both embeddings ( k-means with K = 3). The shaded region is the topic simplex conv {c1, c 2, c 3}; documents concentrate at its vertices rather than filling it, which is the contrast with Figure 5. 
+
+71 C.3 Interior Archetypes ( L < K )
+
+The simulations above illustrate the case L = K, where the number of clusters in document space matches the number of topics. Proposition 4 covers the more general case in which documents concentrate around L archetype mixtures π∗ 
+
+> 1
+
+, . . . , π ∗ 
+
+> L
+
+∈ ∆K−1 that need not coincide with the simplex vertices. The empirical application in Section 4 sits in this regime: k-means on the CBSA corpus recovers L = 5 clusters whose centroids are interior mixtures of an unknown number of latent topics. To illustrate this scaling, I repeat Design 2 ( K = 3 topics, same B matrix as in Section 3) but replace the Dirichlet( α = 1) prior on Θ •d with a two-archetype mixture. Each document is assigned uniformly to one of two archetypes, 
+
+π∗ 
+
+> 1
+
+= (0 .65 , 0.25 , 0.10) , π∗ 
+
+> 2
+
+= (0 .10 , 0.10 , 0.80) ,
+
+and its topic mixture is drawn from a tight Dirichlet centered on the assigned archetype, Θ•d ∼ Dirichlet(20 · π∗ 
+
+> ℓ
+
+). Archetype 1 is fruit-heavy with some citrus; archetype 2 is nearly pure vegetable. Neither lies at a simplex vertex. The word geometry is not carried over unchanged. By Theorem 1 the word metric is Σ Θ-weighted. Figure OA.16 illustrates. The shaded region is the topic simplex conv {c1, c 2, c 3}, computed from the true B and the es-timated word embeddings and projected onto the same two coordinates as the documents; Proposition 3 places every expected document embedding inside it. Crosses mark the two archetypes’ expected embeddings, P 
+
+> k
+
+π∗ 
+
+> ℓk
+
+ck. Both sit in the interior, which is the L < K 
+
+regime of Proposition 4. The simplex is far flatter than in Figure OA.15 even though B is the same, for the reason given above: Σ Θ is nearly rank one here. That flattening is present in both panels and in the full K coordinates, not an artifact of the projection.          
+
+> (a) CBOW (b) SVD-β
+> Online Appendix Figure OA.16: Document embeddings colored by archetype label. The shaded region is the topic simplex conv {c1, c 2, c 3}, computed from the true Band the estimated word embeddings and projected onto the same two coordinates as the documents. Crosses mark the two archetypes’ expected embeddings, P
+> kπ∗
+> ℓk ck.
+
+The archetype design illustrates Proposition 4 in the L = 2 < K = 3 regime: cluster identity in embedding space is governed by the archetype assignment, not by the dominant-72 topic vertex. This mirrors the empirical situation in Section 4, where the choice of L = 5 is governed by the resolvable archetypes in the corpus and need not equal the (unobserved) number of latent topics. 73 C.4 CBOW 
+
+Here, I depict the counterpart of Figures 3-Figure 5 using continuous bag-of-words (CBOW) embeddings.        
+
+> (a) Word embeddings, Design 1 ( K= 2) (b) Word embeddings, Design 2 ( K= 3)
+> (c) Document embeddings, Design 2 ( K= 3)
+
+Online Appendix Figure OA.17: Estimated embedding using CBOW on applicaton-sized corpus. Colors mark the dominant topic in the true B.
+
+74 C.5 UMAP Projections 
+
+Figure 5 projects the 3-dimensional embeddings to two dimensions by retaining the first two coordinates. The empirical application in Section 4 instead uses UMAP (McInnes et al., 2018), a nonlinear dimensionality-reduction method, because the application’s embeddings live in 50 dimensions (closed-form SVD-β and both corpus-trained arms), 300 (pretrained Google News) or 3 ,072 (the LLM embeddings). For visual parallelism with the application figures, this section repeats the Design 2 ( K = 3) embeddings under the same UMAP projection used in Section 4. UMAP’s nonlinear transformation can curve or warp the simplex but generally preserves the cluster structure.           
+
+> (a) SVD-β(b) SGNS (c) CBOW
+> (d) SVD-β, large corpus (e) SGNS, large corpus (f ) CBOW, large corpus
+
+Online Appendix Figure OA.18: Document embeddings for Design 2 ( K = 3), UMAP-projected and colored by dominant topic. Top row: application scale ( D = 363, Nd = 487, full document as context), the same embeddings Figure 5 projects linearly. Bottom row: the larger corpus ( D = 1 ,000, 
+
+Nd = 10 ,000, J = 5), the counterpart of Figure OA.11. Cluster structure is preserved under UMAP at both scales. 
+
+75 C.6 Rank of the SGNS Target under a Sparser Prior 
+
+Table 2 draws every column of B and every topic mixture from a symmetric Dirichlet( α = 1), which puts no mass at the boundary of either simplex: each topic loads on every word and each document on every topic. Table OA.3 repeats that grid at α = 0 .1, where both are more concentrated. Two things change. The level falls sharply: πK−1 runs from 0 .68 to 0 .89, against 0 .91 to 0.99 at α = 1, so a rank-( K − 1) approximation now misses between a tenth and a third of the spectral mass of log R. And the invariance to V breaks for moderately sized K. This suggests the cost of the rank constraint grows with the vocabulary under a sparse prior. Both follow from a larger departure from independence. The diagnostic ϱ = ∥R − 1V 1⊤ 
+
+> V
+
+∥∞
+
+stays below 0 .6 in every cell at α = 1, but ranges from 0 .84 to 6 .5 here and exceeds one in 25 of the 30 cells. Remark 3 expands log R = ββ ⊤ + O(ϱ2) under ϱ < 1, so that expansion does not cover most of this table.                                           
+
+> VK= 2 K= 3 K= 5 K= 10 K= 25 K= 50 100 0.677 0.693 0.728 0.779 0.831 0.890 250 0.677 0.692 0.715 0.743 0.788 0.827 500 0.676 0.691 0.711 0.731 0.755 0.808 1,000 0.677 0.692 0.705 0.721 0.726 0.786 2,500 0.676 0.691 0.704 0.712 0.702 0.747
+
+Online Appendix Table OA.3: Share of the spectral mass of log R carried by its leading K − 1eigenvalues, πK−1 = P 
+
+> i≤K−1
+
+|λi|/ P 
+
+> i
+
+|λi|, at α = 0 .1. Each column of B and each topic mixture Θ•d is drawn from a symmetric Dirichlet( α); R is then formed in population from B and G, so no corpus is sampled. Means over 8 draws; the largest standard deviation in any cell is 0 .016. The negative-sampling shift contributes one further eigenvalue, of size V log ν, and is excluded. 
+
+76 References 
+
+Sanjeev Arora, Rong Ge, Yonatan Halpern, David Mimno, Ankur Moitra, David Sontag, Yichen Wu, and Michael Zhu. A practical algorithm for topic modeling with provable guarantees. In International Conference on Machine Learning , pages 280–288. PMLR, 2013. Sanjeev Arora, Yuanzhi Li, Yingyu Liang, Tengyu Ma, and Andrej Risteski. A latent vari-able model approach to PMI-based word embeddings. Transactions of the Association for Computational Linguistics , 4:385–399, 2016. Sanjeev Arora, Yingyu Liang, and Tengyu Ma. A simple but tough-to-beat baseline for sentence embeddings. In International Conference on Learning Representations , 2017. David Arthur and Sergei Vassilvitskii. k-means++: The advantages of careful seeding. In Pro-ceedings of the Eighteenth Annual ACM-SIAM Symposium on Discrete Algorithms (SODA) ,pages 1027–1035, 2007. Philipp Bach, Victor Chernozhukov, Sven Klaassen, Martin Spindler, Jan Teichert-Kluge, and Suhas Vijaykumar. Adventures in demand analysis using AI. arXiv preprint arXiv:2501.00382 , 2025. Patrick Bajari, Zhihao Cen, Victor Chernozhukov, Manoj Manukonda, Suhas Vijaykumar, Jin Wang, Ramon Huerta, and Junbo Li. Hedonic prices and quality adjusted price indices powered by AI. Journal of Econometrics , 2025. Laura Battaglia, Timothy Christensen, Stephen Hansen, and Szymon Sacher. Inference for regression with variables generated by AI or machine learning. arXiv preprint arXiv:2402.15585 , 2024. David M Blei and John D Lafferty. Dynamic topic models. In Proceedings of the 23rd Inter-national Conference on Machine Learning , pages 113–120, 2006. David M Blei, Andrew Y Ng, and Michael I Jordan. Latent Dirichlet allocation. Journal of Machine Learning Research , 3:993–1022, 2003. St´ ephane Bonhomme, Thibaut Lamadon, and Elena Manresa. Discretizing unobserved het-erogeneity. Econometrica , 90(2):625–643, 2022. L. M. Bregman. The relaxation method of finding the common point of convex sets and its application to the solution of problems in convex programming. USSR Computational Mathematics and Mathematical Physics , 7(3):200–217, 1967. Sara Casella, Jes´ us Fern´ andez-Villaverde, Stephen Hansen, Ryohei Oishi, and Minchul Shin. Structural estimation with unstructured data. Working paper, 2026. Yinyin Chen, Shishuang He, Yun Yang, and Feng Liang. Learning topic models: Identifiability and finite-sample analysis. Journal of the American Statistical Association , pages 1–16, 2022. 77 Timothy Christensen and Giovanni Compiani. From unstructured data to demand counter-factuals: Theory and practice. arXiv preprint arXiv:2601.05374 , 2026. Michael Collins, Sanjoy Dasgupta, and Robert E. Schapire. A generalization of principal com-ponents analysis to the exponential family. In Advances in Neural Information Processing Systems , volume 14, pages 617–624, 2001. Adji B. Dieng, Francisco J. R. Ruiz, and David M. Blei. Topic modeling in embedding spaces. 
+
+Transactions of the Association for Computational Linguistics , 8:439–453, 2020. David Donoho and Victoria Stodden. When does non-negative matrix factorization give a correct decomposition into parts? In Advances in Neural Information Processing Systems ,volume 16, 2003. Naoki Egami, Christian J. Fong, Justin Grimmer, Margaret E. Roberts, and Brandon M. Stewart. How to make causal inferences using texts. Science Advances , 8(42):eabg2652, 2022. Simon Freyaldenhoven, Shikun Ke, Dingyi Li, and Jos´ e Luis Montiel Olea. On the testability of the anchor-words assumption in topic models. 2025. Xiao Fu, Kejun Huang, Nicholas D Sidiropoulos, and Wing-Kin Ma. Nonnegative matrix factorization for signal and data analytics: Identifiability, algorithms, and applications. 
+
+IEEE Signal Process. Mag. , 36(2):59–80, 2019. Thomas Hofmann. Probabilistic latent semantic indexing. In Proceedings of the 22nd annual international ACM SIGIR conference on Research and development in information retrieval ,pages 50–57, 1999. Kejun Huang, Nicholas D Sidiropoulos, and Ananthram Swami. Non-negative matrix factor-ization revisited: Uniqueness and algorithm for symmetric decomposition. IEEE Transac-tions on Signal Processing , 62(1):211–224, 2013. Kejun Huang, Xiao Fu, and Nikolaos D Sidiropoulos. Anchor-free correlated topic modeling: Identifiability and algorithm. Advances in Neural Information Processing Systems , 29, 2016. Mohit Iyyer, Varun Manjunatha, Jordan Boyd-Graber, and Hal Daum´ e III. Deep unordered composition rivals syntactic methods for text classification. In Proceedings of the 53rd Annual Meeting of the Association for Computational Linguistics , pages 1681–1691, 2015. Armand Joulin, Edouard Grave, Piotr Bojanowski, and Tomas Mikolov. Bag of tricks for efficient text classification. In Proceedings of the 15th conference of the European chapter of the association for computational linguistics: volume 2, short papers , pages 427–431, 2017. Austin C Kozlowski, Matt Taddy, and James A Evans. The geometry of culture: Analyzing the meanings of class through word embeddings. American Sociological Review , 84(5):905–949, 2019. Quoc Le and Tomas Mikolov. Distributed representations of sentences and documents. In 
+
+International Conference on Machine Learning , pages 1188–1196. PMLR, 2014. 78 Daniel D Lee and H Sebastian Seung. Learning the parts of objects by non-negative matrix factorization. Nature , 401(6755):788–791, 1999. Omer Levy and Yoav Goldberg. Neural word embedding as implicit matrix factorization. In 
+
+Advances in Neural Information Processing Systems , volume 27, pages 2177–2185, 2014. Omer Levy, Yoav Goldberg, and Ido Dagan. Improving distributional similarity with lessons learned from word embeddings. Transactions of the Association for Computational Linguis-tics , 3:211–225, 2015. Yuchen Li, Yuanzhi Li, and Andrej Risteski. How do transformers learn topic structure: Towards a mechanistic understanding. In International Conference on Machine Learning ,pages 19689–19729. PMLR, 2023. Leland McInnes, John Healy, and James Melville. Umap: Uniform manifold approximation and projection for dimension reduction. arXiv preprint arXiv:1802.03426 , 2018. Tomas Mikolov, Kai Chen, Greg Corrado, and Jeffrey Dean. Efficient estimation of word representations in vector space. In International Conference on Learning Representations ,2013a. Tomas Mikolov, Kai Chen, Greg Corrado, and Jeffrey Dean. word2vec: Tool for computing continuous distributed representations of words. Google Code archive, 2013b. URL https://code.google.com/archive/p/word2vec/ . Pre-trained 
+
+GoogleNews-vectors-negative300 model. Tomas Mikolov, Ilya Sutskever, Kai Chen, Greg Corrado, and Jeffrey Dean. Distributed representations of words and phrases and their compositionality. In Advances in Neural Information Processing Systems , volume 26, pages 3111–3119, 2013c. Jeffrey Pennington, Richard Socher, and Christopher D. Manning. GloVe: Global vectors for word representation. In Proceedings of the 2014 Conference on Empirical Methods in Natural Language Processing (EMNLP) , pages 1532–1543, 2014. Radim ˇReh˚ uˇ rek and Petr Sojka. Software framework for topic modelling with large corpora. In Proceedings of the LREC 2010 Workshop on New Challenges for NLP Frameworks , pages 45–50, Valletta, Malta, 2010. ELRA. Nils Reimers and Iryna Gurevych. Sentence-BERT: Sentence embeddings using Siamese BERT-networks. In Proceedings of the 2019 Conference on Empirical Methods in Natu-ral Language Processing , pages 3982–3992, 2019. Margaret E. Roberts, Brandon M. Stewart, and Richard A. Nielsen. Adjusting for confounding with text matching. American Journal of Political Science , 64(4):887–903, 2020. Paul R. Rosenbaum and Donald B. Rubin. The central role of the propensity score in obser-vational studies for causal effects. Biometrika , 70(1):41–55, 1983. Madeleine Udell, Corinne Horn, Reza Zadeh, and Stephen Boyd. Generalized low rank models. 
+
+Foundations and Trends in Machine Learning , 9(1):1–118, 2016. 79 Keyon Vafa, Emil Palikot, Tianyu Du, Ayush Kanodia, Susan Athey, and David M. Blei. CAREER: A foundation model for labor sequence data. arXiv preprint arXiv:2202.08370 ,2022. Keyon Vafa, Susan Athey, and David M. Blei. Estimating wage disparities using founda-tion models. Proceedings of the National Academy of Sciences , 2025. doi: 10.1073/pnas. 2427298122. Victor Veitch, Dhanya Sridhar, and David M. Blei. Adapting text embeddings for causal inference. In Proceedings of the 36th Conference on Uncertainty in Artificial Intelligence (UAI) , pages 919–928, 2020. Xinyi Wang, Wanrong Zhu, Michael Saxon, Mark Steyvers, and William Yang Wang. Large language models are latent variable models: Explaining and finding good demonstrations for in-context learning. Advances in Neural Information Processing Systems , 36:15614–15638, 2023. John Wieting, Mohit Bansal, Kevin Gimpel, and Karen Livescu. Towards universal para-phrastic sentence embeddings. In International Conference on Learning Representations ,2016. Sang Michael Xie, Aditi Raghunathan, Percy Liang, and Tengyu Ma. An explanation of in-context learning as implicit bayesian inference. International Conference on Learning Representations , 2022. 80

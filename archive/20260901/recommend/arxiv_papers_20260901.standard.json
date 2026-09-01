@@ -1,0 +1,98 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-09-01T23:07:36.601500+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 0,
+    "deep_cap": 7,
+    "deep_selected": 0,
+    "quick_candidates": 2,
+    "quick_skim_target": 12,
+    "quick_selected": 2
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2608.30606v1",
+      "source": "arxiv",
+      "title": "Generative Retrieval for E-commerce: Jointly Learning Embedding and Codebook with Same Product Cluster",
+      "abstract": "With the development of large language models (LLMs), generative retrieval is becoming increasingly important in e-commerce scenarios. Current mainstream approaches typically use a two-stage training strategy: first train a product embedding model, and then learn a codebook that maps embeddings to product IDs. This cascaded approach suffers from two major issues: (1) error accumulation-if the embedding model in the first stage produces biased representations, the codebook in the second stage cannot correct these errors, degrading final retrieval performance; and (2) codebook learning relies solely on product embeddings and lacks modeling of query-to-product and product-to-product interactions. As a result, products belonging to the same cluster may be assigned inconsistent IDs by the codebook, further hurting retrieval accuracy. To address these problems, we propose a novel method that jointly trains the embedding model and the codebook, and incorporates same product cluster information as an additional supervision signal. Experimental results demonstrate that our method significantly improves e-commerce retrieval performance while simultaneously enhancing both embedding and codebook learning.",
+      "authors": [
+        "Songtao Fang",
+        "Zihao Xu",
+        "Shaowei Wei",
+        "Jin Zhang",
+        "Zhuojun Wang"
+      ],
+      "primary_category": "cs.IR",
+      "categories": [
+        "cs.IR",
+        "cs.AI"
+      ],
+      "published": "2026-08-31T11:18:52+00:00",
+      "link": "https://arxiv.org/pdf/2608.30606v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Uses LLMs for generative retrieval and jointly learns product embeddings and codebook with same product cluster, directly involving clustering with LLMs.",
+      "llm_evidence_cn": "利用大模型做生成式检索，并联合学习产品嵌入与码本，涉及大模型与聚类的结合。",
+      "llm_evidence": "利用大模型做生成式检索，并联合学习产品嵌入与码本，涉及大模型与聚类的结合。",
+      "canonical_evidence": "利用大模型做生成式检索，并联合学习产品嵌入与码本，涉及大模型与聚类的结合。",
+      "llm_tldr_en": "This work proposes a generative retrieval approach for e-commerce that jointly learns product embeddings and a codebook sharing the same product cluster, addressing error accumulation and interaction modeling in LLM-based retrieval.",
+      "llm_tldr_cn": "本文针对生成式检索中两阶段训练导致错误累积以及码本学习缺乏查询-产品交互建模的问题，提出一种联合学习产品嵌入与码本的框架，基于大规模语言模型提取语义特征，并利用同一产品聚类约束嵌入与码本的一致性。实验在电商场景中验证了该方法能有效减少级联误差、提升检索精度。该工作展示了聚类在大模型检索中的应用价值，对利用LLM改进聚类方法具有参考意义。",
+      "llm_tldr": "本文针对生成式检索中两阶段训练导致错误累积以及码本学习缺乏查询-产品交互建模的问题，提出一种联合学习产品嵌入与码本的框架，基于大规模语言模型提取语义特征，并利用同一产品聚类约束嵌入与码本的一致性。实验在电商场景中验证了该方法能有效减少级联误差、提升检索精度。该工作展示了聚类在大模型检索中的应用价值，对利用LLM改进聚类方法具有参考意义。",
+      "llm_tags": [
+        "query:ac"
+      ],
+      "matched_query_tag": "query:ac",
+      "matched_query_text": "clustering using large language models",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2608.31059v1",
+      "source": "arxiv",
+      "title": "When Can We Work in Embedding Space? What Text Embeddings Preserve",
+      "abstract": "When do text embeddings work as inputs to empirical analysis? Their use rests on an assumption: that we can trade text for its low-dimensional embedding, and lose little in doing so. I make that assumption precise under a generative model in which documents are mixtures of latent topics. I study two uses---clustering units in embedding space and controlling for high-dimensional text. A cluster of embeddings is a set of documents with similar topic mixtures; controlling for the embedding is equivalent to controlling for the topic mixture, so validity reduces to whether that mixture captures the confounding. In an application to 363 U.S. metropolitan areas, embedding-based clusters of LLM-generated economic descriptions recover interpretable economic archetypes and separate local employment dynamics more sharply than clustering on model residuals, or on a curated set of industry and demographic covariates.",
+      "authors": [
+        "Simon Freyaldenhoven"
+      ],
+      "primary_category": "econ.EM",
+      "categories": [
+        "econ.EM",
+        "cs.CL",
+        "stat.ML"
+      ],
+      "published": "2026-08-31T16:35:54+00:00",
+      "link": "https://arxiv.org/pdf/2608.31059v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Analyzes clustering in embedding space with LLM-generated text, providing theoretical validity conditions",
+      "llm_evidence_cn": "分析嵌入空间中基于大语言模型生成文本的聚类，给出理论有效性条件",
+      "llm_evidence": "分析嵌入空间中基于大语言模型生成文本的聚类，给出理论有效性条件",
+      "canonical_evidence": "分析嵌入空间中基于大语言模型生成文本的聚类，给出理论有效性条件",
+      "llm_tldr_en": "Analyzes when text embeddings preserve latent topic structure for clustering and control in empirical analysis, applied to LLM-generated economic descriptions, recovering interpretable economic archetypes.",
+      "llm_tldr_cn": "文本嵌入常被用于经验分析中的聚类与混频控制，但其有效性前提未被严格刻画。论文在文档为潜在主题混合的生成模型下，研究聚类单元与混频控制两种用途，证明嵌入聚类等价于按主题混合聚类。在363个大都市区用LLM生成经济描述进行嵌入聚类，恢复出可解释的经济原型，为嵌入空间分析提供了理论支撑。",
+      "llm_tldr": "文本嵌入常被用于经验分析中的聚类与混频控制，但其有效性前提未被严格刻画。论文在文档为潜在主题混合的生成模型下，研究聚类单元与混频控制两种用途，证明嵌入聚类等价于按主题混合聚类。在363个大都市区用LLM生成经济描述进行嵌入聚类，恢复出可解释的经济原型，为嵌入空间分析提供了理论支撑。",
+      "llm_tags": [
+        "query:ac"
+      ],
+      "matched_query_tag": "query:ac",
+      "matched_query_text": "clustering using large language models",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}
