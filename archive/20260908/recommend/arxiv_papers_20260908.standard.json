@@ -1,0 +1,56 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-09-08T22:52:54.012569+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 0,
+    "deep_cap": 7,
+    "deep_selected": 0,
+    "quick_candidates": 1,
+    "quick_skim_target": 12,
+    "quick_selected": 1
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2609.03306v1",
+      "source": "arxiv",
+      "title": "Geometry-Aware Graph Construction via Adaptive Spectral Bandwidth Control",
+      "abstract": "Kernelized graph methods - spectral clustering, diffusion maps, and sparse kernel -regression graphs - that use Gaussian kernels depend on the choice of Gaussian bandwidth sigma, which governs the spectral character of the local kernel operator. When sigma is too small, the kernel overestimates local complexity and treats each sample as an independent direction; when sigma is too large, the kernel collapses multiple directions together, the condition number diverges, and all geometric discrimination is lost. We propose a choice of scale to make the spectral complexity of the kernel consistent with the intrinsic complexity of the underlying manifold. We propose a per-node bandwidth criterion that operationalizes this principle by jointly matching the kernel's effective rank to the local intrinsic dimension estimated via minimum spanning tree, anchoring the search in the manifold-consistent log-log scaling regime. We evaluate SSL embeddings from six encoders on CIFAR-100, showing that adaptive bandwidth consistently improves leave-one-out (LOO) classification and label propagation (LP) accuracy over fixed-bandwidth methods and competing adaptive methods.",
+      "authors": [
+        "Ecem Bozkurt",
+        "Antonio Ortega"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "eess.SP"
+      ],
+      "published": "2026-09-03T02:57:28+00:00",
+      "link": "https://arxiv.org/pdf/2609.03306v1",
+      "tags": [
+        "keyword:ac",
+        "keyword:active-clust",
+        "query:ac",
+        "query:active-clust"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Adaptive bandwidth graph construction for spectral clustering; transferable graph construction method that could support active clustering pipelines.",
+      "llm_evidence_cn": "面向谱聚类的自适应带宽图构建方法；作为一种可迁移的图构建技术，可支撑主动聚类的底层环节。",
+      "llm_evidence": "面向谱聚类的自适应带宽图构建方法；作为一种可迁移的图构建技术，可支撑主动聚类的底层环节。",
+      "canonical_evidence": "面向谱聚类的自适应带宽图构建方法；作为一种可迁移的图构建技术，可支撑主动聚类的底层环节。",
+      "llm_tldr_en": "Proposes per-node adaptive spectral bandwidth for Gaussian-kernel graph construction, improving spectral clustering, diffusion maps, and KNR graphs by matching spectral complexity to manifold intrinsic complexity.",
+      "llm_tldr_cn": "谱聚类等核化图方法高度依赖高斯带宽σ，尺度不当会导致核矩阵呈现独立方向或丢失几何判别。论文提出按节点的自适应谱带宽准则，使局部核矩阵的谱复杂度匹配流形的内在复杂度。此方法可用于谱聚类、扩散图与稀疏核回归图的图构建，提升后续聚类精度。虽未涉及主动学习或大模型，但可作主动聚类中图构建环节的可迁移组件。",
+      "llm_tldr": "谱聚类等核化图方法高度依赖高斯带宽σ，尺度不当会导致核矩阵呈现独立方向或丢失几何判别。论文提出按节点的自适应谱带宽准则，使局部核矩阵的谱复杂度匹配流形的内在复杂度。此方法可用于谱聚类、扩散图与稀疏核回归图的图构建，提升后续聚类精度。虽未涉及主动学习或大模型，但可作主动聚类中图构建环节的可迁移组件。",
+      "llm_tags": [
+        "query:active-clust:composite"
+      ],
+      "matched_query_tag": "query:active-clust:composite",
+      "matched_query_text": "Papers central to 帮助我研究一下传统的最新的主动学习聚类是怎么发展的，我想从中找一下能加入大模型优化的创新点, especially work that connects or combines: active learning clustering methods; traditional active learning algorithms for clustering; deep active learning for clustering; semi-supervised clustering with active learning; query strategy for active clustering; evolution of active learning clustering methods from traditional to modern; recent advances in active clustering with large language models.",
+      "matched_requirement_id": "req-composite-active-clust",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

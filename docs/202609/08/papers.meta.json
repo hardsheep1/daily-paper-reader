@@ -1,0 +1,24 @@
+{
+  "label": "2026-09-08",
+  "date": "2026-09-08",
+  "generated_at": "2026-09-08T22:53:38",
+  "count": 1,
+  "papers": [
+    {
+      "paper_id": "202609/08/2609.03306v1-geometry-aware-graph-construction-via-adaptive-spectral-bandwidth-control",
+      "section": "quick",
+      "title_en": "Geometry-Aware Graph Construction via Adaptive Spectral Bandwidth Control",
+      "authors": "Ecem Bozkurt, Antonio Ortega",
+      "date": "2026-09-03",
+      "pdf": "https://arxiv.org/pdf/2609.03306v1",
+      "score": "6.0",
+      "evidence": "面向谱聚类的自适应带宽图构建方法；作为一种可迁移的图构建技术，可支撑主动聚类的底层环节。",
+      "tldr": "高斯核带宽是谱聚类、扩散图等核化图方法的关键，尺度不当会高估或压缩局部复杂度，破坏流形几何特征。本文提出自适应谱带宽控制：逐节点调节带宽，使核的有效秩匹配由最小生成树估计的局部内在维度，并在双对数尺度域中搜索最优参数，令谱复杂度与流形本质一致。在CIFAR-100六个SSL编码器上，该方法稳定提升留一法分类和标签传播精度，优于固定带宽及竞争自适应法。该准则为几何感知图构建提供了有效的带宽选择依据。",
+      "tags": "query:active-clust",
+      "abstract_en": "Kernelized graph methods - spectral clustering, diffusion maps, and sparse kernel -regression graphs - that use Gaussian kernels depend on the choice of Gaussian bandwidth sigma, which governs the spectral character of the local kernel operator. When sigma is too small, the kernel overestimates local complexity and treats each sample as an independent direction; when sigma is too large, the kernel collapses multiple directions together, the condition number diverges, and all geometric discrimination is lost. We propose a choice of scale to make the spectral complexity of the kernel consistent with the intrinsic complexity of the underlying manifold. We propose a per-node bandwidth criterion that operationalizes this principle by jointly matching the kernel's effective rank to the local intrinsic dimension estimated via minimum spanning tree, anchoring the search in the manifold-consistent log-log scaling regime. We evaluate SSL embeddings from six encoders on CIFAR-100, showing that adaptive bandwidth consistently improves leave-one-out (LOO) classification and label propagation (LP) accuracy over fixed-bandwidth methods and competing adaptive methods.",
+      "source": "arxiv",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "errors": []
+}
