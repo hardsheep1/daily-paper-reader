@@ -6,26 +6,22 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-09-08
-- 运行时间：2026-09-08 22:53:35 UTC
+- 最新运行日期：2026-09-09
+- 运行时间：2026-09-09 21:13:20 UTC
 - 运行状态：成功
-- 本次总论文数：1
+- 本次总论文数：0
 - 精读区：0
-- 速读区：1
+- 速读区：0
 
 ### 今日简报（AI）
-今日仅速读1篇论文，暂无精读；整体筛选量低。
-最值得关注的是《Geometry-Aware Graph Construction via Adaptive Spectral Bandwidth Control》（6.0/10），探讨自适应谱带宽控制构建几何感知图。
-建议明日可围绕该论文补充精读，或扩大检索范围以获取更高分候选。
-- 详情：[/202609/08/README](/202609/08/README)
+> 今日无新推荐，系统未产出可展示论文。
+- 详情：[/202609/09/README](/202609/09/README)
 
 ### 精读区论文标签
 - 本次无精读推荐。
 
 ### 速读区论文标签
-1. [Geometry-Aware Graph Construction via Adaptive Spectral Bandwidth Control](/202609/08/2609.03306v1-geometry-aware-graph-construction-via-adaptive-spectral-bandwidth-control)  
-   标签：评分：6.0/10、query:active-clust
-   evidence：面向谱聚类的自适应带宽图构建方法；作为一种可迁移的图构建技术，可支撑主动聚类的底层环节。
+- 本次无速读推荐。
 
 
 <div class="dpr-home-promo-card">
